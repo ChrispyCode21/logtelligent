@@ -301,3 +301,21 @@ describe('Slice 2 decisions (SPEC §5.2, §6.6)', () => {
     expect(suggestion(bench, weekly(A_SUCCESS, B_FAIL, sets(240, [4, 4, 3]))).stacks).toBe(0)
   })
 })
+
+describe('Bodyweight accessories (SPEC §6.1)', () => {
+  const pullUp = accessory({
+    id: 'pull-up',
+    name: 'Pull-up',
+    equipment: 'bodyweight',
+    repRange: { min: 8, max: 12 },
+    seed: { weight: 0, reps: 8 },
+  })
+
+  it('progress by reps up to the ceiling (12 -> 14 -> 15), then add 5 lb at the bottom of the range', () => {
+    const history = weekly(sets(0, [12, 12, 12]), sets(0, [14, 14, 14]), sets(0, [15, 15, 15]))
+    expect(suggestion(pullUp, [])).toMatchObject({ weight: 0, reps: 8 })
+    expect(suggestion(pullUp, history.slice(0, 1))).toMatchObject({ weight: 0, reps: 14 })
+    expect(suggestion(pullUp, history.slice(0, 2))).toMatchObject({ weight: 0, reps: 15 })
+    expect(suggestion(pullUp, history)).toMatchObject({ weight: 5, reps: 8, effectiveTop: 12 })
+  })
+})

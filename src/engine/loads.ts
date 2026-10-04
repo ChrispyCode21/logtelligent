@@ -1,34 +1,35 @@
-import type { ExerciseConfig } from './types'
+import type { EquipmentType, ExerciseConfig } from './types'
 
-// Barbell: 45 lb empty bar, 5 lb total jumps (SPEC §6.2, §10 #5).
-const BARBELL_EMPTY = 45
-const BARBELL_STEP = 5
-const BARBELL_MAX = 1000
+const range = (start: number, step: number, max: number) =>
+  Array.from({ length: Math.floor((max - start) / step) + 1 }, (_, i) => start + i * step)
 
-// Standard dumbbell rack (SPEC §6.2): 2.5 lb steps to 25, then 5 lb steps to 150.
-const DUMBBELL_RACK = [
-  10, 12.5, 15, 17.5, 20, 22.5,
-  ...Array.from({ length: 26 }, (_, i) => 25 + i * 5),
-]
+// Barbell: 45 lb empty bar, 5 lb total jumps (SPEC §6.2).
+const BARBELL = range(45, 5, 1000)
 
-function barbellLoads(): number[] {
-  const loads: number[] = []
-  for (let w = BARBELL_EMPTY; w <= BARBELL_MAX; w += BARBELL_STEP) loads.push(w)
-  return loads
+// Standard dumbbell rack, per hand (SPEC §6.1–6.2): 2.5 lb steps to 25, then 5 lb steps to 150.
+const DUMBBELL_RACK = [10, 12.5, 15, 17.5, 20, 22.5, ...range(25, 5, 150)]
+
+// Bodyweight: added weight, starting at none (SPEC §6.1).
+const BODYWEIGHT_ADDED = range(0, 5, 200)
+
+/** Default loads for an equipment type. Cable/machine stacks are user-entered, so none. */
+export function defaultLoads(equipment: EquipmentType): number[] {
+  switch (equipment) {
+    case 'barbell':
+      return BARBELL
+    case 'dumbbell':
+      return DUMBBELL_RACK
+    case 'bodyweight':
+      return BODYWEIGHT_ADDED
+    default:
+      return []
+  }
 }
 
 /** Available loads for an exercise, ascending (SPEC §6.2 layers 1-2). */
 export function availableLoads(config: ExerciseConfig): number[] {
   if (config.loads) return [...config.loads].sort((a, b) => a - b)
-  switch (config.equipment) {
-    case 'barbell':
-      return barbellLoads()
-    case 'dumbbell':
-      return DUMBBELL_RACK
-    default:
-      // Cable/machine stacks are user-entered; bodyweight has no load list.
-      return []
-  }
+  return defaultLoads(config.equipment)
 }
 
 /** Heaviest available load at or below `weight`, or the lightest load if none is. */
