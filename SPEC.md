@@ -78,7 +78,7 @@ See §11 for ideas parked until after the MVP.
 2. I can choose a different day, but only after an explicit acknowledgement (Decided). Example: I did Lower A but forgot to log it; I can still log Upper B. A skipped day is simply not logged, and the rotation continues from the day I *did* log.
 3. A **warm-up reminder banner** appears at the top with a short suggestion (one sentence or 2–3 bullets). Warm-up sets are not logged (Decided).
 4. Each exercise shows its suggested weight and rep target. Exercises in a deload week are marked as such (§6.7).
-5. I log each working set. The next set **pre-fills** from the previous set's values, so a repeat set is one tap (Proposed).
+5. I log each working set. The next set **pre-fills** from the previous set's values, so a repeat set is one tap (Decided).
 6. When the last set of an exercise is entered, validation runs (see §6.6) and any message is shown.
 7. Finish the session.
 
@@ -135,12 +135,13 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
 
 ### 6.3 Primary lifts
 - **RPE is required on the first set only** (Decided). RPE is optional on other sets.
+- **RPE is entered in half steps from 6 to 10** (6, 6.5 … 10) (Decided).
 - **The first set is the source of truth** for progression: its weight, reps, and RPE drive next session's suggestion (Decided).
 - **All sets use one working weight**; no changing weight from set to set (Decided).
 - Sets 2+ are recorded in full. They don't steer the progression math, but they **feed validation** (§6.6) (Decided).
 
 ### 6.4 Estimated 1RM (primary lifts)
-- Each first set produces an **estimated 1RM (e1RM)**, adjusted for RPE: reps in reserve are added to the reps performed. 225×7 @ RPE 7 (~3 in reserve) is estimated as a ~10-rep-max effort (Proposed).
+- Each first set produces an **estimated 1RM (e1RM)**, adjusted for RPE: reps in reserve are added to the reps performed. 225×7 @ RPE 7 (~3 in reserve) is estimated as a ~10-rep-max effort. Effective reps = `reps + (10 − RPE)` (Decided).
 - **Formula (Decided):** the e1RM is the **average of Epley, Brzycki, and Lombardi**:
   - Epley `w × (1 + r/30)`
   - Brzycki `w × 36 / (37 − r)`
@@ -306,7 +307,10 @@ Upper A, logged 2026-10-01 (bench target range set to 3–5 for this example):
 
 Note: this log predates the app and has no RPE or explicit targets, so it's input for shaping examples, not a gold standard.
 
-## 8. Contracts (Proposed — to be finalized in the data-model step)
+## 8. Contracts (Decided as a starting point — signatures are finalized in code, `src/engine/`)
+
+The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]`), since the 4-week window, deload exclusion (A5) and substitute exclusion (A6) all need per-session data.
+
 
 - TypeScript types for: `Program`, `TrainingDay`, `ExerciseConfig` (including equipment type and progression profile), `Session`, `LoggedSet`, and per-exercise `ProgressionState` (fatigue stacks, last successful numbers, failed heavier numbers, deload status).
 - Progression engine entry point, roughly:
@@ -319,6 +323,8 @@ Note: this log predates the app and has no RPE or explicit targets, so it's inpu
 Vertical slices, each usable on its own:
 
 1. One hard-coded primary exercise → log sets → see next session's suggestion. Engine + tests first.
+   - **Decided:** the exercise is barbell bench, 3 sets, 3–5 @ RPE 8, with a hard-coded seed of 225 × 5. The seed-entry gate (§5.1, A12 in the UI) arrives with program setup in slice 3.
+   - **Decided:** sets can be edited or deleted until the session is finished; finished sessions are read-only for now (see §10 #2).
 2. Floor-rule validation, fatigue stacks, revert message, and deload.
 3. Program setup (days, exercises, configuration) and rotation.
 4. History view per exercise.
@@ -330,9 +336,11 @@ Vertical slices, each usable on its own:
 None block slice 1. Ask Chris before building the slice each one affects:
 
 1. **Incomplete sessions:** if fewer working sets are logged than configured (e.g. 2 of 3, then the session ends), does validation run on the logged sets only, or does a missing set count as a fail? (Affects slice 2.)
-2. **Editing / undoing a logged set:** fixing a typo (e.g. 255 → 225) must re-run validation and progression for that exercise. How far back can sets be edited, and do edits to older sessions recompute later state? (Affects slices 1–2.)
-3. **Units:** pounds only for v1? (Assumed throughout; never stated.)
+2. **Editing / undoing a logged set:** fixing a typo (e.g. 255 → 225) must re-run validation and progression for that exercise. How far back can sets be edited, and do edits to older sessions recompute later state? (Affects slice 2.) *Slice 1 decision: editable until the session is finished, then read-only.*
+3. ~~**Units**~~ — **Decided:** pounds only for v1.
 4. **Dumbbell weight convention:** dumbbell weights are **per hand** (incline press 70 = 70 lb in each hand, not 140 total)? (Assumed; the spec only states the per-side convention for reps.)
+5. **Barbell minimum load:** the barbell load list starts at a 45 lb empty bar and goes up in 5 lb steps (assumed in slice 1; the spec only says "5 lb total jumps"). Correct?
+6. **No load reaches the target reps:** if even the lightest available load predicts fewer than the target reps (only possible with a very low e1RM), the engine suggests the lightest load. (Assumed in slice 1.)
 
 Flagged to revisit after real use (not blocking):
 - Primary-lift deload: resuming at the last successful numbers (§6.7).
