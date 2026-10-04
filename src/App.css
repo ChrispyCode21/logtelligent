@@ -337,3 +337,80 @@ fieldset.field legend {
   display: grid;
   gap: 8px;
 }
+
+/* Slice 4: history */
+
+.app-header {
+  flex-wrap: wrap;
+}
+
+.tabs button {
+  padding: 0 12px;
+}
+
+.chart {
+  margin: 0;
+}
+
+.chart figcaption {
+  margin-bottom: 8px;
+}
+
+.chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: pan-y;
+}
+
+.chart .grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chart .crosshair {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+.chart .axis {
+  fill: var(--muted);
+  font-size: 11px;
+}
+
+.chart .series {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart .marker {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.history-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.history-head .tag {
+  margin-left: 0;
+}
+
+.history-head .muted:last-child {
+  margin-left: auto;
+}

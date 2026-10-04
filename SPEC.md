@@ -92,6 +92,11 @@ See §11 for ideas parked until after the MVP.
 1. Pick an exercise.
 2. See past sessions: date, every set (weight × reps, RPE where logged), and the estimated 1RM over time for primary lifts.
 
+**Decided:**
+- Each e1RM point is **that session's e1RM** (from its first set alone, §6.4), not the running average. Deload sessions are listed and tagged but get no e1RM point.
+- Shown as a **small line chart** (inline SVG, no chart library) above the session list, with the e1RM also on each session row.
+- The exercise picker includes **active exercises** (grouped by day) and **archived exercises that have history** (in an "Archived" group).
+
 ## 6. Domain rules
 
 ### 6.1 Exercise configuration

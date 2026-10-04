@@ -1,12 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
+import { HistoryView } from './components/HistoryView'
 import { ProgramView } from './components/ProgramView'
 import { TodayView } from './components/TodayView'
 import { EMPTY_PROGRAM } from './program/program'
 import { db } from './storage/db'
 import './App.css'
 
-type Tab = 'today' | 'program'
+type Tab = 'today' | 'history' | 'program'
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('today')
@@ -27,16 +28,17 @@ export default function App() {
           <button type="button" aria-pressed={tab === 'today'} onClick={() => setTab('today')}>
             Today
           </button>
+          <button type="button" aria-pressed={tab === 'history'} onClick={() => setTab('history')}>
+            History
+          </button>
           <button type="button" aria-pressed={tab === 'program'} onClick={() => setTab('program')}>
             Program
           </button>
         </nav>
       </header>
-      {tab === 'today' ? (
-        <TodayView {...data} onEditProgram={() => setTab('program')} />
-      ) : (
-        <ProgramView program={data.program} sessions={data.sessions} />
-      )}
+      {tab === 'today' && <TodayView {...data} onEditProgram={() => setTab('program')} />}
+      {tab === 'history' && <HistoryView program={data.program} sessions={data.sessions} />}
+      {tab === 'program' && <ProgramView program={data.program} sessions={data.sessions} />}
     </main>
   )
 }
