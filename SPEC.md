@@ -105,13 +105,23 @@ Per exercise, set at program-setup time:
 | **Equipment type** | e.g. `barbell`, `dumbbell`, `cable`, `machine`, `bodyweight`. Supplies default load steps (§6.2) | Decided |
 | **Progression profile** | How this exercise's load can change — see §6.2 | Decided (needed); values Proposed |
 | Unilateral | Reps are always recorded **per side** (e.g. single-arm or alternating DB curls: 30×15 = 15 each side) | Decided |
+| Target RPE (primary lifts) | First-set target, half steps, default 8 | Decided |
+| Starting numbers (seed) | See §5.1 | Decided |
+
+**Not in the setup form (Decided):** the max relative jump is a fixed 10% for every exercise (§6.2).
+
+**Editing the program (Decided):** any setting can be changed at any time; progression replays history under the current settings. Deleting an exercise or day that has logged sessions **archives** it (hidden from the program, history kept); one with no sessions is deleted outright.
+
+**Bodyweight (Decided):** bodyweight exercises can only be **accessories**. Their loads are **added weight** — 0, 5, 10, 15… lb (overridable). Every jump from 0 exceeds 10%, so they progress by reps up to the rep ceiling, then add 5 lb.
+
+**Dumbbells (Decided):** dumbbell weights are **per hand** (incline press 70 = 70 lb in each hand).
 
 ### 6.2 Progression profile (load steps)
 **Decided:** a fixed pound increment doesn't work across exercises. +5 lb on a 300 lb squat is under 2%; +2.5 lb on a 12.5 lb lateral raise is 20%. Each exercise needs its own description of how it progresses.
 
 **Decided — three layers, combined:**
 1. **Equipment-type defaults** supply the available loads:
-   - Barbell: 5 lb total jumps (2.5 lb plate per side).
+   - Barbell: 5 lb total jumps (2.5 lb plate per side), starting at a 45 lb empty bar (Decided). A different bar uses the per-exercise override.
    - Dumbbell: a standard rack list (e.g. 10, 12.5, 15, 17.5, 20, 22.5, 25, 30…).
    - Cable / machine: a stack list I enter (e.g. …99, 110, 121…).
 2. **Per-exercise override** of those loads for my gym's actual equipment (e.g. "this gym has 22.5s").
@@ -343,8 +353,8 @@ None block slice 1. Ask Chris before building the slice each one affects:
 1. ~~**Incomplete sessions**~~ — **Decided:** validation runs on the logged sets only; a missing set is not a fail (§5.2).
 2. **Editing / undoing a logged set:** fixing a typo (e.g. 255 → 225) must re-run validation and progression for that exercise. How far back can sets be edited, and do edits to older sessions recompute later state? (Affects slice 2.) *Slice 1 decision: editable until the session is finished, then read-only.*
 3. ~~**Units**~~ — **Decided:** pounds only for v1.
-4. **Dumbbell weight convention:** dumbbell weights are **per hand** (incline press 70 = 70 lb in each hand, not 140 total)? (Assumed; the spec only states the per-side convention for reps.)
-5. **Barbell minimum load:** the barbell load list starts at a 45 lb empty bar and goes up in 5 lb steps (assumed in slice 1; the spec only says "5 lb total jumps"). Correct?
+4. ~~**Dumbbell weight convention**~~ — **Decided:** per hand (§6.1).
+5. ~~**Barbell minimum load**~~ — **Decided:** 45 lb empty bar, 5 lb steps (§6.2).
 6. **No load reaches the target reps:** if even the lightest available load predicts fewer than the target reps (only possible with a very low e1RM), the engine suggests the lightest load. (Assumed in slice 1.)
 
 Flagged to revisit after real use (not blocking):
