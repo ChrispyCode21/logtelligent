@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:spec": "node scripts/check-spec-coverage.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.6",

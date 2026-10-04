@@ -4,5 +4,28 @@
   "rules": {
     "react/rules-of-hooks": "error",
     "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/engine/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              { "name": "react", "message": "The engine is pure TypeScript: no React (CLAUDE.md)." },
+              { "name": "dexie", "message": "The engine does no I/O: no Dexie (CLAUDE.md)." },
+              { "name": "dexie-react-hooks", "message": "The engine does no I/O (CLAUDE.md)." }
+            ],
+            "patterns": [
+              {
+                "group": ["../*", "../**", "react-*", "dexie*"],
+                "message": "The engine may only import from src/engine (CLAUDE.md)."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }
