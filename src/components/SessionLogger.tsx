@@ -1,5 +1,14 @@
 import { useState } from 'react'
-import { availableLoads, type ExerciseConfig, type LoggedSet, type Suggestion } from '../engine'
+import {
+  availableLoads,
+  evaluateSession,
+  stepDown,
+  stepUp,
+  type ExerciseConfig,
+  type ExerciseSession,
+  type LoggedSet,
+  type Suggestion,
+} from '../engine'
 import { addSet, canFinish, removeSet, rpeRequired, updateSet } from '../session/sets'
 import type { Session } from '../storage/db'
 import { discardSession, finishSession, saveSets } from '../storage/sessions'
@@ -28,17 +37,23 @@ function formatSet(set: LoggedSet) {
 interface Props {
   config: ExerciseConfig
   session: Session
+  /** Finished history for this exercise. */
+  history: ExerciseSession[]
   suggestion: Suggestion
 }
 
-export function SessionLogger({ config, session, suggestion }: Props) {
+export function SessionLogger({ config, session, history, suggestion }: Props) {
   const sets = session.exercises.find((e) => e.exerciseId === config.id)?.sets ?? []
   const [form, setForm] = useState<Form>(() => prefill(sets, suggestion))
   const [editing, setEditing] = useState<number | null>(null)
 
+  // The working-set count is fixed by config, halved in a deload (SPEC §6.2, §6.7).
+  const targetSets = suggestion.kind === 'suggestion' ? suggestion.sets : config.sets
   const formIndex = editing ?? sets.length
-  // The working-set count is fixed by config (SPEC §6.2); logged sets stay editable.
-  const showForm = editing !== null || sets.length < config.sets
+  // Logged sets stay editable after the last one is entered.
+  const showForm = editing !== null || sets.length < targetSets
+  // Validation runs once the last set is entered (SPEC §5.2, §6.6).
+  const outcome = sets.length >= targetSets ? evaluateSession(config, history, sets) : undefined
   const required = rpeRequired(formIndex)
   const weight = Number(form.weight)
   const reps = Number(form.reps)
@@ -52,8 +67,8 @@ export function SessionLogger({ config, session, suggestion }: Props) {
 
   const loads = availableLoads(config)
   const stepWeight = (direction: 1 | -1) => {
-    const next =
-      direction === 1 ? loads.find((l) => l > weight) : loads.findLast((l) => l < weight)
+    if (loads.length === 0) return
+    const next = direction === 1 ? stepUp(weight, loads) : stepDown(weight, loads)
     if (next !== undefined) setForm({ ...form, weight: String(next) })
   }
   const stepReps = (delta: number) =>
@@ -84,8 +99,8 @@ export function SessionLogger({ config, session, suggestion }: Props) {
   }
 
   async function finish() {
-    const short = sets.length < config.sets
-    if (short && !confirm(`Only ${sets.length} of ${config.sets} sets logged. Finish anyway?`)) return
+    const short = sets.length < targetSets
+    if (short && !confirm(`Only ${sets.length} of ${targetSets} sets logged. Finish anyway?`)) return
     await finishSession(session.id)
   }
 
@@ -98,7 +113,10 @@ export function SessionLogger({ config, session, suggestion }: Props) {
   return (
     <section className="card">
       <h2>
-        {config.name} <span className="muted">· {sets.length} of {config.sets} sets</span>
+        {config.name} <span className="muted">· {sets.length} of {targetSets} sets</span>
+        {suggestion.kind === 'suggestion' && suggestion.plan === 'deload' && (
+          <span className="tag">Deload</span>
+        )}
       </h2>
 
       {sets.length > 0 && (
@@ -171,6 +189,12 @@ export function SessionLogger({ config, session, suggestion }: Props) {
             )}
           </div>
         </form>
+      )}
+
+      {editing === null && outcome?.message && (
+        <p className="note warning" role="status">
+          {outcome.message}
+        </p>
       )}
 
       {editing === null && (

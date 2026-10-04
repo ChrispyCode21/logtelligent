@@ -12,14 +12,16 @@ export default function App() {
   // Re-runs (and re-renders) whenever the sessions table changes.
   const data = useLiveQuery(async () => {
     const sessions = await db.sessions.orderBy('startedAt').toArray()
+    const history = exerciseHistory(sessions, BENCH.id)
     return {
       active: sessions.find((s) => !s.finishedAt),
-      suggestion: suggestNext(BENCH, exerciseHistory(sessions, BENCH.id), new Date()),
+      history,
+      suggestion: suggestNext(BENCH, history, new Date()),
     }
   })
   if (!data) return null
 
-  const { active, suggestion } = data
+  const { active, history, suggestion } = data
 
   return (
     <main>
@@ -30,7 +32,13 @@ export default function App() {
         heading={active ? 'Today' : 'Next session'}
       />
       {active ? (
-        <SessionLogger key={active.id} config={BENCH} session={active} suggestion={suggestion} />
+        <SessionLogger
+          key={active.id}
+          config={BENCH}
+          session={active}
+          history={history}
+          suggestion={suggestion}
+        />
       ) : (
         <button
           type="button"

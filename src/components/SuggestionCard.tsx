@@ -1,9 +1,17 @@
-import type { ExerciseConfig, Suggestion } from '../engine'
+import type { ExerciseConfig, PlanKind, Suggestion } from '../engine'
 
 const BASIS_NOTES = {
   history: null,
   seed: 'Based on your starting numbers.',
   returningFromBreak: 'Returning from a break: estimate lowered 10%.',
+}
+
+const PLAN_NOTES: Record<PlanKind, string | null> = {
+  normal: null,
+  revert: 'Last session missed the minimums, so the weight is back to your last successful numbers.',
+  retry: 'Retrying the numbers that failed. Hitting them clears the fatigue stack.',
+  deload: 'Deload week: fewer sets and less effort. Missing the minimums here does not count.',
+  resume: 'Deload done: back to your last successful numbers.',
 }
 
 interface Props {
@@ -22,22 +30,30 @@ export function SuggestionCard({ config, suggestion, heading }: Props) {
     )
   }
 
-  const note = suggestion.e1rm && BASIS_NOTES[suggestion.e1rm.basis]
-  const { min, max } = config.repRange
+  const basisNote = suggestion.e1rm && suggestion.plan === 'normal' && BASIS_NOTES[suggestion.e1rm.basis]
+  const planNote = PLAN_NOTES[suggestion.plan]
+  const { min } = config.repRange
+  const max = suggestion.effectiveTop ?? config.repRange.max
 
   return (
     <section className="card">
-      <h2>{heading}</h2>
+      <h2>
+        {heading}
+        {suggestion.plan === 'deload' && <span className="tag">Deload</span>}
+      </h2>
       <p className="suggestion">
         {suggestion.weight} lb × {suggestion.reps}
       </p>
       <p className="muted">
-        {suggestion.sets} sets · {min}–{max} reps · first set @ RPE {suggestion.targetRpe}
+        {suggestion.sets} sets · {min}–{max} reps
+        {suggestion.targetRpe !== undefined && <> · first set @ RPE {suggestion.targetRpe}</>}
       </p>
       {suggestion.e1rm && (
         <p className="muted">Estimated 1RM {suggestion.e1rm.value.toFixed(1)} lb</p>
       )}
-      {note && <p className="note">{note}</p>}
+      {suggestion.stacks > 0 && <p className="muted">Fatigue stacks: {suggestion.stacks} of 2</p>}
+      {planNote && <p className="note">{planNote}</p>}
+      {basisNote && <p className="note">{basisNote}</p>}
     </section>
   )
 }

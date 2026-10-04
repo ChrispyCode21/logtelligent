@@ -159,3 +159,18 @@ button.block {
 .actions .primary {
   flex: 1;
 }
+
+.tag {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--note-bg);
+  font-size: 0.8rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.note.warning {
+  margin-top: 12px;
+  border-left: 4px solid var(--danger);
+}
