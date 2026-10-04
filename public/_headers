@@ -1,0 +1,17 @@
+# HTTP response headers for Cloudflare Pages. `vite preview` applies the "/*" block too
+# (minus HSTS), so a local production build runs under the same policy.
+#
+# The app loads only its own files and makes no network requests, so everything is 'self'.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Strict-Transport-Security: max-age=31536000
+
+# Always check for a new service worker, so updates reach phones promptly.
+/sw.js
+  Cache-Control: no-cache

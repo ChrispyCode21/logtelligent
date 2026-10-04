@@ -23,7 +23,7 @@ Hand-typed workout notes (e.g. in Apple Notes) record what happened but don't te
 - **React + TypeScript**, built with **Vite**.
 - **Local-only data** in the browser's IndexedDB, via **Dexie**. No backend, no accounts.
 - **Offline-capable** (service worker via `vite-plugin-pwa`) — gym signal is unreliable.
-- **Free static hosting** (GitHub Pages or Cloudflare Pages). **Decided:** GitHub Pages, deployed by a GitHub Actions workflow on every push to `main`. Chris creates the repo and pushes.
+- **Free static hosting** (GitHub Pages or Cloudflare Pages). **Decided:** Cloudflare Pages, built from the GitHub repo on every push to `main` (moved from GitHub Pages so the app has its own origin; other `*.github.io` sites on the account shared it). Security headers in `public/_headers`.
 - **JSON export** from day one as the backup mechanism. **Decided:** export downloads `logtelligent-YYYY-MM-DD.json` (program + all sessions, with a format version); **import** restores a backup file, replacing all data after a confirm.
 - **Progression engine is pure TypeScript** — no React, no database access — so it can be unit-tested in isolation (Vitest).
 
