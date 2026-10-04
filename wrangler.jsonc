@@ -1,0 +1,14 @@
+// Cloudflare Workers static-assets config. Workers Builds runs `npx wrangler deploy` for main and
+// `npx wrangler preview` for other branches (PR preview URLs), which needs the `previews` block.
+// Security headers come from public/_headers, which the build copies into dist.
+{
+  "name": "logtelligent",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    // Any unknown path serves the app (index.html), matching the original deployment.
+    "not_found_handling": "single-page-application",
+  },
+  // Previews use this branch's assets; there are no bindings, vars or secrets to override.
+  "previews": {},
+}
