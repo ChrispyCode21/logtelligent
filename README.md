@@ -30,7 +30,7 @@ The PR template carries the checklist for what can't be automated (building to D
 
 ## Hosting (Cloudflare Pages)
 
-The app gets its own origin on Cloudflare Pages, so no other site can reach its stored data. `public/_headers` sets the security headers (a strict Content-Security-Policy, no framing, etc.); `vite preview` applies the same headers locally.
+The app gets its own origin on Cloudflare (Workers static assets, configured in `wrangler.jsonc`), so no other site can reach its stored data. Pushes to `main` deploy to production; other branches get preview URLs. `public/_headers` sets the security headers (a strict Content-Security-Policy, no framing, etc.); `vite preview` applies the same headers locally.
 
 ## One-time repository setup
 
