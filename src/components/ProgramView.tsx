@@ -14,6 +14,7 @@ import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../storage/db'
 import { dayHasHistory, exerciseHasHistory } from '../storage/history'
 import { updateProgram } from '../storage/program'
+import { BackupCard } from './BackupCard'
 import { ExerciseForm } from './ExerciseForm'
 
 interface Editing {
@@ -193,6 +194,8 @@ export function ProgramView({ program, sessions }: Props) {
           Add day
         </button>
       </form>
+
+      <BackupCard />
     </>
   )
 }
