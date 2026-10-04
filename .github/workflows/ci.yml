@@ -33,6 +33,8 @@ jobs:
         run: npm run lint
       - name: Every SPEC §7 example has a test
         run: npm run check:spec
+      - name: CHANGELOG has notes for the package.json version
+        run: npm run check:changelog
       - name: Unit tests
         run: npm test
       - name: Type-check and production build

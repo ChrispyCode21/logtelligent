@@ -1,0 +1,37 @@
+# Tags and publishes a release when a merge to main carries a new version in package.json.
+# Release by PR: bump the version and add its CHANGELOG.md section (CI checks the section exists).
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Tag new version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Create the tag and GitHub Release if this version is new
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          tag="v$version"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "$tag is already released; nothing to do."
+            exit 0
+          fi
+          node scripts/changelog-section.mjs "$version" > release-notes.md
+          gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file release-notes.md

@@ -1,7 +1,7 @@
 {
   "name": "logtelligent",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check:spec": "node scripts/check-spec-coverage.mjs"
+    "check:spec": "node scripts/check-spec-coverage.mjs",
+    "check:changelog": "node scripts/changelog-section.mjs --check"
   },
   "dependencies": {
     "dexie": "^4.4.6",
