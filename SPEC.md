@@ -81,6 +81,8 @@ See §11 for ideas parked until after the MVP.
 5. I log each working set. The next set **pre-fills** from the previous set's values, so a repeat set is one tap (Decided).
 6. When the last set of an exercise is entered, validation runs (see §6.6) and any message is shown.
 7. Finish the session.
+   - **Short sessions (Decided):** finishing with fewer sets than configured asks for confirmation ("Only 2 of 3 sets logged. Finish anyway?"). The session is then treated as normal: validation runs on the logged sets only, and a missing set is not a fail. (Leaving early or feeling unwell shouldn't count against progression.)
+   - **Set count in the UI (Decided):** once the configured number of sets is logged, the form for a new set is hidden; logged sets stay editable until the session is finished.
 
 **Exercise menu (⋯) — Decided:** each exercise in a session has a menu with options such as **replace** and **delete**.
 - Replacing shows a notice along the lines of: *"This will be tracked as volume only and not used for estimates."*
@@ -179,6 +181,8 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
 - Stacks **reset to 0 after a deload** (Decided).
 - **While an exercise has stacks > 0, the stack logic decides next session's numbers, not the e1RM rule** (Decided). In shorthand: `stacks > 0 ? stackState.nextNumbers : e1rmPick`, where `nextNumbers` is either the **revert** (last successful numbers) or the **retry** (the exact numbers that failed) — not always "the previous weight."
 - "Last successful numbers" = the weight and rep target of the most recent session for that exercise that passed the floor rule.
+- **No successful session yet (Decided):** if a session fails before any session has succeeded (e.g. an optimistic seed), the stack is added as usual and the revert goes to **one load step below the failed weight** (accessories: at the bottom of the range). Those numbers then act as the last successful numbers.
+- **Off-plan weight (Decided):** sessions are classified by the weight actually lifted. At or above the weight that failed counts as the **retry** (success clears the stack); below it counts as a revert-level session (success keeps the stack, a fail adds one).
 
 Example:
 | Week | Attempt | Result | Stacks after | Next week |
@@ -196,11 +200,11 @@ Triggered per exercise when that exercise reaches two fatigue stacks. Lasts **on
 
 **Primary lifts:**
 - **Volume:** about half the working sets (rounded up).
-- **Load:** about 10% lighter than the last successful weight, **snapped down** to an available load (§6.2) (Decided). Target effort ~RPE 6. ("Intensity" in lifting means load relative to max, not perceived effort — halving it would be far too light.)
+- **Load:** about 10% lighter than the last successful weight, **snapped down** to an available load (§6.2) (Decided). Target effort ~RPE 6. **Reps (Decided):** the last successful rep target (e.g. 225 × 4 → deload 2 × 4 @ 200). ("Intensity" in lifting means load relative to max, not perceived effort — halving it would be far too light.)
 - **Afterward:** resume at the last successful numbers. *Flagged to revisit once there's real deload data* — whether this is too aggressive or too timid is best answered by a few actual cycles.
 
 **Accessory lifts (Decided):**
-- **Same load, about half the working sets (rounded up)**, for one week — the same set-halving as primary lifts. Edge case: a 1-set exercise stays at 1 set (`ceil(0.5) = 1`).
+- **Same load, about half the working sets (rounded up)**, at the last successful rep target, for one week — the same set-halving as primary lifts. Edge case: a 1-set exercise stays at 1 set (`ceil(0.5) = 1`).
 - **Afterward:** resume at the last successful numbers.
 - Rationale: accessories are mostly volume work; a lighter-touch deload is enough, and keeps this from blocking the rest of the app.
 
@@ -326,6 +330,7 @@ Vertical slices, each usable on its own:
    - **Decided:** the exercise is barbell bench, 3 sets, 3–5 @ RPE 8, with a hard-coded seed of 225 × 5. The seed-entry gate (§5.1, A12 in the UI) arrives with program setup in slice 3.
    - **Decided:** sets can be edited or deleted until the session is finished; finished sessions are read-only for now (see §10 #2).
 2. Floor-rule validation, fatigue stacks, revert message, and deload.
+   - **Decided:** accessory double progression (§6.2, §6.5; C1–C9, A11) is built into the engine in this slice, since stacks and deloads apply to accessories. The UI stays bench-only until slice 3.
 3. Program setup (days, exercises, configuration) and rotation.
 4. History view per exercise.
 5. Exercise ⋯ menu (replace / delete) with the volume-only notice.
@@ -335,7 +340,7 @@ Vertical slices, each usable on its own:
 
 None block slice 1. Ask Chris before building the slice each one affects:
 
-1. **Incomplete sessions:** if fewer working sets are logged than configured (e.g. 2 of 3, then the session ends), does validation run on the logged sets only, or does a missing set count as a fail? (Affects slice 2.)
+1. ~~**Incomplete sessions**~~ — **Decided:** validation runs on the logged sets only; a missing set is not a fail (§5.2).
 2. **Editing / undoing a logged set:** fixing a typo (e.g. 255 → 225) must re-run validation and progression for that exercise. How far back can sets be edited, and do edits to older sessions recompute later state? (Affects slice 2.) *Slice 1 decision: editable until the session is finished, then read-only.*
 3. ~~**Units**~~ — **Decided:** pounds only for v1.
 4. **Dumbbell weight convention:** dumbbell weights are **per hand** (incline press 70 = 70 lb in each hand, not 140 total)? (Assumed; the spec only states the per-side convention for reps.)
@@ -351,3 +356,5 @@ Flagged to revisit after real use (not blocking):
 - Rest timer, possibly with push notifications via a small serverless function.
 - Cloud sync / backup (natural first cloud project).
 - Option to run primary lifts **without e1RMs** (plain double progression, like accessories).
+- **Add a set on the fly** during a session, beyond the configured count (v2/v3).
+- **Session notes on "Finish anyway"**: a note shown next week (e.g. "left early" vs. "the first 2 sets wrecked me, skipped the third"). Possibly later sent to an LLM for evaluation (v2/v3).
