@@ -3,6 +3,9 @@ main {
   margin: 0 auto;
   padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
   display: grid;
+  /* minmax(0, …) lets the column shrink below its widest child's minimum width, so nothing
+     (e.g. an input's default ~20-character width) can push the page wider than the screen. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -213,6 +216,8 @@ select {
   border-radius: 10px;
   background: var(--bg);
   font-size: 1rem;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 fieldset.field {
@@ -484,4 +489,20 @@ fieldset.field legend {
 
 .backup input[type='file'] {
   display: none;
+}
+
+/* Single-column grids get a column that may shrink below its content's minimum width (see main),
+   so inputs and long labels wrap or shrink instead of widening the page on small phones. */
+.day,
+.exercise-form,
+.exercise-list,
+.set-form,
+.set-list,
+.field,
+.seed,
+.add-day,
+.backup,
+.replace-form,
+.history-list {
+  grid-template-columns: minmax(0, 1fr);
 }

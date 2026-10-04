@@ -11,6 +11,8 @@ When the pane emulates a phone viewport (the `mobile` preset, 375×812), the pan
 
 **Workaround:** test at the pane's own (desktop) size. The layout is capped at 480 px, so it renders the same. Check results through the DOM (`javascript_tool` reading `main.innerText` or IndexedDB), not by trusting the click report or a page-text read, which can lag a render behind.
 
+**Checking phone-width layout without clicks:** set a custom viewport (e.g. 375×812 and 320×640), drive the UI with DOM `.click()` calls, and compare `document.documentElement.scrollWidth` to `clientWidth` on each screen. Any difference is sideways scrolling; list the elements whose `getBoundingClientRect().right` exceeds the viewport to find the culprit. This is how the "forms widen the page" bug (an input's default width forcing a grid column wider) was found and verified.
+
 **To revisit:** verify the real phone layout on an actual iPhone once the PWA is deployed (slice 6), since the preview can't be trusted at phone size.
 
 ## On-device checklist (after the first deploy)
