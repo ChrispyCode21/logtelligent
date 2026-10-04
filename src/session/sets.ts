@@ -36,6 +36,8 @@ export function canFinish(logs: ExerciseLog[], tierOf: (exerciseId: string) => T
   const progression = logs.filter((l) => !l.skipped && !l.substitute && l.sets.length > 0)
   return (
     logs.some((l) => loggedSets(l).length > 0) &&
-    progression.every((l) => !rpeRequired(tierOf(l.exerciseId) ?? 'accessory', 0) || l.sets[0].rpe !== undefined)
+    progression.every(
+      (l) => !rpeRequired(tierOf(l.exerciseId) ?? 'accessory', 0) || l.sets[0].rpe !== undefined,
+    )
   )
 }

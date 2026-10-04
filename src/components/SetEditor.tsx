@@ -105,7 +105,12 @@ export function SetEditor({
         <ol className="set-list">
           {sets.map((set, i) => (
             <li key={i}>
-              <button type="button" className="set-row" aria-current={editing === i} onClick={() => startEdit(i)}>
+              <button
+                type="button"
+                className="set-row"
+                aria-current={editing === i}
+                onClick={() => startEdit(i)}
+              >
                 <span>Set {i + 1}</span>
                 <span>{formatSet(set)}</span>
               </button>
@@ -144,7 +149,11 @@ export function SetEditor({
               <button type="button" aria-label="Fewer reps" onClick={() => stepReps(-1)}>
                 −
               </button>
-              <input inputMode="numeric" value={form.reps} onChange={(e) => setForm({ ...form, reps: e.target.value })} />
+              <input
+                inputMode="numeric"
+                value={form.reps}
+                onChange={(e) => setForm({ ...form, reps: e.target.value })}
+              />
               <button type="button" aria-label="More reps" onClick={() => stepReps(1)}>
                 +
               </button>

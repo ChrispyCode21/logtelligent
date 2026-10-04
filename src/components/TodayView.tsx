@@ -43,8 +43,8 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
       <section className="card">
         <h2>Starting numbers needed</h2>
         <p>
-          {unseeded.map((e) => e.name).join(', ')} {unseeded.length === 1 ? 'needs' : 'need'}{' '}
-          starting numbers before you can start a session.
+          {unseeded.map((e) => e.name).join(', ')} {unseeded.length === 1 ? 'needs' : 'need'} starting numbers
+          before you can start a session.
         </p>
         <button type="button" className="primary block" onClick={onEditProgram}>
           Finish setup
@@ -72,7 +72,9 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
     <>
       <div className="day-header">
         <h2 className="page-title">{day.name}</h2>
-        <p className="muted">{outOfRotation ? `Out of rotation (next is ${next.name})` : 'Next in rotation'}</p>
+        <p className="muted">
+          {outOfRotation ? `Out of rotation (next is ${next.name})` : 'Next in rotation'}
+        </p>
       </div>
 
       {day.exercises.map((exercise) => (
@@ -90,7 +92,10 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
         onClick={() => {
           // The override applies to this session only; afterward the rotation decides.
           setChosenDayId(undefined)
-          void startSession(day.id, day.exercises.map((e) => e.id))
+          void startSession(
+            day.id,
+            day.exercises.map((e) => e.id),
+          )
         }}
       >
         Start {day.name}

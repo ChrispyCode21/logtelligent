@@ -74,8 +74,7 @@ export interface Numbers {
  * - deload: one lighter week. resume: last successful numbers after a deload.
  */
 export type Plan =
-  | { kind: 'normal'; numbers?: Numbers }
-  | { kind: 'revert' | 'retry' | 'deload' | 'resume'; numbers: Numbers }
+  { kind: 'normal'; numbers?: Numbers } | { kind: 'revert' | 'retry' | 'deload' | 'resume'; numbers: Numbers }
 
 export type PlanKind = Plan['kind']
 

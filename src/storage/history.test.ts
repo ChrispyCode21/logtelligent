@@ -64,6 +64,8 @@ describe('exerciseHistory with the exercise menu (SPEC §5.2)', () => {
   })
 
   it('leaves skipped exercises out', () => {
-    expect(exerciseHistory([finished([{ exerciseId: 'bench', sets: [], skipped: true }])], 'bench')).toEqual([])
+    expect(exerciseHistory([finished([{ exerciseId: 'bench', sets: [], skipped: true }])], 'bench')).toEqual(
+      [],
+    )
   })
 })

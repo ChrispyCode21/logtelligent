@@ -10,7 +10,8 @@ const HEIGHT = 160
 const PAD = { top: 12, right: 12, bottom: 22, left: 40 }
 const Y_STEP = 5
 
-const formatDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 
 interface Props {
   /** Oldest first. */
@@ -77,7 +78,13 @@ export function E1rmChart({ points }: Props) {
         </text>
 
         {active !== null && (
-          <line className="crosshair" x1={x(times[active])} x2={x(times[active])} y1={PAD.top} y2={HEIGHT - PAD.bottom} />
+          <line
+            className="crosshair"
+            x1={x(times[active])}
+            x2={x(times[active])}
+            y1={PAD.top}
+            y2={HEIGHT - PAD.bottom}
+          />
         )}
         <path className="series" d={path} />
         {points.map((p, i) => (

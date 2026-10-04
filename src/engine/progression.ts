@@ -29,9 +29,7 @@ export function failsFloor(config: ExerciseConfig, sets: LoggedSet[]): boolean {
 
 export function initialState(config: ExerciseConfig): ProgressionState {
   const numbers =
-    config.tier === 'accessory' && config.seed
-      ? startingNumbers(config, config.seed.weight)
-      : undefined
+    config.tier === 'accessory' && config.seed ? startingNumbers(config, config.seed.weight) : undefined
   return { stacks: 0, next: { kind: 'normal', numbers } }
 }
 
@@ -40,12 +38,7 @@ function defaultReps(config: ExerciseConfig): number {
   return config.tier === 'primary' ? targetReps(config.repRange) : config.repRange.min
 }
 
-function normalAfter(
-  config: ExerciseConfig,
-  loads: number[],
-  done: Numbers,
-  sets: LoggedSet[],
-): Plan {
+function normalAfter(config: ExerciseConfig, loads: number[], done: Numbers, sets: LoggedSet[]): Plan {
   if (config.tier === 'primary') return { kind: 'normal' }
   return { kind: 'normal', numbers: progressAccessory(config, loads, done, sets) }
 }

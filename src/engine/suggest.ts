@@ -1,13 +1,7 @@
 import { repsToFailure, runningE1rm } from './e1rm'
 import { availableLoads, snapDown } from './loads'
 import { deriveState, targetReps } from './progression'
-import type {
-  ExerciseConfig,
-  ExerciseSession,
-  ProgressionState,
-  RunningE1rm,
-  Suggestion,
-} from './types'
+import type { ExerciseConfig, ExerciseSession, ProgressionState, RunningE1rm, Suggestion } from './types'
 
 const DELOAD_LOAD_FACTOR = 0.9
 const DELOAD_RPE = 6
@@ -55,11 +49,7 @@ function fromPlan(
 }
 
 /** Next session's suggestion for an exercise, from its finished history. */
-export function suggestNext(
-  config: ExerciseConfig,
-  history: ExerciseSession[],
-  asOf: Date,
-): Suggestion {
+export function suggestNext(config: ExerciseConfig, history: ExerciseSession[], asOf: Date): Suggestion {
   const loads = availableLoads(config)
   const { state, sessions } = deriveState(config, history)
 

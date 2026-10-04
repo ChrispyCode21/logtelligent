@@ -203,7 +203,9 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
         targetSets={targetSets}
         first={suggestion.kind === 'suggestion' ? suggestion : undefined}
         rpeRequiredAt={(i) => rpeRequired(config.tier, i)}
-        step={(w, dir) => (loads.length === 0 ? undefined : dir === 1 ? stepUp(w, loads) : stepDown(w, loads))}
+        step={(w, dir) =>
+          loads.length === 0 ? undefined : dir === 1 ? stepUp(w, loads) : stepDown(w, loads)
+        }
         // Bodyweight loads are added weight, so 0 is valid there (SPEC §6.1).
         minWeight={config.equipment === 'bodyweight' ? 0 : Number.MIN_VALUE}
         weightLabel={

@@ -56,9 +56,7 @@ export function SuggestionCard({ config, suggestion, heading }: Props) {
         {config.unilateral && ' per side'}
         {suggestion.targetRpe !== undefined && <> · first set @ RPE {suggestion.targetRpe}</>}
       </p>
-      {suggestion.e1rm && (
-        <p className="muted">Estimated 1RM {suggestion.e1rm.value.toFixed(1)} lb</p>
-      )}
+      {suggestion.e1rm && <p className="muted">Estimated 1RM {suggestion.e1rm.value.toFixed(1)} lb</p>}
       {suggestion.stacks > 0 && <p className="muted">Fatigue stacks: {suggestion.stacks} of 2</p>}
       {planNote && <p className="note">{planNote}</p>}
       {basisNote && <p className="note">{basisNote}</p>}

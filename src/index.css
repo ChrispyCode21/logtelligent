@@ -9,7 +9,10 @@
   --danger: #c4372d;
   --note-bg: #fff4d6;
 
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   color: var(--text);
   background: var(--bg);
   color-scheme: light dark;

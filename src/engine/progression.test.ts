@@ -163,8 +163,16 @@ describe('7.C Accessory double progression', () => {
 
   it('C4-C6 through history: lateral raise extends 20 -> 22 -> 24, then steps to 17.5 x 15', () => {
     const history = weekly(sets(15, [20, 20, 18]), sets(15, [22, 22, 19]), sets(15, [24, 24, 22]))
-    expect(suggestion(lateralRaise, history.slice(0, 1))).toMatchObject({ weight: 15, reps: 22, effectiveTop: 22 })
-    expect(suggestion(lateralRaise, history.slice(0, 2))).toMatchObject({ weight: 15, reps: 24, effectiveTop: 24 })
+    expect(suggestion(lateralRaise, history.slice(0, 1))).toMatchObject({
+      weight: 15,
+      reps: 22,
+      effectiveTop: 22,
+    })
+    expect(suggestion(lateralRaise, history.slice(0, 2))).toMatchObject({
+      weight: 15,
+      reps: 24,
+      effectiveTop: 24,
+    })
     expect(suggestion(lateralRaise, history)).toMatchObject({ weight: 17.5, reps: 15, effectiveTop: 20 })
   })
 })

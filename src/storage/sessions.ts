@@ -10,10 +10,13 @@ export async function startSession(dayId: string, exerciseIds: string[]) {
 }
 
 async function updateLog(sessionId: number, exerciseId: string, edit: (log: ExerciseLog) => void) {
-  await db.sessions.where('id').equals(sessionId).modify((session) => {
-    const log = session.exercises.find((e) => e.exerciseId === exerciseId)
-    if (log) edit(log)
-  })
+  await db.sessions
+    .where('id')
+    .equals(sessionId)
+    .modify((session) => {
+      const log = session.exercises.find((e) => e.exerciseId === exerciseId)
+      if (log) edit(log)
+    })
 }
 
 export function saveSets(sessionId: number, exerciseId: string, sets: LoggedSet[]) {

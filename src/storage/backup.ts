@@ -109,7 +109,9 @@ function session(v: unknown, path: string): Session {
     dayId: optional(s.dayId, (d) => text(d, `${path}.dayId`)),
     startedAt: date(s.startedAt, `${path}.startedAt`),
     finishedAt: optional(s.finishedAt, (d) => date(d, `${path}.finishedAt`)),
-    exercises: list(s.exercises, `${path}.exercises`, 100).map((e, i) => exerciseLog(e, `${path}.exercises[${i}]`)),
+    exercises: list(s.exercises, `${path}.exercises`, 100).map((e, i) =>
+      exerciseLog(e, `${path}.exercises[${i}]`),
+    ),
     warmupDismissed: optional(s.warmupDismissed, (b) => bool(b, `${path}.warmupDismissed`)),
   })
 }

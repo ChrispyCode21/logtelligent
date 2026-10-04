@@ -81,7 +81,8 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
     errors.push('Rep range needs whole numbers, with the top at least the bottom.')
   }
   if (!isWholeNumber(form.sets, 1)) errors.push('Sets must be at least 1.')
-  if (loads?.some((l) => !Number.isFinite(l) || l < 0)) errors.push('Loads must be numbers, e.g. 99, 110, 121.')
+  if (loads?.some((l) => !Number.isFinite(l) || l < 0))
+    errors.push('Loads must be numbers, e.g. 99, 110, 121.')
   if (needsLoads && !loads) errors.push('Enter the stack weights for cable and machine exercises.')
   if (hasSeed) {
     const weight = Number(form.seedWeight)
@@ -140,7 +141,12 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
         <legend>Tier</legend>
         <div className="segmented">
           {(['primary', 'accessory'] as const).map((tier) => (
-            <button key={tier} type="button" aria-pressed={form.tier === tier} onClick={() => changeTier(tier)}>
+            <button
+              key={tier}
+              type="button"
+              aria-pressed={form.tier === tier}
+              onClick={() => changeTier(tier)}
+            >
               {tier === 'primary' ? 'Primary' : 'Accessory'}
             </button>
           ))}
@@ -191,11 +197,19 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
           {form.equipment === 'bodyweight' ? 'Added weights' : 'Available weights'} (lb)
           {!needsLoads && <span className="muted"> · optional, for your gym</span>}
         </span>
-        <input value={form.loads} placeholder={loadsPlaceholder} onChange={(e) => set('loads', e.target.value)} />
+        <input
+          value={form.loads}
+          placeholder={loadsPlaceholder}
+          onChange={(e) => set('loads', e.target.value)}
+        />
       </label>
 
       <label className="checkbox">
-        <input type="checkbox" checked={form.unilateral} onChange={(e) => set('unilateral', e.target.checked)} />
+        <input
+          type="checkbox"
+          checked={form.unilateral}
+          onChange={(e) => set('unilateral', e.target.checked)}
+        />
         <span>One side at a time (reps are per side)</span>
       </label>
 
@@ -217,7 +231,11 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
               </label>
               <label className="field">
                 <span>Reps</span>
-                <input inputMode="numeric" value={form.seedReps} onChange={(e) => set('seedReps', e.target.value)} />
+                <input
+                  inputMode="numeric"
+                  value={form.seedReps}
+                  onChange={(e) => set('seedReps', e.target.value)}
+                />
               </label>
             </div>
           </>

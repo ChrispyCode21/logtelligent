@@ -47,11 +47,7 @@ describe('7.A Estimated 1RM', () => {
   })
 
   it('A3: last 3 sessions within 4 weeks average to a running e1RM of 271.1', () => {
-    const history = [
-      session(14, set(225, 4, 8)),
-      session(7, set(225, 5, 8)),
-      session(1, set(230, 4, 8)),
-    ]
+    const history = [session(14, set(225, 4, 8)), session(7, set(225, 5, 8)), session(1, set(230, 4, 8))]
     const running = runningE1rm(history, undefined, asOf)
     expectLb(running?.value, 271.1)
     expect(running?.basis).toBe('history')
@@ -126,11 +122,7 @@ describe('7.B Primary-lift suggestions', () => {
     expectLb(predictedReps(271.1, 230, 8), 3.8)
 
     // Same running e1RM as A3, through the full engine.
-    const history = [
-      session(14, set(225, 4, 8)),
-      session(7, set(225, 5, 8)),
-      session(1, set(230, 4, 8)),
-    ]
+    const history = [session(14, set(225, 4, 8)), session(7, set(225, 5, 8)), session(1, set(230, 4, 8))]
     const next = suggestion(bench(), history)
     expect(next.weight).toBe(225)
     expect(next.reps).toBe(4)

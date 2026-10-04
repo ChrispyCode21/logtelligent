@@ -78,7 +78,11 @@ describe('JSON backup (SPEC §2)', () => {
       dayId: 'upper-a',
       startedAt: '2026-10-02T10:00:00Z',
       exercises: [
-        { exerciseId: 'bench', sets: [], substitute: { name: 'Machine press', sets: [{ weight: 150, reps: 10 }] } },
+        {
+          exerciseId: 'bench',
+          sets: [],
+          substitute: { name: 'Machine press', sets: [{ weight: 150, reps: 10 }] },
+        },
         { exerciseId: 'raise', sets: [], skipped: true },
       ],
       warmupDismissed: true,
