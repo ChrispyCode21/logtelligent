@@ -21,14 +21,21 @@ export function rpeRequired(tier: Tier, index: number): boolean {
   return tier === 'primary' && index === 0
 }
 
+/** Sets that count as done for this log: the substitute's if replaced, none if skipped. */
+export function loggedSets(log: ExerciseLog): LoggedSet[] {
+  if (log.skipped) return []
+  return log.substitute ? log.substitute.sets : log.sets
+}
+
 /**
  * A session can finish once something is logged and every primary lift that was
- * logged has an RPE on its first set. Unlogged exercises are simply not logged.
+ * logged (and not replaced) has an RPE on its first set. Unlogged exercises are
+ * simply not logged.
  */
 export function canFinish(logs: ExerciseLog[], tierOf: (exerciseId: string) => Tier | undefined): boolean {
-  const logged = logs.filter((l) => l.sets.length > 0)
+  const progression = logs.filter((l) => !l.skipped && !l.substitute && l.sets.length > 0)
   return (
-    logged.length > 0 &&
-    logged.every((l) => !rpeRequired(tierOf(l.exerciseId) ?? 'accessory', 0) || l.sets[0].rpe !== undefined)
+    logs.some((l) => loggedSets(l).length > 0) &&
+    progression.every((l) => !rpeRequired(tierOf(l.exerciseId) ?? 'accessory', 0) || l.sets[0].rpe !== undefined)
   )
 }

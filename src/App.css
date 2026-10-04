@@ -414,3 +414,42 @@ fieldset.field legend {
 .history-head .muted:last-child {
   margin-left: auto;
 }
+
+/* Slice 5: exercise menu */
+
+.logger-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.menu-button {
+  min-width: 44px;
+  padding: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.exercise-menu {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.exercise-menu .actions {
+  margin-top: 0;
+}
+
+.replace-form {
+  display: grid;
+  gap: 8px;
+}
+
+.card.skipped h2 {
+  margin-bottom: 0;
+}
+
+.card.skipped {
+  opacity: 0.75;
+}

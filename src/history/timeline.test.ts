@@ -44,3 +44,15 @@ describe('exerciseTimeline (SPEC §5.3)', () => {
     expect(exerciseTimeline(curl, [{ date: day(1), sets: sets(30, [12, 10]) }])[0].e1rm).toBeUndefined()
   })
 })
+
+describe('exerciseTimeline with a replaced session (SPEC §5.2)', () => {
+  it('shows the substitute with no e1RM, and the replaced session does not count for progression', () => {
+    const substitute = { name: 'Machine press', sets: [{ weight: 150, reps: 10 }] }
+    const timeline = exerciseTimeline(bench, [
+      { date: day(1), sets: sets(225, [5, 4, 3]) },
+      { date: day(8), sets: sets(235, [4]), replaced: true, substitute },
+    ])
+    expect(timeline[0]).toMatchObject({ date: day(8), substitute, e1rm: undefined })
+    expect(timeline[1].e1rm).toBeCloseTo(273.6, 1)
+  })
+})

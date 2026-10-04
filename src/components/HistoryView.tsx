@@ -82,10 +82,23 @@ export function HistoryView({ program, sessions }: Props) {
                   {entry.isDeload && <span className="tag">Deload</span>}
                   {entry.e1rm !== undefined && <span className="muted">e1RM {entry.e1rm.toFixed(1)} lb</span>}
                 </div>
-                <p>
-                  {entry.sets.map(formatSet).join(' · ')}
-                  {exercise.unilateral && <span className="muted"> (per side)</span>}
-                </p>
+                {entry.substitute ? (
+                  <>
+                    <p>
+                      <span className="muted">Replaced with </span>
+                      {entry.substitute.name}
+                      {entry.substitute.sets.length > 0 && `: ${entry.substitute.sets.map(formatSet).join(' · ')}`}
+                    </p>
+                    {entry.sets.length > 0 && (
+                      <p className="muted">Before replacing: {entry.sets.map(formatSet).join(' · ')}</p>
+                    )}
+                  </>
+                ) : (
+                  <p>
+                    {entry.sets.map(formatSet).join(' · ')}
+                    {exercise.unilateral && <span className="muted"> (per side)</span>}
+                  </p>
+                )}
               </li>
             ))}
           </ol>

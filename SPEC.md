@@ -87,6 +87,10 @@ See §11 for ideas parked until after the MVP.
 **Exercise menu (⋯) — Decided:** each exercise in a session has a menu with options such as **replace** and **delete**.
 - Replacing shows a notice along the lines of: *"This will be tracked as volume only and not used for estimates."*
 - A substitute's sets are kept out of the original exercise's progression data.
+- **Substitute (Decided):** a free-text name; its sets are logged as weight × reps (RPE optional), with no suggestion, floor rule or stacks. Any sets already logged for the original that day stay recorded, but the whole session is kept out of the original's progression (A6).
+- **Delete (Decided):** skips the exercise **for today only**, discarding any sets logged for it today. The program is unchanged, and progression treats it as not done (no fail, no stack).
+- **Undo (Decided):** while the session is open, a replaced exercise can be un-replaced (discarding the substitute's sets) and a skipped one restored. After Finish, both are read-only.
+- **History (Decided):** a replaced session shows under the original exercise as "Replaced with …" with the substitute's sets, and no e1RM or chart point.
 
 ### 5.3 Review history
 1. Pick an exercise.
@@ -372,5 +376,6 @@ Flagged to revisit after real use (not blocking):
 - Rest timer, possibly with push notifications via a small serverless function.
 - Cloud sync / backup (natural first cloud project).
 - Option to run primary lifts **without e1RMs** (plain double progression, like accessories).
+- **Muscle-group-aware substitutes** (v2/v3): when replacing an exercise, offer exercises tagged with the same primary muscle and tier (e.g. replacing Bench suggests other pec-primary lifts). Needs a muscle-group store: exercise ↔ muscle group is **many-to-many** (a join table with a primary/secondary role).
 - **Add a set on the fly** during a session, beyond the configured count (v2/v3).
 - **Session notes on "Finish anyway"**: a note shown next week (e.g. "left early" vs. "the first 2 sets wrecked me, skipped the third"). Possibly later sent to an LLM for evaluation (v2/v3).

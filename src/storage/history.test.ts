@@ -47,3 +47,23 @@ describe('lastLoggedDayId', () => {
     expect(lastLoggedDayId([])).toBeUndefined()
   })
 })
+
+describe('exerciseHistory with the exercise menu (SPEC §5.2)', () => {
+  const finished = (exercises: Session['exercises']): Session => ({
+    id: 1,
+    startedAt: '2026-10-01T10:00:00Z',
+    finishedAt: '2026-10-01T11:00:00Z',
+    exercises,
+  })
+
+  it('flags replaced sessions (so the engine skips them, A6) and keeps the substitute', () => {
+    const substitute = { name: 'Machine press', sets: [{ weight: 150, reps: 10 }] }
+    expect(exerciseHistory([finished([{ exerciseId: 'bench', sets: [], substitute }])], 'bench')).toEqual([
+      { date: '2026-10-01T10:00:00Z', sets: [], replaced: true, substitute },
+    ])
+  })
+
+  it('leaves skipped exercises out', () => {
+    expect(exerciseHistory([finished([{ exerciseId: 'bench', sets: [], skipped: true }])], 'bench')).toEqual([])
+  })
+})

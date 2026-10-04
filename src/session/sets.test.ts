@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addSet, canFinish, removeSet, updateSet } from './sets'
+import { addSet, canFinish, loggedSets, removeSet, updateSet } from './sets'
 
 describe('set editing (one working weight, SPEC §6.3)', () => {
   it('adding a set at a new weight moves every set to that weight', () => {
@@ -42,5 +42,19 @@ describe('set editing (one working weight, SPEC §6.3)', () => {
       ]
       expect(canFinish(logs, tierOf)).toBe(true)
     })
+  })
+})
+
+describe('finishing with the exercise menu (SPEC §5.2)', () => {
+  const tierOf = (id: string) => (id === 'bench' ? 'primary' : 'accessory')
+
+  it('a replaced primary counts its substitute sets and needs no RPE', () => {
+    const logs = [{ exerciseId: 'bench', sets: [], substitute: { name: 'Machine press', sets: [{ weight: 150, reps: 10 }] } }]
+    expect(canFinish(logs, tierOf)).toBe(true)
+  })
+
+  it('a skipped exercise counts for nothing', () => {
+    expect(canFinish([{ exerciseId: 'curl', sets: [{ weight: 30, reps: 12 }], skipped: true }], tierOf)).toBe(false)
+    expect(loggedSets({ exerciseId: 'curl', sets: [{ weight: 30, reps: 12 }], skipped: true })).toEqual([])
   })
 })

@@ -2,9 +2,19 @@ import Dexie, { type EntityTable } from 'dexie'
 import type { LoggedSet } from '../engine'
 import type { Program } from '../program/types'
 
+/** An ad-hoc replacement for a session's exercise, tracked as volume only (SPEC §5.2). */
+export interface Substitute {
+  name: string
+  sets: LoggedSet[]
+}
+
 export interface ExerciseLog {
   exerciseId: string
+  /** Sets of the original exercise. Kept, but out of progression, if it was replaced. */
   sets: LoggedSet[]
+  substitute?: Substitute
+  /** Deleted from this session only (SPEC §5.2). */
+  skipped?: boolean
 }
 
 /** A training session. Unfinished sessions are still being logged and can be edited. */

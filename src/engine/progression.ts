@@ -123,12 +123,13 @@ export function step(
  * Replay an exercise history, oldest first, to get its current state.
  * Also returns the history annotated with which sessions were deloads.
  * Replaced sessions (a substitute was logged) are skipped (SPEC §5.2).
+ * Any extra fields on the sessions are passed through untouched.
  */
-export function deriveState(config: ExerciseConfig, history: ExerciseSession[]) {
+export function deriveState<S extends ExerciseSession>(config: ExerciseConfig, history: S[]) {
   const loads = availableLoads(config)
   const sorted = [...history].sort((a, b) => Date.parse(a.date) - Date.parse(b.date))
   let state = initialState(config)
-  const sessions: ExerciseSession[] = []
+  const sessions: S[] = []
 
   for (const session of sorted) {
     if (session.replaced || session.sets.length === 0) {

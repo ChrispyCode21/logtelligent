@@ -1,10 +1,10 @@
 import { suggestNext } from '../engine'
 import { findExercise } from '../program/program'
 import type { Program } from '../program/types'
-import { canFinish } from '../session/sets'
+import { canFinish, loggedSets } from '../session/sets'
 import type { Session } from '../storage/db'
 import { exerciseHistory } from '../storage/history'
-import { discardSession, finishSession, saveSets } from '../storage/sessions'
+import { discardSession, finishSession } from '../storage/sessions'
 import { ExerciseLogger } from './ExerciseLogger'
 
 interface Props {
@@ -23,9 +23,12 @@ export function SessionView({ session, program, sessions, asOf }: Props) {
     return [{ log, config, history, suggestion: suggestNext(config, history, asOf) }]
   })
 
-  const logged = exercises.reduce((n, e) => n + e.log.sets.length, 0)
-  const target = exercises.reduce(
-    (n, e) => n + (e.suggestion.kind === 'suggestion' ? e.suggestion.sets : e.config.sets),
+  // Skipped exercises don't count toward the total; substitutes count their own sets.
+  const counted = exercises.filter((e) => !e.log.skipped)
+  const logged = counted.reduce((n, e) => n + loggedSets(e.log).length, 0)
+  const target = counted.reduce(
+    (n, e) =>
+      n + (e.suggestion.kind === 'suggestion' && !e.log.substitute ? e.suggestion.sets : e.config.sets),
     0,
   )
   const finishable = canFinish(session.exercises, (id) => findExercise(program, id)?.tier)
@@ -48,11 +51,11 @@ export function SessionView({ session, program, sessions, asOf }: Props) {
       {exercises.map(({ log, config, history, suggestion }) => (
         <ExerciseLogger
           key={config.id}
+          sessionId={session.id}
           config={config}
-          sets={log.sets}
+          log={log}
           history={history}
           suggestion={suggestion}
-          onSave={(sets) => saveSets(session.id, config.id, sets)}
         />
       ))}
       <div className="actions">
