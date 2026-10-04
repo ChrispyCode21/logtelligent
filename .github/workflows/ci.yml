@@ -1,0 +1,39 @@
+# Quality gate for every PR and every push to main. Make "Checks" a required status check on main.
+# Actions are pinned to full commit SHAs (version in the comment); Dependabot keeps them current.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Formatting (Prettier)
+        run: npm run format:check
+      - name: Lint (oxlint, incl. engine purity)
+        run: npm run lint
+      - name: Every SPEC §7 example has a test
+        run: npm run check:spec
+      - name: Unit tests
+        run: npm test
+      - name: Type-check and production build
+        run: npm run build
