@@ -39,31 +39,23 @@ Semantic versioning. To release, open a PR that bumps `version` in `package.json
 
 The app gets its own origin on Cloudflare (Workers static assets, configured in `wrangler.jsonc`), so no other site can reach its stored data. Pushes to `main` deploy to production; other branches get preview URLs. `public/_headers` sets the security headers (a strict Content-Security-Policy, no framing, etc.); `vite preview` applies the same headers locally.
 
-## One-time repository setup
+## Setting up a new deployment
 
-Commands are PowerShell-safe (the single quotes stop PowerShell reading `{owner}` as a script block).
+Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as a script block).
 
-1. **Turn on 2FA** for both GitHub and Cloudflare.
-2. **Cloudflare Pages:** dashboard → Workers & Pages → Create → Pages → Import an existing Git repository → `logtelligent`.
-   - Build command `npm run build`, build output directory `dist`, environment variable `NODE_VERSION` = `22`.
-   - Every push to `main` deploys to production; every PR gets its own preview URL.
-3. **Move your data:** on the old site, Program → Backup → Export data; on the new `*.pages.dev` site, Restore from file…. Remove the old home-screen icon and add the new one.
-4. **Turn off GitHub Pages** (the old copy):
-   ```powershell
-   gh api -X DELETE 'repos/{owner}/logtelligent/pages'
-   ```
-5. **Security features:** Dependabot alerts, secret scanning and push protection:
+1. Turn on 2FA for the GitHub and Cloudflare accounts.
+2. Cloudflare: Workers & Pages → Create → import the GitHub repo. `wrangler.jsonc` holds the build settings; set the environment variable `NODE_VERSION` = `22`. Turn on the production (and, optionally, preview) URL.
+3. GitHub security features (Dependabot alerts, secret scanning, push protection):
    ```powershell
    gh api -X PUT 'repos/{owner}/logtelligent/vulnerability-alerts'
    ```
    ```powershell
    gh api -X PATCH 'repos/{owner}/logtelligent' -f 'security_and_analysis[secret_scanning][status]=enabled' -f 'security_and_analysis[secret_scanning_push_protection][status]=enabled'
    ```
-6. **Protect `main`** (after the first CI and Security runs, so the checks exist): changes go through PRs, and all checks must pass.
+4. Protect `main` once CI and Security have run at least once:
    ```powershell
    gh api -X POST 'repos/{owner}/logtelligent/rulesets' --input .github/rulesets/main.json
    ```
-   Approvals are set to 0 because GitHub won't let you approve your own PR; raise `required_approving_review_count` when collaborators join.
 
 ## Install on iPhone
 

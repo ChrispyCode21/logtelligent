@@ -1,7 +1,6 @@
 # Lifting Log — Design Spec
 
 > Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done; v1.1.0 scoping starts from §11.
-> Owner: Chris
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -262,7 +261,7 @@ Shared assumptions unless stated: barbell loads in 5 lb steps; dumbbell rack 10,
 |---|---|---|
 | B1 | Running e1RM 271.1; intent 3–5 @ RPE 8 | Target reps 4. At 225, predicted 4.6 ✓; at 230, predicted 3.8 ✗ → **suggest 225 × 4** |
 | B2 | Last first set 225×12 @ RPE 8 (far above 3–5 range); only session | e1RM 325.0 → **suggest 270 × 4** (predicted 4.6). The overshoot is corrected by the e1RM, not the rep ceiling |
-| B3 | Last first set 225×7 @ RPE 7; intent 5–7 @ RPE 8; only session | e1RM 294.4; target 6 → **suggest 235 × 6** (predicted 6.2). This is the original "Chris hit the top of the range with RPE to spare, bump him up" case |
+| B3 | Last first set 225×7 @ RPE 7; intent 5–7 @ RPE 8; only session | e1RM 294.4; target 6 → **suggest 235 × 6** (predicted 6.2). This is the original "hit the top of the range with RPE to spare, so bump the weight" case |
 | B4 | Primary exercise with stacks > 0 | Suggestion comes from stack state (see 7.D), **not** from B-rule |
 
 ### 7.C Accessory double progression (§6.2, §6.5)
@@ -361,7 +360,7 @@ Vertical slices, each usable on its own. All six are built, tested and live.
 
 ## 10. Open questions (summary)
 
-Ask Chris before building anything each one affects:
+Ask the project owner before building anything each one affects:
 
 1. ~~**Incomplete sessions**~~ — **Decided:** validation runs on the logged sets only; a missing set is not a fail (§5.2).
 2. **Editing / undoing a logged set:** fixing a typo (e.g. 255 → 225) must re-run validation and progression for that exercise. How far back can sets be edited, and do edits to older sessions recompute later state? *Current behavior: editable until the session is finished, then read-only.* Still open: editing finished sessions (the engine already replays history, so recomputing later state is cheap).
@@ -375,9 +374,9 @@ Flagged to revisit after real use (not blocking):
 
 ## 11. Post-MVP ideas (parked)
 
-### v1.1.0 candidates from first-user feedback (2026-10-04)
+### v1.1.0 candidates from friends' feedback
 
-From Shannon, a first friend user. Real complaints, not nitpicks; to be scoped for v1.1.0:
+Feedback from friends trying v1.0.0. Real complaints, not nitpicks; to be scoped for v1.1.0:
 
 - **RPE friction:** "oh, this is that annoying RPE stuff, huh?" RPE is required on every primary lift's first set and drives the e1RM. Options to weigh: an RPE-optional mode, a simpler effort scale (e.g. easy / solid / hard / max mapped to RPE), or running primaries without e1RMs (already parked below).
 - **Ready-made programs:** "So, I have to create a program? I can't just pick one?" Program templates to pick from (e.g. a 4-day upper/lower), editable after picking.
