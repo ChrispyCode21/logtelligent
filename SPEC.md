@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0 — ready to build** (2026-10-04)
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done; v1.1.0 scoping starts from §11.
 > Owner: Chris
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
@@ -29,15 +29,15 @@ Hand-typed workout notes (e.g. in Apple Notes) record what happened but don't te
 
 ## 3. Definition of done (MVP)
 
-The MVP is done when I can, for a full training cycle, using only the app:
+The MVP is done when I can, for a full training cycle, using only the app (features below are built and verified in v1.0.0; **the full-training-cycle use itself is still to be done**):
 
-- [ ] Define my program: training days in rotation, exercises per day, and per-exercise settings (tier, rep range / intent, set count, equipment type, progression profile).
-- [ ] Open the app and see **today's session** (next day in rotation) with a **suggested weight and rep target** for each exercise.
-- [ ] Log every working set (weight, reps, and RPE where applicable) quickly on my phone.
-- [ ] See the result of the session's validation (e.g. "Failed to hit minimums, next week's weight will be lowered") and any deload notice.
-- [ ] View history per exercise.
-- [ ] Export all data to JSON.
-- [ ] All progression rules in §6 are covered by passing unit tests built from the worked examples in §7.
+- [x] Define my program: training days in rotation, exercises per day, and per-exercise settings (tier, rep range / intent, set count, equipment type, progression profile).
+- [x] Open the app and see **today's session** (next day in rotation) with a **suggested weight and rep target** for each exercise.
+- [x] Log every working set (weight, reps, and RPE where applicable) quickly on my phone.
+- [x] See the result of the session's validation (e.g. "Failed to hit minimums, next week's weight will be lowered") and any deload notice.
+- [x] View history per exercise.
+- [x] Export all data to JSON.
+- [x] All progression rules in §6 are covered by passing unit tests built from the worked examples in §7.
 
 ## 4. Non-goals (MVP)
 
@@ -71,6 +71,8 @@ See §11 for ideas parked until after the MVP.
 **Rotation (Decided):**
 - The rotation contains **training days only**; rest days are not slots.
 - The next day is the one after the last day logged, wrapping from the final day back to the first (`(lastIndex + 1) % days.length`). After Lower B comes Upper A.
+- **Days with no exercises are skipped** by the rotation and the Today screen (Decided, slice 3).
+- **If the last day logged has since been archived**, the rotation starts again at the first day (Decided, slice 3).
 - One full pass through the rotation = one **week** (cycle). "Last week's numbers" means the previous pass.
 
 ### 5.2 Run a session (the main flow)
@@ -343,9 +345,9 @@ The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]
 - Validation entry point, roughly:
   `validateExercise(config: ExerciseConfig, sets: LoggedSet[], state: ProgressionState) => { result: ValidationResult, nextState: ProgressionState }`
 
-## 9. Build plan (Proposed)
+## 9. Build plan (Done — v1.0.0)
 
-Vertical slices, each usable on its own:
+Vertical slices, each usable on its own. All six are built, tested and live.
 
 1. One hard-coded primary exercise → log sets → see next session's suggestion. Engine + tests first.
    - **Decided:** the exercise is barbell bench, 3 sets, 3–5 @ RPE 8, with a hard-coded seed of 225 × 5. The seed-entry gate (§5.1, A12 in the UI) arrives with program setup in slice 3.
@@ -359,19 +361,29 @@ Vertical slices, each usable on its own:
 
 ## 10. Open questions (summary)
 
-None block slice 1. Ask Chris before building the slice each one affects:
+Ask Chris before building anything each one affects:
 
 1. ~~**Incomplete sessions**~~ — **Decided:** validation runs on the logged sets only; a missing set is not a fail (§5.2).
-2. **Editing / undoing a logged set:** fixing a typo (e.g. 255 → 225) must re-run validation and progression for that exercise. How far back can sets be edited, and do edits to older sessions recompute later state? (Affects slice 2.) *Slice 1 decision: editable until the session is finished, then read-only.*
+2. **Editing / undoing a logged set:** fixing a typo (e.g. 255 → 225) must re-run validation and progression for that exercise. How far back can sets be edited, and do edits to older sessions recompute later state? *Current behavior: editable until the session is finished, then read-only.* Still open: editing finished sessions (the engine already replays history, so recomputing later state is cheap).
 3. ~~**Units**~~ — **Decided:** pounds only for v1.
 4. ~~**Dumbbell weight convention**~~ — **Decided:** per hand (§6.1).
 5. ~~**Barbell minimum load**~~ — **Decided:** 45 lb empty bar, 5 lb steps (§6.2).
-6. **No load reaches the target reps:** if even the lightest available load predicts fewer than the target reps (only possible with a very low e1RM), the engine suggests the lightest load. (Assumed in slice 1.)
+6. **No load reaches the target reps:** if even the lightest available load predicts fewer than the target reps (only possible with a very low e1RM), the engine suggests the lightest load. (Built this way in v1.0.0; confirm or change.)
 
 Flagged to revisit after real use (not blocking):
 - Primary-lift deload: resuming at the last successful numbers (§6.7).
 
 ## 11. Post-MVP ideas (parked)
+
+### v1.1.0 candidates from first-user feedback (2026-10-04)
+
+From Shannon, a first friend user. Real complaints, not nitpicks; to be scoped for v1.1.0:
+
+- **RPE friction:** "oh, this is that annoying RPE stuff, huh?" RPE is required on every primary lift's first set and drives the e1RM. Options to weigh: an RPE-optional mode, a simpler effort scale (e.g. easy / solid / hard / max mapped to RPE), or running primaries without e1RMs (already parked below).
+- **Ready-made programs:** "So, I have to create a program? I can't just pick one?" Program templates to pick from (e.g. a 4-day upper/lower), editable after picking.
+- **Exercise bank:** "Is there an exercise bank? I don't really know the names of things." A built-in list of exercises with sensible defaults (tier, rep range, equipment), possibly with descriptions or images. Ties in with the muscle-group store below.
+
+### Earlier ideas
 
 - **e1RM confidence measure:** the spread between recent session e1RMs (max − min, or standard deviation). Tight spread = stable estimate; wide spread = noisy. Formula agreement within one set is *not* a confidence signal (§6.4).
 - Rest timer, possibly with push notifications via a small serverless function.

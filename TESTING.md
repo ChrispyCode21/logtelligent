@@ -17,14 +17,16 @@ When the pane emulates a phone viewport (the `mobile` preset, 375×812), the pan
 
 ## On-device checklist (after the first deploy)
 
-The preview can't stand in for these; check them on the iPhone:
+The preview can't stand in for these; check them on the iPhone. Re-run the relevant items for any release that touches them.
 
-- [ ] Layout at phone width: tabs fit, steppers and RPE buttons are easy to hit one-handed, nothing scrolls sideways.
-- [ ] Add to Home Screen: icon, name "Logtelligent", opens full screen.
-- [ ] Offline: turn on Airplane Mode, open the app from the home screen, log a set, finish a session.
-- [ ] Real `confirm()` dialogs: Finish anyway?, Switch day?, Skip today?, Discard?, Restore backup?
-- [ ] Export data saves a `.json` file (Files app), and Restore from file… reads it back.
-- [ ] An update (push a change) appears after reopening the app.
+Results for **v1.0.0** (Chris, iPhone, 2026-10-04): all pass. The first run found sideways scrolling on the Program tab, fixed in PR #2 and re-checked on the phone.
+
+- [x] Layout at phone width: tabs fit, steppers and RPE buttons are easy to hit one-handed, nothing scrolls sideways.
+- [x] Add to Home Screen: icon, name "Logtelligent", opens full screen.
+- [x] Offline: turn on Airplane Mode, open the app from the home screen, log a set, finish a session.
+- [x] Real `confirm()` dialogs: Finish anyway?, Switch day?, Skip today?, Discard?, Restore backup?
+- [x] Export data saves a `.json` file (Files app), and Restore from file… reads it back.
+- [x] An update (push a change) appears after reopening the app. (Close it fully, open, close, and open again; the update downloads on one open and applies on the next.)
 
 ## Other caveats
 
