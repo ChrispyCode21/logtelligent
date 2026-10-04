@@ -26,6 +26,8 @@ export interface Session {
   startedAt: string
   finishedAt?: string
   exercises: ExerciseLog[]
+  /** The warm-up banner was dismissed for this session (SPEC §5.2). */
+  warmupDismissed?: boolean
 }
 
 export const db = new Dexie('logtelligent') as Dexie & {

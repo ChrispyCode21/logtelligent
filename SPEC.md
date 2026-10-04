@@ -23,8 +23,8 @@ Hand-typed workout notes (e.g. in Apple Notes) record what happened but don't te
 - **React + TypeScript**, built with **Vite**.
 - **Local-only data** in the browser's IndexedDB, via **Dexie**. No backend, no accounts.
 - **Offline-capable** (service worker via `vite-plugin-pwa`) — gym signal is unreliable.
-- **Free static hosting** (GitHub Pages or Cloudflare Pages).
-- **JSON export** from day one as the backup mechanism.
+- **Free static hosting** (GitHub Pages or Cloudflare Pages). **Decided:** GitHub Pages, deployed by a GitHub Actions workflow on every push to `main`. Chris creates the repo and pushes.
+- **JSON export** from day one as the backup mechanism. **Decided:** export downloads `logtelligent-YYYY-MM-DD.json` (program + all sessions, with a format version); **import** restores a backup file, replacing all data after a confirm.
 - **Progression engine is pure TypeScript** — no React, no database access — so it can be unit-tested in isolation (Vitest).
 
 ## 3. Definition of done (MVP)
@@ -77,6 +77,7 @@ See §11 for ideas parked until after the MVP.
 1. App opens to the **next day in the rotation** (Decided).
 2. I can choose a different day, but only after an explicit acknowledgement (Decided). Example: I did Lower A but forgot to log it; I can still log Upper B. A skipped day is simply not logged, and the rotation continues from the day I *did* log.
 3. A **warm-up reminder banner** appears at the top with a short suggestion (one sentence or 2–3 bullets). Warm-up sets are not logged (Decided).
+   - **Decided:** shown at the top of an active session, dismissible for that session. It ramps to the day's first exercise at its suggested weight: *"Warm up for Bench Press (225): 5–10 min easy cardio, then ramp: 45 × 10, 110 × 5, 155 × 3, 190 × 1."* Ramp weights are the lightest load, then ~50%, ~70% and ~85% of the working weight, snapped down to available loads (duplicates dropped). With no working weight to ramp to (e.g. unweighted bodyweight), only the cardio line shows.
 4. Each exercise shows its suggested weight and rep target. Exercises in a deload week are marked as such (§6.7).
 5. I log each working set. The next set **pre-fills** from the previous set's values, so a repeat set is one tap (Decided).
 6. When the last set of an exercise is entered, validation runs (see §6.6) and any message is shown.

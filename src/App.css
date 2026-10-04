@@ -453,3 +453,35 @@ fieldset.field legend {
 .card.skipped {
   opacity: 0.75;
 }
+
+/* Slice 6: warm-up banner, backup */
+
+.note.warmup {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+}
+
+.note.warmup p {
+  flex: 1;
+  margin: 0;
+  padding-top: 2px;
+}
+
+.note.warmup button {
+  min-height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.backup {
+  display: grid;
+  gap: 8px;
+}
+
+.backup input[type='file'] {
+  display: none;
+}

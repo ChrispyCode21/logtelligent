@@ -58,6 +58,10 @@ export function restoreExercise(sessionId: number, exerciseId: string) {
   })
 }
 
+export async function dismissWarmup(sessionId: number) {
+  await db.sessions.update(sessionId, { warmupDismissed: true })
+}
+
 export async function finishSession(sessionId: number) {
   await db.sessions.update(sessionId, { finishedAt: new Date().toISOString() })
 }
