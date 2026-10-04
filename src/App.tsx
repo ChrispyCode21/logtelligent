@@ -1,53 +1,41 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { SessionLogger } from './components/SessionLogger'
-import { SuggestionCard } from './components/SuggestionCard'
-import { suggestNext } from './engine'
-import { BENCH } from './program'
+import { useState } from 'react'
+import { ProgramView } from './components/ProgramView'
+import { TodayView } from './components/TodayView'
+import { EMPTY_PROGRAM } from './program/program'
 import { db } from './storage/db'
-import { exerciseHistory } from './storage/history'
-import { startSession } from './storage/sessions'
 import './App.css'
 
-export default function App() {
-  // Re-runs (and re-renders) whenever the sessions table changes.
-  const data = useLiveQuery(async () => {
-    const sessions = await db.sessions.orderBy('startedAt').toArray()
-    const history = exerciseHistory(sessions, BENCH.id)
-    return {
-      active: sessions.find((s) => !s.finishedAt),
-      history,
-      suggestion: suggestNext(BENCH, history, new Date()),
-    }
-  })
-  if (!data) return null
+type Tab = 'today' | 'program'
 
-  const { active, history, suggestion } = data
+export default function App() {
+  const [tab, setTab] = useState<Tab>('today')
+
+  // Re-runs (and re-renders) whenever the tables it reads change.
+  const data = useLiveQuery(async () => ({
+    program: (await db.programs.get('main')) ?? EMPTY_PROGRAM,
+    sessions: await db.sessions.orderBy('startedAt').toArray(),
+    asOf: new Date(),
+  }))
+  if (!data) return null
 
   return (
     <main>
-      <h1>Logtelligent</h1>
-      <SuggestionCard
-        config={BENCH}
-        suggestion={suggestion}
-        heading={active ? 'Today' : 'Next session'}
-      />
-      {active ? (
-        <SessionLogger
-          key={active.id}
-          config={BENCH}
-          session={active}
-          history={history}
-          suggestion={suggestion}
-        />
+      <header className="app-header">
+        <h1>Logtelligent</h1>
+        <nav className="tabs">
+          <button type="button" aria-pressed={tab === 'today'} onClick={() => setTab('today')}>
+            Today
+          </button>
+          <button type="button" aria-pressed={tab === 'program'} onClick={() => setTab('program')}>
+            Program
+          </button>
+        </nav>
+      </header>
+      {tab === 'today' ? (
+        <TodayView {...data} onEditProgram={() => setTab('program')} />
       ) : (
-        <button
-          type="button"
-          className="primary block"
-          disabled={suggestion.kind === 'needsSeed'}
-          onClick={() => void startSession([BENCH.id])}
-        >
-          Start session
-        </button>
+        <ProgramView program={data.program} sessions={data.sessions} />
       )}
     </main>
   )

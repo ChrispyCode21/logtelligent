@@ -22,9 +22,25 @@ describe('set editing (one working weight, SPEC §6.3)', () => {
     ])
   })
 
-  it('a session can finish only once set 1 has an RPE', () => {
-    expect(canFinish([])).toBe(false)
-    expect(canFinish([{ weight: 225, reps: 4 }])).toBe(false)
-    expect(canFinish([{ weight: 225, reps: 4, rpe: 8 }, { weight: 225, reps: 3 }])).toBe(true)
+  describe('finishing a session', () => {
+    const tierOf = (id: string) => (id === 'bench' ? 'primary' : 'accessory')
+
+    it('needs at least one logged set', () => {
+      expect(canFinish([{ exerciseId: 'bench', sets: [] }], tierOf)).toBe(false)
+    })
+
+    it('needs an RPE on the first set of each logged primary lift', () => {
+      const bench = (rpe?: number) => ({ exerciseId: 'bench', sets: [{ weight: 225, reps: 4, rpe }] })
+      expect(canFinish([bench()], tierOf)).toBe(false)
+      expect(canFinish([bench(8)], tierOf)).toBe(true)
+    })
+
+    it('does not need RPE on accessories, and skipped exercises do not block it', () => {
+      const logs = [
+        { exerciseId: 'bench', sets: [] },
+        { exerciseId: 'curl', sets: [{ weight: 30, reps: 12 }] },
+      ]
+      expect(canFinish(logs, tierOf)).toBe(true)
+    })
   })
 })

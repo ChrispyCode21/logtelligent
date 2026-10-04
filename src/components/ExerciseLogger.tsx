@@ -9,9 +9,7 @@ import {
   type LoggedSet,
   type Suggestion,
 } from '../engine'
-import { addSet, canFinish, removeSet, rpeRequired, updateSet } from '../session/sets'
-import type { Session } from '../storage/db'
-import { discardSession, finishSession, saveSets } from '../storage/sessions'
+import { addSet, removeSet, rpeRequired, updateSet } from '../session/sets'
 import { RpePicker } from './RpePicker'
 
 interface Form {
@@ -36,14 +34,15 @@ function formatSet(set: LoggedSet) {
 
 interface Props {
   config: ExerciseConfig
-  session: Session
+  /** Sets logged so far in this session. */
+  sets: LoggedSet[]
   /** Finished history for this exercise. */
   history: ExerciseSession[]
   suggestion: Suggestion
+  onSave: (sets: LoggedSet[]) => Promise<void>
 }
 
-export function SessionLogger({ config, session, history, suggestion }: Props) {
-  const sets = session.exercises.find((e) => e.exerciseId === config.id)?.sets ?? []
+export function ExerciseLogger({ config, sets, history, suggestion, onSave }: Props) {
   const [form, setForm] = useState<Form>(() => prefill(sets, suggestion))
   const [editing, setEditing] = useState<number | null>(null)
 
@@ -54,12 +53,14 @@ export function SessionLogger({ config, session, history, suggestion }: Props) {
   const showForm = editing !== null || sets.length < targetSets
   // Validation runs once the last set is entered (SPEC §5.2, §6.6).
   const outcome = sets.length >= targetSets ? evaluateSession(config, history, sets) : undefined
-  const required = rpeRequired(formIndex)
+  const required = rpeRequired(config.tier, formIndex)
   const weight = Number(form.weight)
   const reps = Number(form.reps)
+  // Bodyweight loads are added weight, so 0 is valid there (SPEC §6.1).
+  const minWeight = config.equipment === 'bodyweight' ? 0 : Number.MIN_VALUE
   const valid =
     form.weight !== '' &&
-    weight > 0 &&
+    weight >= minWeight &&
     form.reps !== '' &&
     Number.isInteger(reps) &&
     reps >= 0 &&
@@ -75,7 +76,7 @@ export function SessionLogger({ config, session, history, suggestion }: Props) {
     setForm({ ...form, reps: String(Math.max(0, (Number.isInteger(reps) ? reps : 0) + delta)) })
 
   async function save(nextSets: LoggedSet[]) {
-    await saveSets(session.id, config.id, nextSets)
+    await onSave(nextSets)
     setEditing(null)
     setForm(prefill(nextSets, suggestion))
   }
@@ -96,18 +97,6 @@ export function SessionLogger({ config, session, history, suggestion }: Props) {
   function cancelEdit() {
     setEditing(null)
     setForm(prefill(sets, suggestion))
-  }
-
-  async function finish() {
-    const short = sets.length < targetSets
-    if (short && !confirm(`Only ${sets.length} of ${targetSets} sets logged. Finish anyway?`)) return
-    await finishSession(session.id)
-  }
-
-  async function discard() {
-    if (confirm('Discard this session? Its logged sets will be deleted.')) {
-      await discardSession(session.id)
-    }
   }
 
   return (
@@ -143,7 +132,9 @@ export function SessionLogger({ config, session, history, suggestion }: Props) {
 
           <label className="field">
             <span>
-              Weight (lb){sets.length > 0 && <span className="muted"> · applies to all sets</span>}
+              {config.equipment === 'bodyweight' ? 'Added weight (lb)' : 'Weight (lb)'}
+              {config.equipment === 'dumbbell' && <span className="muted"> · per hand</span>}
+              {sets.length > 0 && <span className="muted"> · applies to all sets</span>}
             </span>
             <div className="stepper">
               <button type="button" aria-label="Lighter" onClick={() => stepWeight(-1)}>−</button>
@@ -157,7 +148,7 @@ export function SessionLogger({ config, session, history, suggestion }: Props) {
           </label>
 
           <label className="field">
-            <span>Reps</span>
+            <span>Reps{config.unilateral && <span className="muted"> · per side</span>}</span>
             <div className="stepper">
               <button type="button" aria-label="Fewer reps" onClick={() => stepReps(-1)}>−</button>
               <input
@@ -195,15 +186,6 @@ export function SessionLogger({ config, session, history, suggestion }: Props) {
         <p className="note warning" role="status">
           {outcome.message}
         </p>
-      )}
-
-      {editing === null && (
-        <div className="actions">
-          <button type="button" className="primary" disabled={!canFinish(sets)} onClick={finish}>
-            Finish session
-          </button>
-          <button type="button" className="danger" onClick={discard}>Discard</button>
-        </div>
       )}
     </section>
   )

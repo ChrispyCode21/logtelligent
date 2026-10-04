@@ -1,8 +1,9 @@
 import type { LoggedSet } from '../engine'
 import { db } from './db'
 
-export async function startSession(exerciseIds: string[]) {
+export async function startSession(dayId: string, exerciseIds: string[]) {
   await db.sessions.add({
+    dayId,
     startedAt: new Date().toISOString(),
     exercises: exerciseIds.map((exerciseId) => ({ exerciseId, sets: [] })),
   })

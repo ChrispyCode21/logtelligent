@@ -173,6 +173,7 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
 
 ### 6.5 Accessory lifts
 - RPE is optional (Decided).
+- **All sets use one working weight**, as for primary lifts (Decided).
 - Progression by **double progression** (Decided): work up through the rep range at a fixed weight; once the range is filled, move up one load step (§6.2) and drop back to the bottom of the range.
 - **"Range filled" (Decided): more than 50% of working sets reach the top of the range.** In practice: 2 sets → both; 3 sets → 2; 4 sets → 3.
 

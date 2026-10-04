@@ -34,6 +34,12 @@ export function SuggestionCard({ config, suggestion, heading }: Props) {
   const planNote = PLAN_NOTES[suggestion.plan]
   const { min } = config.repRange
   const max = suggestion.effectiveTop ?? config.repRange.max
+  const weight =
+    config.equipment === 'bodyweight'
+      ? suggestion.weight === 0
+        ? 'Bodyweight'
+        : `BW + ${suggestion.weight} lb`
+      : `${suggestion.weight} lb`
 
   return (
     <section className="card">
@@ -42,10 +48,12 @@ export function SuggestionCard({ config, suggestion, heading }: Props) {
         {suggestion.plan === 'deload' && <span className="tag">Deload</span>}
       </h2>
       <p className="suggestion">
-        {suggestion.weight} lb × {suggestion.reps}
+        {weight} × {suggestion.reps}
       </p>
       <p className="muted">
+        {config.equipment === 'dumbbell' && 'Per hand · '}
         {suggestion.sets} sets · {min}–{max} reps
+        {config.unilateral && ' per side'}
         {suggestion.targetRpe !== undefined && <> · first set @ RPE {suggestion.targetRpe}</>}
       </p>
       {suggestion.e1rm && (

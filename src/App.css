@@ -174,3 +174,166 @@ button.block {
   margin-top: 12px;
   border-left: 4px solid var(--danger);
 }
+
+/* Slice 3: navigation, program setup, multi-exercise sessions */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tabs button[aria-pressed='true'],
+.segmented button[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.page-title {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.day-header .muted {
+  margin: 2px 0 0;
+}
+
+input:not([type='checkbox']),
+select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  font-size: 1rem;
+}
+
+fieldset.field {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+fieldset.field legend {
+  padding: 0;
+  margin-bottom: 6px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.row input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+
+.checkbox input {
+  width: 20px;
+  height: 20px;
+}
+
+.exercise-form {
+  display: grid;
+  gap: 12px;
+}
+
+.seed {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+.errors {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--danger);
+}
+
+.day {
+  display: grid;
+  gap: 12px;
+}
+
+.day-title {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.day-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.icon-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.icon-buttons button {
+  min-width: 40px;
+  padding: 0 8px;
+}
+
+.exercise-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.exercise-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.exercise-summary {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.exercise-summary .muted {
+  font-size: 0.85rem;
+}
+
+.warning-text {
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
+.add-day {
+  display: grid;
+  gap: 8px;
+}
