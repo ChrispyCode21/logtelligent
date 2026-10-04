@@ -66,7 +66,7 @@ describe('7.A Estimated 1RM', () => {
     const next = suggestion(bench(), history)
     expect(next.weight).toBe(200)
     expect(next.reps).toBe(4)
-    expect(next.e1rm.basis).toBe('returningFromBreak')
+    expect(next.e1rm?.basis).toBe('returningFromBreak')
   })
 
   it('A5: a deload session is ignored; the 3 most recent non-deload sessions are averaged', () => {
@@ -102,8 +102,8 @@ describe('7.A Estimated 1RM', () => {
 
   it('A9: seed 225x5 (RPE 7) gives e1RM 280.4 and suggests 235 x 4 on a 3-5 @ RPE 8 range', () => {
     const next = suggestion(bench({ seed: { weight: 225, reps: 5 } }), [])
-    expectLb(next.e1rm.value, 280.4)
-    expect(next.e1rm.basis).toBe('seed')
+    expectLb(next.e1rm?.value, 280.4)
+    expect(next.e1rm?.basis).toBe('seed')
     expect(next.weight).toBe(235)
     expect(next.reps).toBe(4)
     expectLb(next.predictedReps, 4.2)
@@ -111,8 +111,8 @@ describe('7.A Estimated 1RM', () => {
 
   it('A10: after one real session the seed is dropped, not averaged (266.8)', () => {
     const next = suggestion(bench({ seed: { weight: 225, reps: 5 } }), [session(1, set(225, 4, 8))])
-    expectLb(next.e1rm.value, 266.8)
-    expect(next.e1rm.basis).toBe('history')
+    expectLb(next.e1rm?.value, 266.8)
+    expect(next.e1rm?.basis).toBe('history')
   })
 
   it('A12: an exercise with no seed and no history needs a seed before a session', () => {
@@ -138,7 +138,7 @@ describe('7.B Primary-lift suggestions', () => {
 
   it('B2: 225x12 @ RPE 8 on a 3-5 range gives e1RM 325.0 and suggests 270 x 4', () => {
     const next = suggestion(bench(), [session(1, set(225, 12, 8))])
-    expectLb(next.e1rm.value, 325.0)
+    expectLb(next.e1rm?.value, 325.0)
     expect(next.weight).toBe(270)
     expect(next.reps).toBe(4)
     expectLb(next.predictedReps, 4.6)
@@ -146,7 +146,7 @@ describe('7.B Primary-lift suggestions', () => {
 
   it('B3: 225x7 @ RPE 7 on a 5-7 range suggests 235 x 6', () => {
     const next = suggestion(bench({ repRange: { min: 5, max: 7 } }), [session(1, set(225, 7, 7))])
-    expectLb(next.e1rm.value, 294.4)
+    expectLb(next.e1rm?.value, 294.4)
     expect(next.weight).toBe(235)
     expect(next.reps).toBe(6)
     expectLb(next.predictedReps, 6.2)

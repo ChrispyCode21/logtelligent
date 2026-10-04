@@ -1,4 +1,6 @@
 export * from './types'
 export * from './e1rm'
 export * from './loads'
+export * from './accessory'
+export * from './progression'
 export * from './suggest'

@@ -30,3 +30,18 @@ export function availableLoads(config: ExerciseConfig): number[] {
       return []
   }
 }
+
+/** Heaviest available load at or below `weight`, or the lightest load if none is. */
+export function snapDown(weight: number, loads: number[]): number {
+  return loads.findLast((l) => l <= weight) ?? loads[0]
+}
+
+/** The next available load below `weight`, or the lightest load if there is none. */
+export function stepDown(weight: number, loads: number[]): number {
+  return loads.findLast((l) => l < weight) ?? loads[0]
+}
+
+/** The next available load above `weight`, if any. */
+export function stepUp(weight: number, loads: number[]): number | undefined {
+  return loads.find((l) => l > weight)
+}

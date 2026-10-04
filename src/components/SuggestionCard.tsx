@@ -22,7 +22,7 @@ export function SuggestionCard({ config, suggestion, heading }: Props) {
     )
   }
 
-  const note = BASIS_NOTES[suggestion.e1rm.basis]
+  const note = suggestion.e1rm && BASIS_NOTES[suggestion.e1rm.basis]
   const { min, max } = config.repRange
 
   return (
@@ -34,7 +34,9 @@ export function SuggestionCard({ config, suggestion, heading }: Props) {
       <p className="muted">
         {suggestion.sets} sets · {min}–{max} reps · first set @ RPE {suggestion.targetRpe}
       </p>
-      <p className="muted">Estimated 1RM {suggestion.e1rm.value.toFixed(1)} lb</p>
+      {suggestion.e1rm && (
+        <p className="muted">Estimated 1RM {suggestion.e1rm.value.toFixed(1)} lb</p>
+      )}
       {note && <p className="note">{note}</p>}
     </section>
   )
