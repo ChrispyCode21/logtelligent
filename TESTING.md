@@ -13,6 +13,17 @@ When the pane emulates a phone viewport (the `mobile` preset, 375×812), the pan
 
 **To revisit:** verify the real phone layout on an actual iPhone once the PWA is deployed (slice 6), since the preview can't be trusted at phone size.
 
+## On-device checklist (after the first deploy)
+
+The preview can't stand in for these; check them on the iPhone:
+
+- [ ] Layout at phone width: tabs fit, steppers and RPE buttons are easy to hit one-handed, nothing scrolls sideways.
+- [ ] Add to Home Screen: icon, name "Logtelligent", opens full screen.
+- [ ] Offline: turn on Airplane Mode, open the app from the home screen, log a set, finish a session.
+- [ ] Real `confirm()` dialogs: Finish anyway?, Switch day?, Skip today?, Discard?, Restore backup?
+- [ ] Export data saves a `.json` file (Files app), and Restore from file… reads it back.
+- [ ] An update (push a change) appears after reopening the app.
+
 ## Other caveats
 
 - **Screenshots time out** when the desktop app window is behind another window; the pane stops drawing. Use DOM reads instead, or bring the window forward.
