@@ -13,7 +13,7 @@ export interface LoggedExerciseSession extends ExerciseSession {
  * Replaced sessions are included but flagged, so the engine skips them (SPEC §5.2, A6);
  * skipped exercises are left out.
  *
- * With `before`, only sessions that started before it are included: the history that session
+ * With `before`, only sessions that came before it are included: the history that session
  * was judged against. Editing a finished session needs this, or it would be validated
  * against itself and every later session (SPEC §9.2, slice 1).
  */
@@ -24,7 +24,7 @@ export function exerciseHistory(
 ): LoggedExerciseSession[] {
   return sessions
     .filter((s) => s.finishedAt)
-    .filter((s) => !before || (s.id !== before.id && Date.parse(s.startedAt) < Date.parse(before.startedAt)))
+    .filter((s) => !before || cameBefore(s, before))
     .flatMap((s) =>
       s.exercises
         .filter((e) => e.exerciseId === exerciseId && !e.skipped)
@@ -35,6 +35,16 @@ export function exerciseHistory(
             : { sessionId: s.id, date: s.startedAt, sets: e.sets },
         ),
     )
+}
+
+/**
+ * Replay's order: by start time, and by id for the same start time, since sessions are read in
+ * id order and the replay's sort is stable.
+ */
+function cameBefore(a: Session, b: Session): boolean {
+  const ta = Date.parse(a.startedAt)
+  const tb = Date.parse(b.startedAt)
+  return ta < tb || (ta === tb && a.id < b.id)
 }
 
 /** The day of the most recent finished session, which drives the rotation (SPEC §5.1). */

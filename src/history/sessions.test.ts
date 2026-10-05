@@ -43,11 +43,12 @@ describe('exerciseHistory', () => {
       expect(weights(first)).toEqual([])
     })
 
-    it('leaves out another session that started at the same moment', () => {
+    it('orders sessions that started at the same moment by id, as replay does', () => {
       const twin = finished(4, middle.startedAt, 999)
-      expect(exerciseHistory([first, middle, twin], 'bench', middle).map((h) => h.sets[0].weight)).toEqual([
-        225,
-      ])
+      const before = (s: Session) =>
+        exerciseHistory([first, middle, twin], 'bench', s).map((h) => h.sets[0].weight)
+      expect(before(middle)).toEqual([225])
+      expect(before(twin)).toEqual([225, 230])
     })
 
     it('is the full history without it', () => {
