@@ -19,7 +19,9 @@ src/
     suggest.ts      suggestNext: the entry point the UI calls (SPEC §6.4 weight selection)
     rotation.ts     nextDay (SPEC §5.1)
   program/      Program model (days → exercises), pure editing functions (add, move, archive…) effort scales (effort.ts), the built-in exercise bank with search (bank.ts), program templates (templates.ts) and the seed walkthrough's pre-fill and stack presets (seeding.ts)
-  session/      Session types (types.ts) and pure session helpers: set editing (one working weight), canFinish, warm-up ramp
+  session/      Session types (types.ts) and pure session rules: set editing (one working weight), each exercise's set target,
+                the "Only X of Y" tally, the first-set effort check and canFinish (sets.ts); set pre-fill and the set form's
+                validation (setForm.ts); warm-up ramp (warmup.ts)
   history/      Pure history helpers: stored sessions → engine history, optionally before a given session (sessions.ts);
                 the History tab's view-model, a timeline of sessions with e1RM (timeline.ts)
                 program/, session/ and history/ are pure too: no React, Dexie, storage or UI imports (enforced by lint).
