@@ -430,6 +430,10 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
 - **What can change:** a set's weight, reps and effort; **delete a set**; **delete the whole session** (with a confirm). Adding sets, and undoing a replace or skip, stay closed once a session is finished.
 - **Same rules as during a session:** one working weight per exercise; set 1 of a primary keeps its effort. Deleting every set of an exercise makes it "not done" for that session (no fail, no stack), as with a skip (§5.2).
 - **Deleting a session** removes it entirely; the rotation then continues from the session before it (§5.1).
+- **Where (Decided 2026-10-05):** each History row has an **Edit** button that opens that whole session for editing: every exercise in it, with the same set list and set form as a live session. There's no form for a new set, no ⋯ menu, no warm-up banner and no Finish. **Done** closes it. Each change saves as it's made, as during a session. Validation messages are judged against the history before that session (§9.2 slice 0, group 1).
+- **Deleting a session (Decided 2026-10-05):** from the editor, after a confirm that names the day and date and says every exercise's sets in it are deleted, not just the one whose History row was tapped.
+- **Deleting set 1 of a primary (Decided 2026-10-05):** if the set that would become set 1 has no effort, the delete asks for one. That set opens in the form with effort required, and the delete and the effort are saved together; Cancel keeps set 1. The same applies during a live session, since it shares the set editor; before this, Finish was silently disabled instead.
+- **An emptied session (Decided 2026-10-05):** a finished session whose sets are all deleted, but which is kept, still counts as that day's session for the rotation (§5.1). Only deleting the session moves the rotation back.
 
 **Slice 2: Add a set on the fly (Decided).**
 - Once the configured (or deload) number of sets is logged, an exercise offers **+ Add set**, for originals and substitutes alike.
