@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is scoped** (§9.2, decided 2026-10-04); not yet built.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is scoped** (§9.2, decided 2026-10-04; slice 0 added 2026-10-05); not yet built.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -406,6 +406,24 @@ Answers the three complaints from friends trying v1.0.0: RPE friction ("oh, this
 ## 9.2 v1.2.0 scope (Decided 2026-10-04 — not yet built)
 
 Theme: **logging fidelity**. Fixes for things noticed in daily use, from the owner's own use rather than friends' feedback. All additive (minor version); no backend. Built in this order, each slice a small PR or two, then a release PR.
+
+**Slice 0: Quality groundwork (Decided 2026-10-05; from the v1.2.0 quality pass).** Prepares the code the three feature slices build on, from an `architecture-reviewer` pass over all of `main`. One small PR per group, in this order. Groups 1–3 change no behavior; group 4 makes the visible changes listed.
+1. **Pure-layer groundwork.**
+   - Session types (`Session`, `ExerciseLog`, `Substitute`) and the pure history helpers (`exerciseHistory`, `lastLoggedDayId`, `exerciseHasHistory`, `dayHasHistory`) move out of `storage/` into the pure layer, so `session/` and `history/` stop importing from storage. `storage/db.ts` imports the types, as it already does for the program.
+   - `exerciseHistory` can return history **before a given session**. Slice 1 needs this, so an edited session is judged against what came before it, not against itself and later sessions.
+   - The backup validator fails to compile if a stored field is left out, so slices 2 and 3 can't silently drop their new fields on restore.
+   - History rows carry their session id (slices 1 and 3).
+2. **Session rules in `src/session/`, with tests.** The set target (deload-halved for originals, configured for substitutes), the "Only X of Y" tally, set pre-fill (§5.2), set-form validation, and the "set 1 of a primary has effort" check, which slice 1 also needs since editing has no Finish step. These are currently inline in the session components.
+3. **One starting-numbers entry.** `ExerciseForm` and `SeedWalkthrough` share one seed-entry component and pure, tested seed and exercise-form helpers in `src/program/`.
+   - Both show the §5.1 wording ("Enter a weight and reps you're confident you could do…"); the walkthrough's hint had drifted.
+   - The exercise form's bank placeholder weight snaps onto the exercise's typed loads, as the walkthrough's pre-fill does. Otherwise the two flows keep their Decided differences: the form shows a placeholder, the walkthrough fills in a value (§9.1 slices 2 and 3), and stack quick picks stay walkthrough-only.
+4. **Fixes and CSS/format cleanup.**
+   - **Stepper font (fix):** the weight and reps inputs go back to the large text size they were built with. A later global input rule has overridden it since v1.1.0.
+   - **One exercise summary line:** the "Primary · 3 × 5–7 · Barbell" line, built three ways today, comes from one shared formatter. Equipment is shown by its label everywhere, "per side" wherever it applies, and the effort target only on the Program tab.
+   - **No visible change:**
+     - The History picker's grouping (§5.3) moves into `src/history/` with tests.
+     - `EffortPicker` uses the `Field` primitive.
+     - The pressed-button style and the duplicate list-button styles are each defined once.
 
 **Slice 1: Edit finished sessions (Decided; resolves §10 #2).**
 - **Any finished session** can be edited, however old. Progression state is derived by replaying history (ARCHITECTURE.md), so an edit recomputes everything after it, and no cut-off is needed.
