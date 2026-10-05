@@ -102,9 +102,13 @@ export function ExerciseLogger({
         ) : log.skipped ? (
           <span className="muted">{finished ? ' · skipped' : ' · skipped today'}</span>
         ) : (
+          // A past session shows only what was logged: what was prescribed then isn't stored (SPEC §9.2, slice 1).
           <span className="muted">
             {' '}
-            · {sets.length} of {target} sets
+            ·{' '}
+            {finished
+              ? `${sets.length} set${sets.length === 1 ? '' : 's'}`
+              : `${sets.length} of ${target} sets`}
           </span>
         )}
         {!substitute && !log.skipped && suggestion.kind === 'suggestion' && suggestion.plan === 'deload' && (

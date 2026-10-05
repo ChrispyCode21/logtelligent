@@ -435,6 +435,7 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
 - **Deleting set 1 of a primary (Decided 2026-10-05):** if the set that would become set 1 has no effort, the delete asks for one. That set opens in the form with effort required, and the delete and the effort are saved together; Cancel keeps set 1. The same applies during a live session, since it shares the set editor; before this, Finish was silently disabled instead.
 - **An emptied session (Decided 2026-10-05):** a finished session whose sets are all deleted, but which is kept, still counts as that day's session for the rotation (§5.1). Only deleting the session moves the rotation back. **Deleting the last set (Decided 2026-10-05):** an emptied session drops out of History, so deleting the last set in a finished session asks whether to delete the whole session; No keeps it, empty, as above.
 - **Outcome messages (Decided 2026-10-05):** a finished session shows each exercise's validation message whenever it has sets, not only when all its target sets are in, since the replay judged it however many there were.
+- **Set counts in a past session (Decided 2026-10-05):** an exercise's header shows the sets logged ("3 sets"), not "3 of 4 sets". The prescribed count isn't stored per session, and today's program may differ from what was prescribed then. A live session keeps "n of m".
 
 **Slice 2: Add a set on the fly (Decided).**
 - Once the configured (or deload) number of sets is logged, an exercise offers **+ Add set**, for originals and substitutes alike.
@@ -474,3 +475,4 @@ Flagged to revisit after real use (not blocking):
 - ~~**Add a set on the fly**~~ — **scoped for v1.2.0** (§9.2 slice 2).
 - ~~**Session notes**~~ — **scoped for v1.2.0** (§9.2 slice 3). Still parked: sending notes to an LLM for evaluation (v2/v3; needs a CSP change and breaks "data never leaves the device").
 - **Keep history for same-named lifts when a template replaces a program:** today a template creates new exercises, so an existing Bench Press starts fresh and its history stays under "Archived" (§9.1 slice 3). Matching by name could carry history and starting numbers over.
+- **Store each session's prescription:** a session stores only the sets logged, so History can't show "3 of 3" for a week when 3 were prescribed, and the progression replay judges old sessions with today's settings (rep range, set count). Saving each exercise's prescription when a session starts would fix both (a stored-data change). Raised while building §9.2 slice 1.
