@@ -1,37 +1,24 @@
 import { useState, type ReactNode } from 'react'
 import type { LoggedSet } from '../engine'
 import type { EffortScale } from '../program/effort'
+import { formFromSet, parseSetForm, prefill, type SetForm } from '../session/setForm'
 import { addSet, removeSet, updateSet } from '../session/sets'
 import { Button } from '../ui/Button'
 import { Field } from '../ui/Field'
 import { formatSet } from '../ui/format'
 import { EffortPicker } from './EffortPicker'
 
-interface Form {
-  weight: string
-  reps: string
-  rpe?: number
-}
-
-/** The next set pre-fills from the previous one (SPEC §5.2); set 1 from `first`. */
-function prefill(sets: LoggedSet[], first?: { weight: number; reps: number }): Form {
-  const last = sets.at(-1)
-  if (last) return { weight: String(last.weight), reps: String(last.reps), rpe: last.rpe }
-  if (first) return { weight: String(first.weight), reps: String(first.reps) }
-  return { weight: '', reps: '' }
-}
-
 interface Props {
   sets: LoggedSet[]
-  targetSets: number
+  /** A new set can be logged; the caller decides when the exercise's sets are all in. */
+  canAdd: boolean
   /** Pre-fill for the first set, usually the suggestion. */
   first?: { weight: number; reps: number }
   effortScale: EffortScale
   rpeRequiredAt: (index: number) => boolean
   /** The next weight up or down from `weight`, if any. */
   step: (weight: number, direction: 1 | -1) => number | undefined
-  /** Smallest valid weight: 0 where unloaded sets make sense, else just above 0. */
-  minWeight: number
+  allowZeroWeight: boolean
   weightLabel: ReactNode
   repsLabel: ReactNode
   /** Shown below the form while no set is being edited. */
@@ -42,33 +29,27 @@ interface Props {
 /** Logged sets (tap to edit or delete) and the form for the next set. One working weight per exercise. */
 export function SetEditor({
   sets,
-  targetSets,
+  canAdd,
   first,
   effortScale,
   rpeRequiredAt,
   step,
-  minWeight,
+  allowZeroWeight,
   weightLabel,
   repsLabel,
   footer,
   onSave,
 }: Props) {
-  const [form, setForm] = useState<Form>(() => prefill(sets, first))
+  const [form, setForm] = useState<SetForm>(() => prefill(sets, first))
   const [editing, setEditing] = useState<number | null>(null)
 
   const formIndex = editing ?? sets.length
   // Logged sets stay editable after the last one is entered.
-  const showForm = editing !== null || sets.length < targetSets
+  const showForm = editing !== null || canAdd
   const required = rpeRequiredAt(formIndex)
+  const parsed = parseSetForm(form, { allowZeroWeight, rpeRequired: required })
   const weight = Number(form.weight)
   const reps = Number(form.reps)
-  const valid =
-    form.weight !== '' &&
-    weight >= minWeight &&
-    form.reps !== '' &&
-    Number.isInteger(reps) &&
-    reps >= 0 &&
-    (!required || form.rpe !== undefined)
 
   const stepWeight = (direction: 1 | -1) => {
     const next = step(weight, direction)
@@ -85,15 +66,13 @@ export function SetEditor({
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!valid) return
-    const set: LoggedSet = { weight, reps, rpe: form.rpe }
-    void save(editing === null ? addSet(sets, set) : updateSet(sets, editing, set))
+    if (!parsed) return
+    void save(editing === null ? addSet(sets, parsed) : updateSet(sets, editing, parsed))
   }
 
   function startEdit(index: number) {
-    const set = sets[index]
     setEditing(index)
-    setForm({ weight: String(set.weight), reps: String(set.reps), rpe: set.rpe })
+    setForm(formFromSet(sets[index]))
   }
 
   function cancelEdit() {
@@ -167,7 +146,7 @@ export function SetEditor({
           />
 
           <div className="actions">
-            <Button type="submit" variant="primary" disabled={!valid}>
+            <Button type="submit" variant="primary" disabled={!parsed}>
               {editing === null ? 'Log set' : 'Save set'}
             </Button>
             {editing !== null && (

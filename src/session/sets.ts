@@ -1,4 +1,4 @@
-import type { LoggedSet, Tier } from '../engine'
+import type { LoggedSet, Suggestion, Tier } from '../engine'
 import type { ExerciseLog } from './types'
 
 // All sets of an exercise use one working weight (SPEC §6.3, §6.5), so changing
@@ -21,10 +21,46 @@ export function rpeRequired(tier: Tier, index: number): boolean {
   return tier === 'primary' && index === 0
 }
 
+/**
+ * Whether a primary lift's sets have the effort its first set needs (SPEC §6.3). No sets need
+ * nothing. Checked at Finish, and when a finished session is edited (SPEC §9.2, slice 1).
+ */
+export function hasRequiredEffort(tier: Tier, sets: LoggedSet[]): boolean {
+  return sets.length === 0 || !rpeRequired(tier, 0) || sets[0].rpe !== undefined
+}
+
+/**
+ * How many sets this exercise wants today: the configured count, halved in a deload
+ * (SPEC §6.2, §6.7). A substitute wants the configured count; it isn't on the plan (SPEC §5.2).
+ */
+export function targetSets(log: ExerciseLog, configuredSets: number, suggestion: Suggestion): number {
+  return suggestion.kind === 'suggestion' && !log.substitute ? suggestion.sets : configuredSets
+}
+
+/** All of today's sets are in: validation runs (SPEC §5.2, §6.6) and the form for a new set closes. */
+export function allSetsLogged(sets: LoggedSet[], target: number): boolean {
+  return sets.length >= target
+}
+
 /** Sets that count as done for this log: the substitute's if replaced, none if skipped. */
 export function loggedSets(log: ExerciseLog): LoggedSet[] {
   if (log.skipped) return []
   return log.substitute ? log.substitute.sets : log.sets
+}
+
+/**
+ * Sets logged against sets wanted across a session, for "Only X of Y sets logged" (SPEC §5.2).
+ * Skipped exercises count for neither; substitutes count their own sets.
+ */
+export function setTally(entries: { log: ExerciseLog; target: number }[]): {
+  logged: number
+  target: number
+} {
+  const counted = entries.filter((e) => !e.log.skipped)
+  return {
+    logged: counted.reduce((n, e) => n + loggedSets(e.log).length, 0),
+    target: counted.reduce((n, e) => n + e.target, 0),
+  }
 }
 
 /**
@@ -33,11 +69,9 @@ export function loggedSets(log: ExerciseLog): LoggedSet[] {
  * simply not logged.
  */
 export function canFinish(logs: ExerciseLog[], tierOf: (exerciseId: string) => Tier | undefined): boolean {
-  const progression = logs.filter((l) => !l.skipped && !l.substitute && l.sets.length > 0)
+  const progression = logs.filter((l) => !l.skipped && !l.substitute)
   return (
     logs.some((l) => loggedSets(l).length > 0) &&
-    progression.every(
-      (l) => !rpeRequired(tierOf(l.exerciseId) ?? 'accessory', 0) || l.sets[0].rpe !== undefined,
-    )
+    progression.every((l) => hasRequiredEffort(tierOf(l.exerciseId) ?? 'accessory', l.sets))
   )
 }
