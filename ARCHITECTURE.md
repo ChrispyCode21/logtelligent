@@ -18,12 +18,12 @@ src/
     progression.ts  Floor rule, fatigue stacks, deloads; deriveState / evaluateSession (SPEC §6.6–6.7)
     suggest.ts      suggestNext: the entry point the UI calls (SPEC §6.4 weight selection)
     rotation.ts     nextDay (SPEC §5.1)
-  program/      Program model (days → exercises) and pure editing functions (add, move, archive…)
+  program/      Program model (days → exercises), pure editing functions (add, move, archive…) and effort scales (effort.ts)
   session/      Pure session helpers: set editing (one working weight), canFinish, warm-up ramp
   history/      Pure view-model for the History tab (timeline of sessions with e1RM)
   storage/      Everything that touches IndexedDB: Dexie schema, reads, writes, backup/restore
   components/   React UI (see "UI" below)
-  ui/           UI primitives (Button, Card, Field), shared formatters (format.ts) and the RPE scale (rpe.ts)
+  ui/           UI primitives (Button, Card, Field), and shared formatters (format.ts)
   styles/       tokens.css: color, spacing, radius, tap-target and type-scale tokens
   App.tsx       Tabs (Today / History / Program) and the single live query
 public/
@@ -59,8 +59,9 @@ Dexie wraps IndexedDB. Database `logtelligent`, schema in `storage/db.ts`:
 |---|---|---|
 | 1 | `sessions` (`++id, startedAt`) | Slice 1 |
 | 2 | + `programs` (`id`) | Slice 3. One row, `id: 'main'`. |
+| 3 | (no index change) | v1.1.0 slice 1. Upgrade sets `effortScale: 'rpe'` on an existing program. |
 
-- **`programs`**: the whole program as one document (`days[] → exercises[]`, each exercise an `ExerciseConfig` plus `archived?`). Edits go through `updateProgram(edit)`, which reads and writes inside one transaction so quick successive edits can't overwrite each other.
+- **`programs`**: the whole program as one document (`days[] → exercises[]`, each exercise an `ExerciseConfig` plus `archived?`; and `effortScale`, the scale effort is entered and shown in: `rpe`, `repsLeft` or `perceived`). Effort is always stored as RPE, whatever the scale (`program/effort.ts` maps labels ↔ RPE). Edits go through `updateProgram(edit)`, which reads and writes inside one transaction so quick successive edits can't overwrite each other.
 - **`sessions`**: one row per training session: `dayId`, `startedAt`, `finishedAt?` (unfinished = in progress, editable), `warmupDismissed?`, and `exercises[]` of `ExerciseLog` (`exerciseId`, `sets[]`, `substitute? { name, sets }`, `skipped?`).
 - Archived exercises and days stay in the program so their history still resolves.
 
@@ -75,12 +76,12 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Backup format
 
-`logtelligent-YYYY-MM-DD.json`: `{ app: 'logtelligent', format: 1, exportedAt, program, sessions }`. Restore validates every field (types, ranges, enums), copies into fresh objects, drops unknown fields, and replaces all data in one transaction. Errors name the bad field.
+`logtelligent-YYYY-MM-DD.json`: `{ app: 'logtelligent', format: 1, exportedAt, program, sessions }`. Restore validates every field (types, ranges, enums), copies into fresh objects, drops unknown fields, and replaces all data in one transaction. Errors name the bad field. A program without `effortScale` (backups from before v1.1.0) is read as `rpe`, so `format` is still 1.
 
 ## UI
 
 - **Tabs:** `TodayView` (next day, suggestions, seed gate, active `SessionView`), `HistoryView` (picker, `E1rmChart`, timeline), `ProgramView` (days, `ExerciseForm`, `BackupCard`).
-- **Session:** `SessionView` (warm-up banner, finish/discard) → `ExerciseLogger` per exercise (⋯ menu, substitute, validation message) → `SetEditor` (set list + form, shared by originals and substitutes) → `RpePicker`.
+- **Session:** `SessionView` (warm-up banner, finish/discard) → `ExerciseLogger` per exercise (⋯ menu, substitute, validation message) → `SetEditor` (set list + form, shared by originals and substitutes) → `EffortPicker` (the program's effort scale).
 - **Styling:** design tokens (colors with light/dark values, spacing, radius, tap target, type scale) in `src/styles/tokens.css`; use a token rather than a raw value, except 1px hairlines and one-off optical tweaks. All component styles are in `src/App.css` as shared classes (`.card`, `.field`, `.actions`, `.note`, `.tag`, `.muted`, `button.primary` / `.danger`), sectioned by slice.
 - **Primitives (`src/ui/`):** `Button` (`variant` primary / secondary / danger, `block`; defaults to `type="button"`), `Card` (`as` section / li / form) and `Field` (label or fieldset, optional `hint`). New UI uses them instead of raw elements with class names. Display formatting goes through `src/ui/format.ts`. Single-column grids use `minmax(0, 1fr)` so content can't widen the page on small phones (see TESTING.md).
 - **Dialogs:** native `confirm()` for destructive or unusual actions.

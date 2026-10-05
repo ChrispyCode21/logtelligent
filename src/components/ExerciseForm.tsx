@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { defaultLoads, type EquipmentType, type Tier } from '../engine'
+import { EFFORT_SCALES, nearestOption, type EffortScale } from '../program/effort'
 import type { ProgramExercise } from '../program/types'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
-import { RPE_SCALE } from '../ui/rpe'
 
 const EQUIPMENT: { value: EquipmentType; label: string }[] = [
   { value: 'barbell', label: 'Barbell' },
@@ -13,6 +13,11 @@ const EQUIPMENT: { value: EquipmentType; label: string }[] = [
   { value: 'machine', label: 'Machine' },
   { value: 'bodyweight', label: 'Bodyweight' },
 ]
+const TARGET_LABEL: Record<EffortScale, string> = {
+  rpe: 'Target RPE on the first set',
+  repsLeft: 'Target reps left on the first set',
+  perceived: 'Target effort on the first set',
+}
 // Fixed for every exercise; not in the form (SPEC §6.1).
 const MAX_RELATIVE_JUMP = 0.1
 // Placeholder suggestions for an accessory seed (SPEC §5.1).
@@ -64,11 +69,12 @@ function parseLoads(text: string): number[] | undefined {
 
 interface Props {
   initial?: ProgramExercise
+  effortScale: EffortScale
   onSave: (exercise: ProgramExercise) => void
   onCancel: () => void
 }
 
-export function ExerciseForm({ initial, onSave, onCancel }: Props) {
+export function ExerciseForm({ initial, effortScale, onSave, onCancel }: Props) {
   const [form, setForm] = useState<Form>(() => toForm(initial))
   const [attempted, setAttempted] = useState(false)
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm({ ...form, [key]: value })
@@ -162,11 +168,16 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
       </div>
 
       {primary && (
-        <Field label="Target RPE on the first set">
-          <select value={form.targetRpe} onChange={(e) => set('targetRpe', Number(e.target.value))}>
-            {RPE_SCALE.map((rpe) => (
+        <Field label={TARGET_LABEL[effortScale]}>
+          <select
+            // A stored target between this scale's options shows as the nearest; it only changes
+            // if a new one is picked.
+            value={nearestOption(effortScale, form.targetRpe).rpe}
+            onChange={(e) => set('targetRpe', Number(e.target.value))}
+          >
+            {EFFORT_SCALES[effortScale].options.map(({ rpe, label }) => (
               <option key={rpe} value={rpe}>
-                {rpe}
+                {label}
               </option>
             ))}
           </select>

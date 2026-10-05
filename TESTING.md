@@ -26,6 +26,7 @@ Results for **v1.0.0** (iPhone, 2026-10-04): all pass. The first run found sidew
 - [x] Offline: turn on Airplane Mode, open the app from the home screen, log a set, finish a session.
 - [x] Real `confirm()` dialogs: Finish anyway?, Switch day?, Skip today?, Discard?, Restore backup?
 - [x] Export data saves a `.json` file (Files app), and Restore from file… reads it back.
+- [ ] **v1.1.0:** each effort scale is easy to tap one-handed during a set, including the stacked Perceived effort buttons; the upgrade keeps an existing program on RPE.
 - [x] An update (push a change) appears after reopening the app. (Close it fully, open, close, and open again; the update downloads on one open and applies on the next.)
 
 ## Other caveats

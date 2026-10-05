@@ -7,6 +7,13 @@ describe('formatSet', () => {
     expect(formatSet({ weight: 225, reps: 4, rpe: 8.5 })).toBe('225 × 4 @ 8.5')
   })
 
+  it('shows effort in the program’s scale (SPEC §9.1, slice 1)', () => {
+    expect(formatSet({ weight: 225, reps: 4, rpe: 8 }, 'repsLeft')).toBe('225 × 4 · 2 left')
+    expect(formatSet({ weight: 225, reps: 4, rpe: 8 }, 'perceived')).toBe('225 × 4 · Challenging')
+    expect(formatSet({ weight: 225, reps: 4, rpe: 8.5 }, 'repsLeft')).toBe('225 × 4 · 1 left')
+    expect(formatSet({ weight: 225, reps: 4 }, 'repsLeft')).toBe('225 × 4')
+  })
+
   it('leaves the RPE out when not logged', () => {
     expect(formatSet({ weight: 15, reps: 20 })).toBe('15 × 20')
   })
@@ -20,6 +27,18 @@ describe('formatSets', () => {
         { weight: 225, reps: 3 },
       ]),
     ).toBe('225 × 4 @ 8 · 225 × 3')
+  })
+
+  it('uses the program’s scale for every set', () => {
+    expect(
+      formatSets(
+        [
+          { weight: 225, reps: 4, rpe: 8 },
+          { weight: 225, reps: 3 },
+        ],
+        'repsLeft',
+      ),
+    ).toBe('225 × 4 · 2 left · 225 × 3')
   })
 
   it('is empty for no sets', () => {

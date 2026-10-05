@@ -126,28 +126,33 @@ button.block {
   font-size: var(--text-lg);
 }
 
-.rpe {
+.effort {
   border: 0;
   margin: 0;
   padding: 0;
 }
 
-.rpe legend {
+.effort legend {
   padding: 0;
   margin-bottom: var(--space-2);
 }
 
-.rpe-buttons {
+.effort-buttons {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: var(--space-2);
 }
 
-.rpe-buttons button {
+/* Perceived-effort labels are too long for five across, so they stack. */
+.effort-buttons.perceived {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.effort-buttons button {
   padding: 0;
 }
 
-.rpe-buttons button[aria-pressed='true'] {
+.effort-buttons button[aria-pressed='true'] {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-text);
@@ -247,6 +252,15 @@ fieldset.field legend {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-2);
+}
+
+.segmented.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Three labels across a phone: less padding so "Perceived effort" fits on two lines. */
+.segmented.three button {
+  padding: 0 var(--space-1);
 }
 
 .checkbox {

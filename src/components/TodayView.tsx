@@ -86,6 +86,7 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
           config={exercise}
           suggestion={suggestNext(exercise, exerciseHistory(sessions, exercise.id), asOf)}
           heading={exercise.name}
+          effortScale={program.effortScale}
         />
       ))}
 

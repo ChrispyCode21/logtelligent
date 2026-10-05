@@ -8,6 +8,7 @@ import {
   type ExerciseSession,
   type Suggestion,
 } from '../engine'
+import type { EffortScale } from '../program/effort'
 import { rpeRequired } from '../session/sets'
 import type { ExerciseLog } from '../storage/db'
 import {
@@ -34,9 +35,10 @@ interface Props {
   /** Finished history for this exercise. */
   history: ExerciseSession[]
   suggestion: Suggestion
+  effortScale: EffortScale
 }
 
-export function ExerciseLogger({ sessionId, config, log, history, suggestion }: Props) {
+export function ExerciseLogger({ sessionId, config, log, history, suggestion, effortScale }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [replacing, setReplacing] = useState(false)
   const [substituteName, setSubstituteName] = useState('')
@@ -165,11 +167,12 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
         {header}
         {menu}
         <p className="muted">Volume only: not used for {config.name} estimates or progression.</p>
-        {sets.length > 0 && <p className="muted">Logged before replacing: {formatSets(sets)}</p>}
+        {sets.length > 0 && <p className="muted">Logged before replacing: {formatSets(sets, effortScale)}</p>}
         <SetEditor
           key="substitute"
           sets={substitute.sets}
           targetSets={config.sets}
+          effortScale={effortScale}
           rpeRequiredAt={() => false}
           step={(w, dir) => Math.max(0, (Number.isFinite(w) ? w : 0) + dir * SUBSTITUTE_STEP)}
           minWeight={0}
@@ -194,6 +197,7 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
         sets={sets}
         targetSets={targetSets}
         first={suggestion.kind === 'suggestion' ? suggestion : undefined}
+        effortScale={effortScale}
         rpeRequiredAt={(i) => rpeRequired(config.tier, i)}
         step={(w, dir) =>
           loads.length === 0 ? undefined : dir === 1 ? stepUp(w, loads) : stepDown(w, loads)

@@ -83,15 +83,16 @@ export function HistoryView({ program, sessions }: Props) {
                     <p>
                       <span className="muted">Replaced with </span>
                       {entry.substitute.name}
-                      {entry.substitute.sets.length > 0 && `: ${formatSets(entry.substitute.sets)}`}
+                      {entry.substitute.sets.length > 0 &&
+                        `: ${formatSets(entry.substitute.sets, program.effortScale)}`}
                     </p>
                     {entry.sets.length > 0 && (
-                      <p className="muted">Before replacing: {formatSets(entry.sets)}</p>
+                      <p className="muted">Before replacing: {formatSets(entry.sets, program.effortScale)}</p>
                     )}
                   </>
                 ) : (
                   <p>
-                    {formatSets(entry.sets)}
+                    {formatSets(entry.sets, program.effortScale)}
                     {exercise.unilateral && <span className="muted"> (per side)</span>}
                   </p>
                 )}

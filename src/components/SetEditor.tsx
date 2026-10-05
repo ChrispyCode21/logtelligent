@@ -1,10 +1,11 @@
 import { useState, type ReactNode } from 'react'
 import type { LoggedSet } from '../engine'
+import type { EffortScale } from '../program/effort'
 import { addSet, removeSet, updateSet } from '../session/sets'
 import { Button } from '../ui/Button'
 import { Field } from '../ui/Field'
 import { formatSet } from '../ui/format'
-import { RpePicker } from './RpePicker'
+import { EffortPicker } from './EffortPicker'
 
 interface Form {
   weight: string
@@ -25,6 +26,7 @@ interface Props {
   targetSets: number
   /** Pre-fill for the first set, usually the suggestion. */
   first?: { weight: number; reps: number }
+  effortScale: EffortScale
   rpeRequiredAt: (index: number) => boolean
   /** The next weight up or down from `weight`, if any. */
   step: (weight: number, direction: 1 | -1) => number | undefined
@@ -42,6 +44,7 @@ export function SetEditor({
   sets,
   targetSets,
   first,
+  effortScale,
   rpeRequiredAt,
   step,
   minWeight,
@@ -106,7 +109,7 @@ export function SetEditor({
             <li key={i}>
               <Button className="set-row" aria-current={editing === i} onClick={() => startEdit(i)}>
                 <span>Set {i + 1}</span>
-                <span>{formatSet(set)}</span>
+                <span>{formatSet(set, effortScale)}</span>
               </Button>
             </li>
           ))}
@@ -156,7 +159,12 @@ export function SetEditor({
             </div>
           </Field>
 
-          <RpePicker value={form.rpe} required={required} onChange={(rpe) => setForm({ ...form, rpe })} />
+          <EffortPicker
+            scale={effortScale}
+            value={form.rpe}
+            required={required}
+            onChange={(rpe) => setForm({ ...form, rpe })}
+          />
 
           <div className="actions">
             <Button type="submit" variant="primary" disabled={!valid}>
