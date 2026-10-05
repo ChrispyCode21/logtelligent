@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is scoped** (§9.2, decided 2026-10-04; slice 0 added 2026-10-05); not yet built.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is being built** (§9.2, decided 2026-10-04; slice 0 added 2026-10-05): slices 0 and 1 are built.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -425,11 +425,17 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
      - `EffortPicker` uses the `Field` primitive.
      - The pressed-button style and the duplicate list-button styles are each defined once.
 
-**Slice 1: Edit finished sessions (Decided; resolves §10 #2).**
+**Slice 1: Edit finished sessions (Decided; resolves §10 #2; built).**
 - **Any finished session** can be edited, however old. Progression state is derived by replaying history (ARCHITECTURE.md), so an edit recomputes everything after it, and no cut-off is needed.
 - **What can change:** a set's weight, reps and effort; **delete a set**; **delete the whole session** (with a confirm). Adding sets, and undoing a replace or skip, stay closed once a session is finished.
 - **Same rules as during a session:** one working weight per exercise; set 1 of a primary keeps its effort. Deleting every set of an exercise makes it "not done" for that session (no fail, no stack), as with a skip (§5.2).
 - **Deleting a session** removes it entirely; the rotation then continues from the session before it (§5.1).
+- **Where (Decided 2026-10-05):** each History row has an **Edit** button that opens that whole session for editing: every exercise in it, with the same set list and set form as a live session. There's no form for a new set, no ⋯ menu, no warm-up banner and no Finish. **Done** closes it. Each change saves as it's made, as during a session. Validation messages are judged against the history before that session (§9.2 slice 0, group 1).
+- **Deleting a session (Decided 2026-10-05):** from the editor, after a confirm that names the day and date and says every exercise's sets in it are deleted, not just the one whose History row was tapped.
+- **Deleting set 1 of a primary (Decided 2026-10-05):** if the set that would become set 1 has no effort, the delete asks for one. That set opens in the form with effort required, and the delete and the effort are saved together; Cancel keeps set 1. The same applies during a live session, since it shares the set editor; before this, Finish was silently disabled instead.
+- **An emptied session (Decided 2026-10-05):** a finished session whose sets are all deleted, but which is kept, still counts as that day's session for the rotation (§5.1). Only deleting the session moves the rotation back. **Deleting the last set (Decided 2026-10-05):** an emptied session drops out of History, so deleting the last set in a finished session asks whether to delete the whole session; No keeps it, empty, as above.
+- **Outcome messages (Decided 2026-10-05):** a finished session shows each exercise's validation message whenever it has sets, not only when all its target sets are in, since the replay judged it however many there were.
+- **Set counts in a past session (Decided 2026-10-05):** an exercise's header shows the sets logged ("3 sets"), not "3 of 4 sets". The prescribed count isn't stored per session, and today's program may differ from what was prescribed then. A live session keeps "n of m".
 
 **Slice 2: Add a set on the fly (Decided).**
 - Once the configured (or deload) number of sets is logged, an exercise offers **+ Add set**, for originals and substitutes alike.
@@ -469,3 +475,4 @@ Flagged to revisit after real use (not blocking):
 - ~~**Add a set on the fly**~~ — **scoped for v1.2.0** (§9.2 slice 2).
 - ~~**Session notes**~~ — **scoped for v1.2.0** (§9.2 slice 3). Still parked: sending notes to an LLM for evaluation (v2/v3; needs a CSP change and breaks "data never leaves the device").
 - **Keep history for same-named lifts when a template replaces a program:** today a template creates new exercises, so an existing Bench Press starts fresh and its history stays under "Archived" (§9.1 slice 3). Matching by name could carry history and starting numbers over.
+- **Store each session's prescription:** a session stores only the sets logged, so History can't show "3 of 3" for a week when 3 were prescribed, and the progression replay judges old sessions with today's settings (rep range, set count). Saving each exercise's prescription when a session starts would fix both (a stored-data change). Raised while building §9.2 slice 1.

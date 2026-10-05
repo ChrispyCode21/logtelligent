@@ -4,10 +4,12 @@ import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
 import { historyGroups } from '../history/picker'
 import { exerciseHistory } from '../history/sessions'
+import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
 import { formatDate, formatE1rm, formatSets } from '../ui/format'
 import { E1rmChart } from './E1rmChart'
+import { SessionView } from './SessionView'
 
 interface Props {
   program: Program
@@ -18,7 +20,21 @@ export function HistoryView({ program, sessions }: Props) {
   const groups = historyGroups(program, sessions)
   const all = groups.flatMap((g) => g.exercises)
   const [selectedId, setSelectedId] = useState<string>()
+  const [editingId, setEditingId] = useState<number>()
   const exercise: ProgramExercise | undefined = all.find((e) => e.id === selectedId) ?? all[0]
+
+  // Editing a finished session opens it whole (SPEC §9.2, slice 1). Once it's deleted, the list is back.
+  const editing = sessions.find((s) => s.id === editingId)
+  if (editing) {
+    return (
+      <SessionView
+        session={editing}
+        program={program}
+        sessions={sessions}
+        onClose={() => setEditingId(undefined)}
+      />
+    )
+  }
 
   if (!exercise) {
     return (
@@ -68,6 +84,13 @@ export function HistoryView({ program, sessions }: Props) {
                   <strong>{formatDate(entry.date)}</strong>
                   {entry.isDeload && <span className="tag">Deload</span>}
                   {entry.e1rm !== undefined && <span className="muted">e1RM {formatE1rm(entry.e1rm)}</span>}
+                  <Button
+                    className="history-edit"
+                    aria-label={`Edit the session on ${formatDate(entry.date)}`}
+                    onClick={() => setEditingId(entry.sessionId)}
+                  >
+                    Edit
+                  </Button>
                 </div>
                 {entry.substitute ? (
                   <>

@@ -1,0 +1,76 @@
+import { describe, expect, it } from 'vitest'
+import type { LoggedSet } from '../engine'
+import type { Program } from '../program/types'
+import { sessionExercises } from './context'
+import type { Session } from './types'
+
+const program: Program = {
+  id: 'main',
+  effortScale: 'rpe',
+  days: [
+    {
+      id: 'upper-a',
+      name: 'Upper A',
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench Press',
+          tier: 'primary',
+          repRange: { min: 3, max: 5 },
+          targetRpe: 8,
+          sets: 3,
+          equipment: 'barbell',
+          maxRelativeJump: 0.1,
+          unilateral: false,
+          seed: { weight: 225, reps: 5 },
+        },
+      ],
+    },
+  ],
+}
+
+const sets = (weight: number, reps: number[]): LoggedSet[] =>
+  reps.map((r, i) => (i === 0 ? { weight, reps: r, rpe: 8 } : { weight, reps: r }))
+
+const session = (id: number, day: number, logged: LoggedSet[], finished = true): Session => {
+  const startedAt = `2026-09-${String(day).padStart(2, '0')}T10:00:00.000Z`
+  return {
+    id,
+    dayId: 'upper-a',
+    startedAt,
+    finishedAt: finished ? startedAt : undefined,
+    exercises: [{ exerciseId: 'bench', sets: logged }],
+  }
+}
+
+const first = session(1, 1, sets(225, [5, 4, 4]))
+const middle = session(2, 8, sets(230, [5, 4, 3]))
+const last = session(3, 15, sets(235, [4, 4, 3]))
+const now = new Date('2026-10-05T10:00:00.000Z')
+
+describe('the exercises of a session and what they are judged against (SPEC §9.2, slice 1)', () => {
+  it('judges a live session against every finished session', () => {
+    const live = session(4, 22, [], false)
+    const [bench] = sessionExercises(live, program, [first, middle, last, live], now)
+    expect(bench.history.map((h) => h.sessionId)).toEqual([1, 2, 3])
+  })
+
+  it('judges a finished session only against the sessions before it, not itself or later ones', () => {
+    const [bench] = sessionExercises(middle, program, [first, middle, last], now)
+    expect(bench.history.map((h) => h.sessionId)).toEqual([1])
+  })
+
+  it("suggests what applied when a finished session started, not today's numbers", () => {
+    const [then] = sessionExercises(middle, program, [first, middle, last], now)
+    const [today] = sessionExercises(session(4, 22, [], false), program, [first, middle, last], now)
+    expect(then.suggestion).not.toEqual(today.suggestion)
+    expect(then.suggestion).toEqual(
+      sessionExercises(session(5, 8, [], false), program, [first], new Date(middle.startedAt))[0].suggestion,
+    )
+  })
+
+  it('leaves out exercises no longer in the program', () => {
+    const gone = { ...middle, exercises: [...middle.exercises, { exerciseId: 'deleted', sets: [] }] }
+    expect(sessionExercises(gone, program, [first, gone], now).map((e) => e.config.id)).toEqual(['bench'])
+  })
+})

@@ -9,7 +9,7 @@ import {
   type Suggestion,
 } from '../engine'
 import type { EffortScale } from '../program/effort'
-import { allSetsLogged, rpeRequired, targetSets } from '../session/sets'
+import { allSetsLogged, rpeRequired, showsOutcome, targetSets } from '../session/sets'
 import type { ExerciseLog } from '../session/types'
 import {
   replaceExercise,
@@ -36,9 +36,22 @@ interface Props {
   history: ExerciseSession[]
   suggestion: Suggestion
   effortScale: EffortScale
+  /** Editing a finished session: logged sets only, no new sets and no menu (SPEC §9.2, slice 1). */
+  finished?: boolean
+  /** After sets are saved, with the log as it now is. */
+  onLogSaved?: (log: ExerciseLog) => void
 }
 
-export function ExerciseLogger({ sessionId, config, log, history, suggestion, effortScale }: Props) {
+export function ExerciseLogger({
+  sessionId,
+  config,
+  log,
+  history,
+  suggestion,
+  effortScale,
+  finished = false,
+  onLogSaved,
+}: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [replacing, setReplacing] = useState(false)
   const [substituteName, setSubstituteName] = useState('')
@@ -87,25 +100,31 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion, ef
         {substitute ? (
           <span className="muted"> → {substitute.name}</span>
         ) : log.skipped ? (
-          <span className="muted"> · skipped today</span>
+          <span className="muted">{finished ? ' · skipped' : ' · skipped today'}</span>
         ) : (
+          // A past session shows only what was logged: what was prescribed then isn't stored (SPEC §9.2, slice 1).
           <span className="muted">
             {' '}
-            · {sets.length} of {target} sets
+            ·{' '}
+            {finished
+              ? `${sets.length} set${sets.length === 1 ? '' : 's'}`
+              : `${sets.length} of ${target} sets`}
           </span>
         )}
         {!substitute && !log.skipped && suggestion.kind === 'suggestion' && suggestion.plan === 'deload' && (
           <span className="tag">Deload</span>
         )}
       </h2>
-      <Button
-        className="menu-button"
-        aria-label={`Options for ${config.name}`}
-        aria-expanded={menuOpen}
-        onClick={() => (menuOpen ? closeMenu() : setMenuOpen(true))}
-      >
-        ⋯
-      </Button>
+      {!finished && (
+        <Button
+          className="menu-button"
+          aria-label={`Options for ${config.name}`}
+          aria-expanded={menuOpen}
+          onClick={() => (menuOpen ? closeMenu() : setMenuOpen(true))}
+        >
+          ⋯
+        </Button>
+      )}
     </div>
   )
 
@@ -170,22 +189,25 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion, ef
         <SetEditor
           key="substitute"
           sets={substitute.sets}
-          canAdd={!allSetsLogged(substitute.sets, target)}
+          canAdd={!finished && !allSetsLogged(substitute.sets, target)}
           effortScale={effortScale}
           rpeRequiredAt={() => false}
           step={(w, dir) => Math.max(0, (Number.isFinite(w) ? w : 0) + dir * SUBSTITUTE_STEP)}
           allowZeroWeight
           weightLabel="Weight (lb)"
           repsLabel={<>Reps{config.unilateral && <span className="muted"> · per side</span>}</>}
-          onSave={(next) => saveSubstituteSets(sessionId, config.id, next)}
+          onSave={async (next) => {
+            await saveSubstituteSets(sessionId, config.id, next)
+            onLogSaved?.({ ...log, substitute: { ...substitute, sets: next } })
+          }}
         />
       </Card>
     )
   }
 
   const loads = availableLoads(config)
-  // Validation runs once the last set is entered (SPEC §5.2, §6.6).
-  const outcome = allSetsLogged(sets, target) ? evaluateSession(config, history, sets) : undefined
+  // Validation runs once the last set is entered; a finished session always shows its outcome (SPEC §5.2, §6.6, §9.2).
+  const outcome = showsOutcome(finished, sets, target) ? evaluateSession(config, history, sets) : undefined
 
   return (
     <Card>
@@ -194,7 +216,7 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion, ef
       <SetEditor
         key="original"
         sets={sets}
-        canAdd={!allSetsLogged(sets, target)}
+        canAdd={!finished && !allSetsLogged(sets, target)}
         first={suggestion.kind === 'suggestion' ? suggestion : undefined}
         effortScale={effortScale}
         rpeRequiredAt={(i) => rpeRequired(config.tier, i)}
@@ -217,7 +239,10 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion, ef
             </p>
           )
         }
-        onSave={(next) => saveSets(sessionId, config.id, next)}
+        onSave={async (next) => {
+          await saveSets(sessionId, config.id, next)
+          onLogSaved?.({ ...log, sets: next })
+        }}
       />
     </Card>
   )

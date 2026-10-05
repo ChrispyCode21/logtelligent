@@ -4,10 +4,14 @@ import {
   addSet,
   allSetsLogged,
   canFinish,
+  hasAnySets,
   hasRequiredEffort,
   loggedSets,
+  removalNeedsEffort,
+  removeFirstSet,
   removeSet,
   setTally,
+  showsOutcome,
   targetSets,
   updateSet,
 } from './sets'
@@ -78,6 +82,69 @@ describe("a primary's first-set effort (SPEC §6.3)", () => {
 
   it('is not needed with no sets', () => {
     expect(hasRequiredEffort('primary', [])).toBe(true)
+  })
+})
+
+describe('editing a finished session (SPEC §9.2, slice 1)', () => {
+  it('knows when no set is left in a session, counting substitutes', () => {
+    expect(hasAnySets([bench(), { ...bench(), exerciseId: 'curl' }])).toBe(false)
+    expect(hasAnySets([bench(), { ...bench(), substitute: { name: 'Machine press', sets: [set] } }])).toBe(
+      true,
+    )
+    expect(hasAnySets([bench([set])])).toBe(true)
+  })
+
+  it('shows a finished exercise its outcome whenever it has sets; a live one once all are in', () => {
+    expect(showsOutcome(true, [set], 3)).toBe(true)
+    expect(showsOutcome(true, [], 3)).toBe(false)
+    expect(showsOutcome(false, [set], 3)).toBe(false)
+    expect(showsOutcome(false, [set, set, set], 3)).toBe(true)
+  })
+})
+
+describe('deleting set 1 (SPEC §9.2, slice 1)', () => {
+  const primary = (i: number) => i === 0
+  const accessory = () => false
+
+  it('asks for an effort when set 2 would become set 1 without one', () => {
+    expect(removalNeedsEffort([{ ...set, rpe: 8 }, set], 0, primary)).toBe(true)
+  })
+
+  it('does not ask when set 2 has an effort, when it is the only set, for accessories, or for later sets', () => {
+    expect(
+      removalNeedsEffort(
+        [
+          { ...set, rpe: 8 },
+          { ...set, rpe: 9 },
+        ],
+        0,
+        primary,
+      ),
+    ).toBe(false)
+    expect(removalNeedsEffort([{ ...set, rpe: 8 }], 0, primary)).toBe(false)
+    expect(removalNeedsEffort([set, set], 0, accessory)).toBe(false)
+    expect(removalNeedsEffort([{ ...set, rpe: 8 }, set, set], 1, primary)).toBe(false)
+  })
+
+  it('never asks when deleting a later set, even if set 1 has no effort (an exercise that was an accessory)', () => {
+    expect(removalNeedsEffort([set, set, set], 1, primary)).toBe(false)
+    expect(removalNeedsEffort([set, set, set], 2, primary)).toBe(false)
+  })
+
+  it('saves the delete and the new set 1 together, at one working weight', () => {
+    expect(
+      removeFirstSet(
+        [
+          { weight: 225, reps: 5, rpe: 8 },
+          { weight: 225, reps: 4 },
+          { weight: 225, reps: 3 },
+        ],
+        { weight: 220, reps: 4, rpe: 9 },
+      ),
+    ).toEqual([
+      { weight: 220, reps: 4, rpe: 9 },
+      { weight: 220, reps: 3 },
+    ])
   })
 })
 

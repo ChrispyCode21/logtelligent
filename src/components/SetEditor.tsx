@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import type { LoggedSet } from '../engine'
 import type { EffortScale } from '../program/effort'
 import { formFromSet, parseSetForm, prefill, type SetForm } from '../session/setForm'
-import { addSet, removeSet, updateSet } from '../session/sets'
+import { addSet, removalNeedsEffort, removeFirstSet, removeSet, updateSet } from '../session/sets'
 import { Button } from '../ui/Button'
 import { Field } from '../ui/Field'
 import { formatSet } from '../ui/format'
@@ -42,8 +42,10 @@ export function SetEditor({
 }: Props) {
   const [form, setForm] = useState<SetForm>(() => prefill(sets, first))
   const [editing, setEditing] = useState<number | null>(null)
+  // Deleting set 1 when set 2 has no effort: the form shows set 2, which needs one (SPEC §9.2, slice 1).
+  const [replacingFirst, setReplacingFirst] = useState(false)
 
-  const formIndex = editing ?? sets.length
+  const formIndex = replacingFirst ? 0 : (editing ?? sets.length)
   // Logged sets stay editable after the last one is entered.
   const showForm = editing !== null || canAdd
   const required = rpeRequiredAt(formIndex)
@@ -61,24 +63,43 @@ export function SetEditor({
   async function save(nextSets: LoggedSet[]) {
     await onSave(nextSets)
     setEditing(null)
+    setReplacingFirst(false)
     setForm(prefill(nextSets, first))
   }
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!parsed) return
-    void save(editing === null ? addSet(sets, parsed) : updateSet(sets, editing, parsed))
+    if (replacingFirst) void save(removeFirstSet(sets, parsed))
+    else void save(editing === null ? addSet(sets, parsed) : updateSet(sets, editing, parsed))
+  }
+
+  function deleteSet(index: number) {
+    if (!removalNeedsEffort(sets, index, rpeRequiredAt)) {
+      void save(removeSet(sets, index))
+      return
+    }
+    setReplacingFirst(true)
+    setForm(formFromSet(sets[1]))
   }
 
   function startEdit(index: number) {
     setEditing(index)
+    setReplacingFirst(false)
     setForm(formFromSet(sets[index]))
   }
 
   function cancelEdit() {
     setEditing(null)
+    setReplacingFirst(false)
     setForm(prefill(sets, first))
   }
+
+  const heading = replacingFirst
+    ? 'Set 2 becomes set 1: add its effort'
+    : editing === null
+      ? `Set ${formIndex + 1}`
+      : `Editing set ${editing + 1}`
 
   return (
     <>
@@ -86,7 +107,11 @@ export function SetEditor({
         <ol className="set-list">
           {sets.map((set, i) => (
             <li key={i}>
-              <Button className="set-row" aria-current={editing === i} onClick={() => startEdit(i)}>
+              <Button
+                className="set-row"
+                aria-current={replacingFirst ? i === 1 : editing === i}
+                onClick={() => startEdit(i)}
+              >
                 <span>Set {i + 1}</span>
                 <span>{formatSet(set, effortScale)}</span>
               </Button>
@@ -97,7 +122,7 @@ export function SetEditor({
 
       {showForm && (
         <form className="set-form" onSubmit={submit}>
-          <h3>{editing === null ? `Set ${formIndex + 1}` : `Editing set ${editing + 1}`}</h3>
+          <h3>{heading}</h3>
 
           <Field
             label={
@@ -147,14 +172,16 @@ export function SetEditor({
 
           <div className="actions">
             <Button type="submit" variant="primary" disabled={!parsed}>
-              {editing === null ? 'Log set' : 'Save set'}
+              {replacingFirst ? 'Delete set 1' : editing === null ? 'Log set' : 'Save set'}
             </Button>
             {editing !== null && (
               <>
                 <Button onClick={cancelEdit}>Cancel</Button>
-                <Button variant="danger" onClick={() => void save(removeSet(sets, editing))}>
-                  Delete set
-                </Button>
+                {!replacingFirst && (
+                  <Button variant="danger" onClick={() => deleteSet(editing)}>
+                    Delete set
+                  </Button>
+                )}
               </>
             )}
           </div>

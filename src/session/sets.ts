@@ -16,6 +16,36 @@ export function removeSet(sets: LoggedSet[], index: number): LoggedSet[] {
   return sets.filter((_, i) => i !== index)
 }
 
+/**
+ * Removing set 1 would leave a first set without the effort it needs, so the delete must ask for one
+ * (SPEC §9.2, slice 1). Removing a later set never asks, even if set 1 already lacks one (e.g. an
+ * exercise that was an accessory when it was logged).
+ */
+export function removalNeedsEffort(
+  sets: LoggedSet[],
+  index: number,
+  rpeRequiredAt: (index: number) => boolean,
+): boolean {
+  return index === 0 && sets.length > 1 && rpeRequiredAt(0) && sets[1].rpe === undefined
+}
+
+/** Remove set 1, saving the effort (and any other change) given for the set that takes its place. */
+export function removeFirstSet(sets: LoggedSet[], newFirst: LoggedSet): LoggedSet[] {
+  return updateSet(removeSet(sets, 0), 0, newFirst)
+}
+
+/** Some set is logged in these logs, for the original exercise or a substitute. */
+export const hasAnySets = (logs: ExerciseLog[]) =>
+  logs.some((l) => l.sets.length > 0 || (l.substitute?.sets.length ?? 0) > 0)
+
+/**
+ * When an exercise's validation message shows. Live: once all of today's sets are in (SPEC §5.2,
+ * §6.6). Finished: whenever it has sets, since the replay judged it however many there were
+ * (SPEC §9.2, slice 1).
+ */
+export const showsOutcome = (finished: boolean, sets: LoggedSet[], target: number) =>
+  finished ? sets.length > 0 : allSetsLogged(sets, target)
+
 /** RPE is required on a primary lift's first set only (SPEC §6.3, §6.5). */
 export function rpeRequired(tier: Tier, index: number): boolean {
   return tier === 'primary' && index === 0
