@@ -1,0 +1,55 @@
+/* Design tokens. Components use these instead of raw values; one-off optical tweaks
+   (1px hairlines, 2px offsets, icon sizes) stay raw where they're used. */
+
+:root {
+  /* Color (light) */
+  --bg: #f6f6f4;
+  --surface: #ffffff;
+  --text: #1b1b1a;
+  --muted: #6b6b66;
+  --border: #d9d9d4;
+  --accent: #2f6fde;
+  --accent-text: #ffffff;
+  --danger: #c4372d;
+  --note-bg: #fff4d6;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 24px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  /* Size: minimum tap target, and the larger one for main actions and steppers */
+  --tap-target: 44px;
+  --tap-target-lg: 52px;
+
+  /* Type scale */
+  --text-xs: 0.8rem;
+  --text-sm: 0.85rem;
+  --text-base: 1rem;
+  --text-heading: 1.05rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.4rem;
+  --text-display: 2rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141414;
+    --surface: #1f1f1e;
+    --text: #ededea;
+    --muted: #9a9a94;
+    --border: #3a3a37;
+    --accent: #5b8ff0;
+    --danger: #ef6a5f;
+    --note-bg: #3a3220;
+  }
+}
