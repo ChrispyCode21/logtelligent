@@ -1,5 +1,6 @@
 import { EFFORT_SCALES, nearestOption, type EffortScale } from '../program/effort'
 import { Button } from '../ui/Button'
+import { Field } from '../ui/Field'
 
 interface Props {
   scale: EffortScale
@@ -15,10 +16,7 @@ export function EffortPicker({ scale, value, required, onChange }: Props) {
   // A stored value between this scale's buttons shows as the nearest one (e.g. 8.5 in Reps left).
   const selected = value === undefined ? undefined : nearestOption(scale, value).rpe
   return (
-    <fieldset className="effort">
-      <legend>
-        {question} {required ? '(required on set 1)' : '(optional)'}
-      </legend>
+    <Field as="fieldset" label={`${question} ${required ? '(required on set 1)' : '(optional)'}`}>
       <div className={`effort-buttons ${scale}`}>
         {options.map(({ rpe, label }) => (
           <Button
@@ -31,6 +29,6 @@ export function EffortPicker({ scale, value, required, onChange }: Props) {
           </Button>
         ))}
       </div>
-    </fieldset>
+    </Field>
   )
 }

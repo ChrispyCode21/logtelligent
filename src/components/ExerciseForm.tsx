@@ -14,15 +14,10 @@ import type { ProgramExercise } from '../program/types'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
+import { EQUIPMENT_LABELS, TIER_LABELS } from '../ui/format'
 import { SeedFields } from './SeedFields'
 
-const EQUIPMENT: { value: EquipmentType; label: string }[] = [
-  { value: 'barbell', label: 'Barbell' },
-  { value: 'dumbbell', label: 'Dumbbell' },
-  { value: 'cable', label: 'Cable' },
-  { value: 'machine', label: 'Machine' },
-  { value: 'bodyweight', label: 'Bodyweight' },
-]
+const EQUIPMENT = Object.entries(EQUIPMENT_LABELS) as [EquipmentType, string][]
 const TARGET_LABEL: Record<EffortScale, string> = {
   rpe: 'Target RPE on the first set',
   repsLeft: 'Target reps left on the first set',
@@ -78,7 +73,7 @@ export function ExerciseForm({ initial, preset, effortScale, onSave, onCancel }:
               aria-pressed={form.tier === tier}
               onClick={() => setForm(withTier(form, tier))}
             >
-              {tier === 'primary' ? 'Primary' : 'Accessory'}
+              {TIER_LABELS[tier]}
             </Button>
           ))}
         </div>
@@ -115,9 +110,10 @@ export function ExerciseForm({ initial, preset, effortScale, onSave, onCancel }:
 
       <Field label="Equipment">
         <select value={form.equipment} onChange={(e) => set('equipment', e.target.value as EquipmentType)}>
-          {EQUIPMENT.filter((o) => !(primary && o.value === 'bodyweight')).map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
+          {/* Bodyweight is accessory-only (SPEC §6.1). */}
+          {EQUIPMENT.filter(([value]) => !(primary && value === 'bodyweight')).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
             </option>
           ))}
         </select>
