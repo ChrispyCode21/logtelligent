@@ -47,7 +47,7 @@ export default function App() {
           onEditProgram={() => setTab('program')}
         />
       )}
-      {tab === 'history' && <HistoryView program={data.program} sessions={data.sessions} />}
+      {tab === 'history' && <HistoryView program={data.program} sessions={data.sessions} asOf={data.asOf} />}
       {tab === 'program' && (
         <ProgramView
           program={data.program}

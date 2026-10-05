@@ -1,12 +1,13 @@
-import { availableLoads, suggestNext } from '../engine'
+import { availableLoads } from '../engine'
 import { findExercise } from '../program/program'
 import type { Program } from '../program/types'
+import { sessionExercises } from '../session/context'
 import { canFinish, setTally, targetSets } from '../session/sets'
 import { warmupText } from '../session/warmup'
 import type { Session } from '../session/types'
-import { exerciseHistory } from '../history/sessions'
 import { discardSession, dismissWarmup, finishSession } from '../storage/sessions'
 import { Button } from '../ui/Button'
+import { formatDate } from '../ui/format'
 import { ExerciseLogger } from './ExerciseLogger'
 
 interface Props {
@@ -14,16 +15,15 @@ interface Props {
   program: Program
   sessions: Session[]
   asOf: Date
+  /** Leave the editor of a finished session (SPEC §9.2, slice 1). */
+  onClose?: () => void
 }
 
-export function SessionView({ session, program, sessions, asOf }: Props) {
+/** A live session, or a finished one being edited. */
+export function SessionView({ session, program, sessions, asOf, onClose }: Props) {
+  const finished = session.finishedAt !== undefined
   const dayName = program.days.find((d) => d.id === session.dayId)?.name ?? 'Session'
-  const exercises = session.exercises.flatMap((log) => {
-    const config = findExercise(program, log.exerciseId)
-    if (!config) return []
-    const history = exerciseHistory(sessions, config.id)
-    return [{ log, config, history, suggestion: suggestNext(config, history, asOf) }]
-  })
+  const exercises = sessionExercises(session, program, sessions, asOf)
 
   const { logged, target } = setTally(
     exercises.map((e) => ({ log: e.log, target: targetSets(e.log, e.config.sets, e.suggestion) })),
@@ -33,7 +33,7 @@ export function SessionView({ session, program, sessions, asOf }: Props) {
   // Warm-up ramps to the first exercise still being done as planned (SPEC §5.2).
   const first = exercises.find((e) => !e.log.skipped && !e.log.substitute)
   const warmup =
-    first && first.suggestion.kind === 'suggestion'
+    !finished && first && first.suggestion.kind === 'suggestion'
       ? warmupText(first.config.name, first.suggestion.weight, availableLoads(first.config))
       : undefined
 
@@ -49,9 +49,16 @@ export function SessionView({ session, program, sessions, asOf }: Props) {
     }
   }
 
+  async function deleteFinished() {
+    const message = `Delete ${dayName} on ${formatDate(session.startedAt)}? The sets logged for every exercise in it will be deleted, not just this one.`
+    if (!confirm(message)) return
+    await discardSession(session.id)
+    onClose?.()
+  }
+
   return (
     <>
-      <h2 className="page-title">{dayName}</h2>
+      <h2 className="page-title">{finished ? `${dayName} · ${formatDate(session.startedAt)}` : dayName}</h2>
       {warmup && !session.warmupDismissed && (
         <div className="note warmup" role="note">
           <p>{warmup}</p>
@@ -69,15 +76,29 @@ export function SessionView({ session, program, sessions, asOf }: Props) {
           history={history}
           suggestion={suggestion}
           effortScale={program.effortScale}
+          finished={finished}
         />
       ))}
       <div className="actions">
-        <Button variant="primary" disabled={!finishable} onClick={finish}>
-          Finish session
-        </Button>
-        <Button variant="danger" onClick={discard}>
-          Discard
-        </Button>
+        {finished ? (
+          <>
+            <Button variant="primary" onClick={onClose}>
+              Done
+            </Button>
+            <Button variant="danger" onClick={() => void deleteFinished()}>
+              Delete session
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button variant="primary" disabled={!finishable} onClick={finish}>
+              Finish session
+            </Button>
+            <Button variant="danger" onClick={discard}>
+              Discard
+            </Button>
+          </>
+        )}
       </div>
     </>
   )

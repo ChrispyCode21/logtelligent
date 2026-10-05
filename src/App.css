@@ -476,8 +476,10 @@ fieldset.field legend {
   margin-left: 0;
 }
 
-.history-head .muted:last-child {
+/* Edit opens the whole session (SPEC §9.2, slice 1). */
+.history-edit {
   margin-left: auto;
+  padding: 0 var(--space-4);
 }
 
 /* Slice 5: exercise menu */
