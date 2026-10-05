@@ -371,9 +371,12 @@ Answers the three complaints from friends trying v1.0.0 (§11): RPE friction, ha
   | **RPE** | Today's picker, half steps 6–10 | as entered |
   | **Reps left** | "How many more reps could you have done?" 0 · 1 · 2 · 3 · 4+ | 10 · 9 · 8 · 7 · 6 |
   | **Perceived effort** | 5 labeled buttons: Easy · Moderate · Challenging · Very hard · Failed on the last rep | 6 · 7 · 8 · 9 · 10 |
-- Chosen during program setup, with a one-line explanation that it estimates 1-rep maxes, which drive suggested weights. Editable later on the Program tab.
+- Chosen during program setup, with a one-line explanation that it estimates 1-rep maxes, which drive suggested weights. Editable later on the Program tab. **Until slice 3 adds a setup flow (Decided):** a card at the top of the Program tab.
 - **Default for a new program: Reps left.** Existing programs (no stored value) and older backups mean **RPE**.
-- The mode also sets the wording of the target-effort field (§6.1 Target RPE), the seed prompt (§5.1), the RPE input in a session (§6.3), and how history shows a set. A stored value that doesn't match a mode's buttons (e.g. 8.5 in Reps left) is shown as the nearest label.
+- The mode also sets the wording of the target-effort field (§6.1 Target RPE), the seed prompt (§5.1, which mentions no RPE and so is unchanged), the RPE input in a session (§6.3), and how history shows a set.
+- **Showing a set (Decided):** RPE `225 × 4 @ 8` (as today); Reps left `225 × 4 · 2 left`; Perceived effort `225 × 4 · Challenging`.
+- **Values between a mode's buttons (Decided):** a stored value that doesn't match a mode's buttons (e.g. 8.5 in Reps left) is shown as the nearest label, **rounding toward harder** on a tie (8.5 → "1 left" / "Very hard"). Only the display rounds; the stored value is unchanged unless re-entered.
+- **Switching modes (Decided):** allowed at any time, including during a session. Nothing stored changes; the pickers and labels re-render in the new mode.
 - Storage change: a new `effortScale` field on the program. Needs the ARCHITECTURE.md checklist (Dexie version, backup validator, round-trip test). `FORMAT` stays 1, since a missing field means RPE.
 
 **Slice 2: Exercise bank (Decided).**
