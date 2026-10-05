@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { BANK, exerciseFromBank, findBankExercise } from './bank'
+import { BANK, exerciseFromBank } from './bank'
 import { EMPTY_PROGRAM, activeDays, missingSeeds } from './program'
-import { needsStack, seedPrefill, STACK_PRESETS } from './seeding'
 import { applyTemplate, TEMPLATES, templateDays } from './templates'
 import type { Program } from './types'
 
@@ -87,38 +86,5 @@ describe('program templates (SPEC §9.1, slice 3)', () => {
       ['Lower B', false],
     ])
     expect(program.effortScale).toBe('rpe')
-  })
-})
-
-describe('guided seeding', () => {
-  const fromBank = (name: string) => exerciseFromBank(findBankExercise(name)!)
-
-  it('finds a bank exercise by name, ignoring case and punctuation', () => {
-    expect(findBankExercise('bench press')?.id).toBe('bench-press')
-    expect(findBankExercise('Pull Up')?.id).toBe('pull-up')
-    expect(findBankExercise('Zercher Squat')).toBeUndefined()
-  })
-
-  it('pre-fills a primary with the bank weight and the top of its range', () => {
-    expect(seedPrefill(fromBank('Bench Press'))).toEqual({ weight: '95', reps: '7' })
-  })
-
-  it('pre-fills an accessory with the bank weight only', () => {
-    expect(seedPrefill(fromBank('Lateral Raise'))).toEqual({ weight: '10', reps: '' })
-  })
-
-  it('snaps the pre-filled weight onto the chosen stack', () => {
-    const tenLb = STACK_PRESETS.find((p) => p.id === '10')!.loads
-    expect(seedPrefill(fromBank('Face Pull'), tenLb).weight).toBe('20')
-  })
-
-  it('leaves exercises that are not in the bank blank', () => {
-    expect(seedPrefill({ ...fromBank('Bench Press'), name: 'Spoto Press' })).toEqual({ weight: '', reps: '' })
-  })
-
-  it('asks for a stack only for cable and machine exercises without one', () => {
-    expect(needsStack(fromBank('Lat Pulldown'))).toBe(true)
-    expect(needsStack({ ...fromBank('Lat Pulldown'), loads: [10, 20] })).toBe(false)
-    expect(needsStack(fromBank('Bench Press'))).toBe(false)
   })
 })

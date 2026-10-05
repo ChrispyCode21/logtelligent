@@ -414,7 +414,7 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
    - The backup validator fails to compile if a stored field is left out, so slices 2 and 3 can't silently drop their new fields on restore.
    - History rows carry their session id (slices 1 and 3).
 2. **Session rules in `src/session/`, with tests (built).** The set target (deload-halved for originals, configured for substitutes), the "Only X of Y" tally, set pre-fill (§5.2), set-form validation, and the "set 1 of a primary has effort" check, which slice 1 also needs since editing has no Finish step. These were inline in the session components.
-3. **One starting-numbers entry.** `ExerciseForm` and `SeedWalkthrough` share one seed-entry component and pure, tested seed and exercise-form helpers in `src/program/`.
+3. **One starting-numbers entry (built).** `ExerciseForm` and `SeedWalkthrough` share one seed-entry component and pure, tested seed and exercise-form helpers in `src/program/`.
    - Both show the §5.1 wording ("Enter a weight and reps you're confident you could do…"); the walkthrough's hint had drifted.
    - The exercise form's bank placeholder weight snaps onto the exercise's typed loads, as the walkthrough's pre-fill does. Otherwise the two flows keep their Decided differences: the form shows a placeholder, the walkthrough fills in a value (§9.1 slices 2 and 3), and stack quick picks stay walkthrough-only.
 4. **Fixes and CSS/format cleanup.**
