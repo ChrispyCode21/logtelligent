@@ -19,8 +19,9 @@ src/
     suggest.ts      suggestNext: the entry point the UI calls (SPEC §6.4 weight selection)
     rotation.ts     nextDay (SPEC §5.1)
   program/      Program model (days → exercises), pure editing functions (add, move, archive…) effort scales (effort.ts), the built-in exercise bank with search (bank.ts), program templates (templates.ts) and the seed walkthrough's pre-fill and stack presets (seeding.ts)
-  session/      Pure session helpers: set editing (one working weight), canFinish, warm-up ramp
-  history/      Pure view-model for the History tab (timeline of sessions with e1RM)
+  session/      Session types (types.ts) and pure session helpers: set editing (one working weight), canFinish, warm-up ramp
+  history/      Pure history helpers: stored sessions → engine history, optionally before a given session (sessions.ts);
+                the History tab's view-model, a timeline of sessions with e1RM (timeline.ts)
   storage/      Everything that touches IndexedDB: Dexie schema, reads, writes, backup/restore
   components/   React UI (see "UI" below)
   ui/           UI primitives (Button, Card, Field), and shared formatters (format.ts)
@@ -39,7 +40,7 @@ Tests sit next to the code (`*.test.ts`). Every SPEC §7 worked example is a tes
 ## Data flow
 
 1. **Read:** `App.tsx` runs one Dexie `useLiveQuery` that loads the program and all sessions. Dexie re-runs it (and React re-renders) whenever those tables change, so there's no client-side cache to keep in sync. The current time (`asOf`) is captured inside the query, which keeps renders pure.
-2. **Compute:** views call the engine with plain data: `suggestNext(config, history, asOf)` for suggestions, `evaluateSession(config, history, sets)` for the validation message. `storage/history.ts` maps stored sessions into the engine's `ExerciseSession[]` shape.
+2. **Compute:** views call the engine with plain data: `suggestNext(config, history, asOf)` for suggestions, `evaluateSession(config, history, sets)` for the validation message. `history/sessions.ts` maps stored sessions into the engine's `ExerciseSession[]` shape, keeping each one's session id. For a session that's already finished, pass it as `before` so it's judged only against the sessions that came before it.
 3. **Write:** components call functions in `storage/` (`saveSets`, `startSession`, `updateProgram`…). The live query picks up the change; nothing is pushed into React state by hand.
 
 ### Progression state is derived, never stored
@@ -70,7 +71,7 @@ Dexie wraps IndexedDB. Database `logtelligent`, schema in `storage/db.ts`:
 Any change to what's stored (a new field, table or shape) needs all of these, in one PR:
 
 1. **Dexie:** add a new `db.version(n)` (never edit an old one); add an `.upgrade()` if existing rows need transforming.
-2. **Backup validator:** update `storage/backup.ts`. It copies only known, validated fields, so **a new field that isn't added there is silently dropped on restore**. Add a round-trip test.
+2. **Backup validator:** update `storage/backup.ts`. It copies only known, validated fields, so **a new field that isn't added there is silently dropped on restore**. Each validator passes its type to `compact<T>`, which requires every field of `T`, so a field left out fails to compile. Validate it properly, then add a round-trip test.
 3. **Backup format:** if old backups can no longer be read as-is, bump `FORMAT` and teach `parseBackup` to read the older format.
 4. **SPEC.md:** record the decision.
 
