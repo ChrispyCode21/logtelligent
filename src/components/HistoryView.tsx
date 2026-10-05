@@ -3,6 +3,7 @@ import { exerciseTimeline } from '../history/timeline'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../storage/db'
 import { exerciseHasHistory, exerciseHistory } from '../storage/history'
+import { Card } from '../ui/Card'
 import { formatDate, formatE1rm, formatSets } from '../ui/format'
 import { E1rmChart } from './E1rmChart'
 
@@ -27,10 +28,10 @@ export function HistoryView({ program, sessions }: Props) {
 
   if (!exercise) {
     return (
-      <section className="card">
+      <Card>
         <h2>No exercises yet</h2>
         <p>History shows up here once your program has exercises.</p>
-      </section>
+      </Card>
     )
   }
 
@@ -65,13 +66,13 @@ export function HistoryView({ program, sessions }: Props) {
       ) : (
         <>
           {exercise.tier === 'primary' && points.length >= 2 && (
-            <section className="card">
+            <Card>
               <E1rmChart points={points} />
-            </section>
+            </Card>
           )}
           <ol className="history-list">
             {timeline.map((entry) => (
-              <li key={entry.date} className="card history-row">
+              <Card as="li" key={entry.date} className="history-row">
                 <div className="history-head">
                   <strong>{formatDate(entry.date)}</strong>
                   {entry.isDeload && <span className="tag">Deload</span>}
@@ -94,7 +95,7 @@ export function HistoryView({ program, sessions }: Props) {
                     {exercise.unilateral && <span className="muted"> (per side)</span>}
                   </p>
                 )}
-              </li>
+              </Card>
             ))}
           </ol>
         </>

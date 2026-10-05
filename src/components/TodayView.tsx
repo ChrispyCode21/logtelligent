@@ -6,6 +6,7 @@ import type { Session } from '../storage/db'
 import { exerciseHistory, lastLoggedDayId } from '../storage/history'
 import { startSession } from '../storage/sessions'
 import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
 import { SessionView } from './SessionView'
 import { SuggestionCard } from './SuggestionCard'
 
@@ -27,13 +28,13 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
   const days = activeDays(program).filter((d) => d.exercises.length > 0)
   if (days.length === 0) {
     return (
-      <section className="card">
+      <Card>
         <h2>No program yet</h2>
         <p>Add your training days and exercises to get started.</p>
         <Button variant="primary" block onClick={onEditProgram}>
           Set up program
         </Button>
-      </section>
+      </Card>
     )
   }
 
@@ -41,7 +42,7 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
   const unseeded = missingSeeds(program)
   if (unseeded.length > 0) {
     return (
-      <section className="card">
+      <Card>
         <h2>Starting numbers needed</h2>
         <p>
           {unseeded.map((e) => e.name).join(', ')} {unseeded.length === 1 ? 'needs' : 'need'} starting numbers
@@ -50,7 +51,7 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
         <Button variant="primary" block onClick={onEditProgram}>
           Finish setup
         </Button>
-      </section>
+      </Card>
     )
   }
 

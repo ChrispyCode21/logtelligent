@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { defaultLoads, type EquipmentType, type Tier } from '../engine'
 import type { ProgramExercise } from '../program/types'
 import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
 import { RPE_SCALE } from '../ui/rpe'
 
 const EQUIPMENT: { value: EquipmentType; label: string }[] = [
@@ -130,7 +131,7 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
   const repsWord = form.unilateral ? 'reps (per side)' : 'reps'
 
   return (
-    <form className="card exercise-form" onSubmit={submit}>
+    <Card as="form" className="exercise-form" onSubmit={submit}>
       <h3>{initial ? `Edit ${initial.name}` : 'New exercise'}</h3>
 
       <label className="field">
@@ -265,6 +266,6 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
         </Button>
         <Button onClick={onCancel}>Cancel</Button>
       </div>
-    </form>
+    </Card>
   )
 }

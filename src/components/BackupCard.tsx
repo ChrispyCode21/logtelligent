@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { exportBackup, parseBackup, restoreBackup } from '../storage/backup'
 import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
 import { formatDate } from '../ui/format'
 
 /** Export and restore all data as JSON (SPEC §2). Data never leaves the device otherwise. */
@@ -36,7 +37,7 @@ export function BackupCard() {
   }
 
   return (
-    <section className="card backup">
+    <Card className="backup">
       <h2>Backup</h2>
       <p className="muted">
         Your data lives only on this device. Export a backup now and then; restoring one replaces everything.
@@ -62,6 +63,6 @@ export function BackupCard() {
           {status}
         </p>
       )}
-    </section>
+    </Card>
   )
 }

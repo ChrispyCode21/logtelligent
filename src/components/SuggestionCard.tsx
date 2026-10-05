@@ -1,4 +1,5 @@
 import type { ExerciseConfig, PlanKind, Suggestion } from '../engine'
+import { Card } from '../ui/Card'
 import { formatE1rm, formatWeight } from '../ui/format'
 
 const BASIS_NOTES = {
@@ -24,10 +25,10 @@ interface Props {
 export function SuggestionCard({ config, suggestion, heading }: Props) {
   if (suggestion.kind === 'needsSeed') {
     return (
-      <section className="card">
+      <Card>
         <h2>{heading}</h2>
         <p>{config.name} needs starting numbers before you can start a session.</p>
-      </section>
+      </Card>
     )
   }
 
@@ -37,7 +38,7 @@ export function SuggestionCard({ config, suggestion, heading }: Props) {
   const max = suggestion.effectiveTop ?? config.repRange.max
 
   return (
-    <section className="card">
+    <Card>
       <h2>
         {heading}
         {suggestion.plan === 'deload' && <span className="tag">Deload</span>}
@@ -55,6 +56,6 @@ export function SuggestionCard({ config, suggestion, heading }: Props) {
       {suggestion.stacks > 0 && <p className="muted">Fatigue stacks: {suggestion.stacks} of 2</p>}
       {planNote && <p className="note">{planNote}</p>}
       {basisNote && <p className="note">{basisNote}</p>}
-    </section>
+    </Card>
   )
 }

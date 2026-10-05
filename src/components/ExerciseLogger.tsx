@@ -19,6 +19,7 @@ import {
   undoReplace,
 } from '../storage/sessions'
 import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
 import { formatSets } from '../ui/format'
 import { SetEditor } from './SetEditor'
 
@@ -151,16 +152,16 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
 
   if (log.skipped) {
     return (
-      <section className="card skipped">
+      <Card className="skipped">
         {header}
         {menu}
-      </section>
+      </Card>
     )
   }
 
   if (substitute) {
     return (
-      <section className="card">
+      <Card>
         {header}
         {menu}
         <p className="muted">Volume only: not used for {config.name} estimates or progression.</p>
@@ -176,7 +177,7 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
           repsLabel={<>Reps{config.unilateral && <span className="muted"> · per side</span>}</>}
           onSave={(next) => saveSubstituteSets(sessionId, config.id, next)}
         />
-      </section>
+      </Card>
     )
   }
 
@@ -185,7 +186,7 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
   const outcome = sets.length >= targetSets ? evaluateSession(config, history, sets) : undefined
 
   return (
-    <section className="card">
+    <Card>
       {header}
       {menu}
       <SetEditor
@@ -215,6 +216,6 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
         }
         onSave={(next) => saveSets(sessionId, config.id, next)}
       />
-    </section>
+    </Card>
   )
 }

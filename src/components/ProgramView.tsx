@@ -15,6 +15,7 @@ import type { Session } from '../storage/db'
 import { dayHasHistory, exerciseHasHistory } from '../storage/history'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
 import { BackupCard } from './BackupCard'
 import { ExerciseForm } from './ExerciseForm'
 
@@ -80,7 +81,7 @@ export function ProgramView({ program, sessions }: Props) {
       <p className="muted">Training days run in this order, then repeat.</p>
 
       {days.map((day, dayIndex) => (
-        <section key={day.id} className="card day">
+        <Card key={day.id} className="day">
           <div className="day-title">
             <input
               key={day.name}
@@ -170,10 +171,10 @@ export function ProgramView({ program, sessions }: Props) {
           ) : (
             <Button onClick={() => setEditing({ dayId: day.id })}>+ Add exercise</Button>
           )}
-        </section>
+        </Card>
       ))}
 
-      <form className="card add-day" onSubmit={submitDay}>
+      <Card as="form" className="add-day" onSubmit={submitDay}>
         <label className="field">
           <span>New training day</span>
           <input
@@ -185,7 +186,7 @@ export function ProgramView({ program, sessions }: Props) {
         <Button type="submit" disabled={!newDayName.trim()}>
           Add day
         </Button>
-      </form>
+      </Card>
 
       <BackupCard />
     </>
