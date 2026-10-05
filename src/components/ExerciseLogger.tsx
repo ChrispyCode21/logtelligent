@@ -9,7 +9,7 @@ import {
   type Suggestion,
 } from '../engine'
 import type { EffortScale } from '../program/effort'
-import { rpeRequired } from '../session/sets'
+import { allSetsLogged, rpeRequired, targetSets } from '../session/sets'
 import type { ExerciseLog } from '../session/types'
 import {
   replaceExercise,
@@ -43,8 +43,7 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion, ef
   const [replacing, setReplacing] = useState(false)
   const [substituteName, setSubstituteName] = useState('')
 
-  // The working-set count is fixed by config, halved in a deload (SPEC §6.2, §6.7).
-  const targetSets = suggestion.kind === 'suggestion' ? suggestion.sets : config.sets
+  const target = targetSets(log, config.sets, suggestion)
   const substitute = log.substitute
   const sets = log.sets
 
@@ -92,7 +91,7 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion, ef
         ) : (
           <span className="muted">
             {' '}
-            · {sets.length} of {targetSets} sets
+            · {sets.length} of {target} sets
           </span>
         )}
         {!substitute && !log.skipped && suggestion.kind === 'suggestion' && suggestion.plan === 'deload' && (
@@ -171,11 +170,11 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion, ef
         <SetEditor
           key="substitute"
           sets={substitute.sets}
-          targetSets={config.sets}
+          canAdd={!allSetsLogged(substitute.sets, target)}
           effortScale={effortScale}
           rpeRequiredAt={() => false}
           step={(w, dir) => Math.max(0, (Number.isFinite(w) ? w : 0) + dir * SUBSTITUTE_STEP)}
-          minWeight={0}
+          allowZeroWeight
           weightLabel="Weight (lb)"
           repsLabel={<>Reps{config.unilateral && <span className="muted"> · per side</span>}</>}
           onSave={(next) => saveSubstituteSets(sessionId, config.id, next)}
@@ -186,7 +185,7 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion, ef
 
   const loads = availableLoads(config)
   // Validation runs once the last set is entered (SPEC §5.2, §6.6).
-  const outcome = sets.length >= targetSets ? evaluateSession(config, history, sets) : undefined
+  const outcome = allSetsLogged(sets, target) ? evaluateSession(config, history, sets) : undefined
 
   return (
     <Card>
@@ -195,7 +194,7 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion, ef
       <SetEditor
         key="original"
         sets={sets}
-        targetSets={targetSets}
+        canAdd={!allSetsLogged(sets, target)}
         first={suggestion.kind === 'suggestion' ? suggestion : undefined}
         effortScale={effortScale}
         rpeRequiredAt={(i) => rpeRequired(config.tier, i)}
@@ -203,7 +202,7 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion, ef
           loads.length === 0 ? undefined : dir === 1 ? stepUp(w, loads) : stepDown(w, loads)
         }
         // Bodyweight loads are added weight, so 0 is valid there (SPEC §6.1).
-        minWeight={config.equipment === 'bodyweight' ? 0 : Number.MIN_VALUE}
+        allowZeroWeight={config.equipment === 'bodyweight'}
         weightLabel={
           <>
             {config.equipment === 'bodyweight' ? 'Added weight (lb)' : 'Weight (lb)'}

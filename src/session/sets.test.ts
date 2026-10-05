@@ -1,5 +1,85 @@
 import { describe, expect, it } from 'vitest'
-import { addSet, canFinish, loggedSets, removeSet, updateSet } from './sets'
+import type { Suggestion } from '../engine'
+import {
+  addSet,
+  allSetsLogged,
+  canFinish,
+  hasRequiredEffort,
+  loggedSets,
+  removeSet,
+  setTally,
+  targetSets,
+  updateSet,
+} from './sets'
+import type { ExerciseLog } from './types'
+
+const suggestion = (sets: number, plan: 'normal' | 'deload' = 'normal'): Suggestion => ({
+  kind: 'suggestion',
+  plan,
+  weight: 225,
+  reps: 5,
+  sets,
+  stacks: 0,
+})
+const bench = (sets: ExerciseLog['sets'] = []): ExerciseLog => ({ exerciseId: 'bench', sets })
+const set = { weight: 225, reps: 5 }
+
+describe('how many sets an exercise wants today', () => {
+  it('is the suggestion count, which a deload halves (SPEC §6.2, §6.7)', () => {
+    expect(targetSets(bench(), 3, suggestion(3))).toBe(3)
+    expect(targetSets(bench(), 4, suggestion(2, 'deload'))).toBe(2)
+  })
+
+  it('is the configured count for a substitute, deload or not (SPEC §5.2)', () => {
+    const replaced = { ...bench(), substitute: { name: 'Machine press', sets: [] } }
+    expect(targetSets(replaced, 4, suggestion(2, 'deload'))).toBe(4)
+  })
+
+  it('is the configured count without a suggestion', () => {
+    expect(targetSets(bench(), 3, { kind: 'needsSeed' })).toBe(3)
+  })
+
+  it('is all logged once the count is reached (SPEC §5.2, §6.6)', () => {
+    expect(allSetsLogged([set, set], 3)).toBe(false)
+    expect(allSetsLogged([set, set, set], 3)).toBe(true)
+  })
+})
+
+describe('the session tally, "Only X of Y sets logged" (SPEC §5.2)', () => {
+  it('adds logged and wanted sets across exercises', () => {
+    expect(
+      setTally([
+        { log: bench([set, set]), target: 3 },
+        { log: { exerciseId: 'curl', sets: [set] }, target: 2 },
+      ]),
+    ).toEqual({ logged: 3, target: 5 })
+  })
+
+  it('leaves skipped exercises out of both, and counts a substitute by its own sets', () => {
+    expect(
+      setTally([
+        { log: { ...bench([set]), skipped: true }, target: 3 },
+        { log: { ...bench([set, set]), substitute: { name: 'Machine press', sets: [set] } }, target: 3 },
+      ]),
+    ).toEqual({ logged: 1, target: 3 })
+  })
+})
+
+describe("a primary's first-set effort (SPEC §6.3)", () => {
+  it('is needed on a primary, not on an accessory', () => {
+    expect(hasRequiredEffort('primary', [set])).toBe(false)
+    expect(hasRequiredEffort('primary', [{ ...set, rpe: 8 }, set])).toBe(true)
+    expect(hasRequiredEffort('accessory', [set])).toBe(true)
+  })
+
+  it('goes missing when set 1 is deleted and set 2 has none', () => {
+    expect(hasRequiredEffort('primary', removeSet([{ ...set, rpe: 8 }, set], 0))).toBe(false)
+  })
+
+  it('is not needed with no sets', () => {
+    expect(hasRequiredEffort('primary', [])).toBe(true)
+  })
+})
 
 describe('set editing (one working weight, SPEC §6.3)', () => {
   it('adding a set at a new weight moves every set to that weight', () => {

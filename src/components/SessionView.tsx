@@ -1,7 +1,7 @@
 import { availableLoads, suggestNext } from '../engine'
 import { findExercise } from '../program/program'
 import type { Program } from '../program/types'
-import { canFinish, loggedSets } from '../session/sets'
+import { canFinish, setTally, targetSets } from '../session/sets'
 import { warmupText } from '../session/warmup'
 import type { Session } from '../session/types'
 import { exerciseHistory } from '../history/sessions'
@@ -25,13 +25,8 @@ export function SessionView({ session, program, sessions, asOf }: Props) {
     return [{ log, config, history, suggestion: suggestNext(config, history, asOf) }]
   })
 
-  // Skipped exercises don't count toward the total; substitutes count their own sets.
-  const counted = exercises.filter((e) => !e.log.skipped)
-  const logged = counted.reduce((n, e) => n + loggedSets(e.log).length, 0)
-  const target = counted.reduce(
-    (n, e) =>
-      n + (e.suggestion.kind === 'suggestion' && !e.log.substitute ? e.suggestion.sets : e.config.sets),
-    0,
+  const { logged, target } = setTally(
+    exercises.map((e) => ({ log: e.log, target: targetSets(e.log, e.config.sets, e.suggestion) })),
   )
   const finishable = canFinish(session.exercises, (id) => findExercise(program, id)?.tier)
 
