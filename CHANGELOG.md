@@ -6,6 +6,11 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ## [Unreleased]
 
+### Changed
+
+- **Starting numbers look and read the same everywhere:** the guided walkthrough uses the same prompt and layout as the exercise form ("Enter a weight and reps you're confident you could do…").
+- **Suggested starting weight follows your gym's weights:** when adding an exercise from the list, the suggested starting weight now rounds down to one of the weights you've typed for it.
+
 ## [1.1.0] - 2026-10-04
 
 Answers the first round of feedback from friends: effort that doesn't require knowing RPE, an exercise list to pick from, and a ready-made program to start with.

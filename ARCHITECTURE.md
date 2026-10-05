@@ -18,7 +18,7 @@ src/
     progression.ts  Floor rule, fatigue stacks, deloads; deriveState / evaluateSession (SPEC §6.6–6.7)
     suggest.ts      suggestNext: the entry point the UI calls (SPEC §6.4 weight selection)
     rotation.ts     nextDay (SPEC §5.1)
-  program/      Program model (days → exercises), pure editing functions (add, move, archive…) effort scales (effort.ts), the built-in exercise bank with search (bank.ts), program templates (templates.ts) and the seed walkthrough's pre-fill and stack presets (seeding.ts)
+  program/      Program model (days → exercises), pure editing functions (add, move, archive…) effort scales (effort.ts), the built-in exercise bank with search (bank.ts), program templates (templates.ts), entering starting numbers: validation, pre-fill, placeholders and stack presets (seeding.ts), and the exercise form's fields and validation (exerciseForm.ts)
   session/      Session types (types.ts) and pure session rules: set editing (one working weight), each exercise's set target,
                 the "Only X of Y" tally, the first-set effort check and canFinish (sets.ts); set pre-fill and the set form's
                 validation (setForm.ts); warm-up ramp (warmup.ts)
@@ -85,7 +85,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 ## UI
 
 - **Tabs:** `TodayView` (next day, suggestions, seed gate → `SeedWalkthrough`, active `SessionView`), `HistoryView` (picker, `E1rmChart`, timeline), `ProgramView` (`EffortScaleCard`, `TemplateCard`, days, `ExercisePicker` → `ExerciseForm`, `BackupCard`).
-- **Templates and seeding:** `TemplateCard` applies `program/templates.ts` (first on an empty program; above Backup, as a replace after a confirm, otherwise) and tells `App` to open the walkthrough on Today. `SeedWalkthrough` always shows the first exercise still missing starting numbers and saves each one on Next, so leaving and coming back resumes without any stored progress. The bank match for pre-fill is by name, since programs store no link to the bank.
+- **Templates and seeding:** `TemplateCard` applies `program/templates.ts` (first on an empty program; above Backup, as a replace after a confirm, otherwise) and tells `App` to open the walkthrough on Today. `SeedWalkthrough` always shows the first exercise still missing starting numbers and saves each one on Next, so leaving and coming back resumes without any stored progress. The bank match for pre-fill is by name, since programs store no link to the bank. Both `SeedWalkthrough` and `ExerciseForm` enter starting numbers through `SeedFields` (stateless; each keeps its own state) and the rules in `program/seeding.ts`.
 - **Adding an exercise:** `ExercisePicker` browses `program/bank.ts` by body area or search; picking one opens `ExerciseForm` with `preset` (the bank defaults are copied in, nothing links back), and "Custom exercise…" opens it blank.
 - **Session:** `SessionView` (warm-up banner, finish/discard) → `ExerciseLogger` per exercise (⋯ menu, substitute, validation message) → `SetEditor` (set list + form, shared by originals and substitutes) → `EffortPicker` (the program's effort scale).
 - **Styling:** design tokens (colors with light/dark values, spacing, radius, tap target, type scale) in `src/styles/tokens.css`; use a token rather than a raw value, except 1px hairlines and one-off optical tweaks. All component styles are in `src/App.css` as shared classes (`.card`, `.field`, `.actions`, `.note`, `.tag`, `.muted`, `button.primary` / `.danger`), sectioned by slice.
