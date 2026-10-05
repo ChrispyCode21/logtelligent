@@ -106,7 +106,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Proposed: UI component layer and design tokens
 
-*Status: **Proposed**. Not built; decide during v1.1.0 scoping. Worth doing before v1.1.0 adds a lot of UI (exercise bank, program templates).*
+*Status: **Decided (trimmed) for v1.1.0**, not yet built (SPEC §9.1, slice 0): steps 1, 4, and step 2 limited to `Button`, `Field` and `Card`. The other primitives, and moving every component to CSS Modules (step 3), stay **Proposed** and come as they're needed.*
 
 An audit of v1.0.0 found:
 

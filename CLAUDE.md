@@ -4,7 +4,7 @@ Standing instructions for any Claude session working in this repo.
 
 ## Read first
 
-- **SPEC.md**: what the app does and why (the source of truth). §11 holds the candidates for the next version.
+- **SPEC.md**: what the app does and why (the source of truth). §9.1 holds the scope of the version being built; §11 holds ideas for later ones.
 - **ARCHITECTURE.md**: how it's built: folder map, data flow, storage, hosting, gates, releases, and Proposed strategies.
 - **TESTING.md**: how to verify changes in the preview, its known quirks, and the on-device checklist.
 - **CHANGELOG.md**: what shipped in each version.
@@ -44,6 +44,6 @@ Standing instructions for any Claude session working in this repo.
 - **`main` is protected.** Never push to it. Work on a branch, keep changes small with a commit per meaningful step, push the branch, and open a PR (the template has the checklist). The owner reviews and merges.
 - Before pushing, run what CI runs: `npm run format:check`, `npm run lint`, `npm run check:spec`, `npm run check:changelog`, `npm test`, `npm run build`.
 - Add user-facing changes to the "Unreleased" section of CHANGELOG.md. A release is a PR that bumps `package.json`'s version and moves those notes under it; merging it tags the release automatically (semantic versioning).
-- New work is scoped as versions (next: v1.1.0) from SPEC §11. Settle the scope and any Open/Proposed items with the owner before building.
+- New work is scoped as versions from SPEC §11 (v1.1.0 is scoped in §9.1). Settle the scope and any Open/Proposed items with the owner before building.
 
 Personal working preferences, if any, live in `CLAUDE.local.md` (git-ignored, never committed).
