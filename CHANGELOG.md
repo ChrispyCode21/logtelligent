@@ -14,7 +14,7 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ### Fixed
 
-- **Bigger weight and reps fields while logging:** they were meant to be larger than other fields, but a style added in v1.1.0 shrank them back to normal size.
+- **Bigger weight and reps fields while logging:** they were meant to be larger than other fields, but a general input style overrode them before v1.0.0 shipped.
 - **Starting numbers with a typed weight stack:** a stack typed out of order (e.g. "40, 10, 20, 30") now suggests the right starting weight, and a stack with a typo in it no longer suggests "NaN".
 
 ## [1.1.0] - 2026-10-04

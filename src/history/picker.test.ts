@@ -26,7 +26,12 @@ const program: Program = {
       exercises: [exercise('bench'), exercise('fly', true), exercise('dip', true)],
     },
     { id: 'b', name: 'Lower A', exercises: [] },
-    { id: 'old', name: 'Old day', archived: true, exercises: [exercise('row'), exercise('shrug')] },
+    {
+      id: 'old',
+      name: 'Old day',
+      archived: true,
+      exercises: [exercise('row'), exercise('shrug'), exercise('curl', true)],
+    },
   ],
 }
 
@@ -53,8 +58,10 @@ describe('the History picker (SPEC §5.3)', () => {
     ])
   })
 
-  it('leaves out archived exercises with no history', () => {
-    const groups = historyGroups(program, [logged('bench')])
-    expect(groups.map((g) => g.label)).toEqual(['Upper A'])
+  it('lists an archived exercise on an archived day once, and keeps only the archived day’s exercises with history', () => {
+    expect(labels(historyGroups(program, [logged('curl', 'row')]))).toEqual([
+      ['Upper A', ['bench']],
+      ['Archived', ['row', 'curl']],
+    ])
   })
 })
