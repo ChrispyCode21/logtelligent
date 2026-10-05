@@ -23,11 +23,11 @@ src/
                 the "Only X of Y" tally, the first-set effort check and canFinish (sets.ts); set pre-fill and the set form's
                 validation (setForm.ts); warm-up ramp (warmup.ts)
   history/      Pure history helpers: stored sessions → engine history, optionally before a given session (sessions.ts);
-                the History tab's view-model, a timeline of sessions with e1RM (timeline.ts)
+                the History tab's view-model: a timeline of sessions with e1RM (timeline.ts) and the exercise picker's groups (picker.ts)
                 program/, session/ and history/ are pure too: no React, Dexie, storage or UI imports (enforced by lint).
   storage/      Everything that touches IndexedDB: Dexie schema, reads, writes, backup/restore
   components/   React UI (see "UI" below)
-  ui/           UI primitives (Button, Card, Field), and shared formatters (format.ts)
+  ui/           UI primitives (Button, Card, Field), and shared formatters and display labels (format.ts)
   styles/       tokens.css: color, spacing, radius, tap-target and type-scale tokens
   App.tsx       Tabs (Today / History / Program) and the single live query
 public/
@@ -88,8 +88,8 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 - **Templates and seeding:** `TemplateCard` applies `program/templates.ts` (first on an empty program; above Backup, as a replace after a confirm, otherwise) and tells `App` to open the walkthrough on Today. `SeedWalkthrough` always shows the first exercise still missing starting numbers and saves each one on Next, so leaving and coming back resumes without any stored progress. The bank match for pre-fill is by name, since programs store no link to the bank. Both `SeedWalkthrough` and `ExerciseForm` enter starting numbers through `SeedFields` (stateless; each keeps its own state) and the rules in `program/seeding.ts`.
 - **Adding an exercise:** `ExercisePicker` browses `program/bank.ts` by body area or search; picking one opens `ExerciseForm` with `preset` (the bank defaults are copied in, nothing links back), and "Custom exercise…" opens it blank.
 - **Session:** `SessionView` (warm-up banner, finish/discard) → `ExerciseLogger` per exercise (⋯ menu, substitute, validation message) → `SetEditor` (set list + form, shared by originals and substitutes) → `EffortPicker` (the program's effort scale).
-- **Styling:** design tokens (colors with light/dark values, spacing, radius, tap target, type scale) in `src/styles/tokens.css`; use a token rather than a raw value, except 1px hairlines and one-off optical tweaks. All component styles are in `src/App.css` as shared classes (`.card`, `.field`, `.actions`, `.note`, `.tag`, `.muted`, `button.primary` / `.danger`), sectioned by slice.
-- **Primitives (`src/ui/`):** `Button` (`variant` primary / secondary / danger, `block`; defaults to `type="button"`), `Card` (`as` section / li / form) and `Field` (label or fieldset, optional `hint`). New UI uses them instead of raw elements with class names. Display formatting goes through `src/ui/format.ts`. Single-column grids use `minmax(0, 1fr)` so content can't widen the page on small phones (see TESTING.md).
+- **Styling:** design tokens (colors with light/dark values, spacing, radius, tap target, type scale) in `src/styles/tokens.css`; use a token rather than a raw value, except 1px hairlines and one-off optical tweaks. All component styles are in `src/App.css` as shared classes (`.card`, `.field`, `.actions`, `.note`, `.tag`, `.muted`, `.list-button`, `button.primary` / `.danger`), sectioned by slice. Any `aria-pressed` button gets the pressed style from one rule, so a new toggle group needs no CSS of its own.
+- **Primitives (`src/ui/`):** `Button` (`variant` primary / secondary / danger, `block`; defaults to `type="button"`), `Card` (`as` section / li / form) and `Field` (label or fieldset, optional `hint`). New UI uses them instead of raw elements with class names. Display formatting goes through `src/ui/format.ts`, including an exercise's summary line (`formatPrescription`) and the equipment and tier labels. Single-column grids use `minmax(0, 1fr)` so content can't widen the page on small phones (see TESTING.md).
 - **Dialogs:** native `confirm()` for destructive or unusual actions.
 
 ## PWA and offline

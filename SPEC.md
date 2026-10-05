@@ -417,7 +417,7 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
 3. **One starting-numbers entry (built).** `ExerciseForm` and `SeedWalkthrough` share one seed-entry component and pure, tested seed and exercise-form helpers in `src/program/`.
    - Both show the §5.1 wording ("Enter a weight and reps you're confident you could do…"); the walkthrough's hint had drifted.
    - The exercise form's bank placeholder weight snaps onto the exercise's typed loads, as the walkthrough's pre-fill does. Otherwise the two flows keep their Decided differences: the form shows a placeholder, the walkthrough fills in a value (§9.1 slices 2 and 3), and stack quick picks stay walkthrough-only.
-4. **Fixes and CSS/format cleanup.**
+4. **Fixes and CSS/format cleanup (built).**
    - **Stepper font (fix):** the weight and reps inputs go back to the large text size they were built with. A later global input rule has overridden it since v1.1.0.
    - **One exercise summary line:** the "Primary · 3 × 5–7 · Barbell" line, built three ways today, comes from one shared formatter. Equipment is shown by its label everywhere, "per side" wherever it applies, and the effort target only on the Program tab.
    - **No visible change:**
