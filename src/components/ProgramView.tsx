@@ -11,6 +11,7 @@ import {
   updateExercise,
 } from '../program/program'
 import { effortTarget, type EffortScale } from '../program/effort'
+import type { BankExercise } from '../program/bank'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../storage/db'
 import { dayHasHistory, exerciseHasHistory } from '../storage/history'
@@ -21,11 +22,14 @@ import { Field } from '../ui/Field'
 import { BackupCard } from './BackupCard'
 import { EffortScaleCard } from './EffortScaleCard'
 import { ExerciseForm } from './ExerciseForm'
+import { ExercisePicker } from './ExercisePicker'
 
 interface Editing {
   dayId: string
   /** Undefined when adding a new exercise. */
   exerciseId?: string
+  /** Adding: what was picked from the bank, or 'custom'. Undefined while the picker is open. */
+  preset?: BankExercise | 'custom'
 }
 
 function summary(e: ProgramExercise, scale: EffortScale) {
@@ -172,11 +176,22 @@ export function ProgramView({ program, sessions }: Props) {
           </ol>
 
           {editing?.dayId === day.id && editing.exerciseId === undefined ? (
-            <ExerciseForm
-              effortScale={program.effortScale}
-              onSave={(e) => saveExercise(day.id, e)}
-              onCancel={() => setEditing(null)}
-            />
+            editing.preset === undefined ? (
+              <ExercisePicker
+                onPick={(preset) => setEditing({ dayId: day.id, preset })}
+                onCustom={() => setEditing({ dayId: day.id, preset: 'custom' })}
+                onCancel={() => setEditing(null)}
+              />
+            ) : (
+              <ExerciseForm
+                key={editing.preset === 'custom' ? 'custom' : editing.preset.id}
+                preset={editing.preset === 'custom' ? undefined : editing.preset}
+                effortScale={program.effortScale}
+                onSave={(e) => saveExercise(day.id, e)}
+                // Back to the picker, in case the wrong exercise was picked.
+                onCancel={() => setEditing({ dayId: day.id })}
+              />
+            )
           ) : (
             <Button onClick={() => setEditing({ dayId: day.id })}>+ Add exercise</Button>
           )}

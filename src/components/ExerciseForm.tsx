@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { defaultLoads, type EquipmentType, type Tier } from '../engine'
 import { EFFORT_SCALES, nearestOption, type EffortScale } from '../program/effort'
+import type { BankExercise } from '../program/bank'
 import type { ProgramExercise } from '../program/types'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
@@ -43,16 +44,18 @@ interface Form {
   seedReps: string
 }
 
-function toForm(e?: ProgramExercise): Form {
+/** From an existing exercise, else a bank exercise's defaults (SPEC §9.1, slice 2), else blank. */
+function toForm(e?: ProgramExercise, preset?: BankExercise): Form {
+  const from = e ?? preset
   return {
-    name: e?.name ?? '',
-    tier: e?.tier ?? 'primary',
-    min: String(e?.repRange.min ?? ''),
-    max: String(e?.repRange.max ?? ''),
-    sets: String(e?.sets ?? 3),
-    equipment: e?.equipment ?? 'barbell',
+    name: from?.name ?? '',
+    tier: from?.tier ?? 'primary',
+    min: String(from?.repRange.min ?? ''),
+    max: String(from?.repRange.max ?? ''),
+    sets: String(from?.sets ?? 3),
+    equipment: from?.equipment ?? 'barbell',
     targetRpe: e?.targetRpe ?? 8,
-    unilateral: e?.unilateral ?? false,
+    unilateral: from?.unilateral ?? false,
     loads: e?.loads?.join(', ') ?? '',
     seedWeight: e?.seed ? String(e.seed.weight) : '',
     seedReps: e?.seed ? String(e.seed.reps) : '',
@@ -69,13 +72,15 @@ function parseLoads(text: string): number[] | undefined {
 
 interface Props {
   initial?: ProgramExercise
+  /** A new exercise from the bank: its defaults prefill the form. */
+  preset?: BankExercise
   effortScale: EffortScale
   onSave: (exercise: ProgramExercise) => void
   onCancel: () => void
 }
 
-export function ExerciseForm({ initial, effortScale, onSave, onCancel }: Props) {
-  const [form, setForm] = useState<Form>(() => toForm(initial))
+export function ExerciseForm({ initial, preset, effortScale, onSave, onCancel }: Props) {
+  const [form, setForm] = useState<Form>(() => toForm(initial, preset))
   const [attempted, setAttempted] = useState(false)
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm({ ...form, [key]: value })
 
@@ -136,10 +141,14 @@ export function ExerciseForm({ initial, effortScale, onSave, onCancel }: Props) 
     ? `Default: ${defaults.slice(0, 6).join(', ')}…`
     : 'e.g. 88, 99, 110, 121, 132'
   const repsWord = form.unilateral ? 'reps (per side)' : 'reps'
+  // The bank's starting-weight hint, while its equipment still applies.
+  const presetSeed =
+    preset && form.equipment === preset.equipment ? String(preset.seedPlaceholder) : undefined
 
   return (
     <Card as="form" className="exercise-form" onSubmit={submit}>
       <h3>{initial ? `Edit ${initial.name}` : 'New exercise'}</h3>
+      {preset && <p className="muted">{preset.description}</p>}
 
       <Field label="Name">
         <input value={form.name} onChange={(e) => set('name', e.target.value)} />
@@ -232,6 +241,7 @@ export function ExerciseForm({ initial, effortScale, onSave, onCancel }: Props) 
               <input
                 inputMode="decimal"
                 value={form.seedWeight}
+                placeholder={presetSeed}
                 onChange={(e) => set('seedWeight', e.target.value)}
               />
             </Field>
@@ -255,7 +265,7 @@ export function ExerciseForm({ initial, effortScale, onSave, onCancel }: Props) 
             <input
               inputMode="decimal"
               value={form.seedWeight}
-              placeholder={SEED_PLACEHOLDER[form.equipment] || loads?.[0]?.toString() || ''}
+              placeholder={presetSeed ?? (SEED_PLACEHOLDER[form.equipment] || loads?.[0]?.toString() || '')}
               onChange={(e) => set('seedWeight', e.target.value)}
             />
           </Field>
