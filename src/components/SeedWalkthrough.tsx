@@ -2,13 +2,12 @@ import { useState } from 'react'
 import { findBankExercise } from '../program/bank'
 import { activeDays, missingSeeds, updateExercise } from '../program/program'
 import {
-  hasInvalidLoads,
   needsStack,
   seedPrefill,
   stackLoads,
   STACK_PRESETS,
   toSeed,
-  validateSeed,
+  validateSeedStep,
   type StackPick,
 } from '../program/seeding'
 import type { Program, ProgramExercise } from '../program/types'
@@ -85,9 +84,7 @@ function SeedStep({ exercise, dayName, progress, last, initialStack, onSave, onL
   const bank = findBankExercise(exercise.name)
   const { min, max } = exercise.repRange
 
-  const errors: string[] = []
-  if (askStack && (!loads || hasInvalidLoads(loads))) errors.push('Enter the stack weights, e.g. 10, 20, 30.')
-  errors.push(...validateSeed(seed, exercise.tier))
+  const errors = validateSeedStep(seed, exercise.tier, askStack, loads)
 
   function submit(e: React.FormEvent) {
     e.preventDefault()

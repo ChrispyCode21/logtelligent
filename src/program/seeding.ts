@@ -77,6 +77,16 @@ const ACCESSORY_PLACEHOLDER: Record<EquipmentType, string> = {
   bodyweight: '0',
 }
 
+/** Typed loads, lightest first, if there are any and they're all weights. */
+const usableLoads = (loads: readonly number[] | undefined) =>
+  loads?.length && !hasInvalidLoads([...loads]) ? loads.toSorted((a, b) => a - b) : undefined
+
+/** A bank weight snapped down onto the loads, however they were typed; unchanged without usable loads. */
+function snapBankWeight(weight: number, loads: readonly number[] | undefined): number {
+  const usable = usableLoads(loads)
+  return usable ? snapDown(weight, usable) : weight
+}
+
 /**
  * The exercise form's placeholder starting weight (SPEC §9.1, slice 2): the bank's weight, snapped
  * down onto the exercise's typed loads (SPEC §9.2, slice 0). Without one, accessories get a general
@@ -88,10 +98,9 @@ export function formSeedPlaceholder(
   loads: number[] | undefined,
   bankWeight?: number,
 ): string | undefined {
-  const usable = loads?.length && !hasInvalidLoads(loads) ? loads.toSorted((a, b) => a - b) : undefined
-  if (bankWeight !== undefined) return String(usable ? snapDown(bankWeight, usable) : bankWeight)
+  if (bankWeight !== undefined) return String(snapBankWeight(bankWeight, loads))
   if (tier === 'primary') return undefined
-  return ACCESSORY_PLACEHOLDER[equipment] || loads?.[0]?.toString() || ''
+  return ACCESSORY_PLACEHOLDER[equipment] || usableLoads(loads)?.[0]?.toString() || ''
 }
 
 /**
@@ -101,6 +110,23 @@ export function formSeedPlaceholder(
 export function seedPrefill(e: ProgramExercise, stack?: readonly number[]): { weight: string; reps: string } {
   const bank = findBankExercise(e.name)
   if (!bank) return { weight: '', reps: '' }
-  const weight = stack?.length ? snapDown(bank.seedPlaceholder, [...stack]) : bank.seedPlaceholder
-  return { weight: String(weight), reps: e.tier === 'primary' ? String(e.repRange.max) : '' }
+  return {
+    weight: String(snapBankWeight(bank.seedPlaceholder, stack)),
+    reps: e.tier === 'primary' ? String(e.repRange.max) : '',
+  }
+}
+
+/**
+ * What's wrong with a walkthrough step: the stack, when it asks for one (SPEC §9.1, slice 3),
+ * then the starting numbers.
+ */
+export function validateSeedStep(
+  input: SeedInput,
+  tier: Tier,
+  askStack: boolean,
+  loads: number[] | undefined,
+): string[] {
+  const stackError =
+    askStack && (!loads || hasInvalidLoads(loads)) ? ['Enter the stack weights, e.g. 10, 20, 30.'] : []
+  return [...stackError, ...validateSeed(input, tier)]
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { defaultLoads } from '../engine'
-import { BANK, BODY_AREAS, searchBank } from './bank'
+import { BANK, BODY_AREAS, findBankExercise, searchBank } from './bank'
 
 describe('exercise bank (SPEC §9.1, slice 2)', () => {
   it('has about 50 exercises in every body area', () => {
@@ -55,5 +55,13 @@ describe('searchBank', () => {
 
   it('returns nothing when nothing matches', () => {
     expect(searchBank('zercher')).toEqual([])
+  })
+})
+
+describe('findBankExercise', () => {
+  it('finds a bank exercise by name, ignoring case and punctuation', () => {
+    expect(findBankExercise('bench press')?.id).toBe('bench-press')
+    expect(findBankExercise('Pull Up')?.id).toBe('pull-up')
+    expect(findBankExercise('Zercher Squat')).toBeUndefined()
   })
 })

@@ -12,17 +12,12 @@ import {
   toSeed,
   usesStack,
   validateSeed,
+  validateSeedStep,
 } from './seeding'
 
 const fromBank = (name: string) => exerciseFromBank(findBankExercise(name)!)
 
 describe('guided seeding (SPEC §9.1, slice 3)', () => {
-  it('finds a bank exercise by name, ignoring case and punctuation', () => {
-    expect(findBankExercise('bench press')?.id).toBe('bench-press')
-    expect(findBankExercise('Pull Up')?.id).toBe('pull-up')
-    expect(findBankExercise('Zercher Squat')).toBeUndefined()
-  })
-
   it('pre-fills a primary with the bank weight and the top of its range', () => {
     expect(seedPrefill(fromBank('Bench Press'))).toEqual({ weight: '95', reps: '7' })
   })
@@ -34,6 +29,23 @@ describe('guided seeding (SPEC §9.1, slice 3)', () => {
   it('snaps the pre-filled weight onto the chosen stack', () => {
     const tenLb = STACK_PRESETS.find((p) => p.id === '10')!.loads
     expect(seedPrefill(fromBank('Face Pull'), tenLb).weight).toBe('20')
+  })
+
+  it('snaps onto a custom stack typed in any order, and ignores one that has a non-weight in it', () => {
+    expect(seedPrefill(fromBank('Face Pull'), [20, 10, 40]).weight).toBe('20')
+    expect(seedPrefill(fromBank('Face Pull'), [Number.NaN, 50]).weight).toBe('25')
+  })
+
+  it("checks a step's stack before its starting numbers", () => {
+    const blank = { weight: '', reps: '' }
+    expect(validateSeedStep(blank, 'accessory', true, undefined)).toEqual([
+      'Enter the stack weights, e.g. 10, 20, 30.',
+      'Starting weight must be a number.',
+    ])
+    expect(validateSeedStep({ weight: '20', reps: '' }, 'accessory', true, [10, Number.NaN])).toEqual([
+      'Enter the stack weights, e.g. 10, 20, 30.',
+    ])
+    expect(validateSeedStep({ weight: '20', reps: '' }, 'accessory', false, undefined)).toEqual([])
   })
 
   it('leaves exercises that are not in the bank blank', () => {
@@ -113,7 +125,8 @@ describe("the exercise form's starting-weight placeholder", () => {
   it('without a bank weight: none for a primary; a general suggestion or the first load for an accessory', () => {
     expect(formSeedPlaceholder('primary', 'barbell', undefined)).toBeUndefined()
     expect(formSeedPlaceholder('accessory', 'dumbbell', undefined)).toBe('15')
-    expect(formSeedPlaceholder('accessory', 'machine', [50, 60])).toBe('50')
+    expect(formSeedPlaceholder('accessory', 'machine', [60, 50])).toBe('50')
+    expect(formSeedPlaceholder('accessory', 'machine', [Number.NaN, 50])).toBe('')
     expect(formSeedPlaceholder('accessory', 'machine', undefined)).toBe('')
   })
 })
