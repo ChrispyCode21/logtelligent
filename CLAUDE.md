@@ -46,4 +46,16 @@ Standing instructions for any Claude session working in this repo.
 - Add user-facing changes to the "Unreleased" section of CHANGELOG.md. A release is a PR that bumps `package.json`'s version and moves those notes under it; merging it tags the release automatically (semantic versioning).
 - New work is scoped as versions from SPEC §11 (v1.2.0 is scoped in §9.2), recorded the way v1.1.0 is in §9.1. Settle the scope and any Open/Proposed items with the owner before building.
 
+### Building a slice
+
+v1.1.0 was built one slice per PR, in this order:
+
+1. **Settle what the spec doesn't cover.** Ask the owner about any behavior the slice's SPEC entry leaves open, with a recommended default for each.
+2. **Record the decisions first:** a SPEC.md commit (status tags, the slice's section, §10) before any code.
+3. **Pure logic with tests,** outside React and Dexie (`src/program/`, `src/session/`, or `src/engine/` for progression rules), then the UI on top. Data that's still Proposed (e.g. an exercise list) goes in as written and is listed in the PR for review.
+4. **Stored-data changes** follow the ARCHITECTURE.md checklist (Dexie version, backup validator, round-trip test).
+5. **Verify in the preview** per TESTING.md: the flows by DOM, and sideways scrolling and clipped labels at 375px and 320px. Leave the preview's data as it was.
+6. **Update the docs in the same PR:** ARCHITECTURE.md (folder map, UI, storage), CHANGELOG.md "Unreleased" for user-facing changes, SPEC.md (the slice marked built), and TESTING.md's on-device checklist for anything the preview can't check.
+7. **Open the PR** with what changed, how it was verified, anything worth the owner's attention, and any Proposed data to review. Run the CI checks first.
+
 Personal working preferences, if any, live in `CLAUDE.local.md` (git-ignored, never committed).
