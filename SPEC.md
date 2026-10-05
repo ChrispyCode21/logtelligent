@@ -386,7 +386,7 @@ Answers the three complaints from friends trying v1.0.0 (§11): RPE friction, ha
 - **Search (Decided):** matches the name and a few common nicknames per exercise (e.g. "RDL" → Romanian Deadlift, "OHP" → Overhead Press), ignoring case and punctuation; every word typed must match.
 - **After picking (Decided):** the usual exercise form opens, prefilled with the bank's defaults, its description, and its placeholder starting weight. Review, enter starting numbers, Save. One flow for bank and custom exercises.
 - **Text only, no images.**
-- The exact list and its defaults are **Proposed**; review it in the slice's PR.
+- **The list and its defaults (Decided 2026-10-04):** the 57 exercises in `src/program/bank.ts`, approved as proposed in PR #8.
 
 **Slice 3: Program templates and guided seeding (Decided).**
 - One template ships: a **4-day Upper/Lower**, built from bank exercises. Its exact days, exercises and rep ranges are **Proposed**; review them in the slice's PR.
