@@ -1,4 +1,5 @@
 import type { ExerciseConfig } from '../engine'
+import type { EffortScale } from './effort'
 
 /** Archived items are hidden from the program but keep their history (SPEC §6.1). */
 export interface ProgramExercise extends ExerciseConfig {
@@ -17,4 +18,6 @@ export interface ProgramDay {
 export interface Program {
   id: 'main'
   days: ProgramDay[]
+  /** How effort is entered and shown; always stored as RPE (SPEC §9.1, slice 1). */
+  effortScale: EffortScale
 }

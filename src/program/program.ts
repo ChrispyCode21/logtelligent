@@ -1,6 +1,8 @@
+import { DEFAULT_EFFORT_SCALE } from './effort'
 import type { Program, ProgramDay, ProgramExercise } from './types'
 
-export const EMPTY_PROGRAM: Program = { id: 'main', days: [] }
+/** What a new user starts with, before anything is saved. */
+export const EMPTY_PROGRAM: Program = { id: 'main', days: [], effortScale: DEFAULT_EFFORT_SCALE }
 
 /** Days in rotation, each with its active exercises. */
 export function activeDays(program: Program): ProgramDay[] {

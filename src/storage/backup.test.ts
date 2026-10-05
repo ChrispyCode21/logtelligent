@@ -11,7 +11,11 @@ const sessions: Session[] = [
     exercises: [{ exerciseId: 'bench', sets: [{ weight: 225, reps: 4, rpe: 8 }] }],
   },
 ]
-const program = { id: 'main' as const, days: [{ id: 'upper-a', name: 'Upper A', exercises: [] }] }
+const program = {
+  id: 'main' as const,
+  days: [{ id: 'upper-a', name: 'Upper A', exercises: [] }],
+  effortScale: 'rpe' as const,
+}
 
 describe('JSON backup (SPEC §2)', () => {
   it('names the file by local date', () => {
@@ -39,6 +43,7 @@ describe('JSON backup (SPEC §2)', () => {
   it('round-trips a full program and a session using the exercise menu', () => {
     const full = {
       id: 'main' as const,
+      effortScale: 'perceived' as const,
       days: [
         {
           id: 'upper-a',
@@ -96,6 +101,25 @@ describe('JSON backup (SPEC §2)', () => {
     const json = JSON.parse(JSON.stringify(bad))
     json.sessions[0].exercises[0].sets[0].reps = 'four'
     expect(() => parseBackup(JSON.stringify(json))).toThrow('sessions[0].exercises[0].sets[0].reps')
+  })
+
+  it('keeps the program’s effort scale (SPEC §9.1, slice 1)', () => {
+    for (const effortScale of ['rpe', 'repsLeft', 'perceived'] as const) {
+      const backup = buildBackup({ ...program, effortScale }, sessions, new Date())
+      expect(parseBackup(JSON.stringify(backup)).program?.effortScale).toBe(effortScale)
+    }
+  })
+
+  it('reads a backup from before effort scales as RPE', () => {
+    const json = JSON.parse(JSON.stringify(buildBackup(program, sessions, new Date())))
+    delete json.program.effortScale
+    expect(parseBackup(JSON.stringify(json)).program?.effortScale).toBe('rpe')
+  })
+
+  it('rejects an unknown effort scale', () => {
+    const json = JSON.parse(JSON.stringify(buildBackup(program, sessions, new Date())))
+    json.program.effortScale = 'vibes'
+    expect(() => parseBackup(JSON.stringify(json))).toThrow('program.effortScale')
   })
 
   it('rejects absurd numbers', () => {

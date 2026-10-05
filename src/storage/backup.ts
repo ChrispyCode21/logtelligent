@@ -1,4 +1,5 @@
 import type { EquipmentType, LoggedSet } from '../engine'
+import { EFFORT_SCALE_IDS, LEGACY_EFFORT_SCALE, type EffortScale } from '../program/effort'
 import type { Program, ProgramExercise } from '../program/types'
 import { db, type ExerciseLog, type Session } from './db'
 
@@ -152,8 +153,12 @@ function program(v: unknown): Program | null {
   if (v === null) return null
   const p = obj(v, 'program')
   if (p.id !== 'main') throw new Damaged('program.id')
+  // Backups from before effort scales have none; those programs used RPE.
+  const effortScale = (p.effortScale ?? LEGACY_EFFORT_SCALE) as EffortScale
+  if (!EFFORT_SCALE_IDS.includes(effortScale)) throw new Damaged('program.effortScale')
   return {
     id: 'main',
+    effortScale,
     days: list(p.days, 'program.days', 50).map((d, i) => {
       const day = obj(d, `program.days[${i}]`)
       return compact({
