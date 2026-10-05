@@ -22,6 +22,7 @@ src/
   session/      Session types (types.ts) and pure session helpers: set editing (one working weight), canFinish, warm-up ramp
   history/      Pure history helpers: stored sessions → engine history, optionally before a given session (sessions.ts);
                 the History tab's view-model, a timeline of sessions with e1RM (timeline.ts)
+                program/, session/ and history/ are pure too: no React, Dexie, storage or UI imports (enforced by lint).
   storage/      Everything that touches IndexedDB: Dexie schema, reads, writes, backup/restore
   components/   React UI (see "UI" below)
   ui/           UI primitives (Button, Card, Field), and shared formatters (format.ts)
@@ -54,7 +55,7 @@ Fatigue stacks, the last successful numbers, deload status and accessory rep ext
 
 ## Storage
 
-Dexie wraps IndexedDB. Database `logtelligent`, schema in `storage/db.ts`:
+Dexie wraps IndexedDB. Database `logtelligent`, schema in `storage/db.ts`; the stored types are in `session/types.ts` and `program/types.ts`:
 
 | Version | Tables | Notes |
 |---|---|---|
@@ -103,7 +104,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Quality gates and releases
 
-- **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the engine-purity rule), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
+- **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the purity rules for the engine and for program/, session/ and history/), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
 - **Architecture and quality review:** the `architecture-reviewer` subagent (`.claude/agents/architecture-reviewer.md`) reviews a branch or a module against this document and CLAUDE.md and reports ranked findings; it is read-only. Run it before opening a PR (CLAUDE.md, "Building a slice").
 - **Security** (`security.yml`): CodeQL on the app and the workflows; dependency review on PRs.
 - **Dependabot:** weekly npm and GitHub Actions update PRs. Actions are pinned to commit SHAs.
