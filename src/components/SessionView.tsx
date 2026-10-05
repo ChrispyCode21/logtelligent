@@ -73,6 +73,7 @@ export function SessionView({ session, program, sessions, asOf }: Props) {
           log={log}
           history={history}
           suggestion={suggestion}
+          effortScale={program.effortScale}
         />
       ))}
       <div className="actions">

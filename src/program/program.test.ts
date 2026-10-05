@@ -36,6 +36,10 @@ function program(): Program {
 const dayNames = (p: Program) => activeDays(p).map((d) => d.name)
 
 describe('program editing', () => {
+  it('starts a new program on the Reps left effort scale (SPEC §9.1, slice 1)', () => {
+    expect(EMPTY_PROGRAM.effortScale).toBe('repsLeft')
+  })
+
   it('moves days up and down, ignoring moves past either end', () => {
     expect(dayNames(moveDay(program(), 'c', -1))).toEqual(['A', 'C', 'B'])
     expect(dayNames(moveDay(program(), 'a', -1))).toEqual(['A', 'B', 'C'])

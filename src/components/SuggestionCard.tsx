@@ -1,4 +1,5 @@
 import type { ExerciseConfig, PlanKind, Suggestion } from '../engine'
+import { effortTarget, type EffortScale } from '../program/effort'
 import { Card } from '../ui/Card'
 import { formatE1rm, formatWeight } from '../ui/format'
 
@@ -20,9 +21,10 @@ interface Props {
   config: ExerciseConfig
   suggestion: Suggestion
   heading: string
+  effortScale: EffortScale
 }
 
-export function SuggestionCard({ config, suggestion, heading }: Props) {
+export function SuggestionCard({ config, suggestion, heading, effortScale }: Props) {
   if (suggestion.kind === 'needsSeed') {
     return (
       <Card>
@@ -50,7 +52,9 @@ export function SuggestionCard({ config, suggestion, heading }: Props) {
         {config.equipment === 'dumbbell' && 'Per hand · '}
         {suggestion.sets} sets · {min}–{max} reps
         {config.unilateral && ' per side'}
-        {suggestion.targetRpe !== undefined && <> · first set @ RPE {suggestion.targetRpe}</>}
+        {suggestion.targetRpe !== undefined && (
+          <> · first set{effortTarget(effortScale, suggestion.targetRpe)}</>
+        )}
       </p>
       {suggestion.e1rm && <p className="muted">Estimated 1RM {formatE1rm(suggestion.e1rm.value)}</p>}
       {suggestion.stacks > 0 && <p className="muted">Fatigue stacks: {suggestion.stacks} of 2</p>}

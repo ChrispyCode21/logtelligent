@@ -10,6 +10,7 @@ import {
   renameDay,
   updateExercise,
 } from '../program/program'
+import { effortTarget, type EffortScale } from '../program/effort'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../storage/db'
 import { dayHasHistory, exerciseHasHistory } from '../storage/history'
@@ -18,6 +19,7 @@ import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
 import { BackupCard } from './BackupCard'
+import { EffortScaleCard } from './EffortScaleCard'
 import { ExerciseForm } from './ExerciseForm'
 
 interface Editing {
@@ -26,9 +28,9 @@ interface Editing {
   exerciseId?: string
 }
 
-function summary(e: ProgramExercise) {
+function summary(e: ProgramExercise, scale: EffortScale) {
   const { min, max } = e.repRange
-  const rpe = e.tier === 'primary' ? ` @ RPE ${e.targetRpe}` : ''
+  const rpe = e.tier === 'primary' ? effortTarget(scale, e.targetRpe) : ''
   return `${e.tier === 'primary' ? 'Primary' : 'Accessory'} · ${e.sets} × ${min}–${max}${rpe} · ${e.equipment}`
 }
 
@@ -79,6 +81,7 @@ export function ProgramView({ program, sessions }: Props) {
   return (
     <>
       <h2 className="page-title">Program</h2>
+      <EffortScaleCard value={program.effortScale} />
       <p className="muted">Training days run in this order, then repeat.</p>
 
       {days.map((day, dayIndex) => (
@@ -125,6 +128,7 @@ export function ProgramView({ program, sessions }: Props) {
                 <li key={exercise.id}>
                   <ExerciseForm
                     initial={exercise}
+                    effortScale={program.effortScale}
                     onSave={(e) => saveExercise(day.id, e)}
                     onCancel={() => setEditing(null)}
                   />
@@ -136,7 +140,7 @@ export function ProgramView({ program, sessions }: Props) {
                     onClick={() => setEditing({ dayId: day.id, exerciseId: exercise.id })}
                   >
                     <strong>{exercise.name}</strong>
-                    <span className="muted">{summary(exercise)}</span>
+                    <span className="muted">{summary(exercise, program.effortScale)}</span>
                     {!exercise.seed && <span className="warning-text">Needs starting numbers</span>}
                   </Button>
                   <div className="icon-buttons">
@@ -168,7 +172,11 @@ export function ProgramView({ program, sessions }: Props) {
           </ol>
 
           {editing?.dayId === day.id && editing.exerciseId === undefined ? (
-            <ExerciseForm onSave={(e) => saveExercise(day.id, e)} onCancel={() => setEditing(null)} />
+            <ExerciseForm
+              effortScale={program.effortScale}
+              onSave={(e) => saveExercise(day.id, e)}
+              onCancel={() => setEditing(null)}
+            />
           ) : (
             <Button onClick={() => setEditing({ dayId: day.id })}>+ Add exercise</Button>
           )}
