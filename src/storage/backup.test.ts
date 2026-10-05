@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Session } from './db'
+import type { Session } from '../session/types'
 import { backupFilename, buildBackup, parseBackup } from './backup'
 
 const sessions: Session[] = [

@@ -10,7 +10,7 @@ import {
 } from '../engine'
 import type { EffortScale } from '../program/effort'
 import { rpeRequired } from '../session/sets'
-import type { ExerciseLog } from '../storage/db'
+import type { ExerciseLog } from '../session/types'
 import {
   replaceExercise,
   restoreExercise,

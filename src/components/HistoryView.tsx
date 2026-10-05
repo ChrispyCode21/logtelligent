@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { exerciseTimeline } from '../history/timeline'
 import type { Program, ProgramExercise } from '../program/types'
-import type { Session } from '../storage/db'
-import { exerciseHasHistory, exerciseHistory } from '../storage/history'
+import type { Session } from '../session/types'
+import { exerciseHasHistory, exerciseHistory } from '../history/sessions'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
 import { formatDate, formatE1rm, formatSets } from '../ui/format'
@@ -72,7 +72,7 @@ export function HistoryView({ program, sessions }: Props) {
           )}
           <ol className="history-list">
             {timeline.map((entry) => (
-              <Card as="li" key={entry.date} className="history-row">
+              <Card as="li" key={entry.sessionId} className="history-row">
                 <div className="history-head">
                   <strong>{formatDate(entry.date)}</strong>
                   {entry.isDeload && <span className="tag">Deload</span>}

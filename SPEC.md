@@ -408,9 +408,9 @@ Answers the three complaints from friends trying v1.0.0: RPE friction ("oh, this
 Theme: **logging fidelity**. Fixes for things noticed in daily use, from the owner's own use rather than friends' feedback. All additive (minor version); no backend. Built in this order, each slice a small PR or two, then a release PR.
 
 **Slice 0: Quality groundwork (Decided 2026-10-05; from the v1.2.0 quality pass).** Prepares the code the three feature slices build on, from an `architecture-reviewer` pass over all of `main`. One small PR per group, in this order. Groups 1–3 change no behavior; group 4 makes the visible changes listed.
-1. **Pure-layer groundwork.**
+1. **Pure-layer groundwork (built).**
    - Session types (`Session`, `ExerciseLog`, `Substitute`) and the pure history helpers (`exerciseHistory`, `lastLoggedDayId`, `exerciseHasHistory`, `dayHasHistory`) move out of `storage/` into the pure layer, so `session/` and `history/` stop importing from storage. `storage/db.ts` imports the types, as it already does for the program.
-   - `exerciseHistory` can return history **before a given session**. Slice 1 needs this, so an edited session is judged against what came before it, not against itself and later sessions.
+   - `exerciseHistory` can return history **before a given session**. Slice 1 needs this, so an edited session is judged against what came before it, not against itself and later sessions. **"Before" is replay order (Decided 2026-10-05):** by start time, then by id for sessions that started at the same moment, so editing sees exactly the history the replay used.
    - The backup validator fails to compile if a stored field is left out, so slices 2 and 3 can't silently drop their new fields on restore.
    - History rows carry their session id (slices 1 and 3).
 2. **Session rules in `src/session/`, with tests.** The set target (deload-halved for originals, configured for substitutes), the "Only X of Y" tally, set pre-fill (§5.2), set-form validation, and the "set 1 of a primary has effort" check, which slice 1 also needs since editing has no Finish step. These are currently inline in the session components.

@@ -26,6 +26,30 @@
           }
         ]
       }
+    },
+    {
+      "files": ["src/program/**", "src/session/**", "src/history/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              { "name": "react", "message": "Pure layer: no React (ARCHITECTURE.md)." },
+              {
+                "name": "dexie",
+                "message": "Pure layer: no Dexie; storage calls it, not the reverse (ARCHITECTURE.md)."
+              },
+              { "name": "dexie-react-hooks", "message": "Pure layer: no React or Dexie (ARCHITECTURE.md)." }
+            ],
+            "patterns": [
+              {
+                "group": ["../storage/*", "../components/*", "../ui/*", "react-*", "dexie*"],
+                "message": "Pure layer: no storage, components or UI; they call it, not the reverse (ARCHITECTURE.md)."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

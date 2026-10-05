@@ -1,5 +1,5 @@
 import type { LoggedSet, Tier } from '../engine'
-import type { ExerciseLog } from '../storage/db'
+import type { ExerciseLog } from './types'
 
 // All sets of an exercise use one working weight (SPEC §6.3, §6.5), so changing
 // the weight on any set changes it on every set.

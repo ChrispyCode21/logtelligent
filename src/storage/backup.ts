@@ -1,7 +1,8 @@
-import type { EquipmentType, LoggedSet } from '../engine'
+import type { EquipmentType, LoggedSet, RepRange, Seed } from '../engine'
 import { EFFORT_SCALE_IDS, LEGACY_EFFORT_SCALE, type EffortScale } from '../program/effort'
-import type { Program, ProgramExercise } from '../program/types'
-import { db, type ExerciseLog, type Session } from './db'
+import type { Program, ProgramDay, ProgramExercise } from '../program/types'
+import type { ExerciseLog, Session, Substitute } from '../session/types'
+import { db } from './db'
 
 // JSON backup (SPEC §2). Bump FORMAT when the shape changes, and teach parseBackup to read old ones.
 const APP = 'logtelligent'
@@ -74,14 +75,20 @@ function optional<T>(v: unknown, check: (v: unknown) => T): T | undefined {
   return v === undefined ? undefined : check(v)
 }
 
+/**
+ * Every field of T, optional ones included, so a validator that leaves one out fails to compile.
+ * Otherwise a new stored field would be silently dropped on restore (ARCHITECTURE.md, checklist).
+ */
+type AllFields<T> = { [K in keyof Required<T>]: T[K] | undefined }
+
 /** Drop undefined fields so the stored object has only what was in the file. */
-function compact<T extends object>(o: T): T {
+function compact<T extends object>(o: AllFields<T>): T {
   return Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as T
 }
 
 function loggedSet(v: unknown, path: string): LoggedSet {
   const s = obj(v, path)
-  return compact({
+  return compact<LoggedSet>({
     weight: num(s.weight, `${path}.weight`, 0, 2000),
     reps: num(s.reps, `${path}.reps`, 0, 1000, true),
     rpe: optional(s.rpe, (r) => num(r, `${path}.rpe`, 1, 10)),
@@ -92,12 +99,15 @@ const sets = (v: unknown, path: string) => list(v, path, 100).map((s, i) => logg
 
 function exerciseLog(v: unknown, path: string): ExerciseLog {
   const l = obj(v, path)
-  return compact({
+  return compact<ExerciseLog>({
     exerciseId: text(l.exerciseId, `${path}.exerciseId`),
     sets: sets(l.sets, `${path}.sets`),
     substitute: optional(l.substitute, (sub) => {
       const s = obj(sub, `${path}.substitute`)
-      return { name: text(s.name, `${path}.substitute.name`), sets: sets(s.sets, `${path}.substitute.sets`) }
+      return compact<Substitute>({
+        name: text(s.name, `${path}.substitute.name`),
+        sets: sets(s.sets, `${path}.substitute.sets`),
+      })
     }),
     skipped: optional(l.skipped, (b) => bool(b, `${path}.skipped`)),
   })
@@ -105,7 +115,7 @@ function exerciseLog(v: unknown, path: string): ExerciseLog {
 
 function session(v: unknown, path: string): Session {
   const s = obj(v, path)
-  return compact({
+  return compact<Session>({
     id: num(s.id, `${path}.id`, 1, Number.MAX_SAFE_INTEGER, true),
     dayId: optional(s.dayId, (d) => text(d, `${path}.dayId`)),
     startedAt: date(s.startedAt, `${path}.startedAt`),
@@ -125,11 +135,11 @@ function exercise(v: unknown, path: string): ProgramExercise {
   if (tier !== 'primary' && tier !== 'accessory') throw new Damaged(`${path}.tier`)
   const equipment = e.equipment as EquipmentType
   if (!EQUIPMENT.includes(equipment)) throw new Damaged(`${path}.equipment`)
-  return compact({
+  return compact<ProgramExercise>({
     id: text(e.id, `${path}.id`),
     name: text(e.name, `${path}.name`),
     tier,
-    repRange: { min, max: num(range.max, `${path}.repRange.max`, min, 100, true) },
+    repRange: compact<RepRange>({ min, max: num(range.max, `${path}.repRange.max`, min, 100, true) }),
     targetRpe: num(e.targetRpe, `${path}.targetRpe`, 1, 10),
     sets: num(e.sets, `${path}.sets`, 1, 20, true),
     equipment,
@@ -140,10 +150,10 @@ function exercise(v: unknown, path: string): ProgramExercise {
     unilateral: bool(e.unilateral, `${path}.unilateral`),
     seed: optional(e.seed, (sd) => {
       const s = obj(sd, `${path}.seed`)
-      return {
+      return compact<Seed>({
         weight: num(s.weight, `${path}.seed.weight`, 0, 2000),
         reps: num(s.reps, `${path}.seed.reps`, 1, 100, true),
-      }
+      })
     }),
     archived: optional(e.archived, (b) => bool(b, `${path}.archived`)),
   })
@@ -156,12 +166,12 @@ function program(v: unknown): Program | null {
   // Backups from before effort scales have none; those programs used RPE.
   const effortScale = (p.effortScale ?? LEGACY_EFFORT_SCALE) as EffortScale
   if (!EFFORT_SCALE_IDS.includes(effortScale)) throw new Damaged('program.effortScale')
-  return {
+  return compact<Program>({
     id: 'main',
     effortScale,
     days: list(p.days, 'program.days', 50).map((d, i) => {
       const day = obj(d, `program.days[${i}]`)
-      return compact({
+      return compact<ProgramDay>({
         id: text(day.id, `program.days[${i}].id`),
         name: text(day.name, `program.days[${i}].name`),
         archived: optional(day.archived, (b) => bool(b, `program.days[${i}].archived`)),
@@ -170,7 +180,7 @@ function program(v: unknown): Program | null {
         ),
       })
     }),
-  }
+  })
 }
 
 /** Parse and validate a backup file. Throws an Error with a readable message. */
