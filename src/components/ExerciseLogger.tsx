@@ -20,6 +20,7 @@ import {
 } from '../storage/sessions'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
+import { Field } from '../ui/Field'
 import { formatSets } from '../ui/format'
 import { SetEditor } from './SetEditor'
 
@@ -113,15 +114,14 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
       {replacing ? (
         <form className="replace-form" onSubmit={confirmReplace}>
           <p className="note">{VOLUME_ONLY_NOTICE}</p>
-          <label className="field">
-            <span>Replace {config.name} with</span>
+          <Field label={<>Replace {config.name} with</>}>
             <input
               autoFocus
               value={substituteName}
               placeholder="e.g. Machine chest press"
               onChange={(e) => setSubstituteName(e.target.value)}
             />
-          </label>
+          </Field>
           <div className="actions">
             <Button type="submit" variant="primary" disabled={!substituteName.trim()}>
               Replace

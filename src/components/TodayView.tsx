@@ -7,6 +7,7 @@ import { exerciseHistory, lastLoggedDayId } from '../storage/history'
 import { startSession } from '../storage/sessions'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
+import { Field } from '../ui/Field'
 import { SessionView } from './SessionView'
 import { SuggestionCard } from './SuggestionCard'
 
@@ -104,8 +105,7 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
       </Button>
 
       {days.length > 1 && (
-        <label className="field">
-          <span className="muted">Do a different day</span>
+        <Field label={<span className="muted">Do a different day</span>}>
           <select value={day.id} onChange={(e) => chooseDay(e.target.value)}>
             {days.map((d) => (
               <option key={d.id} value={d.id}>
@@ -114,7 +114,7 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
               </option>
             ))}
           </select>
-        </label>
+        </Field>
       )}
     </>
   )

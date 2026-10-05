@@ -16,6 +16,7 @@ import { dayHasHistory, exerciseHasHistory } from '../storage/history'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
+import { Field } from '../ui/Field'
 import { BackupCard } from './BackupCard'
 import { ExerciseForm } from './ExerciseForm'
 
@@ -175,14 +176,13 @@ export function ProgramView({ program, sessions }: Props) {
       ))}
 
       <Card as="form" className="add-day" onSubmit={submitDay}>
-        <label className="field">
-          <span>New training day</span>
+        <Field label="New training day">
           <input
             value={newDayName}
             placeholder={days.length === 0 ? 'e.g. Upper A' : ''}
             onChange={(e) => setNewDayName(e.target.value)}
           />
-        </label>
+        </Field>
         <Button type="submit" disabled={!newDayName.trim()}>
           Add day
         </Button>

@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import type { LoggedSet } from '../engine'
 import { addSet, removeSet, updateSet } from '../session/sets'
 import { Button } from '../ui/Button'
+import { Field } from '../ui/Field'
 import { formatSet } from '../ui/format'
 import { RpePicker } from './RpePicker'
 
@@ -116,11 +117,14 @@ export function SetEditor({
         <form className="set-form" onSubmit={submit}>
           <h3>{editing === null ? `Set ${formIndex + 1}` : `Editing set ${editing + 1}`}</h3>
 
-          <label className="field">
-            <span>
-              {weightLabel}
-              {sets.length > 0 && <span className="muted"> · applies to all sets</span>}
-            </span>
+          <Field
+            label={
+              <>
+                {weightLabel}
+                {sets.length > 0 && <span className="muted"> · applies to all sets</span>}
+              </>
+            }
+          >
             <div className="stepper">
               <Button aria-label="Lighter" onClick={() => stepWeight(-1)}>
                 −
@@ -134,10 +138,9 @@ export function SetEditor({
                 +
               </Button>
             </div>
-          </label>
+          </Field>
 
-          <label className="field">
-            <span>{repsLabel}</span>
+          <Field label={repsLabel}>
             <div className="stepper">
               <Button aria-label="Fewer reps" onClick={() => stepReps(-1)}>
                 −
@@ -151,7 +154,7 @@ export function SetEditor({
                 +
               </Button>
             </div>
-          </label>
+          </Field>
 
           <RpePicker value={form.rpe} required={required} onChange={(rpe) => setForm({ ...form, rpe })} />
 

@@ -4,6 +4,7 @@ import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../storage/db'
 import { exerciseHasHistory, exerciseHistory } from '../storage/history'
 import { Card } from '../ui/Card'
+import { Field } from '../ui/Field'
 import { formatDate, formatE1rm, formatSets } from '../ui/format'
 import { E1rmChart } from './E1rmChart'
 
@@ -44,8 +45,7 @@ export function HistoryView({ program, sessions }: Props) {
   return (
     <>
       <h2 className="page-title">History</h2>
-      <label className="field">
-        <span className="muted">Exercise</span>
+      <Field label={<span className="muted">Exercise</span>}>
         <select value={exercise.id} onChange={(e) => setSelectedId(e.target.value)}>
           {groups
             .filter((g) => g.exercises.length > 0)
@@ -59,7 +59,7 @@ export function HistoryView({ program, sessions }: Props) {
               </optgroup>
             ))}
         </select>
-      </label>
+      </Field>
 
       {timeline.length === 0 ? (
         <p className="muted">No sessions logged yet.</p>
