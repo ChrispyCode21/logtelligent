@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:spec": "node scripts/check-spec-coverage.mjs",
+    "check:conventions": "node scripts/check-conventions.mjs",
     "check:changelog": "node scripts/changelog-section.mjs --check"
   },
   "dependencies": {

@@ -28,4 +28,6 @@ dist-ssr
 
 # Local-only: personal Claude context and this machine's preview config
 CLAUDE.local.md
-.claude/
+# Local Claude Code settings stay local; shared subagents are committed.
+.claude/*
+!.claude/agents/

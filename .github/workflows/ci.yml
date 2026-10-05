@@ -31,6 +31,8 @@ jobs:
         run: npm run format:check
       - name: Lint (oxlint, incl. engine purity)
         run: npm run lint
+      - name: UI conventions (primitives, tokens, shared formatters)
+        run: npm run check:conventions
       - name: Every SPEC §7 example has a test
         run: npm run check:spec
       - name: CHANGELOG has notes for the package.json version
