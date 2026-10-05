@@ -22,8 +22,8 @@ export function rpeRequired(tier: Tier, index: number): boolean {
 }
 
 /**
- * Whether a primary lift's sets have the effort its first set needs (SPEC §6.3). No sets need
- * nothing. Checked at Finish, and when a finished session is edited (SPEC §9.2, slice 1).
+ * Whether a primary lift's sets have the effort its first set needs (SPEC §6.3). An exercise with
+ * no sets needs no effort. Checked at Finish, and when a finished session is edited (SPEC §9.2, slice 1).
  */
 export function hasRequiredEffort(tier: Tier, sets: LoggedSet[]): boolean {
   return sets.length === 0 || !rpeRequired(tier, 0) || sets[0].rpe !== undefined
