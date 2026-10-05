@@ -13,8 +13,8 @@ Standing instructions for any Claude session working in this repo.
 
 - **SPEC.md is the source of truth** for what the app does and why. Read it before starting work.
 - Items in SPEC.md and ARCHITECTURE.md are tagged **Decided**, **Proposed**, or **Open**. Build to Decided.
-- **Ask Chris before** implementing anything marked Proposed or Open, or any behavior the spec doesn't cover. Do not guess and move on. Say what's undecided, offer a recommended default, and wait for an answer.
-- When Chris makes a decision, **update SPEC.md** in the same change (status tag, the relevant section, and §10 Open questions), so the spec never drifts from the code.
+- **Ask the project owner before** implementing anything marked Proposed or Open, or any behavior the spec doesn't cover. Do not guess and move on. Say what's undecided, offer a recommended default, and wait for an answer.
+- When the owner makes a decision, **update SPEC.md** in the same change (status tag, the relevant section, and §10 Open questions), so the spec never drifts from the code.
 
 ## Stack
 
@@ -41,14 +41,9 @@ Standing instructions for any Claude session working in this repo.
 
 ## How to work
 
-- **`main` is protected.** Never push to it. Work on a branch, keep changes small with a commit per meaningful step, push the branch, and open a PR (the template has the checklist). Chris reviews and merges.
+- **`main` is protected.** Never push to it. Work on a branch, keep changes small with a commit per meaningful step, push the branch, and open a PR (the template has the checklist). The owner reviews and merges.
 - Before pushing, run what CI runs: `npm run format:check`, `npm run lint`, `npm run check:spec`, `npm run check:changelog`, `npm test`, `npm run build`.
 - Add user-facing changes to the "Unreleased" section of CHANGELOG.md. A release is a PR that bumps `package.json`'s version and moves those notes under it; merging it tags the release automatically (semantic versioning).
-- New work is scoped as versions (next: v1.1.0) from SPEC §11. Settle the scope and any Open/Proposed items with Chris before building.
+- New work is scoped as versions (next: v1.1.0) from SPEC §11. Settle the scope and any Open/Proposed items with the owner before building.
 
-## About Chris
-
-- Full-stack developer who works in React + TypeScript day to day.
-- Explain tools, libraries, and concepts when they come up rather than assuming familiarity.
-- Uses **PowerShell** on Windows. Commands given to him must be PowerShell-safe (e.g. single-quote `gh api 'repos/{owner}/…'`, since `{…}` is a script block in PowerShell).
-- Does account-side and publishing steps himself (Cloudflare, GitHub settings, merging, 2FA); give him exact steps.
+Personal working preferences, if any, live in `CLAUDE.local.md` (git-ignored, never committed).

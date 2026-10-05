@@ -19,7 +19,7 @@ When the pane emulates a phone viewport (the `mobile` preset, 375×812), the pan
 
 The preview can't stand in for these; check them on the iPhone. Re-run the relevant items for any release that touches them.
 
-Results for **v1.0.0** (Chris, iPhone, 2026-10-04): all pass. The first run found sideways scrolling on the Program tab, fixed in PR #2 and re-checked on the phone.
+Results for **v1.0.0** (iPhone, 2026-10-04): all pass. The first run found sideways scrolling on the Program tab, fixed in PR #2 and re-checked on the phone.
 
 - [x] Layout at phone width: tabs fit, steppers and RPE buttons are easy to hit one-handed, nothing scrolls sideways.
 - [x] Add to Home Screen: icon, name "Logtelligent", opens full screen.
