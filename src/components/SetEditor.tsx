@@ -107,7 +107,11 @@ export function SetEditor({
         <ol className="set-list">
           {sets.map((set, i) => (
             <li key={i}>
-              <Button className="set-row" aria-current={editing === i} onClick={() => startEdit(i)}>
+              <Button
+                className="set-row"
+                aria-current={replacingFirst ? i === 1 : editing === i}
+                onClick={() => startEdit(i)}
+              >
                 <span>Set {i + 1}</span>
                 <span>{formatSet(set, effortScale)}</span>
               </Button>

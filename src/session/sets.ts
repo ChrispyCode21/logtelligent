@@ -17,16 +17,16 @@ export function removeSet(sets: LoggedSet[], index: number): LoggedSet[] {
 }
 
 /**
- * Removing this set would leave a first set without the effort it needs, so the delete must ask for
- * one (SPEC §9.2, slice 1). Only removing set 1 can, when set 2 has none.
+ * Removing set 1 would leave a first set without the effort it needs, so the delete must ask for one
+ * (SPEC §9.2, slice 1). Removing a later set never asks, even if set 1 already lacks one (e.g. an
+ * exercise that was an accessory when it was logged).
  */
 export function removalNeedsEffort(
   sets: LoggedSet[],
   index: number,
   rpeRequiredAt: (index: number) => boolean,
 ): boolean {
-  const rest = removeSet(sets, index)
-  return rest.length > 0 && rpeRequiredAt(0) && rest[0].rpe === undefined
+  return index === 0 && sets.length > 1 && rpeRequiredAt(0) && sets[1].rpe === undefined
 }
 
 /** Remove set 1, saving the effort (and any other change) given for the set that takes its place. */

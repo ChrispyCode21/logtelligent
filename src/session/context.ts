@@ -16,16 +16,17 @@ export interface SessionExercise {
  * Each exercise in a session, with what it's judged against. A live session uses all finished
  * history and today's suggestion. A finished one uses only the history before it, and the
  * suggestion as of when it started, so editing it recomputes it as it was (SPEC §9.2, slice 1).
- * Exercises no longer in the program are left out.
+ * Exercises no longer in the program are left out. `now` matters only for a live session; App
+ * captures it in its query so renders stay pure.
  */
 export function sessionExercises(
   session: Session,
   program: Program,
   sessions: Session[],
-  now: Date,
+  now?: Date,
 ): SessionExercise[] {
   const finished = session.finishedAt !== undefined
-  const asOf = finished ? new Date(session.startedAt) : now
+  const asOf = finished ? new Date(session.startedAt) : (now ?? new Date())
   return session.exercises.flatMap((log) => {
     const config = findExercise(program, log.exerciseId)
     if (!config) return []

@@ -14,10 +14,9 @@ import { SessionView } from './SessionView'
 interface Props {
   program: Program
   sessions: Session[]
-  asOf: Date
 }
 
-export function HistoryView({ program, sessions, asOf }: Props) {
+export function HistoryView({ program, sessions }: Props) {
   const groups = historyGroups(program, sessions)
   const all = groups.flatMap((g) => g.exercises)
   const [selectedId, setSelectedId] = useState<string>()
@@ -32,7 +31,6 @@ export function HistoryView({ program, sessions, asOf }: Props) {
         session={editing}
         program={program}
         sessions={sessions}
-        asOf={asOf}
         onClose={() => setEditingId(undefined)}
       />
     )

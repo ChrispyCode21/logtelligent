@@ -107,6 +107,11 @@ describe('deleting set 1 (SPEC §9.2, slice 1)', () => {
     expect(removalNeedsEffort([{ ...set, rpe: 8 }, set, set], 1, primary)).toBe(false)
   })
 
+  it('never asks when deleting a later set, even if set 1 has no effort (an exercise that was an accessory)', () => {
+    expect(removalNeedsEffort([set, set, set], 1, primary)).toBe(false)
+    expect(removalNeedsEffort([set, set, set], 2, primary)).toBe(false)
+  })
+
   it('saves the delete and the new set 1 together, at one working weight', () => {
     expect(
       removeFirstSet(

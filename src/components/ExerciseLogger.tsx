@@ -97,7 +97,7 @@ export function ExerciseLogger({
         {substitute ? (
           <span className="muted"> → {substitute.name}</span>
         ) : log.skipped ? (
-          <span className="muted"> · skipped today</span>
+          <span className="muted">{finished ? ' · skipped' : ' · skipped today'}</span>
         ) : (
           <span className="muted">
             {' '}

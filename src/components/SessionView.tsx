@@ -14,7 +14,8 @@ interface Props {
   session: Session
   program: Program
   sessions: Session[]
-  asOf: Date
+  /** Now, for a live session. A finished one is judged as of when it started. */
+  asOf?: Date
   /** Leave the editor of a finished session (SPEC §9.2, slice 1). */
   onClose?: () => void
 }
