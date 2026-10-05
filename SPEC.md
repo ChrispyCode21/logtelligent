@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done; v1.1.0 scoping starts from §11.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 is scoped** (§9.1, decided 2026-10-04); not yet built.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -158,7 +158,7 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
 
 ### 6.3 Primary lifts
 - **RPE is required on the first set only** (Decided). RPE is optional on other sets.
-- **RPE is entered in half steps from 6 to 10** (6, 6.5 … 10) (Decided).
+- **RPE is entered in half steps from 6 to 10** (6, 6.5 … 10) (Decided). From v1.1.0 this is one of three input modes chosen per program; the others map onto the same scale (§9.1, slice 1).
 - **The first set is the source of truth** for progression: its weight, reps, and RPE drive next session's suggestion (Decided).
 - **All sets use one working weight**; no changing weight from set to set (Decided).
 - Sets 2+ are recorded in full. They don't steer the progression math, but they **feed validation** (§6.6) (Decided).
@@ -358,6 +358,37 @@ Vertical slices, each usable on its own. All six are built, tested and live.
 5. Exercise ⋯ menu (replace / delete) with the volume-only notice.
 6. Warm-up banner, JSON export, PWA install and offline polish.
 
+## 9.1 v1.1.0 scope (Decided 2026-10-04 — not yet built)
+
+Answers the three complaints from friends trying v1.0.0 (§11): RPE friction, having to build a program, and not knowing exercise names. All changes are additive (minor version). Built in this order, each slice a small PR or two, then a release PR.
+
+**Slice 0: UI groundwork (Decided: trimmed version of the ARCHITECTURE.md strategy).** Design tokens (spacing, radius, tap target, type scale), the primitives the new screens need (`Button`, `Field`, `Card`), and shared formatters (`formatSet`, `formatDate`, `formatWeight`, one RPE scale constant). The other primitives come later, as they're needed. No user-facing change.
+
+**Slice 1: Effort scale, chosen per program (Decided).**
+- The program has an **effort scale** that sets how effort is entered. All three modes are stored as an **RPE number** (6–10), so the engine, logged sets and e1RM math (§6.4) don't change, and switching modes later loses nothing.
+  | Mode | Input | Maps to RPE |
+  |---|---|---|
+  | **RPE** | Today's picker, half steps 6–10 | as entered |
+  | **Reps left** | "How many more reps could you have done?" 0 · 1 · 2 · 3 · 4+ | 10 · 9 · 8 · 7 · 6 |
+  | **Perceived effort** | 5 labeled buttons: Easy · Moderate · Challenging · Very hard · Failed on the last rep | 6 · 7 · 8 · 9 · 10 |
+- Chosen during program setup, with a one-line explanation that it estimates 1-rep maxes, which drive suggested weights. Editable later on the Program tab.
+- **Default for a new program: Reps left.** Existing programs (no stored value) and older backups mean **RPE**.
+- The mode also sets the wording of the target-effort field (§6.1 Target RPE), the seed prompt (§5.1), the RPE input in a session (§6.3), and how history shows a set. A stored value that doesn't match a mode's buttons (e.g. 8.5 in Reps left) is shown as the nearest label.
+- Storage change: a new `effortScale` field on the program. Needs the ARCHITECTURE.md checklist (Dexie version, backup validator, round-trip test). `FORMAT` stays 1, since a missing field means RPE.
+
+**Slice 2: Exercise bank (Decided).**
+- About 50 common exercises **built into the app** (no network): name, tier, equipment, default rep range, sets, unilateral, a one-line description, and a placeholder starting weight for the seed prompt.
+- "Add exercise" searches the bank, with a **Custom…** option for anything not listed. Picking a bank exercise **copies its defaults** into a normal exercise, which is then fully editable. No link to the bank is stored (no storage change).
+- **Text only, no images.**
+- The exact list and its defaults are **Proposed**; review it in the slice's PR.
+
+**Slice 3: Program templates and guided seeding (Decided).**
+- One template ships: a **4-day Upper/Lower**, built from bank exercises. Its exact days, exercises and rep ranges are **Proposed**; review them in the slice's PR.
+- Offered when the program is empty (alongside "Build my own"), and from the Program tab, where picking one **replaces** the program after a confirm. A template produces a normal, fully editable program (no storage change). Exercises from a replaced program that have history are archived, as with any delete (§6.1).
+- **Guided seed walkthrough:** after picking a template, step through each exercise on its own screen to enter its seed, pre-filled with the bank's placeholder weight. The seed gate (§5.1) is unchanged; the walkthrough is just a faster way through it.
+
+**Not in v1.1.0:** editing finished sessions (§10 #2) and the "Earlier ideas" in §11.
+
 ## 10. Open questions (summary)
 
 Ask the project owner before building anything each one affects:
@@ -367,7 +398,7 @@ Ask the project owner before building anything each one affects:
 3. ~~**Units**~~ — **Decided:** pounds only for v1.
 4. ~~**Dumbbell weight convention**~~ — **Decided:** per hand (§6.1).
 5. ~~**Barbell minimum load**~~ — **Decided:** 45 lb empty bar, 5 lb steps (§6.2).
-6. **No load reaches the target reps:** if even the lightest available load predicts fewer than the target reps (only possible with a very low e1RM), the engine suggests the lightest load. (Built this way in v1.0.0; confirm or change.)
+6. ~~**No load reaches the target reps**~~ — **Decided:** if even the lightest available load predicts fewer than the target reps (only possible with a very low e1RM), the engine suggests the lightest load (as built in v1.0.0).
 
 Flagged to revisit after real use (not blocking):
 - Primary-lift deload: resuming at the last successful numbers (§6.7).
@@ -376,7 +407,7 @@ Flagged to revisit after real use (not blocking):
 
 ### v1.1.0 candidates from friends' feedback
 
-Feedback from friends trying v1.0.0. Real complaints, not nitpicks; to be scoped for v1.1.0:
+Feedback from friends trying v1.0.0. Real complaints, not nitpicks. **Scoped 2026-10-04: see §9.1** for what was decided; kept here for context.
 
 - **RPE friction:** "oh, this is that annoying RPE stuff, huh?" RPE is required on every primary lift's first set and drives the e1RM. Options to weigh: an RPE-optional mode, a simpler effort scale (e.g. easy / solid / hard / max mapped to RPE), or running primaries without e1RMs (already parked below).
 - **Ready-made programs:** "So, I have to create a program? I can't just pick one?" Program templates to pick from (e.g. a 4-day upper/lower), editable after picking.
