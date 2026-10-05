@@ -18,7 +18,7 @@ describe('exerciseHistory', () => {
       },
     ]
     expect(exerciseHistory(sessions, 'bench')).toEqual([
-      { date: '2026-10-01T10:00:00Z', sets: [{ weight: 225, reps: 4, rpe: 8 }] },
+      { sessionId: 1, date: '2026-10-01T10:00:00Z', sets: [{ weight: 225, reps: 4, rpe: 8 }] },
     ])
   })
 
@@ -92,7 +92,7 @@ describe('exerciseHistory with the exercise menu (SPEC §5.2)', () => {
   it('flags replaced sessions (so the engine skips them, A6) and keeps the substitute', () => {
     const substitute = { name: 'Machine press', sets: [{ weight: 150, reps: 10 }] }
     expect(exerciseHistory([finished([{ exerciseId: 'bench', sets: [], substitute }])], 'bench')).toEqual([
-      { date: '2026-10-01T10:00:00Z', sets: [], replaced: true, substitute },
+      { sessionId: 1, date: '2026-10-01T10:00:00Z', sets: [], replaced: true, substitute },
     ])
   })
 

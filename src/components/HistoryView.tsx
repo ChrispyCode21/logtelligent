@@ -72,7 +72,7 @@ export function HistoryView({ program, sessions }: Props) {
           )}
           <ol className="history-list">
             {timeline.map((entry) => (
-              <Card as="li" key={entry.date} className="history-row">
+              <Card as="li" key={entry.sessionId} className="history-row">
                 <div className="history-head">
                   <strong>{formatDate(entry.date)}</strong>
                   {entry.isDeload && <span className="tag">Deload</span>}

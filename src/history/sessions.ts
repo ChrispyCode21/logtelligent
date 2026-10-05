@@ -1,8 +1,10 @@
 import type { ExerciseSession } from '../engine'
 import type { Session, Substitute } from '../session/types'
 
-/** An engine session plus what the history view shows for a replaced one. */
+/** An engine session plus what the history view needs: which session it was, and any substitute. */
 export interface LoggedExerciseSession extends ExerciseSession {
+  /** The stored session's id, so History can act on it (SPEC §9.2, slices 1 and 3). */
+  sessionId: number
   substitute?: Substitute
 }
 
@@ -29,8 +31,8 @@ export function exerciseHistory(
         .filter((e) => e.sets.length > 0 || (e.substitute?.sets.length ?? 0) > 0)
         .map((e) =>
           e.substitute
-            ? { date: s.startedAt, sets: e.sets, replaced: true, substitute: e.substitute }
-            : { date: s.startedAt, sets: e.sets },
+            ? { sessionId: s.id, date: s.startedAt, sets: e.sets, replaced: true, substitute: e.substitute }
+            : { sessionId: s.id, date: s.startedAt, sets: e.sets },
         ),
     )
 }

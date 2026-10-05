@@ -3,6 +3,7 @@ import type { Substitute } from '../session/types'
 import type { LoggedExerciseSession } from './sessions'
 
 export interface TimelineEntry {
+  sessionId: number
   date: string
   sets: LoggedSet[]
   isDeload: boolean
@@ -16,6 +17,7 @@ export interface TimelineEntry {
 export function exerciseTimeline(config: ExerciseConfig, history: LoggedExerciseSession[]): TimelineEntry[] {
   return deriveState(config, history)
     .sessions.map((s) => ({
+      sessionId: s.sessionId,
       date: s.date,
       sets: s.sets,
       isDeload: !!s.isDeload,
