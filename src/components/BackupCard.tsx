@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { exportBackup, parseBackup, restoreBackup } from '../storage/backup'
+import { formatDate } from '../ui/format'
 
 /** Export and restore all data as JSON (SPEC §2). Data never leaves the device otherwise. */
 export function BackupCard() {
@@ -20,7 +21,7 @@ export function BackupCard() {
   async function restore(file: File) {
     try {
       const backup = parseBackup(await file.text())
-      const date = new Date(backup.exportedAt).toLocaleDateString()
+      const date = formatDate(backup.exportedAt, 'numeric')
       const ok = confirm(
         `Replace ALL current data with this backup from ${date} (${backup.sessions.length} sessions)? ` +
           'This cannot be undone. Export first if you want to keep what is here now.',

@@ -18,12 +18,11 @@ import {
   skipExercise,
   undoReplace,
 } from '../storage/sessions'
+import { formatSets } from '../ui/format'
 import { SetEditor } from './SetEditor'
 
 const VOLUME_ONLY_NOTICE = 'This will be tracked as volume only and not used for estimates.'
 const SUBSTITUTE_STEP = 5
-const formatSets = (sets: ExerciseLog['sets']) =>
-  sets.map((s) => `${s.weight} × ${s.reps}${s.rpe !== undefined ? ` @ ${s.rpe}` : ''}`).join(' · ')
 
 interface Props {
   sessionId: number

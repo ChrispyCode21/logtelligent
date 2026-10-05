@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatDate, formatE1rm } from '../ui/format'
 
 export interface ChartPoint {
   date: string
@@ -9,9 +10,6 @@ const WIDTH = 440
 const HEIGHT = 160
 const PAD = { top: 12, right: 12, bottom: 22, left: 40 }
 const Y_STEP = 5
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 
 interface Props {
   /** Oldest first. */
@@ -36,7 +34,7 @@ export function E1rmChart({ points }: Props) {
   const path = points.map((p, i) => `${i ? 'L' : 'M'}${x(times[i])},${y(p.value)}`).join(' ')
 
   const shown = active ?? points.length - 1
-  const label = active === null ? 'Latest' : formatDate(points[shown].date)
+  const label = active === null ? 'Latest' : formatDate(points[shown].date, 'short')
 
   function nearest(e: React.PointerEvent<SVGSVGElement>) {
     const box = e.currentTarget.getBoundingClientRect()
@@ -52,7 +50,7 @@ export function E1rmChart({ points }: Props) {
     <figure className="chart">
       <figcaption>
         <span className="muted">Estimated 1RM · {label}</span>{' '}
-        <strong>{points[shown].value.toFixed(1)} lb</strong>
+        <strong>{formatE1rm(points[shown].value)}</strong>
       </figcaption>
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -71,10 +69,10 @@ export function E1rmChart({ points }: Props) {
           </g>
         ))}
         <text className="axis" x={PAD.left} y={HEIGHT - 4}>
-          {formatDate(points[0].date)}
+          {formatDate(points[0].date, 'short')}
         </text>
         <text className="axis" x={WIDTH - PAD.right} y={HEIGHT - 4} textAnchor="end">
-          {formatDate(points.at(-1)!.date)}
+          {formatDate(points.at(-1)!.date, 'short')}
         </text>
 
         {active !== null && (

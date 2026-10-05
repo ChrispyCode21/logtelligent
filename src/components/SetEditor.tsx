@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import type { LoggedSet } from '../engine'
 import { addSet, removeSet, updateSet } from '../session/sets'
+import { formatSet } from '../ui/format'
 import { RpePicker } from './RpePicker'
 
 interface Form {
@@ -15,10 +16,6 @@ function prefill(sets: LoggedSet[], first?: { weight: number; reps: number }): F
   if (last) return { weight: String(last.weight), reps: String(last.reps), rpe: last.rpe }
   if (first) return { weight: String(first.weight), reps: String(first.reps) }
   return { weight: '', reps: '' }
-}
-
-function formatSet(set: LoggedSet) {
-  return `${set.weight} × ${set.reps}${set.rpe !== undefined ? ` @ ${set.rpe}` : ''}`
 }
 
 interface Props {

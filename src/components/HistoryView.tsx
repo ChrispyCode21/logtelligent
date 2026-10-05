@@ -1,21 +1,10 @@
 import { useState } from 'react'
-import type { LoggedSet } from '../engine'
 import { exerciseTimeline } from '../history/timeline'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../storage/db'
 import { exerciseHasHistory, exerciseHistory } from '../storage/history'
+import { formatDate, formatE1rm, formatSets } from '../ui/format'
 import { E1rmChart } from './E1rmChart'
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-
-const formatSet = (set: LoggedSet) =>
-  `${set.weight} × ${set.reps}${set.rpe !== undefined ? ` @ ${set.rpe}` : ''}`
 
 interface Props {
   program: Program
@@ -86,23 +75,22 @@ export function HistoryView({ program, sessions }: Props) {
                 <div className="history-head">
                   <strong>{formatDate(entry.date)}</strong>
                   {entry.isDeload && <span className="tag">Deload</span>}
-                  {entry.e1rm !== undefined && <span className="muted">e1RM {entry.e1rm.toFixed(1)} lb</span>}
+                  {entry.e1rm !== undefined && <span className="muted">e1RM {formatE1rm(entry.e1rm)}</span>}
                 </div>
                 {entry.substitute ? (
                   <>
                     <p>
                       <span className="muted">Replaced with </span>
                       {entry.substitute.name}
-                      {entry.substitute.sets.length > 0 &&
-                        `: ${entry.substitute.sets.map(formatSet).join(' · ')}`}
+                      {entry.substitute.sets.length > 0 && `: ${formatSets(entry.substitute.sets)}`}
                     </p>
                     {entry.sets.length > 0 && (
-                      <p className="muted">Before replacing: {entry.sets.map(formatSet).join(' · ')}</p>
+                      <p className="muted">Before replacing: {formatSets(entry.sets)}</p>
                     )}
                   </>
                 ) : (
                   <p>
-                    {entry.sets.map(formatSet).join(' · ')}
+                    {formatSets(entry.sets)}
                     {exercise.unilateral && <span className="muted"> (per side)</span>}
                   </p>
                 )}

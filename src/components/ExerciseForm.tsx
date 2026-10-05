@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { defaultLoads, type EquipmentType, type Tier } from '../engine'
 import type { ProgramExercise } from '../program/types'
+import { RPE_SCALE } from '../ui/rpe'
 
 const EQUIPMENT: { value: EquipmentType; label: string }[] = [
   { value: 'barbell', label: 'Barbell' },
@@ -9,7 +10,6 @@ const EQUIPMENT: { value: EquipmentType; label: string }[] = [
   { value: 'machine', label: 'Machine' },
   { value: 'bodyweight', label: 'Bodyweight' },
 ]
-const RPE_VALUES = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]
 // Fixed for every exercise; not in the form (SPEC §6.1).
 const MAX_RELATIVE_JUMP = 0.1
 // Placeholder suggestions for an accessory seed (SPEC §5.1).
@@ -172,7 +172,7 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
         <label className="field">
           <span>Target RPE on the first set</span>
           <select value={form.targetRpe} onChange={(e) => set('targetRpe', Number(e.target.value))}>
-            {RPE_VALUES.map((rpe) => (
+            {RPE_SCALE.map((rpe) => (
               <option key={rpe} value={rpe}>
                 {rpe}
               </option>

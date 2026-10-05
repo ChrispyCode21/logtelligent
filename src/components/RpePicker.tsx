@@ -1,5 +1,4 @@
-// Half steps from 6 to 10 (SPEC §6.3).
-const RPE_VALUES = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]
+import { RPE_SCALE } from '../ui/rpe'
 
 interface Props {
   value: number | undefined
@@ -12,7 +11,7 @@ export function RpePicker({ value, required, onChange }: Props) {
     <fieldset className="rpe">
       <legend>RPE {required ? '(required on set 1)' : '(optional)'}</legend>
       <div className="rpe-buttons">
-        {RPE_VALUES.map((rpe) => (
+        {RPE_SCALE.map((rpe) => (
           <button
             key={rpe}
             type="button"
