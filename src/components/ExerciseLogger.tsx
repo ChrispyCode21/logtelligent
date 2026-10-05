@@ -18,12 +18,14 @@ import {
   skipExercise,
   undoReplace,
 } from '../storage/sessions'
+import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
+import { Field } from '../ui/Field'
+import { formatSets } from '../ui/format'
 import { SetEditor } from './SetEditor'
 
 const VOLUME_ONLY_NOTICE = 'This will be tracked as volume only and not used for estimates.'
 const SUBSTITUTE_STEP = 5
-const formatSets = (sets: ExerciseLog['sets']) =>
-  sets.map((s) => `${s.weight} × ${s.reps}${s.rpe !== undefined ? ` @ ${s.rpe}` : ''}`).join(' · ')
 
 interface Props {
   sessionId: number
@@ -95,15 +97,14 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
           <span className="tag">Deload</span>
         )}
       </h2>
-      <button
-        type="button"
+      <Button
         className="menu-button"
         aria-label={`Options for ${config.name}`}
         aria-expanded={menuOpen}
         onClick={() => (menuOpen ? closeMenu() : setMenuOpen(true))}
       >
         ⋯
-      </button>
+      </Button>
     </div>
   )
 
@@ -113,44 +114,35 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
       {replacing ? (
         <form className="replace-form" onSubmit={confirmReplace}>
           <p className="note">{VOLUME_ONLY_NOTICE}</p>
-          <label className="field">
-            <span>Replace {config.name} with</span>
+          <Field label={<>Replace {config.name} with</>}>
             <input
               autoFocus
               value={substituteName}
               placeholder="e.g. Machine chest press"
               onChange={(e) => setSubstituteName(e.target.value)}
             />
-          </label>
+          </Field>
           <div className="actions">
-            <button type="submit" className="primary" disabled={!substituteName.trim()}>
+            <Button type="submit" variant="primary" disabled={!substituteName.trim()}>
               Replace
-            </button>
-            <button type="button" onClick={closeMenu}>
-              Cancel
-            </button>
+            </Button>
+            <Button onClick={closeMenu}>Cancel</Button>
           </div>
         </form>
       ) : (
         <div className="actions">
           {log.skipped ? (
-            <button type="button" onClick={() => void restore()}>
-              Restore
-            </button>
+            <Button onClick={() => void restore()}>Restore</Button>
           ) : (
             <>
               {substitute ? (
-                <button type="button" onClick={() => void undo()}>
-                  Undo replace
-                </button>
+                <Button onClick={() => void undo()}>Undo replace</Button>
               ) : (
-                <button type="button" onClick={() => setReplacing(true)}>
-                  Replace…
-                </button>
+                <Button onClick={() => setReplacing(true)}>Replace…</Button>
               )}
-              <button type="button" className="danger" onClick={() => void skip()}>
+              <Button variant="danger" onClick={() => void skip()}>
                 Skip today
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -160,16 +152,16 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
 
   if (log.skipped) {
     return (
-      <section className="card skipped">
+      <Card className="skipped">
         {header}
         {menu}
-      </section>
+      </Card>
     )
   }
 
   if (substitute) {
     return (
-      <section className="card">
+      <Card>
         {header}
         {menu}
         <p className="muted">Volume only: not used for {config.name} estimates or progression.</p>
@@ -185,7 +177,7 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
           repsLabel={<>Reps{config.unilateral && <span className="muted"> · per side</span>}</>}
           onSave={(next) => saveSubstituteSets(sessionId, config.id, next)}
         />
-      </section>
+      </Card>
     )
   }
 
@@ -194,7 +186,7 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
   const outcome = sets.length >= targetSets ? evaluateSession(config, history, sets) : undefined
 
   return (
-    <section className="card">
+    <Card>
       {header}
       {menu}
       <SetEditor
@@ -224,6 +216,6 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
         }
         onSave={(next) => saveSets(sessionId, config.id, next)}
       />
-    </section>
+    </Card>
   )
 }

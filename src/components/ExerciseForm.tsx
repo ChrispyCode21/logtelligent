@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { defaultLoads, type EquipmentType, type Tier } from '../engine'
 import type { ProgramExercise } from '../program/types'
+import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
+import { Field } from '../ui/Field'
+import { RPE_SCALE } from '../ui/rpe'
 
 const EQUIPMENT: { value: EquipmentType; label: string }[] = [
   { value: 'barbell', label: 'Barbell' },
@@ -9,7 +13,6 @@ const EQUIPMENT: { value: EquipmentType; label: string }[] = [
   { value: 'machine', label: 'Machine' },
   { value: 'bodyweight', label: 'Bodyweight' },
 ]
-const RPE_VALUES = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]
 // Fixed for every exercise; not in the form (SPEC §6.1).
 const MAX_RELATIVE_JUMP = 0.1
 // Placeholder suggestions for an accessory seed (SPEC §5.1).
@@ -129,60 +132,48 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
   const repsWord = form.unilateral ? 'reps (per side)' : 'reps'
 
   return (
-    <form className="card exercise-form" onSubmit={submit}>
+    <Card as="form" className="exercise-form" onSubmit={submit}>
       <h3>{initial ? `Edit ${initial.name}` : 'New exercise'}</h3>
 
-      <label className="field">
-        <span>Name</span>
+      <Field label="Name">
         <input value={form.name} onChange={(e) => set('name', e.target.value)} />
-      </label>
+      </Field>
 
-      <fieldset className="field">
-        <legend>Tier</legend>
+      <Field as="fieldset" label="Tier">
         <div className="segmented">
           {(['primary', 'accessory'] as const).map((tier) => (
-            <button
-              key={tier}
-              type="button"
-              aria-pressed={form.tier === tier}
-              onClick={() => changeTier(tier)}
-            >
+            <Button key={tier} aria-pressed={form.tier === tier} onClick={() => changeTier(tier)}>
               {tier === 'primary' ? 'Primary' : 'Accessory'}
-            </button>
+            </Button>
           ))}
         </div>
-      </fieldset>
+      </Field>
 
       <div className="row">
-        <label className="field">
-          <span>Reps from</span>
+        <Field label="Reps from">
           <input inputMode="numeric" value={form.min} onChange={(e) => set('min', e.target.value)} />
-        </label>
-        <label className="field">
-          <span>to</span>
+        </Field>
+        <Field label="to">
           <input inputMode="numeric" value={form.max} onChange={(e) => set('max', e.target.value)} />
-        </label>
-        <label className="field">
-          <span>Sets</span>
+        </Field>
+        <Field label="Sets">
           <input inputMode="numeric" value={form.sets} onChange={(e) => set('sets', e.target.value)} />
-        </label>
+        </Field>
       </div>
 
       {primary && (
-        <label className="field">
-          <span>Target RPE on the first set</span>
+        <Field label="Target RPE on the first set">
           <select value={form.targetRpe} onChange={(e) => set('targetRpe', Number(e.target.value))}>
-            {RPE_VALUES.map((rpe) => (
+            {RPE_SCALE.map((rpe) => (
               <option key={rpe} value={rpe}>
                 {rpe}
               </option>
             ))}
           </select>
-        </label>
+        </Field>
       )}
 
-      <label className="field">
-        <span>Equipment</span>
+      <Field label="Equipment">
         <select value={form.equipment} onChange={(e) => set('equipment', e.target.value as EquipmentType)}>
           {EQUIPMENT.filter((o) => !(primary && o.value === 'bodyweight')).map((o) => (
             <option key={o.value} value={o.value}>
@@ -190,19 +181,22 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
             </option>
           ))}
         </select>
-      </label>
+      </Field>
 
-      <label className="field">
-        <span>
-          {form.equipment === 'bodyweight' ? 'Added weights' : 'Available weights'} (lb)
-          {!needsLoads && <span className="muted"> · optional, for your gym</span>}
-        </span>
+      <Field
+        label={
+          <>
+            {form.equipment === 'bodyweight' ? 'Added weights' : 'Available weights'} (lb)
+            {!needsLoads && <span className="muted"> · optional, for your gym</span>}
+          </>
+        }
+      >
         <input
           value={form.loads}
           placeholder={loadsPlaceholder}
           onChange={(e) => set('loads', e.target.value)}
         />
-      </label>
+      </Field>
 
       <label className="checkbox">
         <input
@@ -213,47 +207,49 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
         <span>One side at a time (reps are per side)</span>
       </label>
 
-      <fieldset className="field seed">
-        <legend>Starting numbers</legend>
+      <Field
+        as="fieldset"
+        label="Starting numbers"
+        hint={
+          primary && "Enter a weight and reps you're confident you could do: hard, but you wouldn't fail."
+        }
+        className="seed"
+      >
         {primary ? (
-          <>
-            <p className="muted">
-              Enter a weight and reps you&apos;re confident you could do: hard, but you wouldn&apos;t fail.
-            </p>
-            <div className="row">
-              <label className="field">
-                <span>Weight (lb)</span>
-                <input
-                  inputMode="decimal"
-                  value={form.seedWeight}
-                  onChange={(e) => set('seedWeight', e.target.value)}
-                />
-              </label>
-              <label className="field">
-                <span>Reps</span>
-                <input
-                  inputMode="numeric"
-                  value={form.seedReps}
-                  onChange={(e) => set('seedReps', e.target.value)}
-                />
-              </label>
-            </div>
-          </>
+          <div className="row">
+            <Field label="Weight (lb)">
+              <input
+                inputMode="decimal"
+                value={form.seedWeight}
+                onChange={(e) => set('seedWeight', e.target.value)}
+              />
+            </Field>
+            <Field label="Reps">
+              <input
+                inputMode="numeric"
+                value={form.seedReps}
+                onChange={(e) => set('seedReps', e.target.value)}
+              />
+            </Field>
+          </div>
         ) : (
-          <label className="field">
-            <span className="muted">
-              What&apos;s a weight you can do {form.min || 'the bottom of the range'} {repsWord} of{' '}
-              {form.name.trim() || 'this exercise'} with that would be hard, but achievable?
-            </span>
+          <Field
+            label={
+              <span className="muted">
+                What&apos;s a weight you can do {form.min || 'the bottom of the range'} {repsWord} of{' '}
+                {form.name.trim() || 'this exercise'} with that would be hard, but achievable?
+              </span>
+            }
+          >
             <input
               inputMode="decimal"
               value={form.seedWeight}
               placeholder={SEED_PLACEHOLDER[form.equipment] || loads?.[0]?.toString() || ''}
               onChange={(e) => set('seedWeight', e.target.value)}
             />
-          </label>
+          </Field>
         )}
-      </fieldset>
+      </Field>
 
       {attempted && errors.length > 0 && (
         <ul className="errors" role="alert">
@@ -264,13 +260,11 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
       )}
 
       <div className="actions">
-        <button type="submit" className="primary">
+        <Button type="submit" variant="primary">
           Save exercise
-        </button>
-        <button type="button" onClick={onCancel}>
-          Cancel
-        </button>
+        </Button>
+        <Button onClick={onCancel}>Cancel</Button>
       </div>
-    </form>
+    </Card>
   )
 }

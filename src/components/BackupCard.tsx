@@ -1,5 +1,8 @@
 import { useRef, useState } from 'react'
 import { exportBackup, parseBackup, restoreBackup } from '../storage/backup'
+import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
+import { formatDate } from '../ui/format'
 
 /** Export and restore all data as JSON (SPEC §2). Data never leaves the device otherwise. */
 export function BackupCard() {
@@ -20,7 +23,7 @@ export function BackupCard() {
   async function restore(file: File) {
     try {
       const backup = parseBackup(await file.text())
-      const date = new Date(backup.exportedAt).toLocaleDateString()
+      const date = formatDate(backup.exportedAt, 'numeric')
       const ok = confirm(
         `Replace ALL current data with this backup from ${date} (${backup.sessions.length} sessions)? ` +
           'This cannot be undone. Export first if you want to keep what is here now.',
@@ -34,18 +37,16 @@ export function BackupCard() {
   }
 
   return (
-    <section className="card backup">
+    <Card className="backup">
       <h2>Backup</h2>
       <p className="muted">
         Your data lives only on this device. Export a backup now and then; restoring one replaces everything.
       </p>
       <div className="actions">
-        <button type="button" className="primary" onClick={() => void download()}>
+        <Button variant="primary" onClick={() => void download()}>
           Export data
-        </button>
-        <button type="button" onClick={() => fileInput.current?.click()}>
-          Restore from file…
-        </button>
+        </Button>
+        <Button onClick={() => fileInput.current?.click()}>Restore from file…</Button>
         <input
           ref={fileInput}
           type="file"
@@ -62,6 +63,6 @@ export function BackupCard() {
           {status}
         </p>
       )}
-    </section>
+    </Card>
   )
 }

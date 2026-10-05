@@ -1,6 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import type { LoggedSet } from '../engine'
 import { addSet, removeSet, updateSet } from '../session/sets'
+import { Button } from '../ui/Button'
+import { Field } from '../ui/Field'
+import { formatSet } from '../ui/format'
 import { RpePicker } from './RpePicker'
 
 interface Form {
@@ -15,10 +18,6 @@ function prefill(sets: LoggedSet[], first?: { weight: number; reps: number }): F
   if (last) return { weight: String(last.weight), reps: String(last.reps), rpe: last.rpe }
   if (first) return { weight: String(first.weight), reps: String(first.reps) }
   return { weight: '', reps: '' }
-}
-
-function formatSet(set: LoggedSet) {
-  return `${set.weight} × ${set.reps}${set.rpe !== undefined ? ` @ ${set.rpe}` : ''}`
 }
 
 interface Props {
@@ -105,15 +104,10 @@ export function SetEditor({
         <ol className="set-list">
           {sets.map((set, i) => (
             <li key={i}>
-              <button
-                type="button"
-                className="set-row"
-                aria-current={editing === i}
-                onClick={() => startEdit(i)}
-              >
+              <Button className="set-row" aria-current={editing === i} onClick={() => startEdit(i)}>
                 <span>Set {i + 1}</span>
                 <span>{formatSet(set)}</span>
-              </button>
+              </Button>
             </li>
           ))}
         </ol>
@@ -123,57 +117,57 @@ export function SetEditor({
         <form className="set-form" onSubmit={submit}>
           <h3>{editing === null ? `Set ${formIndex + 1}` : `Editing set ${editing + 1}`}</h3>
 
-          <label className="field">
-            <span>
-              {weightLabel}
-              {sets.length > 0 && <span className="muted"> · applies to all sets</span>}
-            </span>
+          <Field
+            label={
+              <>
+                {weightLabel}
+                {sets.length > 0 && <span className="muted"> · applies to all sets</span>}
+              </>
+            }
+          >
             <div className="stepper">
-              <button type="button" aria-label="Lighter" onClick={() => stepWeight(-1)}>
+              <Button aria-label="Lighter" onClick={() => stepWeight(-1)}>
                 −
-              </button>
+              </Button>
               <input
                 inputMode="decimal"
                 value={form.weight}
                 onChange={(e) => setForm({ ...form, weight: e.target.value })}
               />
-              <button type="button" aria-label="Heavier" onClick={() => stepWeight(1)}>
+              <Button aria-label="Heavier" onClick={() => stepWeight(1)}>
                 +
-              </button>
+              </Button>
             </div>
-          </label>
+          </Field>
 
-          <label className="field">
-            <span>{repsLabel}</span>
+          <Field label={repsLabel}>
             <div className="stepper">
-              <button type="button" aria-label="Fewer reps" onClick={() => stepReps(-1)}>
+              <Button aria-label="Fewer reps" onClick={() => stepReps(-1)}>
                 −
-              </button>
+              </Button>
               <input
                 inputMode="numeric"
                 value={form.reps}
                 onChange={(e) => setForm({ ...form, reps: e.target.value })}
               />
-              <button type="button" aria-label="More reps" onClick={() => stepReps(1)}>
+              <Button aria-label="More reps" onClick={() => stepReps(1)}>
                 +
-              </button>
+              </Button>
             </div>
-          </label>
+          </Field>
 
           <RpePicker value={form.rpe} required={required} onChange={(rpe) => setForm({ ...form, rpe })} />
 
           <div className="actions">
-            <button type="submit" className="primary" disabled={!valid}>
+            <Button type="submit" variant="primary" disabled={!valid}>
               {editing === null ? 'Log set' : 'Save set'}
-            </button>
+            </Button>
             {editing !== null && (
               <>
-                <button type="button" onClick={cancelEdit}>
-                  Cancel
-                </button>
-                <button type="button" className="danger" onClick={() => void save(removeSet(sets, editing))}>
+                <Button onClick={cancelEdit}>Cancel</Button>
+                <Button variant="danger" onClick={() => void save(removeSet(sets, editing))}>
                   Delete set
-                </button>
+                </Button>
               </>
             )}
           </div>

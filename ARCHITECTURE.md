@@ -23,6 +23,8 @@ src/
   history/      Pure view-model for the History tab (timeline of sessions with e1RM)
   storage/      Everything that touches IndexedDB: Dexie schema, reads, writes, backup/restore
   components/   React UI (see "UI" below)
+  ui/           UI primitives (Button, Card, Field), shared formatters (format.ts) and the RPE scale (rpe.ts)
+  styles/       tokens.css: color, spacing, radius, tap-target and type-scale tokens
   App.tsx       Tabs (Today / History / Program) and the single live query
 public/
   _headers        HTTP security headers (served by Cloudflare; applied by `vite preview` too)
@@ -79,7 +81,8 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 - **Tabs:** `TodayView` (next day, suggestions, seed gate, active `SessionView`), `HistoryView` (picker, `E1rmChart`, timeline), `ProgramView` (days, `ExerciseForm`, `BackupCard`).
 - **Session:** `SessionView` (warm-up banner, finish/discard) → `ExerciseLogger` per exercise (⋯ menu, substitute, validation message) → `SetEditor` (set list + form, shared by originals and substitutes) → `RpePicker`.
-- **Styling:** color tokens with light/dark values in `src/index.css`; all component styles in `src/App.css` as shared classes (`.card`, `.field`, `.actions`, `.note`, `.tag`, `.muted`, `button.primary` / `.danger`), sectioned by slice. Single-column grids use `minmax(0, 1fr)` so content can't widen the page on small phones (see TESTING.md).
+- **Styling:** design tokens (colors with light/dark values, spacing, radius, tap target, type scale) in `src/styles/tokens.css`; use a token rather than a raw value, except 1px hairlines and one-off optical tweaks. All component styles are in `src/App.css` as shared classes (`.card`, `.field`, `.actions`, `.note`, `.tag`, `.muted`, `button.primary` / `.danger`), sectioned by slice.
+- **Primitives (`src/ui/`):** `Button` (`variant` primary / secondary / danger, `block`; defaults to `type="button"`), `Card` (`as` section / li / form) and `Field` (label or fieldset, optional `hint`). New UI uses them instead of raw elements with class names. Display formatting goes through `src/ui/format.ts`. Single-column grids use `minmax(0, 1fr)` so content can't widen the page on small phones (see TESTING.md).
 - **Dialogs:** native `confirm()` for destructive or unusual actions.
 
 ## PWA and offline
@@ -106,7 +109,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Proposed: UI component layer and design tokens
 
-*Status: **Decided (trimmed) for v1.1.0**, not yet built (SPEC §9.1, slice 0): steps 1, 4, and step 2 limited to `Button`, `Field` and `Card`. The other primitives, and moving every component to CSS Modules (step 3), stay **Proposed** and come as they're needed.*
+*Status: **Built (trimmed) in v1.1.0** (SPEC §9.1, slice 0): steps 1, 4, and step 2 limited to `Button`, `Field` and `Card`. The token scale as built is `--space-1…6` (4, 6, 8, 12, 16, 24px), `--radius-sm/md/lg/pill`, `--tap-target` / `--tap-target-lg` (44, 52px) and `--text-xs…display`, matching the existing values one-to-one. The other primitives, and moving every component to CSS Modules (step 3), stay **Proposed** and come as they're needed.*
 
 An audit of v1.0.0 found:
 

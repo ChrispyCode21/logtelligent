@@ -1,4 +1,6 @@
 import type { ExerciseConfig, PlanKind, Suggestion } from '../engine'
+import { Card } from '../ui/Card'
+import { formatE1rm, formatWeight } from '../ui/format'
 
 const BASIS_NOTES = {
   history: null,
@@ -23,10 +25,10 @@ interface Props {
 export function SuggestionCard({ config, suggestion, heading }: Props) {
   if (suggestion.kind === 'needsSeed') {
     return (
-      <section className="card">
+      <Card>
         <h2>{heading}</h2>
         <p>{config.name} needs starting numbers before you can start a session.</p>
-      </section>
+      </Card>
     )
   }
 
@@ -34,21 +36,15 @@ export function SuggestionCard({ config, suggestion, heading }: Props) {
   const planNote = PLAN_NOTES[suggestion.plan]
   const { min } = config.repRange
   const max = suggestion.effectiveTop ?? config.repRange.max
-  const weight =
-    config.equipment === 'bodyweight'
-      ? suggestion.weight === 0
-        ? 'Bodyweight'
-        : `BW + ${suggestion.weight} lb`
-      : `${suggestion.weight} lb`
 
   return (
-    <section className="card">
+    <Card>
       <h2>
         {heading}
         {suggestion.plan === 'deload' && <span className="tag">Deload</span>}
       </h2>
       <p className="suggestion">
-        {weight} × {suggestion.reps}
+        {formatWeight(suggestion.weight, config.equipment)} × {suggestion.reps}
       </p>
       <p className="muted">
         {config.equipment === 'dumbbell' && 'Per hand · '}
@@ -56,10 +52,10 @@ export function SuggestionCard({ config, suggestion, heading }: Props) {
         {config.unilateral && ' per side'}
         {suggestion.targetRpe !== undefined && <> · first set @ RPE {suggestion.targetRpe}</>}
       </p>
-      {suggestion.e1rm && <p className="muted">Estimated 1RM {suggestion.e1rm.value.toFixed(1)} lb</p>}
+      {suggestion.e1rm && <p className="muted">Estimated 1RM {formatE1rm(suggestion.e1rm.value)}</p>}
       {suggestion.stacks > 0 && <p className="muted">Fatigue stacks: {suggestion.stacks} of 2</p>}
       {planNote && <p className="note">{planNote}</p>}
       {basisNote && <p className="note">{basisNote}</p>}
-    </section>
+    </Card>
   )
 }

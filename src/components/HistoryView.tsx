@@ -1,21 +1,12 @@
 import { useState } from 'react'
-import type { LoggedSet } from '../engine'
 import { exerciseTimeline } from '../history/timeline'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../storage/db'
 import { exerciseHasHistory, exerciseHistory } from '../storage/history'
+import { Card } from '../ui/Card'
+import { Field } from '../ui/Field'
+import { formatDate, formatE1rm, formatSets } from '../ui/format'
 import { E1rmChart } from './E1rmChart'
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-
-const formatSet = (set: LoggedSet) =>
-  `${set.weight} × ${set.reps}${set.rpe !== undefined ? ` @ ${set.rpe}` : ''}`
 
 interface Props {
   program: Program
@@ -38,10 +29,10 @@ export function HistoryView({ program, sessions }: Props) {
 
   if (!exercise) {
     return (
-      <section className="card">
+      <Card>
         <h2>No exercises yet</h2>
         <p>History shows up here once your program has exercises.</p>
-      </section>
+      </Card>
     )
   }
 
@@ -54,8 +45,7 @@ export function HistoryView({ program, sessions }: Props) {
   return (
     <>
       <h2 className="page-title">History</h2>
-      <label className="field">
-        <span className="muted">Exercise</span>
+      <Field label={<span className="muted">Exercise</span>}>
         <select value={exercise.id} onChange={(e) => setSelectedId(e.target.value)}>
           {groups
             .filter((g) => g.exercises.length > 0)
@@ -69,44 +59,43 @@ export function HistoryView({ program, sessions }: Props) {
               </optgroup>
             ))}
         </select>
-      </label>
+      </Field>
 
       {timeline.length === 0 ? (
         <p className="muted">No sessions logged yet.</p>
       ) : (
         <>
           {exercise.tier === 'primary' && points.length >= 2 && (
-            <section className="card">
+            <Card>
               <E1rmChart points={points} />
-            </section>
+            </Card>
           )}
           <ol className="history-list">
             {timeline.map((entry) => (
-              <li key={entry.date} className="card history-row">
+              <Card as="li" key={entry.date} className="history-row">
                 <div className="history-head">
                   <strong>{formatDate(entry.date)}</strong>
                   {entry.isDeload && <span className="tag">Deload</span>}
-                  {entry.e1rm !== undefined && <span className="muted">e1RM {entry.e1rm.toFixed(1)} lb</span>}
+                  {entry.e1rm !== undefined && <span className="muted">e1RM {formatE1rm(entry.e1rm)}</span>}
                 </div>
                 {entry.substitute ? (
                   <>
                     <p>
                       <span className="muted">Replaced with </span>
                       {entry.substitute.name}
-                      {entry.substitute.sets.length > 0 &&
-                        `: ${entry.substitute.sets.map(formatSet).join(' · ')}`}
+                      {entry.substitute.sets.length > 0 && `: ${formatSets(entry.substitute.sets)}`}
                     </p>
                     {entry.sets.length > 0 && (
-                      <p className="muted">Before replacing: {entry.sets.map(formatSet).join(' · ')}</p>
+                      <p className="muted">Before replacing: {formatSets(entry.sets)}</p>
                     )}
                   </>
                 ) : (
                   <p>
-                    {entry.sets.map(formatSet).join(' · ')}
+                    {formatSets(entry.sets)}
                     {exercise.unilateral && <span className="muted"> (per side)</span>}
                   </p>
                 )}
-              </li>
+              </Card>
             ))}
           </ol>
         </>

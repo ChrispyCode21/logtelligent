@@ -5,6 +5,9 @@ import type { Program } from '../program/types'
 import type { Session } from '../storage/db'
 import { exerciseHistory, lastLoggedDayId } from '../storage/history'
 import { startSession } from '../storage/sessions'
+import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
+import { Field } from '../ui/Field'
 import { SessionView } from './SessionView'
 import { SuggestionCard } from './SuggestionCard'
 
@@ -26,13 +29,13 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
   const days = activeDays(program).filter((d) => d.exercises.length > 0)
   if (days.length === 0) {
     return (
-      <section className="card">
+      <Card>
         <h2>No program yet</h2>
         <p>Add your training days and exercises to get started.</p>
-        <button type="button" className="primary block" onClick={onEditProgram}>
+        <Button variant="primary" block onClick={onEditProgram}>
           Set up program
-        </button>
-      </section>
+        </Button>
+      </Card>
     )
   }
 
@@ -40,16 +43,16 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
   const unseeded = missingSeeds(program)
   if (unseeded.length > 0) {
     return (
-      <section className="card">
+      <Card>
         <h2>Starting numbers needed</h2>
         <p>
           {unseeded.map((e) => e.name).join(', ')} {unseeded.length === 1 ? 'needs' : 'need'} starting numbers
           before you can start a session.
         </p>
-        <button type="button" className="primary block" onClick={onEditProgram}>
+        <Button variant="primary" block onClick={onEditProgram}>
           Finish setup
-        </button>
-      </section>
+        </Button>
+      </Card>
     )
   }
 
@@ -86,9 +89,9 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
         />
       ))}
 
-      <button
-        type="button"
-        className="primary block"
+      <Button
+        variant="primary"
+        block
         onClick={() => {
           // The override applies to this session only; afterward the rotation decides.
           setChosenDayId(undefined)
@@ -99,11 +102,10 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
         }}
       >
         Start {day.name}
-      </button>
+      </Button>
 
       {days.length > 1 && (
-        <label className="field">
-          <span className="muted">Do a different day</span>
+        <Field label={<span className="muted">Do a different day</span>}>
           <select value={day.id} onChange={(e) => chooseDay(e.target.value)}>
             {days.map((d) => (
               <option key={d.id} value={d.id}>
@@ -112,7 +114,7 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
               </option>
             ))}
           </select>
-        </label>
+        </Field>
       )}
     </>
   )

@@ -6,6 +6,7 @@ import { warmupText } from '../session/warmup'
 import type { Session } from '../storage/db'
 import { exerciseHistory } from '../storage/history'
 import { discardSession, dismissWarmup, finishSession } from '../storage/sessions'
+import { Button } from '../ui/Button'
 import { ExerciseLogger } from './ExerciseLogger'
 
 interface Props {
@@ -59,9 +60,9 @@ export function SessionView({ session, program, sessions, asOf }: Props) {
       {warmup && !session.warmupDismissed && (
         <div className="note warmup" role="note">
           <p>{warmup}</p>
-          <button type="button" aria-label="Dismiss warm-up" onClick={() => void dismissWarmup(session.id)}>
+          <Button aria-label="Dismiss warm-up" onClick={() => void dismissWarmup(session.id)}>
             ✕
-          </button>
+          </Button>
         </div>
       )}
       {exercises.map(({ log, config, history, suggestion }) => (
@@ -75,12 +76,12 @@ export function SessionView({ session, program, sessions, asOf }: Props) {
         />
       ))}
       <div className="actions">
-        <button type="button" className="primary" disabled={!finishable} onClick={finish}>
+        <Button variant="primary" disabled={!finishable} onClick={finish}>
           Finish session
-        </button>
-        <button type="button" className="danger" onClick={discard}>
+        </Button>
+        <Button variant="danger" onClick={discard}>
           Discard
-        </button>
+        </Button>
       </div>
     </>
   )

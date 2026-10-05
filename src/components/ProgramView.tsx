@@ -14,6 +14,9 @@ import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../storage/db'
 import { dayHasHistory, exerciseHasHistory } from '../storage/history'
 import { updateProgram } from '../storage/program'
+import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
+import { Field } from '../ui/Field'
 import { BackupCard } from './BackupCard'
 import { ExerciseForm } from './ExerciseForm'
 
@@ -79,7 +82,7 @@ export function ProgramView({ program, sessions }: Props) {
       <p className="muted">Training days run in this order, then repeat.</p>
 
       {days.map((day, dayIndex) => (
-        <section key={day.id} className="card day">
+        <Card key={day.id} className="day">
           <div className="day-title">
             <input
               key={day.name}
@@ -92,30 +95,27 @@ export function ProgramView({ program, sessions }: Props) {
               }}
             />
             <div className="icon-buttons">
-              <button
-                type="button"
+              <Button
                 aria-label={`Move ${day.name} up`}
                 disabled={dayIndex === 0}
                 onClick={() => save((p) => moveDay(p, day.id, -1))}
               >
                 ↑
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
                 aria-label={`Move ${day.name} down`}
                 disabled={dayIndex === days.length - 1}
                 onClick={() => save((p) => moveDay(p, day.id, 1))}
               >
                 ↓
-              </button>
-              <button
-                type="button"
-                className="danger"
+              </Button>
+              <Button
+                variant="danger"
                 aria-label={`Remove ${day.name}`}
                 onClick={() => removeDayConfirmed(day.id, day.name)}
               >
                 ✕
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -131,40 +131,36 @@ export function ProgramView({ program, sessions }: Props) {
                 </li>
               ) : (
                 <li key={exercise.id} className="exercise-row">
-                  <button
-                    type="button"
+                  <Button
                     className="exercise-summary"
                     onClick={() => setEditing({ dayId: day.id, exerciseId: exercise.id })}
                   >
                     <strong>{exercise.name}</strong>
                     <span className="muted">{summary(exercise)}</span>
                     {!exercise.seed && <span className="warning-text">Needs starting numbers</span>}
-                  </button>
+                  </Button>
                   <div className="icon-buttons">
-                    <button
-                      type="button"
+                    <Button
                       aria-label={`Move ${exercise.name} up`}
                       disabled={i === 0}
                       onClick={() => save((p) => moveExercise(p, day.id, exercise.id, -1))}
                     >
                       ↑
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
                       aria-label={`Move ${exercise.name} down`}
                       disabled={i === day.exercises.length - 1}
                       onClick={() => save((p) => moveExercise(p, day.id, exercise.id, 1))}
                     >
                       ↓
-                    </button>
-                    <button
-                      type="button"
-                      className="danger"
+                    </Button>
+                    <Button
+                      variant="danger"
                       aria-label={`Remove ${exercise.name}`}
                       onClick={() => removeExerciseConfirmed(exercise)}
                     >
                       ✕
-                    </button>
+                    </Button>
                   </div>
                 </li>
               ),
@@ -174,26 +170,23 @@ export function ProgramView({ program, sessions }: Props) {
           {editing?.dayId === day.id && editing.exerciseId === undefined ? (
             <ExerciseForm onSave={(e) => saveExercise(day.id, e)} onCancel={() => setEditing(null)} />
           ) : (
-            <button type="button" onClick={() => setEditing({ dayId: day.id })}>
-              + Add exercise
-            </button>
+            <Button onClick={() => setEditing({ dayId: day.id })}>+ Add exercise</Button>
           )}
-        </section>
+        </Card>
       ))}
 
-      <form className="card add-day" onSubmit={submitDay}>
-        <label className="field">
-          <span>New training day</span>
+      <Card as="form" className="add-day" onSubmit={submitDay}>
+        <Field label="New training day">
           <input
             value={newDayName}
             placeholder={days.length === 0 ? 'e.g. Upper A' : ''}
             onChange={(e) => setNewDayName(e.target.value)}
           />
-        </label>
-        <button type="submit" disabled={!newDayName.trim()}>
+        </Field>
+        <Button type="submit" disabled={!newDayName.trim()}>
           Add day
-        </button>
-      </form>
+        </Button>
+      </Card>
 
       <BackupCard />
     </>
