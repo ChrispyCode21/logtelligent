@@ -10,9 +10,11 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 - **Starting numbers look and read the same everywhere:** the guided walkthrough uses the same prompt and layout as the exercise form ("Enter a weight and reps you're confident you could do…").
 - **Suggested starting weight follows your gym's weights:** when adding an exercise from the list, the suggested starting weight now rounds down to one of the weights you've typed for it.
+- **One way to describe an exercise:** the Program tab, the exercise list and the starting-numbers walkthrough all show the same line, e.g. "Primary · 3 × 5–7 · Barbell", with "per side" for one-sided exercises. The exercise list now shows sets and reps too.
 
 ### Fixed
 
+- **Bigger weight and reps fields while logging:** they were meant to be larger than other fields, but a general input style overrode them before v1.0.0 shipped.
 - **Starting numbers with a typed weight stack:** a stack typed out of order (e.g. "40, 10, 20, 30") now suggests the right starting weight, and a stack with a typo in it no longer suggests "NaN".
 
 ## [1.1.0] - 2026-10-04

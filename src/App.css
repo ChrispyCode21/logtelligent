@@ -79,6 +79,13 @@ button.block {
   min-height: var(--tap-target-lg);
 }
 
+/* Every toggle group: tabs, effort scale, tier, stack presets, effort picker. */
+button[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
 .set-list {
   list-style: none;
   margin: 0 0 var(--space-5);
@@ -116,27 +123,6 @@ button.block {
   gap: var(--space-3);
 }
 
-.stepper input {
-  min-width: 0;
-  min-height: var(--tap-target);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg);
-  text-align: center;
-  font-size: var(--text-lg);
-}
-
-.effort {
-  border: 0;
-  margin: 0;
-  padding: 0;
-}
-
-.effort legend {
-  padding: 0;
-  margin-bottom: var(--space-2);
-}
-
 .effort-buttons {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -150,12 +136,6 @@ button.block {
 
 .effort-buttons button {
   padding: 0;
-}
-
-.effort-buttons button[aria-pressed='true'] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-text);
 }
 
 .actions {
@@ -198,13 +178,6 @@ button.block {
   gap: var(--space-1);
 }
 
-.tabs button[aria-pressed='true'],
-.segmented button[aria-pressed='true'] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-text);
-}
-
 .page-title {
   font-size: var(--text-xl);
   margin: 0;
@@ -224,6 +197,13 @@ select {
   font-size: var(--text-base);
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* After the rule above, which would otherwise win: the logging inputs are larger (SPEC §9.2, slice 0). */
+.stepper input {
+  min-width: 0;
+  text-align: center;
+  font-size: var(--text-lg);
 }
 
 fieldset.field {
@@ -320,8 +300,8 @@ fieldset.field legend {
   gap: var(--space-2);
 }
 
-.bank-item {
-  width: 100%;
+/* A list entry as a button: a title over a smaller muted line (bank exercises, program exercises). */
+.list-button {
   display: grid;
   justify-items: start;
   gap: 2px;
@@ -329,8 +309,12 @@ fieldset.field legend {
   text-align: left;
 }
 
-.bank-item .muted {
+.list-button .muted {
   font-size: var(--text-sm);
+}
+
+.bank-item {
+  width: 100%;
 }
 
 .checkbox {
@@ -407,15 +391,6 @@ fieldset.field legend {
 .exercise-summary {
   flex: 1;
   min-width: 0;
-  display: grid;
-  justify-items: start;
-  gap: 2px;
-  padding: var(--space-3) var(--space-4);
-  text-align: left;
-}
-
-.exercise-summary .muted {
-  font-size: var(--text-sm);
 }
 
 .warning-text {

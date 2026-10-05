@@ -10,7 +10,6 @@ import {
   renameDay,
   updateExercise,
 } from '../program/program'
-import { effortTarget, type EffortScale } from '../program/effort'
 import type { BankExercise } from '../program/bank'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
@@ -19,6 +18,7 @@ import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
+import { formatPrescription } from '../ui/format'
 import { BackupCard } from './BackupCard'
 import { EffortScaleCard } from './EffortScaleCard'
 import { ExerciseForm } from './ExerciseForm'
@@ -31,12 +31,6 @@ interface Editing {
   exerciseId?: string
   /** Adding: what was picked from the bank, or 'custom'. Undefined while the picker is open. */
   preset?: BankExercise | 'custom'
-}
-
-function summary(e: ProgramExercise, scale: EffortScale) {
-  const { min, max } = e.repRange
-  const rpe = e.tier === 'primary' ? effortTarget(scale, e.targetRpe) : ''
-  return `${e.tier === 'primary' ? 'Primary' : 'Accessory'} · ${e.sets} × ${min}–${max}${rpe} · ${e.equipment}`
 }
 
 function removalMessage(name: string, hasHistory: boolean) {
@@ -145,11 +139,11 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
               ) : (
                 <li key={exercise.id} className="exercise-row">
                   <Button
-                    className="exercise-summary"
+                    className="list-button exercise-summary"
                     onClick={() => setEditing({ dayId: day.id, exerciseId: exercise.id })}
                   >
                     <strong>{exercise.name}</strong>
-                    <span className="muted">{summary(exercise, program.effortScale)}</span>
+                    <span className="muted">{formatPrescription(exercise, program.effortScale)}</span>
                     {!exercise.seed && <span className="warning-text">Needs starting numbers</span>}
                   </Button>
                   <div className="icon-buttons">

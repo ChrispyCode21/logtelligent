@@ -3,8 +3,7 @@ import { BODY_AREAS, searchBank, type BankExercise } from '../program/bank'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
-
-const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1)
+import { formatPrescription } from '../ui/format'
 
 interface Props {
   onPick: (exercise: BankExercise) => void
@@ -42,11 +41,9 @@ export function ExercisePicker({ onPick, onCustom, onCancel }: Props) {
             <ul className="bank-list">
               {exercises.map((e) => (
                 <li key={e.id}>
-                  <Button className="bank-item" onClick={() => onPick(e)}>
+                  <Button className="list-button bank-item" onClick={() => onPick(e)}>
                     <strong>{e.name}</strong>
-                    <span className="muted">
-                      {capitalize(e.equipment)} · {capitalize(e.tier)}
-                    </span>
+                    <span className="muted">{formatPrescription(e)}</span>
                   </Button>
                 </li>
               ))}

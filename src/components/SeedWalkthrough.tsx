@@ -15,6 +15,7 @@ import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
+import { formatPrescription } from '../ui/format'
 import { SeedFields } from './SeedFields'
 
 interface Props {
@@ -77,12 +78,11 @@ function SeedStep({ exercise, dayName, progress, last, initialStack, onSave, onL
   const [reps, setReps] = useState<string>()
   const [attempted, setAttempted] = useState(false)
 
-  const primary = exercise.tier === 'primary'
   const loads = askStack ? stackLoads(stack) : exercise.loads
   const prefill = seedPrefill(exercise, askStack ? loads : undefined)
   const seed = { weight: weight ?? prefill.weight, reps: reps ?? prefill.reps }
   const bank = findBankExercise(exercise.name)
-  const { min, max } = exercise.repRange
+  const { min } = exercise.repRange
 
   const errors = validateSeedStep(seed, exercise.tier, askStack, loads)
 
@@ -103,10 +103,7 @@ function SeedStep({ exercise, dayName, progress, last, initialStack, onSave, onL
       </p>
       <h2>{exercise.name}</h2>
       {bank && <p className="muted">{bank.description}</p>}
-      <p className="muted">
-        {primary ? 'Primary' : 'Accessory'} · {exercise.sets} × {min}–{max}
-        {exercise.unilateral && ' per side'} · {exercise.equipment}
-      </p>
+      <p className="muted">{formatPrescription(exercise)}</p>
 
       {askStack && (
         <Field as="fieldset" label="Weight stack" hint="The weights on this machine at your gym.">

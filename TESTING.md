@@ -30,6 +30,7 @@ Results for **v1.0.0** (iPhone, 2026-10-04): all pass. The first run found sidew
 - [x] Export data saves a `.json` file (Files app), and Restore from file… reads it back.
 - [ ] **v1.1.0:** each effort scale is easy to tap one-handed during a set, including the stacked Perceived effort buttons; the upgrade keeps an existing program on RPE.
 - [ ] **v1.1.0:** the template's "Replace your program…?" `confirm()`, and the seed walkthrough one-handed (stack quick picks, Next, Finish later and resuming from Today).
+- [ ] **v1.2.0 slice 0:** the larger weight and reps fields in a session are easy to read and tap one-handed, and the program and exercise-list summary lines (e.g. "Accessory · 3 × 10–12 per side · Dumbbell") read well where they wrap.
 - [x] An update (push a change) appears after reopening the app. (Close it fully, open, close, and open again; the update downloads on one open and applies on the next.)
 
 ## Preview techniques

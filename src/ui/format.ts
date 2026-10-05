@@ -1,6 +1,36 @@
 // Display formatting shared by the UI. All weights are in pounds.
-import type { EquipmentType, LoggedSet } from '../engine'
-import { effortSuffix, type EffortScale } from '../program/effort'
+import type { EquipmentType, LoggedSet, RepRange, Tier } from '../engine'
+import { effortSuffix, effortTarget, type EffortScale } from '../program/effort'
+
+export const EQUIPMENT_LABELS: Record<EquipmentType, string> = {
+  barbell: 'Barbell',
+  dumbbell: 'Dumbbell',
+  cable: 'Cable',
+  machine: 'Machine',
+  bodyweight: 'Bodyweight',
+}
+
+export const TIER_LABELS: Record<Tier, string> = { primary: 'Primary', accessory: 'Accessory' }
+
+interface Prescription {
+  tier: Tier
+  sets: number
+  repRange: RepRange
+  unilateral: boolean
+  equipment: EquipmentType
+  targetRpe?: number
+}
+
+/**
+ * What an exercise asks for: `Primary · 3 × 5–7 · Barbell`, `Accessory · 3 × 10–12 per side · Dumbbell`.
+ * With a scale, a primary also shows its first-set effort target: `Primary · 3 × 5–7 @ RPE 8 · Barbell`.
+ */
+export function formatPrescription(e: Prescription, scale?: EffortScale) {
+  const target =
+    scale && e.tier === 'primary' && e.targetRpe !== undefined ? effortTarget(scale, e.targetRpe) : ''
+  const reps = `${e.sets} × ${e.repRange.min}–${e.repRange.max}${e.unilateral ? ' per side' : ''}${target}`
+  return `${TIER_LABELS[e.tier]} · ${reps} · ${EQUIPMENT_LABELS[e.equipment]}`
+}
 
 /** `225 × 4 @ 8` (`225 × 4 · 2 left`, `225 × 4 · Challenging` in other scales), or `225 × 4` without effort. */
 export const formatSet = (set: LoggedSet, scale: EffortScale = 'rpe') =>

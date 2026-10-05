@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { exerciseTimeline } from '../history/timeline'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
-import { exerciseHasHistory, exerciseHistory } from '../history/sessions'
+import { historyGroups } from '../history/picker'
+import { exerciseHistory } from '../history/sessions'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
 import { formatDate, formatE1rm, formatSets } from '../ui/format'
@@ -14,15 +15,7 @@ interface Props {
 }
 
 export function HistoryView({ program, sessions }: Props) {
-  // Active exercises grouped by day, then archived ones that have history (SPEC §5.3).
-  const groups = program.days
-    .filter((d) => !d.archived)
-    .map((d) => ({ label: d.name, exercises: d.exercises.filter((e) => !e.archived) }))
-  const archived = program.days
-    .flatMap((d) => d.exercises.filter((e) => d.archived || e.archived))
-    .filter((e) => exerciseHasHistory(sessions, e.id))
-  if (archived.length > 0) groups.push({ label: 'Archived', exercises: archived })
-
+  const groups = historyGroups(program, sessions)
   const all = groups.flatMap((g) => g.exercises)
   const [selectedId, setSelectedId] = useState<string>()
   const exercise: ProgramExercise | undefined = all.find((e) => e.id === selectedId) ?? all[0]
@@ -47,17 +40,15 @@ export function HistoryView({ program, sessions }: Props) {
       <h2 className="page-title">History</h2>
       <Field label={<span className="muted">Exercise</span>}>
         <select value={exercise.id} onChange={(e) => setSelectedId(e.target.value)}>
-          {groups
-            .filter((g) => g.exercises.length > 0)
-            .map((g) => (
-              <optgroup key={g.label} label={g.label}>
-                {g.exercises.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
+          {groups.map((g) => (
+            <optgroup key={g.label} label={g.label}>
+              {g.exercises.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                </option>
+              ))}
+            </optgroup>
+          ))}
         </select>
       </Field>
 

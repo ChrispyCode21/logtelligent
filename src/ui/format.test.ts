@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatE1rm, formatSet, formatSets, formatWeight } from './format'
+import { formatE1rm, formatPrescription, formatSet, formatSets, formatWeight } from './format'
 
 describe('formatSet', () => {
   it('shows the RPE when logged', () => {
@@ -62,5 +62,32 @@ describe('formatE1rm', () => {
   it('rounds to one decimal', () => {
     expect(formatE1rm(271.0844)).toBe('271.1 lb')
     expect(formatE1rm(250)).toBe('250.0 lb')
+  })
+})
+
+describe('formatPrescription (SPEC §9.2, slice 0)', () => {
+  const bench = {
+    tier: 'primary' as const,
+    sets: 3,
+    repRange: { min: 5, max: 7 },
+    unilateral: false,
+    equipment: 'barbell' as const,
+    targetRpe: 8,
+  }
+
+  it('shows tier, sets × reps and the equipment label', () => {
+    expect(formatPrescription(bench)).toBe('Primary · 3 × 5–7 · Barbell')
+  })
+
+  it('adds a primary’s effort target in the scale given', () => {
+    expect(formatPrescription(bench, 'rpe')).toBe('Primary · 3 × 5–7 @ RPE 8 · Barbell')
+    expect(formatPrescription(bench, 'repsLeft')).toBe('Primary · 3 × 5–7 with 2 reps left · Barbell')
+  })
+
+  it('says per side for one side at a time, and gives accessories no target', () => {
+    const lunge = { ...bench, tier: 'accessory' as const, repRange: { min: 10, max: 12 }, unilateral: true }
+    expect(formatPrescription({ ...lunge, equipment: 'dumbbell' }, 'rpe')).toBe(
+      'Accessory · 3 × 10–12 per side · Dumbbell',
+    )
   })
 })
