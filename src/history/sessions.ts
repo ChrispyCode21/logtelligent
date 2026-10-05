@@ -10,10 +10,19 @@ export interface LoggedExerciseSession extends ExerciseSession {
  * Finished sessions for one exercise, in the shape the engine takes.
  * Replaced sessions are included but flagged, so the engine skips them (SPEC §5.2, A6);
  * skipped exercises are left out.
+ *
+ * With `before`, only sessions that started before it are included: the history that session
+ * was judged against. Editing a finished session needs this, or it would be validated
+ * against itself and every later session (SPEC §9.2, slice 1).
  */
-export function exerciseHistory(sessions: Session[], exerciseId: string): LoggedExerciseSession[] {
+export function exerciseHistory(
+  sessions: Session[],
+  exerciseId: string,
+  before?: Session,
+): LoggedExerciseSession[] {
   return sessions
     .filter((s) => s.finishedAt)
+    .filter((s) => !before || (s.id !== before.id && Date.parse(s.startedAt) < Date.parse(before.startedAt)))
     .flatMap((s) =>
       s.exercises
         .filter((e) => e.exerciseId === exerciseId && !e.skipped)
