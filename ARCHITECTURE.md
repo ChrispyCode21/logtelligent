@@ -102,7 +102,8 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Quality gates and releases
 
-- **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the engine-purity rule), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
+- **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the engine-purity rule), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
+- **Architecture and quality review:** the `architecture-reviewer` subagent (`.claude/agents/architecture-reviewer.md`) reviews a branch or a module against this document and CLAUDE.md and reports ranked findings; it is read-only. Run it before opening a PR (CLAUDE.md, "Building a slice").
 - **Security** (`security.yml`): CodeQL on the app and the workflows; dependency review on PRs.
 - **Dependabot:** weekly npm and GitHub Actions update PRs. Actions are pinned to commit SHAs.
 - **`main` is protected** (`.github/rulesets/main.json`): changes arrive by PR, all checks must pass, and there are no force-pushes or deletions.

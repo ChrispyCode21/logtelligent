@@ -42,13 +42,13 @@ Standing instructions for any Claude session working in this repo.
 ## How to work
 
 - **`main` is protected.** Never push to it. Work on a branch, keep changes small with a commit per meaningful step, push the branch, and open a PR (the template has the checklist). The owner reviews and merges.
-- Before pushing, run what CI runs: `npm run format:check`, `npm run lint`, `npm run check:spec`, `npm run check:changelog`, `npm test`, `npm run build`.
+- Before pushing, run what CI runs: `npm run format:check`, `npm run lint`, `npm run check:conventions`, `npm run check:spec`, `npm run check:changelog`, `npm test`, `npm run build`.
 - Add user-facing changes to the "Unreleased" section of CHANGELOG.md. A release is a PR that bumps `package.json`'s version and moves those notes under it; merging it tags the release automatically (semantic versioning).
 - New work is scoped as versions from SPEC §11 (v1.2.0 is scoped in §9.2), recorded the way v1.1.0 is in §9.1. Settle the scope and any Open/Proposed items with the owner before building.
 
 ### Building a slice
 
-v1.1.0 was built one slice per PR, in this order:
+v1.1.0 was built one slice per PR, in this order (step 7 was added for v1.2.0):
 
 1. **Settle what the spec doesn't cover.** Ask the owner about any behavior the slice's SPEC entry leaves open, with a recommended default for each.
 2. **Record the decisions first:** a SPEC.md commit (status tags, the slice's section, §10) before any code.
@@ -56,6 +56,7 @@ v1.1.0 was built one slice per PR, in this order:
 4. **Stored-data changes** follow the ARCHITECTURE.md checklist (Dexie version, backup validator, round-trip test).
 5. **Verify in the preview** per TESTING.md: the flows by DOM, and sideways scrolling and clipped labels at 375px and 320px. Leave the preview's data as it was.
 6. **Update the docs in the same PR:** ARCHITECTURE.md (folder map, UI, storage), CHANGELOG.md "Unreleased" for user-facing changes, SPEC.md (the slice marked built), and TESTING.md's on-device checklist for anything the preview can't check.
-7. **Open the PR** with what changed, how it was verified, anything worth the owner's attention, and any Proposed data to review. Run the CI checks first.
+7. **Review:** run the `architecture-reviewer` subagent (`.claude/agents/`) on the branch's diff. Fix the must-fix findings; fix worth-fixing ones or say in the PR why not; raise its questions with the owner.
+8. **Open the PR** with what changed, how it was verified, anything worth the owner's attention, and any Proposed data to review. Run the CI checks first.
 
 Personal working preferences, if any, live in `CLAUDE.local.md` (git-ignored, never committed).
