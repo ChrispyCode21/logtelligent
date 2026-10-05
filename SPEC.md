@@ -379,9 +379,12 @@ Answers the three complaints from friends trying v1.0.0 (§11): RPE friction, ha
 - **Switching modes (Decided):** allowed at any time, including during a session. Nothing stored changes; the pickers and labels re-render in the new mode.
 - Storage change: a new `effortScale` field on the program. Needs the ARCHITECTURE.md checklist (Dexie version, backup validator, round-trip test). `FORMAT` stays 1, since a missing field means RPE.
 
-**Slice 2: Exercise bank (Decided).**
+**Slice 2: Exercise bank (Decided; built).**
 - About 50 common exercises **built into the app** (no network): name, tier, equipment, default rep range, sets, unilateral, a one-line description, and a placeholder starting weight for the seed prompt.
 - "Add exercise" searches the bank, with a **Custom…** option for anything not listed. Picking a bank exercise **copies its defaults** into a normal exercise, which is then fully editable. No link to the bank is stored (no storage change).
+- **Browsing (Decided):** the bank is grouped by body area (Chest, Back, Shoulders, Arms, Legs, Core), since not knowing exercise names was the complaint. Groups start collapsed, with a count, and a search opens every group with a match. Typing in the search box filters across all groups. The body area is a display label only, not the parked muscle-group store (§11).
+- **Search (Decided):** matches the name and a few common nicknames per exercise (e.g. "RDL" → Romanian Deadlift, "OHP" → Overhead Press), ignoring case and punctuation; every word typed must match.
+- **After picking (Decided):** the usual exercise form opens, prefilled with the bank's defaults, its description, and its placeholder starting weight. Review, enter starting numbers, Save. One flow for bank and custom exercises.
 - **Text only, no images.**
 - The exact list and its defaults are **Proposed**; review it in the slice's PR.
 

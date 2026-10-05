@@ -18,7 +18,7 @@ src/
     progression.ts  Floor rule, fatigue stacks, deloads; deriveState / evaluateSession (SPEC §6.6–6.7)
     suggest.ts      suggestNext: the entry point the UI calls (SPEC §6.4 weight selection)
     rotation.ts     nextDay (SPEC §5.1)
-  program/      Program model (days → exercises), pure editing functions (add, move, archive…) and effort scales (effort.ts)
+  program/      Program model (days → exercises), pure editing functions (add, move, archive…) effort scales (effort.ts) and the built-in exercise bank with search (bank.ts)
   session/      Pure session helpers: set editing (one working weight), canFinish, warm-up ramp
   history/      Pure view-model for the History tab (timeline of sessions with e1RM)
   storage/      Everything that touches IndexedDB: Dexie schema, reads, writes, backup/restore
@@ -80,7 +80,8 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## UI
 
-- **Tabs:** `TodayView` (next day, suggestions, seed gate, active `SessionView`), `HistoryView` (picker, `E1rmChart`, timeline), `ProgramView` (days, `ExerciseForm`, `BackupCard`).
+- **Tabs:** `TodayView` (next day, suggestions, seed gate, active `SessionView`), `HistoryView` (picker, `E1rmChart`, timeline), `ProgramView` (`EffortScaleCard`, days, `ExercisePicker` → `ExerciseForm`, `BackupCard`).
+- **Adding an exercise:** `ExercisePicker` browses `program/bank.ts` by body area or search; picking one opens `ExerciseForm` with `preset` (the bank defaults are copied in, nothing links back), and "Custom exercise…" opens it blank.
 - **Session:** `SessionView` (warm-up banner, finish/discard) → `ExerciseLogger` per exercise (⋯ menu, substitute, validation message) → `SetEditor` (set list + form, shared by originals and substitutes) → `EffortPicker` (the program's effort scale).
 - **Styling:** design tokens (colors with light/dark values, spacing, radius, tap target, type scale) in `src/styles/tokens.css`; use a token rather than a raw value, except 1px hairlines and one-off optical tweaks. All component styles are in `src/App.css` as shared classes (`.card`, `.field`, `.actions`, `.note`, `.tag`, `.muted`, `button.primary` / `.danger`), sectioned by slice.
 - **Primitives (`src/ui/`):** `Button` (`variant` primary / secondary / danger, `block`; defaults to `type="button"`), `Card` (`as` section / li / form) and `Field` (label or fieldset, optional `hint`). New UI uses them instead of raw elements with class names. Display formatting goes through `src/ui/format.ts`. Single-column grids use `minmax(0, 1fr)` so content can't widen the page on small phones (see TESTING.md).
