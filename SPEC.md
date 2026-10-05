@@ -362,15 +362,15 @@ Vertical slices, each usable on its own. All six are built, tested and live.
 
 Answers the three complaints from friends trying v1.0.0 (§11): RPE friction, having to build a program, and not knowing exercise names. All changes are additive (minor version). Built in this order, each slice a small PR or two, then a release PR.
 
-**Slice 0: UI groundwork (Decided: trimmed version of the ARCHITECTURE.md strategy).** Design tokens (spacing, radius, tap target, type scale), the primitives the new screens need (`Button`, `Field`, `Card`), and shared formatters (`formatSet`, `formatDate`, `formatWeight`, one RPE scale constant). The other primitives come later, as they're needed. No user-facing change.
+**Slice 0: UI groundwork (Decided: trimmed version of the ARCHITECTURE.md strategy; built).** Design tokens (spacing, radius, tap target, type scale), the primitives the new screens need (`Button`, `Field`, `Card`), and shared formatters (`formatSet`, `formatDate`, `formatWeight`, one RPE scale constant). The other primitives come later, as they're needed. No user-facing change.
 
-**Slice 1: Effort scale, chosen per program (Decided).**
+**Slice 1: Effort scale, chosen per program (Decided; built).**
 - The program has an **effort scale** that sets how effort is entered. All three modes are stored as an **RPE number** (6–10), so the engine, logged sets and e1RM math (§6.4) don't change, and switching modes later loses nothing.
   | Mode | Input | Maps to RPE |
   |---|---|---|
   | **RPE** | Today's picker, half steps 6–10 | as entered |
   | **Reps left** | "How many more reps could you have done?" 0 · 1 · 2 · 3 · 4+ | 10 · 9 · 8 · 7 · 6 |
-  | **Perceived effort** | 5 labeled buttons: Easy · Moderate · Challenging · Very hard · Failed on the last rep | 6 · 7 · 8 · 9 · 10 |
+  | **Perceived effort** | 5 labeled buttons, stacked (the labels don't fit five across a phone): Easy · Moderate · Challenging · Very hard · Failed on the last rep | 6 · 7 · 8 · 9 · 10 |
 - Chosen during program setup, with a one-line explanation that it estimates 1-rep maxes, which drive suggested weights. Editable later on the Program tab. **Until slice 3 adds a setup flow (Decided):** a card at the top of the Program tab.
 - **Default for a new program: Reps left.** Existing programs (no stored value) and older backups mean **RPE**.
 - The mode also sets the wording of the target-effort field (§6.1 Target RPE), the seed prompt (§5.1, which mentions no RPE and so is unchanged), the RPE input in a session (§6.3), and how history shows a set.
