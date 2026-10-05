@@ -21,7 +21,8 @@ src/
   program/      Program model (days → exercises), pure editing functions (add, move, archive…) effort scales (effort.ts), the built-in exercise bank with search (bank.ts), program templates (templates.ts), entering starting numbers: validation, pre-fill, placeholders and stack presets (seeding.ts), and the exercise form's fields and validation (exerciseForm.ts)
   session/      Session types (types.ts) and pure session rules: set editing (one working weight), each exercise's set target,
                 the "Only X of Y" tally, the first-set effort check and canFinish (sets.ts); set pre-fill and the set form's
-                validation (setForm.ts); warm-up ramp (warmup.ts)
+                validation (setForm.ts); each exercise's history and suggestion for a live or finished session (context.ts);
+                warm-up ramp (warmup.ts)
   history/      Pure history helpers: stored sessions → engine history, optionally before a given session (sessions.ts);
                 the History tab's view-model: a timeline of sessions with e1RM (timeline.ts) and the exercise picker's groups (picker.ts)
                 program/, session/ and history/ are pure too: no React, Dexie, storage or UI imports (enforced by lint).
@@ -51,7 +52,7 @@ Tests sit next to the code (`*.test.ts`). Every SPEC §7 worked example is a tes
 Fatigue stacks, the last successful numbers, deload status and accessory rep extensions are **not stored**. `deriveState` replays an exercise's finished sessions, oldest first, through the same `step` function used to validate a live session. Consequences:
 
 - One source of truth (the logged sets); state can't drift from history.
-- Editing or importing history automatically recomputes everything after it (useful when SPEC §10 #2, editing finished sessions, is decided).
+- Editing or importing history automatically recomputes everything after it. Editing a finished session (SPEC §9.2, slice 1) relies on this: `session/context.ts` judges it against only the sessions before it, as of when it started.
 - Deload and replaced sessions are identified during the replay, which is how they're excluded from e1RM (A5, A6).
 - Cost is negligible at this scale (a few hundred sessions per exercise at most).
 
@@ -84,10 +85,10 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## UI
 
-- **Tabs:** `TodayView` (next day, suggestions, seed gate → `SeedWalkthrough`, active `SessionView`), `HistoryView` (picker, `E1rmChart`, timeline), `ProgramView` (`EffortScaleCard`, `TemplateCard`, days, `ExercisePicker` → `ExerciseForm`, `BackupCard`).
+- **Tabs:** `TodayView` (next day, suggestions, seed gate → `SeedWalkthrough`, active `SessionView`), `HistoryView` (picker, `E1rmChart`, timeline; a row's Edit opens that session in `SessionView`), `ProgramView` (`EffortScaleCard`, `TemplateCard`, days, `ExercisePicker` → `ExerciseForm`, `BackupCard`).
 - **Templates and seeding:** `TemplateCard` applies `program/templates.ts` (first on an empty program; above Backup, as a replace after a confirm, otherwise) and tells `App` to open the walkthrough on Today. `SeedWalkthrough` always shows the first exercise still missing starting numbers and saves each one on Next, so leaving and coming back resumes without any stored progress. The bank match for pre-fill is by name, since programs store no link to the bank. Both `SeedWalkthrough` and `ExerciseForm` enter starting numbers through `SeedFields` (stateless; each keeps its own state) and the rules in `program/seeding.ts`.
 - **Adding an exercise:** `ExercisePicker` browses `program/bank.ts` by body area or search; picking one opens `ExerciseForm` with `preset` (the bank defaults are copied in, nothing links back), and "Custom exercise…" opens it blank.
-- **Session:** `SessionView` (warm-up banner, finish/discard) → `ExerciseLogger` per exercise (⋯ menu, substitute, validation message) → `SetEditor` (set list + form, shared by originals and substitutes) → `EffortPicker` (the program's effort scale).
+- **Session:** `SessionView` (warm-up banner, finish/discard) → `ExerciseLogger` per exercise (⋯ menu, substitute, validation message) → `SetEditor` (set list + form, shared by originals and substitutes) → `EffortPicker` (the program's effort scale). A finished session uses the same components in a finished mode (no warm-up, menu or new-set form; Done and Delete session), opened from History. Edits save through the same `storage/sessions.ts` writes as a live session.
 - **Styling:** design tokens (colors with light/dark values, spacing, radius, tap target, type scale) in `src/styles/tokens.css`; use a token rather than a raw value, except 1px hairlines and one-off optical tweaks. All component styles are in `src/App.css` as shared classes (`.card`, `.field`, `.actions`, `.note`, `.tag`, `.muted`, `.list-button`, `button.primary` / `.danger`), sectioned by slice. Any `aria-pressed` button gets the pressed style from one rule, so a new toggle group needs no CSS of its own.
 - **Primitives (`src/ui/`):** `Button` (`variant` primary / secondary / danger, `block`; defaults to `type="button"`), `Card` (`as` section / li / form) and `Field` (label or fieldset, optional `hint`). New UI uses them instead of raw elements with class names. Display formatting goes through `src/ui/format.ts`, including an exercise's summary line (`formatPrescription`) and the equipment and tier labels. Single-column grids use `minmax(0, 1fr)` so content can't widen the page on small phones (see TESTING.md).
 - **Dialogs:** native `confirm()` for destructive or unusual actions.

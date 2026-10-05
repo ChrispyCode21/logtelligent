@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is scoped** (§9.2, decided 2026-10-04; slice 0 added 2026-10-05); not yet built.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is being built** (§9.2, decided 2026-10-04; slice 0 added 2026-10-05): slices 0 and 1 are built.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -425,7 +425,7 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
      - `EffortPicker` uses the `Field` primitive.
      - The pressed-button style and the duplicate list-button styles are each defined once.
 
-**Slice 1: Edit finished sessions (Decided; resolves §10 #2).**
+**Slice 1: Edit finished sessions (Decided; resolves §10 #2; built).**
 - **Any finished session** can be edited, however old. Progression state is derived by replaying history (ARCHITECTURE.md), so an edit recomputes everything after it, and no cut-off is needed.
 - **What can change:** a set's weight, reps and effort; **delete a set**; **delete the whole session** (with a confirm). Adding sets, and undoing a replace or skip, stay closed once a session is finished.
 - **Same rules as during a session:** one working weight per exercise; set 1 of a primary keeps its effort. Deleting every set of an exercise makes it "not done" for that session (no fail, no stack), as with a skip (§5.2).
