@@ -23,6 +23,7 @@ import { BackupCard } from './BackupCard'
 import { EffortScaleCard } from './EffortScaleCard'
 import { ExerciseForm } from './ExerciseForm'
 import { ExercisePicker } from './ExercisePicker'
+import { TemplateCard } from './TemplateCard'
 
 interface Editing {
   dayId: string
@@ -47,9 +48,10 @@ function removalMessage(name: string, hasHistory: boolean) {
 interface Props {
   program: Program
   sessions: Session[]
+  onTemplateApplied: () => void
 }
 
-export function ProgramView({ program, sessions }: Props) {
+export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
   const [editing, setEditing] = useState<Editing | null>(null)
   const [newDayName, setNewDayName] = useState('')
   const days = activeDays(program)
@@ -86,6 +88,9 @@ export function ProgramView({ program, sessions }: Props) {
     <>
       <h2 className="page-title">Program</h2>
       <EffortScaleCard value={program.effortScale} />
+      {days.length === 0 && (
+        <TemplateCard program={program} sessions={sessions} onApplied={onTemplateApplied} />
+      )}
       <p className="muted">Training days run in this order, then repeat.</p>
 
       {days.map((day, dayIndex) => (
@@ -211,6 +216,9 @@ export function ProgramView({ program, sessions }: Props) {
         </Button>
       </Card>
 
+      {days.length > 0 && (
+        <TemplateCard program={program} sessions={sessions} onApplied={onTemplateApplied} />
+      )}
       <BackupCard />
     </>
   )

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { defaultLoads, type EquipmentType, type Tier } from '../engine'
-import { EFFORT_SCALES, nearestOption, type EffortScale } from '../program/effort'
 import type { BankExercise } from '../program/bank'
+import { EFFORT_SCALES, nearestOption, type EffortScale } from '../program/effort'
 import { MAX_RELATIVE_JUMP } from '../program/program'
+import { parseLoads } from '../program/seeding'
 import type { ProgramExercise } from '../program/types'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
@@ -62,12 +63,6 @@ function toForm(e?: ProgramExercise, preset?: BankExercise): Form {
 }
 
 const isWholeNumber = (s: string, min: number) => s !== '' && Number.isInteger(Number(s)) && Number(s) >= min
-
-function parseLoads(text: string): number[] | undefined {
-  const parts = text.split(/[\s,]+/).filter(Boolean)
-  if (parts.length === 0) return undefined
-  return parts.map(Number)
-}
 
 interface Props {
   initial?: ProgramExercise
