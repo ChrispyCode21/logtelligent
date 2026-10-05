@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0** (§9.1): all four slices built; release pending.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. The next version is scoped from §11.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:

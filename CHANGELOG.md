@@ -6,6 +6,10 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-04
+
+Answers the first round of feedback from friends: effort that doesn't require knowing RPE, an exercise list to pick from, and a ready-made program to start with.
+
 ### Added
 
 - **Effort scale, chosen per program:** rate sets in RPE, **reps left** (0 to 4+) or **perceived effort** (Easy to Failed on the last rep). Set it at the top of the Program tab; a new program starts on Reps left, and existing ones stay on RPE. Every scale feeds the same 1-rep-max estimate, and switching never changes logged data.
