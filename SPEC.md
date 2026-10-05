@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 is scoped** (§9.1, decided 2026-10-04); not yet built.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0** (§9.1): all four slices built; release pending.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -388,7 +388,7 @@ Answers the three complaints from friends trying v1.0.0 (§11): RPE friction, ha
 - **Text only, no images.**
 - **The list and its defaults (Decided 2026-10-04):** the 57 exercises in `src/program/bank.ts`, approved as proposed in PR #8.
 
-**Slice 3: Program templates and guided seeding (Decided).**
+**Slice 3: Program templates and guided seeding (Decided; built).**
 - One template ships: a **4-day Upper/Lower**, built from bank exercises with their bank defaults. **Days and exercises (Decided 2026-10-04):**
   - **Upper A:** Bench Press, Barbell Row, Dumbbell Shoulder Press, Lat Pulldown, Lateral Raise, Triceps Pushdown
   - **Lower A:** Back Squat, Romanian Deadlift, Leg Press, Lying Leg Curl, Standing Calf Raise
