@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. The next version is scoped from §11.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is scoped** (§9.2, decided 2026-10-04); not yet built.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -358,9 +358,9 @@ Vertical slices, each usable on its own. All six are built, tested and live.
 5. Exercise ⋯ menu (replace / delete) with the volume-only notice.
 6. Warm-up banner, JSON export, PWA install and offline polish.
 
-## 9.1 v1.1.0 scope (Decided 2026-10-04 — not yet built)
+## 9.1 v1.1.0 scope (Decided 2026-10-04 — released in v1.1.0)
 
-Answers the three complaints from friends trying v1.0.0 (§11): RPE friction, having to build a program, and not knowing exercise names. All changes are additive (minor version). Built in this order, each slice a small PR or two, then a release PR.
+Answers the three complaints from friends trying v1.0.0: RPE friction ("oh, this is that annoying RPE stuff, huh?"), having to build a program ("So, I have to create a program? I can't just pick one?"), and not knowing exercise names ("Is there an exercise bank? I don't really know the names of things."). All changes are additive (minor version). Built in this order, each slice a small PR or two, then a release PR.
 
 **Slice 0: UI groundwork (Decided: trimmed version of the ARCHITECTURE.md strategy; built).** Design tokens (spacing, radius, tap target, type scale), the primitives the new screens need (`Button`, `Field`, `Card`), and shared formatters (`formatSet`, `formatDate`, `formatWeight`, one RPE scale constant). The other primitives come later, as they're needed. No user-facing change.
 
@@ -403,12 +403,34 @@ Answers the three complaints from friends trying v1.0.0 (§11): RPE friction, ha
 
 **Not in v1.1.0:** editing finished sessions (§10 #2) and the "Earlier ideas" in §11.
 
+## 9.2 v1.2.0 scope (Decided 2026-10-04 — not yet built)
+
+Theme: **logging fidelity**. Fixes for things noticed in daily use, from the owner's own use rather than friends' feedback. All additive (minor version); no backend. Built in this order, each slice a small PR or two, then a release PR.
+
+**Slice 1: Edit finished sessions (Decided; resolves §10 #2).**
+- **Any finished session** can be edited, however old. Progression state is derived by replaying history (ARCHITECTURE.md), so an edit recomputes everything after it, and no cut-off is needed.
+- **What can change:** a set's weight, reps and effort; **delete a set**; **delete the whole session** (with a confirm). Adding sets, and undoing a replace or skip, stay closed once a session is finished.
+- **Same rules as during a session:** one working weight per exercise; set 1 of a primary keeps its effort. Deleting every set of an exercise makes it "not done" for that session (no fail, no stack), as with a skip (§5.2).
+- **Deleting a session** removes it entirely; the rotation then continues from the session before it (§5.1).
+
+**Slice 2: Add a set on the fly (Decided).**
+- Once the configured (or deload) number of sets is logged, an exercise offers **+ Add set**, for originals and substitutes alike.
+- **Extra sets are recorded, not counted:** shown in the session and History, tagged "extra", but excluded from validation (the floor rule and "range filled", §6.5–6.6) and from e1RM. The configured sets are the only ones that steer suggestions, so "sets are never added by progression" (§6.2) still holds.
+- Storage change: extra sets are marked as such, since the configured count can change later. Needs the ARCHITECTURE.md checklist.
+
+**Slice 3: Session notes (Decided).**
+- An optional **note for next time** above Finish on every session; the "Finish anyway?" confirm mentions it. Plain text, up to 200 characters.
+- **Shown** on the Today screen the next time that training day comes up ("Last time: …"), and on History rows for that session.
+- Editable with the session (slice 1). Storage change: a note on the session. Needs the ARCHITECTURE.md checklist.
+
+**Not in v1.2.0:** the rest of §11, and the primary-lift deload "resume" rule, which waits for real deload data (§10).
+
 ## 10. Open questions (summary)
 
 Ask the project owner before building anything each one affects:
 
 1. ~~**Incomplete sessions**~~ — **Decided:** validation runs on the logged sets only; a missing set is not a fail (§5.2).
-2. **Editing / undoing a logged set:** fixing a typo (e.g. 255 → 225) must re-run validation and progression for that exercise. How far back can sets be edited, and do edits to older sessions recompute later state? *Current behavior: editable until the session is finished, then read-only.* Still open: editing finished sessions (the engine already replays history, so recomputing later state is cheap).
+2. ~~**Editing / undoing a logged set**~~ — **Decided (v1.2.0, §9.2 slice 1):** any finished session can be edited (set numbers, delete a set, delete the session), and later state recomputes by replay.
 3. ~~**Units**~~ — **Decided:** pounds only for v1.
 4. ~~**Dumbbell weight convention**~~ — **Decided:** per hand (§6.1).
 5. ~~**Barbell minimum load**~~ — **Decided:** 45 lb empty bar, 5 lb steps (§6.2).
@@ -419,20 +441,13 @@ Flagged to revisit after real use (not blocking):
 
 ## 11. Post-MVP ideas (parked)
 
-### v1.1.0 candidates from friends' feedback
-
-Feedback from friends trying v1.0.0. Real complaints, not nitpicks. **Scoped 2026-10-04: see §9.1** for what was decided; kept here for context.
-
-- **RPE friction:** "oh, this is that annoying RPE stuff, huh?" RPE is required on every primary lift's first set and drives the e1RM. Options to weigh: an RPE-optional mode, a simpler effort scale (e.g. easy / solid / hard / max mapped to RPE), or running primaries without e1RMs (already parked below).
-- **Ready-made programs:** "So, I have to create a program? I can't just pick one?" Program templates to pick from (e.g. a 4-day upper/lower), editable after picking.
-- **Exercise bank:** "Is there an exercise bank? I don't really know the names of things." A built-in list of exercises with sensible defaults (tier, rep range, equipment), possibly with descriptions or images. Ties in with the muscle-group store below.
-
 ### Earlier ideas
 
 - **e1RM confidence measure:** the spread between recent session e1RMs (max − min, or standard deviation). Tight spread = stable estimate; wide spread = noisy. Formula agreement within one set is *not* a confidence signal (§6.4).
 - Rest timer, possibly with push notifications via a small serverless function.
 - Cloud sync / backup (natural first cloud project).
-- Option to run primary lifts **without e1RMs** (plain double progression, like accessories).
+- ~~Option to run primary lifts **without e1RMs**~~ — **superseded:** the effort scales (§9.1 slice 1) remove the RPE friction behind it, and an exercise can already be set as an accessory to use plain double progression.
 - **Muscle-group-aware substitutes** (v2/v3): when replacing an exercise, offer exercises tagged with the same primary muscle and tier (e.g. replacing Bench suggests other pec-primary lifts). Needs a muscle-group store: exercise ↔ muscle group is **many-to-many** (a join table with a primary/secondary role).
-- **Add a set on the fly** during a session, beyond the configured count (v2/v3).
-- **Session notes on "Finish anyway"**: a note shown next week (e.g. "left early" vs. "the first 2 sets wrecked me, skipped the third"). Possibly later sent to an LLM for evaluation (v2/v3).
+- ~~**Add a set on the fly**~~ — **scoped for v1.2.0** (§9.2 slice 2).
+- ~~**Session notes**~~ — **scoped for v1.2.0** (§9.2 slice 3). Still parked: sending notes to an LLM for evaluation (v2/v3; needs a CSP change and breaks "data never leaves the device").
+- **Keep history for same-named lifts when a template replaces a program:** today a template creates new exercises, so an existing Bench Press starts fresh and its history stays under "Archived" (§9.1 slice 3). Matching by name could carry history and starting numbers over.
