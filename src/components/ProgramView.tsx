@@ -13,7 +13,7 @@ import {
 import { effortTarget, type EffortScale } from '../program/effort'
 import type { BankExercise } from '../program/bank'
 import type { Program, ProgramExercise } from '../program/types'
-import type { Session } from '../storage/db'
+import type { Session } from '../session/types'
 import { dayHasHistory, exerciseHasHistory } from '../storage/history'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'

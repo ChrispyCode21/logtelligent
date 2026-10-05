@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { exerciseTimeline } from '../history/timeline'
 import type { Program, ProgramExercise } from '../program/types'
-import type { Session } from '../storage/db'
+import type { Session } from '../session/types'
 import { exerciseHasHistory, exerciseHistory } from '../storage/history'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'

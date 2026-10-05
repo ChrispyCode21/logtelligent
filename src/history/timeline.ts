@@ -1,5 +1,5 @@
 import { deriveState, sessionE1rm, type ExerciseConfig, type LoggedSet } from '../engine'
-import type { Substitute } from '../storage/db'
+import type { Substitute } from '../session/types'
 import type { LoggedExerciseSession } from '../storage/history'
 
 export interface TimelineEntry {

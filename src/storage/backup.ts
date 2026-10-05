@@ -1,7 +1,8 @@
 import type { EquipmentType, LoggedSet } from '../engine'
 import { EFFORT_SCALE_IDS, LEGACY_EFFORT_SCALE, type EffortScale } from '../program/effort'
 import type { Program, ProgramExercise } from '../program/types'
-import { db, type ExerciseLog, type Session } from './db'
+import type { ExerciseLog, Session } from '../session/types'
+import { db } from './db'
 
 // JSON backup (SPEC §2). Bump FORMAT when the shape changes, and teach parseBackup to read old ones.
 const APP = 'logtelligent'

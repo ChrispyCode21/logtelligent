@@ -1,5 +1,5 @@
 import type { ExerciseSession } from '../engine'
-import type { Session, Substitute } from './db'
+import type { Session, Substitute } from '../session/types'
 
 /** An engine session plus what the history view shows for a replaced one. */
 export interface LoggedExerciseSession extends ExerciseSession {

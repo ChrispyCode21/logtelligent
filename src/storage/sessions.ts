@@ -1,5 +1,6 @@
 import type { LoggedSet } from '../engine'
-import { db, type ExerciseLog } from './db'
+import type { ExerciseLog } from '../session/types'
+import { db } from './db'
 
 export async function startSession(dayId: string, exerciseIds: string[]) {
   await db.sessions.add({

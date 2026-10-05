@@ -1,7 +1,7 @@
 import { activeDays } from '../program/program'
 import { applyTemplate, TEMPLATES } from '../program/templates'
 import type { Program } from '../program/types'
-import type { Session } from '../storage/db'
+import type { Session } from '../session/types'
 import { dayHasHistory } from '../storage/history'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
