@@ -4,12 +4,14 @@ import {
   addSet,
   allSetsLogged,
   canFinish,
+  hasAnySets,
   hasRequiredEffort,
   loggedSets,
   removalNeedsEffort,
   removeFirstSet,
   removeSet,
   setTally,
+  showsOutcome,
   targetSets,
   updateSet,
 } from './sets'
@@ -80,6 +82,23 @@ describe("a primary's first-set effort (SPEC §6.3)", () => {
 
   it('is not needed with no sets', () => {
     expect(hasRequiredEffort('primary', [])).toBe(true)
+  })
+})
+
+describe('editing a finished session (SPEC §9.2, slice 1)', () => {
+  it('knows when no set is left in a session, counting substitutes', () => {
+    expect(hasAnySets([bench(), { ...bench(), exerciseId: 'curl' }])).toBe(false)
+    expect(hasAnySets([bench(), { ...bench(), substitute: { name: 'Machine press', sets: [set] } }])).toBe(
+      true,
+    )
+    expect(hasAnySets([bench([set])])).toBe(true)
+  })
+
+  it('shows a finished exercise its outcome whenever it has sets; a live one once all are in', () => {
+    expect(showsOutcome(true, [set], 3)).toBe(true)
+    expect(showsOutcome(true, [], 3)).toBe(false)
+    expect(showsOutcome(false, [set], 3)).toBe(false)
+    expect(showsOutcome(false, [set, set, set], 3)).toBe(true)
   })
 })
 

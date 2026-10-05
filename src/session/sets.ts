@@ -34,6 +34,18 @@ export function removeFirstSet(sets: LoggedSet[], newFirst: LoggedSet): LoggedSe
   return updateSet(removeSet(sets, 0), 0, newFirst)
 }
 
+/** Some set is logged in these logs, for the original exercise or a substitute. */
+export const hasAnySets = (logs: ExerciseLog[]) =>
+  logs.some((l) => l.sets.length > 0 || (l.substitute?.sets.length ?? 0) > 0)
+
+/**
+ * When an exercise's validation message shows. Live: once all of today's sets are in (SPEC §5.2,
+ * §6.6). Finished: whenever it has sets, since the replay judged it however many there were
+ * (SPEC §9.2, slice 1).
+ */
+export const showsOutcome = (finished: boolean, sets: LoggedSet[], target: number) =>
+  finished ? sets.length > 0 : allSetsLogged(sets, target)
+
 /** RPE is required on a primary lift's first set only (SPEC §6.3, §6.5). */
 export function rpeRequired(tier: Tier, index: number): boolean {
   return tier === 'primary' && index === 0

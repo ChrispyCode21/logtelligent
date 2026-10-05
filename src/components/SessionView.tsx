@@ -2,9 +2,9 @@ import { availableLoads } from '../engine'
 import { findExercise } from '../program/program'
 import type { Program } from '../program/types'
 import { sessionExercises } from '../session/context'
-import { canFinish, setTally, targetSets } from '../session/sets'
+import { canFinish, hasAnySets, setTally, targetSets } from '../session/sets'
 import { warmupText } from '../session/warmup'
-import type { Session } from '../session/types'
+import type { ExerciseLog, Session } from '../session/types'
 import { discardSession, dismissWarmup, finishSession } from '../storage/sessions'
 import { Button } from '../ui/Button'
 import { formatDate } from '../ui/format'
@@ -57,6 +57,22 @@ export function SessionView({ session, program, sessions, asOf, onClose }: Props
     onClose?.()
   }
 
+  // An emptied finished session would drop out of History but still count for the rotation, so
+  // deleting its last set offers to delete it (SPEC §9.2, slice 1).
+  async function afterSave(saved: ExerciseLog) {
+    if (!finished) return
+    const logs = session.exercises.map((l) => (l.exerciseId === saved.exerciseId ? saved : l))
+    if (hasAnySets(logs)) return
+    if (
+      !confirm(
+        `That was the last set. Delete the whole ${dayName} session on ${formatDate(session.startedAt)}?`,
+      )
+    )
+      return
+    await discardSession(session.id)
+    onClose?.()
+  }
+
   return (
     <>
       <h2 className="page-title">{finished ? `${dayName} · ${formatDate(session.startedAt)}` : dayName}</h2>
@@ -78,6 +94,7 @@ export function SessionView({ session, program, sessions, asOf, onClose }: Props
           suggestion={suggestion}
           effortScale={program.effortScale}
           finished={finished}
+          onLogSaved={(saved) => void afterSave(saved)}
         />
       ))}
       <div className="actions">

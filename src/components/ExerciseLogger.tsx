@@ -9,7 +9,7 @@ import {
   type Suggestion,
 } from '../engine'
 import type { EffortScale } from '../program/effort'
-import { allSetsLogged, rpeRequired, targetSets } from '../session/sets'
+import { allSetsLogged, rpeRequired, showsOutcome, targetSets } from '../session/sets'
 import type { ExerciseLog } from '../session/types'
 import {
   replaceExercise,
@@ -38,6 +38,8 @@ interface Props {
   effortScale: EffortScale
   /** Editing a finished session: logged sets only, no new sets and no menu (SPEC §9.2, slice 1). */
   finished?: boolean
+  /** After sets are saved, with the log as it now is. */
+  onLogSaved?: (log: ExerciseLog) => void
 }
 
 export function ExerciseLogger({
@@ -48,6 +50,7 @@ export function ExerciseLogger({
   suggestion,
   effortScale,
   finished = false,
+  onLogSaved,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [replacing, setReplacing] = useState(false)
@@ -189,15 +192,18 @@ export function ExerciseLogger({
           allowZeroWeight
           weightLabel="Weight (lb)"
           repsLabel={<>Reps{config.unilateral && <span className="muted"> · per side</span>}</>}
-          onSave={(next) => saveSubstituteSets(sessionId, config.id, next)}
+          onSave={async (next) => {
+            await saveSubstituteSets(sessionId, config.id, next)
+            onLogSaved?.({ ...log, substitute: { ...substitute, sets: next } })
+          }}
         />
       </Card>
     )
   }
 
   const loads = availableLoads(config)
-  // Validation runs once the last set is entered (SPEC §5.2, §6.6).
-  const outcome = allSetsLogged(sets, target) ? evaluateSession(config, history, sets) : undefined
+  // Validation runs once the last set is entered; a finished session always shows its outcome (SPEC §5.2, §6.6, §9.2).
+  const outcome = showsOutcome(finished, sets, target) ? evaluateSession(config, history, sets) : undefined
 
   return (
     <Card>
@@ -229,7 +235,10 @@ export function ExerciseLogger({
             </p>
           )
         }
-        onSave={(next) => saveSets(sessionId, config.id, next)}
+        onSave={async (next) => {
+          await saveSets(sessionId, config.id, next)
+          onLogSaved?.({ ...log, sets: next })
+        }}
       />
     </Card>
   )
