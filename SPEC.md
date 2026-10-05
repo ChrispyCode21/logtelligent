@@ -389,9 +389,17 @@ Answers the three complaints from friends trying v1.0.0 (§11): RPE friction, ha
 - **The list and its defaults (Decided 2026-10-04):** the 57 exercises in `src/program/bank.ts`, approved as proposed in PR #8.
 
 **Slice 3: Program templates and guided seeding (Decided).**
-- One template ships: a **4-day Upper/Lower**, built from bank exercises. Its exact days, exercises and rep ranges are **Proposed**; review them in the slice's PR.
-- Offered when the program is empty (alongside "Build my own"), and from the Program tab, where picking one **replaces** the program after a confirm. A template produces a normal, fully editable program (no storage change). Exercises from a replaced program that have history are archived, as with any delete (§6.1).
+- One template ships: a **4-day Upper/Lower**, built from bank exercises with their bank defaults. **Days and exercises (Decided 2026-10-04):**
+  - **Upper A:** Bench Press, Barbell Row, Dumbbell Shoulder Press, Lat Pulldown, Lateral Raise, Triceps Pushdown
+  - **Lower A:** Back Squat, Romanian Deadlift, Leg Press, Lying Leg Curl, Standing Calf Raise
+  - **Upper B:** Overhead Press, Pull-Up, Incline Dumbbell Press, Seated Cable Row, Dumbbell Curl, Face Pull
+  - **Lower B:** Deadlift, Bulgarian Split Squat, Leg Extension, Seated Leg Curl, Hanging Leg Raise
+- Offered when the program is empty (alongside "Build my own"), and from the Program tab, where picking one **replaces** the program after a confirm. A template produces a normal, fully editable program (no storage change). **Replacing (Decided):** days from the replaced program that have history are archived (history kept), and ones without history are deleted, as with any delete (§6.1). The effort scale is kept.
 - **Guided seed walkthrough:** after picking a template, step through each exercise on its own screen to enter its seed, pre-filled with the bank's placeholder weight. The seed gate (§5.1) is unchanged; the walkthrough is just a faster way through it.
+  - **Saves each step (Decided):** Next saves that exercise's starting numbers straight away. "Finish later" leaves; Today's seed gate resumes at the first exercise still missing numbers. There is no Back button (edit an exercise on the Program tab instead).
+  - **Any program (Decided):** the seed gate offers the walkthrough for any program with exercises missing starting numbers, not only templates.
+  - **Pre-fill (Decided):** an exercise whose name matches a bank exercise gets the bank's placeholder weight; primaries also get the **top of their rep range** as reps. Others start blank.
+  - **Weight stacks (Decided):** a cable or machine exercise without a stack asks for one on its screen, with quick picks (5 lb steps, 10 lb steps) or the gym's own list typed in. The last pick is offered first on the next cable/machine exercise. Stacks stay per exercise (§6.2 unchanged).
 
 **Not in v1.1.0:** editing finished sessions (§10 #2) and the "Earlier ideas" in §11.
 
