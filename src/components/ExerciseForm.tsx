@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { defaultLoads, type EquipmentType, type Tier } from '../engine'
 import { EFFORT_SCALES, nearestOption, type EffortScale } from '../program/effort'
 import type { BankExercise } from '../program/bank'
+import { MAX_RELATIVE_JUMP } from '../program/program'
 import type { ProgramExercise } from '../program/types'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
@@ -19,8 +20,6 @@ const TARGET_LABEL: Record<EffortScale, string> = {
   repsLeft: 'Target reps left on the first set',
   perceived: 'Target effort on the first set',
 }
-// Fixed for every exercise; not in the form (SPEC §6.1).
-const MAX_RELATIVE_JUMP = 0.1
 // Placeholder suggestions for an accessory seed (SPEC §5.1).
 const SEED_PLACEHOLDER: Record<EquipmentType, string> = {
   barbell: '65',

@@ -1,6 +1,8 @@
 // The built-in exercise bank (SPEC §9.1, slice 2). Pure data: picking an exercise copies its
 // defaults into a normal program exercise, and nothing links back here.
 import type { EquipmentType, RepRange, Tier } from '../engine'
+import { MAX_RELATIVE_JUMP } from './program'
+import type { ProgramExercise } from './types'
 
 export type BodyArea = 'chest' | 'back' | 'shoulders' | 'arms' | 'legs' | 'core'
 
@@ -160,4 +162,25 @@ export function searchBank(query: string, bank: BankExercise[] = BANK): BankExer
       return typed.every((w) => haystack.includes(w))
     }),
   )
+}
+
+/** The bank exercise with this name, ignoring case and spacing, if any. The program stores no link. */
+export function findBankExercise(name: string, bank: BankExercise[] = BANK): BankExercise | undefined {
+  const key = words(name).join(' ')
+  return bank.find((e) => words(e.name).join(' ') === key)
+}
+
+/** A new program exercise with a bank exercise's defaults, and no starting numbers yet. */
+export function exerciseFromBank(e: BankExercise, id: string = crypto.randomUUID()): ProgramExercise {
+  return {
+    id,
+    name: e.name,
+    tier: e.tier,
+    repRange: { ...e.repRange },
+    targetRpe: 8,
+    sets: e.sets,
+    equipment: e.equipment,
+    maxRelativeJump: MAX_RELATIVE_JUMP,
+    unilateral: e.unilateral,
+  }
 }
