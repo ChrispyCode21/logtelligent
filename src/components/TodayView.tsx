@@ -5,6 +5,7 @@ import type { Program } from '../program/types'
 import type { Session } from '../storage/db'
 import { exerciseHistory, lastLoggedDayId } from '../storage/history'
 import { startSession } from '../storage/sessions'
+import { Button } from '../ui/Button'
 import { SessionView } from './SessionView'
 import { SuggestionCard } from './SuggestionCard'
 
@@ -29,9 +30,9 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
       <section className="card">
         <h2>No program yet</h2>
         <p>Add your training days and exercises to get started.</p>
-        <button type="button" className="primary block" onClick={onEditProgram}>
+        <Button variant="primary" block onClick={onEditProgram}>
           Set up program
-        </button>
+        </Button>
       </section>
     )
   }
@@ -46,9 +47,9 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
           {unseeded.map((e) => e.name).join(', ')} {unseeded.length === 1 ? 'needs' : 'need'} starting numbers
           before you can start a session.
         </p>
-        <button type="button" className="primary block" onClick={onEditProgram}>
+        <Button variant="primary" block onClick={onEditProgram}>
           Finish setup
-        </button>
+        </Button>
       </section>
     )
   }
@@ -86,9 +87,9 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
         />
       ))}
 
-      <button
-        type="button"
-        className="primary block"
+      <Button
+        variant="primary"
+        block
         onClick={() => {
           // The override applies to this session only; afterward the rotation decides.
           setChosenDayId(undefined)
@@ -99,7 +100,7 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
         }}
       >
         Start {day.name}
-      </button>
+      </Button>
 
       {days.length > 1 && (
         <label className="field">

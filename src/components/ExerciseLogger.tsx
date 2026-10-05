@@ -18,6 +18,7 @@ import {
   skipExercise,
   undoReplace,
 } from '../storage/sessions'
+import { Button } from '../ui/Button'
 import { formatSets } from '../ui/format'
 import { SetEditor } from './SetEditor'
 
@@ -94,15 +95,14 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
           <span className="tag">Deload</span>
         )}
       </h2>
-      <button
-        type="button"
+      <Button
         className="menu-button"
         aria-label={`Options for ${config.name}`}
         aria-expanded={menuOpen}
         onClick={() => (menuOpen ? closeMenu() : setMenuOpen(true))}
       >
         ⋯
-      </button>
+      </Button>
     </div>
   )
 
@@ -122,34 +122,26 @@ export function ExerciseLogger({ sessionId, config, log, history, suggestion }: 
             />
           </label>
           <div className="actions">
-            <button type="submit" className="primary" disabled={!substituteName.trim()}>
+            <Button type="submit" variant="primary" disabled={!substituteName.trim()}>
               Replace
-            </button>
-            <button type="button" onClick={closeMenu}>
-              Cancel
-            </button>
+            </Button>
+            <Button onClick={closeMenu}>Cancel</Button>
           </div>
         </form>
       ) : (
         <div className="actions">
           {log.skipped ? (
-            <button type="button" onClick={() => void restore()}>
-              Restore
-            </button>
+            <Button onClick={() => void restore()}>Restore</Button>
           ) : (
             <>
               {substitute ? (
-                <button type="button" onClick={() => void undo()}>
-                  Undo replace
-                </button>
+                <Button onClick={() => void undo()}>Undo replace</Button>
               ) : (
-                <button type="button" onClick={() => setReplacing(true)}>
-                  Replace…
-                </button>
+                <Button onClick={() => setReplacing(true)}>Replace…</Button>
               )}
-              <button type="button" className="danger" onClick={() => void skip()}>
+              <Button variant="danger" onClick={() => void skip()}>
                 Skip today
-              </button>
+              </Button>
             </>
           )}
         </div>

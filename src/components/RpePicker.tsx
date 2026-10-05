@@ -1,3 +1,4 @@
+import { Button } from '../ui/Button'
 import { RPE_SCALE } from '../ui/rpe'
 
 interface Props {
@@ -12,15 +13,14 @@ export function RpePicker({ value, required, onChange }: Props) {
       <legend>RPE {required ? '(required on set 1)' : '(optional)'}</legend>
       <div className="rpe-buttons">
         {RPE_SCALE.map((rpe) => (
-          <button
+          <Button
             key={rpe}
-            type="button"
             aria-pressed={value === rpe}
             // Tapping the selected value clears it, unless RPE is required.
             onClick={() => onChange(value === rpe && !required ? undefined : rpe)}
           >
             {rpe}
-          </button>
+          </Button>
         ))}
       </div>
     </fieldset>

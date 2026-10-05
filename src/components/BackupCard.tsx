@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { exportBackup, parseBackup, restoreBackup } from '../storage/backup'
+import { Button } from '../ui/Button'
 import { formatDate } from '../ui/format'
 
 /** Export and restore all data as JSON (SPEC §2). Data never leaves the device otherwise. */
@@ -41,12 +42,10 @@ export function BackupCard() {
         Your data lives only on this device. Export a backup now and then; restoring one replaces everything.
       </p>
       <div className="actions">
-        <button type="button" className="primary" onClick={() => void download()}>
+        <Button variant="primary" onClick={() => void download()}>
           Export data
-        </button>
-        <button type="button" onClick={() => fileInput.current?.click()}>
-          Restore from file…
-        </button>
+        </Button>
+        <Button onClick={() => fileInput.current?.click()}>Restore from file…</Button>
         <input
           ref={fileInput}
           type="file"

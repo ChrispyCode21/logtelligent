@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { defaultLoads, type EquipmentType, type Tier } from '../engine'
 import type { ProgramExercise } from '../program/types'
+import { Button } from '../ui/Button'
 import { RPE_SCALE } from '../ui/rpe'
 
 const EQUIPMENT: { value: EquipmentType; label: string }[] = [
@@ -141,14 +142,9 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
         <legend>Tier</legend>
         <div className="segmented">
           {(['primary', 'accessory'] as const).map((tier) => (
-            <button
-              key={tier}
-              type="button"
-              aria-pressed={form.tier === tier}
-              onClick={() => changeTier(tier)}
-            >
+            <Button key={tier} aria-pressed={form.tier === tier} onClick={() => changeTier(tier)}>
               {tier === 'primary' ? 'Primary' : 'Accessory'}
-            </button>
+            </Button>
           ))}
         </div>
       </fieldset>
@@ -264,12 +260,10 @@ export function ExerciseForm({ initial, onSave, onCancel }: Props) {
       )}
 
       <div className="actions">
-        <button type="submit" className="primary">
+        <Button type="submit" variant="primary">
           Save exercise
-        </button>
-        <button type="button" onClick={onCancel}>
-          Cancel
-        </button>
+        </Button>
+        <Button onClick={onCancel}>Cancel</Button>
       </div>
     </form>
   )

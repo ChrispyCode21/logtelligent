@@ -5,6 +5,7 @@ import { ProgramView } from './components/ProgramView'
 import { TodayView } from './components/TodayView'
 import { EMPTY_PROGRAM } from './program/program'
 import { db } from './storage/db'
+import { Button } from './ui/Button'
 import './App.css'
 
 type Tab = 'today' | 'history' | 'program'
@@ -25,15 +26,15 @@ export default function App() {
       <header className="app-header">
         <h1>Logtelligent</h1>
         <nav className="tabs">
-          <button type="button" aria-pressed={tab === 'today'} onClick={() => setTab('today')}>
+          <Button aria-pressed={tab === 'today'} onClick={() => setTab('today')}>
             Today
-          </button>
-          <button type="button" aria-pressed={tab === 'history'} onClick={() => setTab('history')}>
+          </Button>
+          <Button aria-pressed={tab === 'history'} onClick={() => setTab('history')}>
             History
-          </button>
-          <button type="button" aria-pressed={tab === 'program'} onClick={() => setTab('program')}>
+          </Button>
+          <Button aria-pressed={tab === 'program'} onClick={() => setTab('program')}>
             Program
-          </button>
+          </Button>
         </nav>
       </header>
       {tab === 'today' && <TodayView {...data} onEditProgram={() => setTab('program')} />}
