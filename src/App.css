@@ -263,6 +263,20 @@ fieldset.field legend {
   padding: 0 var(--space-1);
 }
 
+/* v1.1.0 slice 3: templates, guided seeding */
+
+.templates,
+.template,
+.walkthrough {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.walkthrough h2 {
+  margin: 0;
+}
+
 /* v1.1.0 slice 2: exercise bank */
 
 .exercise-picker {

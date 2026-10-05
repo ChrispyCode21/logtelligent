@@ -10,6 +10,8 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 - **Effort scale, chosen per program:** rate sets in RPE, **reps left** (0 to 4+) or **perceived effort** (Easy to Failed on the last rep). Set it at the top of the Program tab; a new program starts on Reps left, and existing ones stay on RPE. Every scale feeds the same 1-rep-max estimate, and switching never changes logged data.
 - **Exercise bank:** "+ Add exercise" now opens a list of about 50 common exercises, grouped by body area and searchable by name or nickname (e.g. "RDL", "OHP"). Picking one fills in sensible defaults, a short description and a suggested starting weight; "Custom exercise…" is still there for anything else.
+- **Ready-made program:** a 4-day Upper/Lower to start from, offered on an empty Program tab (or to replace your program, after a confirm; days with history are archived).
+- **Guided starting numbers:** enter each exercise's starting numbers one screen at a time, pre-filled with a suggestion, with quick picks for cable and machine weight stacks. You can finish later; the Today tab picks up where you left off.
 
 ## [1.0.0] - 2026-10-04
 

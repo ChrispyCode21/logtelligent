@@ -8,6 +8,7 @@ import { startSession } from '../storage/sessions'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
+import { SeedWalkthrough } from './SeedWalkthrough'
 import { SessionView } from './SessionView'
 import { SuggestionCard } from './SuggestionCard'
 
@@ -15,10 +16,13 @@ interface Props {
   program: Program
   sessions: Session[]
   asOf: Date
+  /** The guided seed walkthrough is open. */
+  seeding: boolean
+  onSeeding: (open: boolean) => void
   onEditProgram: () => void
 }
 
-export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
+export function TodayView({ program, sessions, asOf, seeding, onSeeding, onEditProgram }: Props) {
   const [chosenDayId, setChosenDayId] = useState<string>()
 
   const active = sessions.find((s) => !s.finishedAt)
@@ -31,7 +35,7 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
     return (
       <Card>
         <h2>No program yet</h2>
-        <p>Add your training days and exercises to get started.</p>
+        <p>Pick a ready-made program, or add your own training days and exercises.</p>
         <Button variant="primary" block onClick={onEditProgram}>
           Set up program
         </Button>
@@ -42,16 +46,21 @@ export function TodayView({ program, sessions, asOf, onEditProgram }: Props) {
   // Sessions can't start until every exercise has starting numbers (SPEC §5.1, A12).
   const unseeded = missingSeeds(program)
   if (unseeded.length > 0) {
+    if (seeding) return <SeedWalkthrough program={program} onClose={() => onSeeding(false)} />
+    const which =
+      unseeded.length <= 3 ? unseeded.map((e) => e.name).join(', ') : `${unseeded.length} exercises`
     return (
       <Card>
         <h2>Starting numbers needed</h2>
         <p>
-          {unseeded.map((e) => e.name).join(', ')} {unseeded.length === 1 ? 'needs' : 'need'} starting numbers
-          before you can start a session.
+          {which} {unseeded.length === 1 ? 'needs' : 'need'} starting numbers before you can start a session.
         </p>
-        <Button variant="primary" block onClick={onEditProgram}>
-          Finish setup
-        </Button>
+        <div className="actions">
+          <Button variant="primary" onClick={() => onSeeding(true)}>
+            Enter starting numbers
+          </Button>
+          <Button onClick={onEditProgram}>Edit program</Button>
+        </div>
       </Card>
     )
   }

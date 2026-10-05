@@ -12,6 +12,8 @@ type Tab = 'today' | 'history' | 'program'
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('today')
+  // The guided seed walkthrough is open on the Today tab (SPEC §9.1, slice 3).
+  const [seeding, setSeeding] = useState(false)
 
   // Re-runs (and re-renders) whenever the tables it reads change.
   const data = useLiveQuery(async () => ({
@@ -37,9 +39,25 @@ export default function App() {
           </Button>
         </nav>
       </header>
-      {tab === 'today' && <TodayView {...data} onEditProgram={() => setTab('program')} />}
+      {tab === 'today' && (
+        <TodayView
+          {...data}
+          seeding={seeding}
+          onSeeding={setSeeding}
+          onEditProgram={() => setTab('program')}
+        />
+      )}
       {tab === 'history' && <HistoryView program={data.program} sessions={data.sessions} />}
-      {tab === 'program' && <ProgramView program={data.program} sessions={data.sessions} />}
+      {tab === 'program' && (
+        <ProgramView
+          program={data.program}
+          sessions={data.sessions}
+          onTemplateApplied={() => {
+            setSeeding(true)
+            setTab('today')
+          }}
+        />
+      )}
     </main>
   )
 }
