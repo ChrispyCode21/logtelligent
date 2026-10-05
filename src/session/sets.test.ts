@@ -6,6 +6,8 @@ import {
   canFinish,
   hasRequiredEffort,
   loggedSets,
+  removalNeedsEffort,
+  removeFirstSet,
   removeSet,
   setTally,
   targetSets,
@@ -78,6 +80,47 @@ describe("a primary's first-set effort (SPEC §6.3)", () => {
 
   it('is not needed with no sets', () => {
     expect(hasRequiredEffort('primary', [])).toBe(true)
+  })
+})
+
+describe('deleting set 1 (SPEC §9.2, slice 1)', () => {
+  const primary = (i: number) => i === 0
+  const accessory = () => false
+
+  it('asks for an effort when set 2 would become set 1 without one', () => {
+    expect(removalNeedsEffort([{ ...set, rpe: 8 }, set], 0, primary)).toBe(true)
+  })
+
+  it('does not ask when set 2 has an effort, when it is the only set, for accessories, or for later sets', () => {
+    expect(
+      removalNeedsEffort(
+        [
+          { ...set, rpe: 8 },
+          { ...set, rpe: 9 },
+        ],
+        0,
+        primary,
+      ),
+    ).toBe(false)
+    expect(removalNeedsEffort([{ ...set, rpe: 8 }], 0, primary)).toBe(false)
+    expect(removalNeedsEffort([set, set], 0, accessory)).toBe(false)
+    expect(removalNeedsEffort([{ ...set, rpe: 8 }, set, set], 1, primary)).toBe(false)
+  })
+
+  it('saves the delete and the new set 1 together, at one working weight', () => {
+    expect(
+      removeFirstSet(
+        [
+          { weight: 225, reps: 5, rpe: 8 },
+          { weight: 225, reps: 4 },
+          { weight: 225, reps: 3 },
+        ],
+        { weight: 220, reps: 4, rpe: 9 },
+      ),
+    ).toEqual([
+      { weight: 220, reps: 4, rpe: 9 },
+      { weight: 220, reps: 3 },
+    ])
   })
 })
 

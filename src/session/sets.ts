@@ -16,6 +16,24 @@ export function removeSet(sets: LoggedSet[], index: number): LoggedSet[] {
   return sets.filter((_, i) => i !== index)
 }
 
+/**
+ * Removing this set would leave a first set without the effort it needs, so the delete must ask for
+ * one (SPEC §9.2, slice 1). Only removing set 1 can, when set 2 has none.
+ */
+export function removalNeedsEffort(
+  sets: LoggedSet[],
+  index: number,
+  rpeRequiredAt: (index: number) => boolean,
+): boolean {
+  const rest = removeSet(sets, index)
+  return rest.length > 0 && rpeRequiredAt(0) && rest[0].rpe === undefined
+}
+
+/** Remove set 1, saving the effort (and any other change) given for the set that takes its place. */
+export function removeFirstSet(sets: LoggedSet[], newFirst: LoggedSet): LoggedSet[] {
+  return updateSet(removeSet(sets, 0), 0, newFirst)
+}
+
 /** RPE is required on a primary lift's first set only (SPEC §6.3, §6.5). */
 export function rpeRequired(tier: Tier, index: number): boolean {
   return tier === 'primary' && index === 0
