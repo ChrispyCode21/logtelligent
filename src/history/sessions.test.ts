@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Session } from '../session/types'
-import { exerciseHistory, lastLoggedDayId } from './history'
+import { exerciseHistory, lastLoggedDayId } from './sessions'
 
 describe('exerciseHistory', () => {
   it('includes finished sessions only, mapped to the engine shape', () => {
