@@ -89,7 +89,7 @@ See §11 for ideas parked until after the MVP.
 **Exercise menu (⋯) — Decided:** each exercise in a session has a menu with options such as **replace** and **delete**.
 - Replacing shows a notice along the lines of: *"This will be tracked as volume only and not used for estimates."*
 - A substitute's sets are kept out of the original exercise's progression data.
-- **Substitute (Decided):** a free-text name; its sets are logged as weight × reps (RPE optional), with no suggestion, floor rule or stacks. Any sets already logged for the original that day stay recorded, but the whole session is kept out of the original's progression (A6).
+- **Substitute (Decided):** a free-text name; its sets are logged as weight × reps (no RPE asked, §9.3), with no suggestion, floor rule or stacks. Any sets already logged for the original that day stay recorded, but the whole session is kept out of the original's progression (A6).
 - **Delete (Decided):** skips the exercise **for today only**, discarding any sets logged for it today. The program is unchanged, and progression treats it as not done (no fail, no stack).
 - **Undo (Decided):** while the session is open, a replaced exercise can be un-replaced (discarding the substitute's sets) and a skipped one restored. After Finish, both are read-only.
 - **History (Decided):** a replaced session shows under the original exercise as "Replaced with …" with the substitute's sets, and no e1RM or chart point.
@@ -157,7 +157,7 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
 **Sets are never added by progression (Decided).** The working-set count is fixed in configuration; progression changes only reps and load.
 
 ### 6.3 Primary lifts
-- **RPE is required on the first set only** (Decided). RPE is optional on other sets.
+- **RPE is asked on the first set only, and required there** (Decided; changed 2026-10-06, §9.3). Later sets don't ask for it: only the first set's effort is ever used (§6.4). Efforts logged on later sets before v1.2.1 are kept and shown.
 - **RPE is entered in half steps from 6 to 10** (6, 6.5 … 10) (Decided). From v1.1.0 this is one of three input modes chosen per program; the others map onto the same scale (§9.1, slice 1).
 - **The first set is the source of truth** for progression: its weight, reps, and RPE drive next session's suggestion (Decided).
 - **All sets use one working weight**; no changing weight from set to set (Decided).
@@ -183,7 +183,7 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
   - Progress is implicit: if I get stronger, the e1RM rises and the chosen load rises with it. If I don't, the load holds — which is honest.
 
 ### 6.5 Accessory lifts
-- RPE is optional (Decided).
+- RPE is not asked (Decided; changed 2026-10-06, §9.3). Accessories don't use e1RM, so it was informational only. Efforts logged before v1.2.1 are kept and shown.
 - **All sets use one working weight**, as for primary lifts (Decided).
 - Progression by **double progression** (Decided): work up through the rep range at a fixed weight; once the range is filled, move up one load step (§6.2) and drop back to the bottom of the range.
 - **"Range filled" (Decided): more than 50% of working sets reach the top of the range.** In practice: 2 sets → both; 3 sets → 2; 4 sets → 3.
@@ -465,6 +465,14 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
 
 **Not in v1.2.0:** the rest of §11, and the primary-lift deload "resume" rule, which waits for real deload data (§10).
 
+## 9.3 v1.2.1: fixes from the on-device pass (Decided 2026-10-06)
+
+From the owner's v1.2.0 on-device checks (TESTING.md). A patch release; no stored-data change.
+
+- **Effort only where it's used:** asked on a primary lift's first set only (required there, as before). No effort picker on a primary's later sets, on accessories, on substitutes or on extra sets, and pre-fill no longer copies set 1's effort onto later sets. Efforts already logged stay as they are. The engine only ever used the primary's first set, so suggestions don't change (§6.3, §6.5).
+- **Logged-set rows:** the "Set 1 · 225 × 5" row's text is centred vertically (it sat at the top of the 44 px row).
+- **Effort scale card:** its description area is always as tall as the longest of the three descriptions, so switching scales doesn't move the rest of the Program tab.
+
 ## 10. Open questions (summary)
 
 Ask the project owner before building anything each one affects:
@@ -481,7 +489,7 @@ Flagged to revisit after real use (not blocking):
 
 **Open: raised during v1.2.0, not blocking.** Each has a recommended default; settle it with the owner before building anything it affects.
 
-7. **Substitutes and the working weight:** the set editor applies the one-working-weight rule (§6.3) to a substitute's sets too, though §5.2 only says "weight × reps (RPE optional)". *Recommended:* keep it; extra sets (§9.2 slice 2) already allow a different weight.
+7. **Substitutes and the working weight:** the set editor applies the one-working-weight rule (§6.3) to a substitute's sets too, though §5.2 only says "weight × reps". *Recommended:* keep it; extra sets (§9.2 slice 2) already allow a different weight.
 8. **Deleting while a session is open:** removing an exercise or day archives it, rather than deleting it, if any session has it, including an unfinished one. An exercise archived that way can show in History's picker with "No sessions logged yet." *Recommended:* count only finished sessions, unless the open session has sets for it.
 9. **Old sessions judged with today's settings:** the replay and the finished-session editor use the current rep range and set count, not what was prescribed then (§9.2 slice 1, "Set counts in a past session"). *Recommended:* schedule §11 "Store each session's prescription" in the next version.
 10. **Tap targets under 44 px:** the warm-up banner's ✕ (32 px) and the Program tab's move/remove buttons (40 px wide). *Recommended:* bring ✕ up to `--tap-target`; check the icon buttons at 320 px first.
@@ -503,3 +511,5 @@ Waiting on the owner's phone: TESTING.md's unticked on-device checks for v1.1.0 
 - **Keep history for same-named lifts when a template replaces a program:** today a template creates new exercises, so an existing Bench Press starts fresh and its history stays under "Archived" (§9.1 slice 3). Matching by name could carry history and starting numbers over.
 - **Store each session's prescription:** a session stores only the sets logged, so History can't show "3 of 3" for a week when 3 were prescribed, and the progression replay judges old sessions with today's settings (rep range, set count). Saving each exercise's prescription when a session starts would fix both (a stored-data change). Raised while building §9.2 slice 1.
 - **Progression schemes beyond double progression (e.g. 5/3/1):** today every exercise uses one scheme: straight sets at one working weight, double progression, the floor rule and an e1RM from the first set. Programs like 5/3/1 prescribe a different weight and reps per set (percentages of a training max, an AMRAP last set, 3-week waves). Supporting them would add a per-exercise scheme that decides each set's prescription and how a session is judged; the current scheme stays as it is. Logged sets already store a weight each, so storage needn't change shape. Raised while scoping §9.2 slice 2.
+- **Change programs mid-cycle:** a way to drop the current program (e.g. two weeks into an Upper/Lower template, switching to 5/3/1) and start or build another, **keeping the history** of the lifts already logged. Today a template replaces the program after a confirm (days with history are archived, §9.1 slice 3), but there's no "start over" or "delete program" for building your own from scratch. Raised by the owner in the v1.2.0 on-device pass.
+- **A fixed action footer:** the walkthrough's Next (and, during a session, Log set and Finish) move as cards above them grow and shrink. A footer pinned to the bottom of the screen could hold each screen's main buttons. Owner's note: probably not needed, since the walkthrough is meant to be read, not tapped through quickly. Raised in the v1.2.0 on-device pass.
