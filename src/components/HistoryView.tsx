@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { countedSets, type LoggedSet } from '../engine'
 import { exerciseTimeline } from '../history/timeline'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
@@ -97,18 +98,24 @@ export function HistoryView({ program, sessions }: Props) {
                     <p>
                       <span className="muted">Replaced with </span>
                       {entry.substitute.name}
-                      {entry.substitute.sets.length > 0 &&
-                        `: ${formatSets(entry.substitute.sets, program.effortScale)}`}
+                      {countedSets(entry.substitute.sets).length > 0 &&
+                        `: ${formatSets(countedSets(entry.substitute.sets), program.effortScale)}`}
                     </p>
+                    <ExtraSets sets={entry.substitute.sets} />
                     {entry.sets.length > 0 && (
                       <p className="muted">Before replacing: {formatSets(entry.sets, program.effortScale)}</p>
                     )}
                   </>
                 ) : (
-                  <p>
-                    {formatSets(entry.sets, program.effortScale)}
-                    {exercise.unilateral && <span className="muted"> (per side)</span>}
-                  </p>
+                  <>
+                    {countedSets(entry.sets).length > 0 && (
+                      <p>
+                        {formatSets(countedSets(entry.sets), program.effortScale)}
+                        {exercise.unilateral && <span className="muted"> (per side)</span>}
+                      </p>
+                    )}
+                    <ExtraSets sets={entry.sets} />
+                  </>
                 )}
               </Card>
             ))}
@@ -117,4 +124,11 @@ export function HistoryView({ program, sessions }: Props) {
       )}
     </>
   )
+}
+
+/** Extra sets on their own line: "Extra: 185 × 8 · 185 × 7" (SPEC §9.2, slice 2). They carry no effort. */
+function ExtraSets({ sets }: { sets: LoggedSet[] }) {
+  const extras = sets.filter((s) => s.extra)
+  if (extras.length === 0) return null
+  return <p className="muted">Extra: {formatSets(extras)}</p>
 }

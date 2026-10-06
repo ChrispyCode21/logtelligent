@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatE1rm, formatPrescription, formatSet, formatSets, formatWeight } from './format'
+import { formatE1rm, formatPrescription, formatSet, formatSetCount, formatSets, formatWeight } from './format'
 
 describe('formatSet', () => {
   it('shows the RPE when logged', () => {
@@ -89,5 +89,21 @@ describe('formatPrescription (SPEC §9.2, slice 0)', () => {
     expect(formatPrescription({ ...lunge, equipment: 'dumbbell' }, 'rpe')).toBe(
       'Accessory · 3 × 10–12 per side · Dumbbell',
     )
+  })
+})
+
+describe('formatSetCount (SPEC §9.2, slices 1 and 2)', () => {
+  const set = { weight: 225, reps: 5 }
+  const extra = { weight: 185, reps: 8, extra: true }
+
+  it('shows logged of wanted during a session, adding any extras', () => {
+    expect(formatSetCount([set, set], 3)).toBe('2 of 3 sets')
+    expect(formatSetCount([set, set, set, extra], 3)).toBe('3 of 3 sets + 1 extra')
+    expect(formatSetCount([set, set, set, extra, extra], 3)).toBe('3 of 3 sets + 2 extras')
+  })
+
+  it('shows only what was logged for a past session', () => {
+    expect(formatSetCount([set])).toBe('1 set')
+    expect(formatSetCount([set, set, extra])).toBe('2 sets + 1 extra')
   })
 })
