@@ -29,6 +29,7 @@ export function HistoryView({ program, sessions }: Props) {
   if (editing) {
     return (
       <SessionView
+        key={editing.id}
         session={editing}
         program={program}
         sessions={sessions}
@@ -119,6 +120,7 @@ export function HistoryView({ program, sessions }: Props) {
                     <ExtraLine sets={entry.sets} />
                   </>
                 )}
+                {entry.note && <p className="muted">Note: {entry.note}</p>}
               </Card>
             ))}
           </ol>

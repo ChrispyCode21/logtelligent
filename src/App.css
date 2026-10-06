@@ -188,7 +188,8 @@ button[aria-pressed='true'] {
 }
 
 input:not([type='checkbox']),
-select {
+select,
+textarea {
   min-height: var(--tap-target);
   padding: 0 var(--space-4);
   border: 1px solid var(--border);
@@ -569,4 +570,17 @@ fieldset.field legend {
 .exercise-picker,
 .bank-list {
   grid-template-columns: minmax(0, 1fr);
+}
+
+/* v1.2.0 slice 3: session notes */
+
+textarea {
+  padding: var(--space-3) var(--space-4);
+  font-family: inherit;
+  width: 100%;
+  resize: vertical;
+}
+
+.last-time {
+  margin: 0;
 }

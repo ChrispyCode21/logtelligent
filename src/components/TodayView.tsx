@@ -3,7 +3,7 @@ import { nextDay, suggestNext } from '../engine'
 import { activeDays, missingSeeds } from '../program/program'
 import type { Program } from '../program/types'
 import type { Session } from '../session/types'
-import { exerciseHistory, lastLoggedDayId } from '../history/sessions'
+import { exerciseHistory, lastLoggedDayId, lastNoteFor } from '../history/sessions'
 import { startSession } from '../storage/sessions'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
@@ -27,7 +27,7 @@ export function TodayView({ program, sessions, asOf, seeding, onSeeding, onEditP
 
   const active = sessions.find((s) => !s.finishedAt)
   if (active) {
-    return <SessionView session={active} program={program} sessions={sessions} asOf={asOf} />
+    return <SessionView key={active.id} session={active} program={program} sessions={sessions} asOf={asOf} />
   }
 
   const days = activeDays(program).filter((d) => d.exercises.length > 0)
@@ -68,6 +68,8 @@ export function TodayView({ program, sessions, asOf, seeding, onSeeding, onEditP
   const next = nextDay(days, lastLoggedDayId(sessions))!
   const day = days.find((d) => d.id === chosenDayId) ?? next
   const outOfRotation = day.id !== next.id
+  // The note left for this day last time (SPEC §9.2, slice 3).
+  const lastTime = lastNoteFor(sessions, day.id)
 
   // Choosing a different day needs an explicit acknowledgement (SPEC §5.2).
   function chooseDay(dayId: string) {
@@ -88,6 +90,7 @@ export function TodayView({ program, sessions, asOf, seeding, onSeeding, onEditP
           {outOfRotation ? `Out of rotation (next is ${next.name})` : 'Next in rotation'}
         </p>
       </div>
+      {lastTime && <p className="note last-time">Last time: {lastTime}</p>}
 
       {day.exercises.map((exercise) => (
         <SuggestionCard
