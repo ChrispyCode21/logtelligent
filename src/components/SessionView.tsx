@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { availableLoads } from '../engine'
 import { lastNoteFor } from '../history/sessions'
 import { findExercise } from '../program/program'
@@ -45,6 +45,28 @@ export function SessionView({ session, program, sessions, asOf, onClose }: Props
   // The note for next time is edited here and saved on leaving the field, Finish and Done (SPEC §9.2, slice 3).
   const [noteDraft, setNoteDraft] = useState(session.note ?? '')
   const saveDraft = () => saveNote(session.id, normalizeNote(noteDraft))
+
+  // Leaving the screen is leaving the field too: switching tabs, or the app going to the background,
+  // can skip the blur (iOS keeps the keyboard up), so the draft also saves then (SPEC §9.2, slice 3).
+  const latest = useRef({ draft: noteDraft, stored: session.note })
+  useEffect(() => {
+    latest.current = { draft: noteDraft, stored: session.note }
+  }, [noteDraft, session.note])
+  useEffect(() => {
+    const flush = () => {
+      const note = normalizeNote(latest.current.draft)
+      // A deleted session matches nothing, so flushing after Discard or Delete is harmless.
+      if (note !== latest.current.stored) void saveNote(session.id, note)
+    }
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flush()
+    }
+    document.addEventListener('visibilitychange', onHide)
+    return () => {
+      document.removeEventListener('visibilitychange', onHide)
+      flush()
+    }
+  }, [session.id])
   // "Last time: …" from this day's previous session, shown while logging (SPEC §9.2, slice 3).
   const lastTime = !finished && session.dayId ? lastNoteFor(sessions, session.dayId) : undefined
 

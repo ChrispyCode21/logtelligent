@@ -56,12 +56,16 @@ function cameBefore(a: Session, b: Session): boolean {
   return ta < tb || (ta === tb && a.id < b.id)
 }
 
+/** The most recent finished session with a day (that day, if given), in replay order. */
+function lastFinished(sessions: Session[], dayId?: string): Session | undefined {
+  return sessions
+    .filter((s) => s.finishedAt && s.dayId && (dayId === undefined || s.dayId === dayId))
+    .reduce<Session | undefined>((last, s) => (!last || cameBefore(last, s) ? s : last), undefined)
+}
+
 /** The day of the most recent finished session, which drives the rotation (SPEC §5.1). */
 export function lastLoggedDayId(sessions: Session[]): string | undefined {
-  return sessions
-    .filter((s) => s.finishedAt && s.dayId)
-    .toSorted((a, b) => Date.parse(a.startedAt) - Date.parse(b.startedAt))
-    .at(-1)?.dayId
+  return lastFinished(sessions)?.dayId
 }
 
 /**
@@ -69,9 +73,7 @@ export function lastLoggedDayId(sessions: Session[]): string | undefined {
  * finished session, if it has one. Older sessions aren't searched.
  */
 export function lastNoteFor(sessions: Session[], dayId: string): string | undefined {
-  const finished = sessions.filter((s) => s.finishedAt && s.dayId === dayId)
-  const last = finished.reduce<Session | undefined>((a, s) => (!a || cameBefore(a, s) ? s : a), undefined)
-  return last?.note
+  return lastFinished(sessions, dayId)?.note
 }
 
 export function exerciseHasHistory(sessions: Session[], exerciseId: string): boolean {

@@ -584,3 +584,11 @@ textarea {
 .last-time {
   margin: 0;
 }
+
+.note-counter {
+  margin: 0;
+}
+
+.note-counter:empty {
+  display: none;
+}

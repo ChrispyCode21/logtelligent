@@ -81,6 +81,15 @@ describe('JSON backup (SPEC §2)', () => {
     expect(parseBackup(JSON.stringify(backup))).toEqual(backup)
   })
 
+  it('stores a restored note as the app would: trimmed, and whitespace as no note', () => {
+    const json = JSON.parse(JSON.stringify(buildBackup(program, sessions, new Date())))
+    json.sessions[0].note = '  go lighter  '
+    json.sessions[1] = { ...json.sessions[0], id: 99, note: '   ' }
+    const parsed = parseBackup(JSON.stringify(json)).sessions
+    expect(parsed[0].note).toBe('go lighter')
+    expect(parsed[1]).not.toHaveProperty('note')
+  })
+
   it('rejects a note that is empty or over 200 characters', () => {
     for (const note of ['', 'x'.repeat(201)]) {
       const json = JSON.parse(JSON.stringify(buildBackup(program, sessions, new Date())))

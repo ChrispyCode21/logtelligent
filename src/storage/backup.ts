@@ -2,6 +2,7 @@ import { countedSets, type EquipmentType, type LoggedSet, type RepRange, type Se
 import { EFFORT_SCALE_IDS, LEGACY_EFFORT_SCALE, type EffortScale } from '../program/effort'
 import type { Program, ProgramDay, ProgramExercise } from '../program/types'
 import type { ExerciseLog, Session, Substitute } from '../session/types'
+import { normalizeNote } from '../session/notes'
 import { db } from './db'
 
 // JSON backup (SPEC §2). Bump FORMAT when the shape changes, and teach parseBackup to read old ones.
@@ -131,7 +132,7 @@ function session(v: unknown, path: string): Session {
     ),
     warmupDismissed: optional(s.warmupDismissed, (b) => bool(b, `${path}.warmupDismissed`)),
     // Session notes (SPEC §9.2, slice 3): 1–200 characters. Backups from before them have none.
-    note: optional(s.note, (n) => text(n, `${path}.note`)),
+    note: optional(s.note, (n) => normalizeNote(text(n, `${path}.note`))),
   })
 }
 
