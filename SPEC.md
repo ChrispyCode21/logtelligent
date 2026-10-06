@@ -452,6 +452,8 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
   - No limit beyond the backup's 100 sets per exercise.
   - In a finished session, extras can be edited or deleted but not added (adding stays closed, slice 1).
   - A substitute's extras are tagged the same way.
+- **Only extras left (Decided 2026-10-05):** if every prescribed set of an exercise is deleted but its extras are kept, the session can still finish, and progression treats that exercise as "not done", as with a skip (§5.2): no fail, no stack.
+- **Extras and replacing (Decided 2026-10-05):** extras logged before an exercise is replaced are kept, like its prescribed sets, and shown tagged: "Logged before replacing: 225 × 5 @ 8 · 225 × 4 · Extra: 185 × 8".
 
 **Slice 3: Session notes (Decided).**
 - An optional **note for next time** above Finish on every session; the "Finish anyway?" confirm mentions it. Plain text, up to 200 characters.
