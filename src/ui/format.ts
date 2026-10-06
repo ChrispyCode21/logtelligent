@@ -48,6 +48,20 @@ export function formatSetCount(sets: LoggedSet[], target?: number) {
   return extras > 0 ? `${base} + ${extras} extra${extras === 1 ? '' : 's'}` : base
 }
 
+/** The prescribed sets on one line, leaving extras out: `225 × 5 @ 8 · 225 × 4`. */
+export const formatCountedSets = (sets: LoggedSet[], scale: EffortScale = 'rpe') =>
+  formatSets(countedSets(sets), scale)
+
+/** Extra sets on their own line, `Extra: 185 × 8 · 185 × 7`, or undefined without any (SPEC §9.2, slice 2). */
+export function formatExtras(sets: LoggedSet[]): string | undefined {
+  const extras = sets.filter((s) => s.extra)
+  return extras.length > 0 ? `Extra: ${formatSets(extras)}` : undefined
+}
+
+/** All of an exercise's sets on one line, extras last and tagged: `225 × 5 @ 8 · 225 × 4 · Extra: 185 × 8`. */
+export const formatSetsWithExtras = (sets: LoggedSet[], scale: EffortScale = 'rpe') =>
+  [formatCountedSets(sets, scale), formatExtras(sets)].filter(Boolean).join(' · ')
+
 /** Sets on one line: `225 × 4 @ 8 · 225 × 4 · 225 × 3`. */
 export const formatSets = (sets: LoggedSet[], scale: EffortScale = 'rpe') =>
   sets.map((set) => formatSet(set, scale)).join(' · ')

@@ -8,7 +8,7 @@ import { exerciseHistory } from '../history/sessions'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
-import { formatDate, formatE1rm, formatSets } from '../ui/format'
+import { formatCountedSets, formatDate, formatE1rm, formatExtras, formatSetsWithExtras } from '../ui/format'
 import { E1rmChart } from './E1rmChart'
 import { SessionView } from './SessionView'
 
@@ -99,22 +99,24 @@ export function HistoryView({ program, sessions }: Props) {
                       <span className="muted">Replaced with </span>
                       {entry.substitute.name}
                       {countedSets(entry.substitute.sets).length > 0 &&
-                        `: ${formatSets(countedSets(entry.substitute.sets), program.effortScale)}`}
+                        `: ${formatCountedSets(entry.substitute.sets, program.effortScale)}`}
                     </p>
-                    <ExtraSets sets={entry.substitute.sets} />
+                    <ExtraLine sets={entry.substitute.sets} />
                     {entry.sets.length > 0 && (
-                      <p className="muted">Before replacing: {formatSets(entry.sets, program.effortScale)}</p>
+                      <p className="muted">
+                        Before replacing: {formatSetsWithExtras(entry.sets, program.effortScale)}
+                      </p>
                     )}
                   </>
                 ) : (
                   <>
                     {countedSets(entry.sets).length > 0 && (
                       <p>
-                        {formatSets(countedSets(entry.sets), program.effortScale)}
+                        {formatCountedSets(entry.sets, program.effortScale)}
                         {exercise.unilateral && <span className="muted"> (per side)</span>}
                       </p>
                     )}
-                    <ExtraSets sets={entry.sets} />
+                    <ExtraLine sets={entry.sets} />
                   </>
                 )}
               </Card>
@@ -126,9 +128,8 @@ export function HistoryView({ program, sessions }: Props) {
   )
 }
 
-/** Extra sets on their own line: "Extra: 185 × 8 · 185 × 7" (SPEC §9.2, slice 2). They carry no effort. */
-function ExtraSets({ sets }: { sets: LoggedSet[] }) {
-  const extras = sets.filter((s) => s.extra)
-  if (extras.length === 0) return null
-  return <p className="muted">Extra: {formatSets(extras)}</p>
+/** Extra sets on their own line (SPEC §9.2, slice 2). */
+function ExtraLine({ sets }: { sets: LoggedSet[] }) {
+  const extras = formatExtras(sets)
+  return extras ? <p className="muted">{extras}</p> : null
 }

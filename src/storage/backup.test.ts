@@ -67,6 +67,14 @@ describe('JSON backup (SPEC §2)', () => {
     expect(() => parseBackup(JSON.stringify(json))).toThrow('sessions[0].exercises[0].sets[0].extra')
   })
 
+  it('puts extra sets after the prescribed ones, whatever order the file has', () => {
+    const json = JSON.parse(JSON.stringify(buildBackup(program, sessions, new Date())))
+    json.sessions[0].exercises[0].sets.unshift({ weight: 185, reps: 8, extra: true })
+    const parsed = parseBackup(JSON.stringify(json)).sessions[0].exercises[0].sets
+    expect(parsed.at(-1)).toEqual({ weight: 185, reps: 8, extra: true })
+    expect(parsed.filter((s) => !s.extra)).toEqual(sessions[0].exercises[0].sets)
+  })
+
   it('round-trips a full program and a session using the exercise menu', () => {
     const full = {
       id: 'main' as const,

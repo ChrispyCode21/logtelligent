@@ -263,6 +263,15 @@ describe('extra sets (SPEC §9.2, slice 2)', () => {
     expect(removalNeedsEffort([{ ...set, rpe: 8 }, x(185, 8)], 0, primary)).toBe(false)
   })
 
+  it('ask for set 2’s effort when set 1 is deleted with extras present, and keep the extras’ weight', () => {
+    const sets = [{ weight: 225, reps: 5, rpe: 8 }, { weight: 225, reps: 4 }, x(185, 8)]
+    expect(removalNeedsEffort(sets, 0, (i) => i === 0)).toBe(true)
+    expect(removeFirstSet(sets, { weight: 220, reps: 4, rpe: 9 })).toEqual([
+      { weight: 220, reps: 4, rpe: 9 },
+      x(185, 8),
+    ])
+  })
+
   it('show a finished exercise’s outcome only when it has prescribed sets', () => {
     expect(showsOutcome(true, [x(185, 8)], 3)).toBe(false)
   })

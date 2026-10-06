@@ -22,7 +22,7 @@ import {
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
-import { formatSetCount, formatSets } from '../ui/format'
+import { formatSetCount, formatSetsWithExtras } from '../ui/format'
 import { SetEditor } from './SetEditor'
 
 const VOLUME_ONLY_NOTICE = 'This will be tracked as volume only and not used for estimates.'
@@ -179,7 +179,9 @@ export function ExerciseLogger({
         {header}
         {menu}
         <p className="muted">Volume only: not used for {config.name} estimates or progression.</p>
-        {sets.length > 0 && <p className="muted">Logged before replacing: {formatSets(sets, effortScale)}</p>}
+        {sets.length > 0 && (
+          <p className="muted">Logged before replacing: {formatSetsWithExtras(sets, effortScale)}</p>
+        )}
         <SetEditor
           key="substitute"
           sets={substitute.sets}
