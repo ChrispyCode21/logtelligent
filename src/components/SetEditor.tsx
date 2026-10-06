@@ -32,9 +32,9 @@ interface Props {
 type Mode =
   | { kind: 'new' }
   | { kind: 'edit'; index: number }
-  /** Logging an extra set (SPEC §9.2, slice 2). */
+  // Logging an extra set (SPEC §9.2, slice 2).
   | { kind: 'extra' }
-  /** Deleting set 1 when set 2 has no effort: the form shows set 2, which needs one (SPEC §9.2, slice 1). */
+  // Deleting set 1 when set 2 has no effort: the form shows set 2, which needs one (SPEC §9.2, slice 1).
   | { kind: 'replaceFirst' }
 
 const NEW: Mode = { kind: 'new' }
