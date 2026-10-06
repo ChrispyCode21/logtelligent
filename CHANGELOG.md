@@ -6,6 +6,10 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-06
+
+Logging fidelity: fix past sessions, log extra sets, and leave yourself a note for next time.
+
 ### Added
 
 - **Edit finished sessions:** each session in History has an **Edit** button that opens the whole session. Fix a set's weight, reps or effort, delete a set, or delete the session. Suggestions and messages after it update to match.
