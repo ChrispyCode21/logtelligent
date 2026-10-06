@@ -47,7 +47,10 @@ export function SetEditor({
   onSave,
 }: Props) {
   const [form, setForm] = useState<SetForm>(() => prefill(sets, first))
-  const [editing, setEditing] = useState<number | null>(null)
+  const [editingIndex, setEditing] = useState<number | null>(null)
+  // A save re-renders with the new sets before this resets, so a deleted last set can leave the
+  // index past the end for one render.
+  const editing = editingIndex !== null && editingIndex < sets.length ? editingIndex : null
   const [addingExtra, setAddingExtra] = useState(false)
   // Deleting set 1 when set 2 has no effort: the form shows set 2, which needs one (SPEC §9.2, slice 1).
   const [replacingFirst, setReplacingFirst] = useState(false)
