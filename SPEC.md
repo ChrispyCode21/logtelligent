@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is being built** (§9.2, decided 2026-10-04; slice 0 added 2026-10-05): slices 0–3 are built; the release PR is next.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -403,7 +403,7 @@ Answers the three complaints from friends trying v1.0.0: RPE friction ("oh, this
 
 **Not in v1.1.0:** editing finished sessions (§10 #2) and the "Earlier ideas" in §11.
 
-## 9.2 v1.2.0 scope (Decided 2026-10-04 — not yet built)
+## 9.2 v1.2.0 scope (Decided 2026-10-04 — released in v1.2.0)
 
 Theme: **logging fidelity**. Fixes for things noticed in daily use, from the owner's own use rather than friends' feedback. All additive (minor version); no backend. Built in this order, each slice a small PR or two, then a release PR.
 
