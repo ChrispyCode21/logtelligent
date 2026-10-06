@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { formatE1rm, formatPrescription, formatSet, formatSets, formatWeight } from './format'
+import {
+  formatCountedSets,
+  formatE1rm,
+  formatExtras,
+  formatPrescription,
+  formatSet,
+  formatSetCount,
+  formatSets,
+  formatSetsWithExtras,
+  formatWeight,
+} from './format'
 
 describe('formatSet', () => {
   it('shows the RPE when logged', () => {
@@ -89,5 +99,40 @@ describe('formatPrescription (SPEC §9.2, slice 0)', () => {
     expect(formatPrescription({ ...lunge, equipment: 'dumbbell' }, 'rpe')).toBe(
       'Accessory · 3 × 10–12 per side · Dumbbell',
     )
+  })
+})
+
+describe('formatSetCount (SPEC §9.2, slices 1 and 2)', () => {
+  const set = { weight: 225, reps: 5 }
+  const extra = { weight: 185, reps: 8, extra: true }
+
+  it('shows logged of wanted during a session, adding any extras', () => {
+    expect(formatSetCount([set, set], 3)).toBe('2 of 3 sets')
+    expect(formatSetCount([set, set, set, extra], 3)).toBe('3 of 3 sets + 1 extra')
+    expect(formatSetCount([set, set, set, extra, extra], 3)).toBe('3 of 3 sets + 2 extras')
+  })
+
+  it('shows only what was logged for a past session', () => {
+    expect(formatSetCount([set])).toBe('1 set')
+    expect(formatSetCount([set, set, extra])).toBe('2 sets + 1 extra')
+  })
+})
+
+describe('extra sets on a line (SPEC §9.2, slice 2)', () => {
+  const sets = [
+    { weight: 225, reps: 5, rpe: 8 },
+    { weight: 225, reps: 4 },
+    { weight: 185, reps: 8, extra: true },
+  ]
+
+  it('separates prescribed sets from extras', () => {
+    expect(formatCountedSets(sets)).toBe('225 × 5 @ 8 · 225 × 4')
+    expect(formatExtras(sets)).toBe('Extra: 185 × 8')
+    expect(formatExtras(sets.slice(0, 2))).toBeUndefined()
+  })
+
+  it('puts them on one line, extras last and tagged', () => {
+    expect(formatSetsWithExtras(sets)).toBe('225 × 5 @ 8 · 225 × 4 · Extra: 185 × 8')
+    expect(formatSetsWithExtras(sets.slice(0, 2))).toBe('225 × 5 @ 8 · 225 × 4')
   })
 })

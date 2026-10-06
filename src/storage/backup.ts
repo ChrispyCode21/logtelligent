@@ -1,4 +1,4 @@
-import type { EquipmentType, LoggedSet, RepRange, Seed } from '../engine'
+import { countedSets, type EquipmentType, type LoggedSet, type RepRange, type Seed } from '../engine'
 import { EFFORT_SCALE_IDS, LEGACY_EFFORT_SCALE, type EffortScale } from '../program/effort'
 import type { Program, ProgramDay, ProgramExercise } from '../program/types'
 import type { ExerciseLog, Session, Substitute } from '../session/types'
@@ -92,10 +92,16 @@ function loggedSet(v: unknown, path: string): LoggedSet {
     weight: num(s.weight, `${path}.weight`, 0, 2000),
     reps: num(s.reps, `${path}.reps`, 0, 1000, true),
     rpe: optional(s.rpe, (r) => num(r, `${path}.rpe`, 1, 10)),
+    // Extra sets (SPEC §9.2, slice 2). Backups from before them have none: every set counted.
+    extra: optional(s.extra, (b) => bool(b, `${path}.extra`)),
   })
 }
 
-const sets = (v: unknown, path: string) => list(v, path, 100).map((s, i) => loggedSet(s, `${path}[${i}]`))
+/** Prescribed sets first, then extras, as the app keeps them, whatever order the file had. */
+function sets(v: unknown, path: string): LoggedSet[] {
+  const all = list(v, path, 100).map((s, i) => loggedSet(s, `${path}[${i}]`))
+  return [...countedSets(all), ...all.filter((s) => s.extra)]
+}
 
 function exerciseLog(v: unknown, path: string): ExerciseLog {
   const l = obj(v, path)

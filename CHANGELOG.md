@@ -10,6 +10,7 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 - **Edit finished sessions:** each session in History has an **Edit** button that opens the whole session. Fix a set's weight, reps or effort, delete a set, or delete the session. Suggestions and messages after it update to match.
 - **Deleting a first set asks for the next set's effort:** on a primary lift, deleting set 1 when set 2 has no effort asks for one, so the session still counts toward your estimated 1RM. Before, Finish just stayed disabled.
+- **Add a set on the fly:** once an exercise's sets are done, **+ Add set** logs an extra one, such as a lighter back-off set at its own weight. Extra sets show in the session and in History ("Extra: 185 × 8"), but never change your suggestions or estimated 1RM.
 
 ### Changed
 

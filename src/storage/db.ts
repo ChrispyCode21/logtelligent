@@ -31,3 +31,9 @@ db.version(3)
         program.effortScale ??= LEGACY_EFFORT_SCALE
       }),
   )
+// v4: logged sets may be marked `extra` (SPEC §9.2, slice 2). No index change and no upgrade:
+// a set without the mark is a counted one, as every set before this was.
+db.version(4).stores({
+  sessions: '++id, startedAt',
+  programs: 'id',
+})

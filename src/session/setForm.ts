@@ -1,4 +1,4 @@
-import type { LoggedSet } from '../engine'
+import { countedSets, type LoggedSet } from '../engine'
 
 /** The set form's fields, as typed. */
 export interface SetForm {
@@ -12,12 +12,21 @@ export function formFromSet(set: LoggedSet): SetForm {
   return { weight: String(set.weight), reps: String(set.reps), rpe: set.rpe }
 }
 
-/** The next set pre-fills from the previous one (SPEC §5.2); set 1 from `first`, usually the suggestion. */
+/**
+ * The next prescribed set pre-fills from the previous one (SPEC §5.2), not from an extra; set 1
+ * from `first`, usually the suggestion.
+ */
 export function prefill(sets: LoggedSet[], first?: { weight: number; reps: number }): SetForm {
-  const last = sets.at(-1)
+  const last = countedSets(sets).at(-1)
   if (last) return formFromSet(last)
   if (first) return { weight: String(first.weight), reps: String(first.reps) }
   return { weight: '', reps: '' }
+}
+
+/** An extra set pre-fills from the set before it, without effort (SPEC §9.2, slice 2). */
+export function prefillExtra(sets: LoggedSet[]): SetForm {
+  const last = sets.at(-1)
+  return last ? { weight: String(last.weight), reps: String(last.reps) } : { weight: '', reps: '' }
 }
 
 export interface SetRules {

@@ -1,5 +1,5 @@
 // Display formatting shared by the UI. All weights are in pounds.
-import type { EquipmentType, LoggedSet, RepRange, Tier } from '../engine'
+import { countedSets, type EquipmentType, type LoggedSet, type RepRange, type Tier } from '../engine'
 import { effortSuffix, effortTarget, type EffortScale } from '../program/effort'
 
 export const EQUIPMENT_LABELS: Record<EquipmentType, string> = {
@@ -35,6 +35,32 @@ export function formatPrescription(e: Prescription, scale?: EffortScale) {
 /** `225 × 4 @ 8` (`225 × 4 · 2 left`, `225 × 4 · Challenging` in other scales), or `225 × 4` without effort. */
 export const formatSet = (set: LoggedSet, scale: EffortScale = 'rpe') =>
   `${set.weight} × ${set.reps}${set.rpe !== undefined ? ` ${effortSuffix(scale, set.rpe)}` : ''}`
+
+/**
+ * An exercise's set count: `2 of 3 sets`, `3 of 3 sets + 1 extra`. Without a target (a past session,
+ * whose prescription isn't stored): `3 sets`, `1 set + 2 extras` (SPEC §9.2, slices 1 and 2).
+ */
+export function formatSetCount(sets: LoggedSet[], target?: number) {
+  const counted = countedSets(sets).length
+  const extras = sets.length - counted
+  const base =
+    target === undefined ? `${counted} set${counted === 1 ? '' : 's'}` : `${counted} of ${target} sets`
+  return extras > 0 ? `${base} + ${extras} extra${extras === 1 ? '' : 's'}` : base
+}
+
+/** The prescribed sets on one line, leaving extras out: `225 × 5 @ 8 · 225 × 4`. */
+export const formatCountedSets = (sets: LoggedSet[], scale: EffortScale = 'rpe') =>
+  formatSets(countedSets(sets), scale)
+
+/** Extra sets on their own line, `Extra: 185 × 8 · 185 × 7`, or undefined without any (SPEC §9.2, slice 2). */
+export function formatExtras(sets: LoggedSet[]): string | undefined {
+  const extras = sets.filter((s) => s.extra)
+  return extras.length > 0 ? `Extra: ${formatSets(extras)}` : undefined
+}
+
+/** All of an exercise's sets on one line, extras last and tagged: `225 × 5 @ 8 · 225 × 4 · Extra: 185 × 8`. */
+export const formatSetsWithExtras = (sets: LoggedSet[], scale: EffortScale = 'rpe') =>
+  [formatCountedSets(sets, scale), formatExtras(sets)].filter(Boolean).join(' · ')
 
 /** Sets on one line: `225 × 4 @ 8 · 225 × 4 · 225 × 3`. */
 export const formatSets = (sets: LoggedSet[], scale: EffortScale = 'rpe') =>

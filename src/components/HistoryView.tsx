@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { countedSets, type LoggedSet } from '../engine'
 import { exerciseTimeline } from '../history/timeline'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
@@ -7,7 +8,7 @@ import { exerciseHistory } from '../history/sessions'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
-import { formatDate, formatE1rm, formatSets } from '../ui/format'
+import { formatCountedSets, formatDate, formatE1rm, formatExtras, formatSetsWithExtras } from '../ui/format'
 import { E1rmChart } from './E1rmChart'
 import { SessionView } from './SessionView'
 
@@ -97,18 +98,26 @@ export function HistoryView({ program, sessions }: Props) {
                     <p>
                       <span className="muted">Replaced with </span>
                       {entry.substitute.name}
-                      {entry.substitute.sets.length > 0 &&
-                        `: ${formatSets(entry.substitute.sets, program.effortScale)}`}
+                      {countedSets(entry.substitute.sets).length > 0 &&
+                        `: ${formatCountedSets(entry.substitute.sets, program.effortScale)}`}
                     </p>
+                    <ExtraLine sets={entry.substitute.sets} />
                     {entry.sets.length > 0 && (
-                      <p className="muted">Before replacing: {formatSets(entry.sets, program.effortScale)}</p>
+                      <p className="muted">
+                        Before replacing: {formatSetsWithExtras(entry.sets, program.effortScale)}
+                      </p>
                     )}
                   </>
                 ) : (
-                  <p>
-                    {formatSets(entry.sets, program.effortScale)}
-                    {exercise.unilateral && <span className="muted"> (per side)</span>}
-                  </p>
+                  <>
+                    {countedSets(entry.sets).length > 0 && (
+                      <p>
+                        {formatCountedSets(entry.sets, program.effortScale)}
+                        {exercise.unilateral && <span className="muted"> (per side)</span>}
+                      </p>
+                    )}
+                    <ExtraLine sets={entry.sets} />
+                  </>
                 )}
               </Card>
             ))}
@@ -117,4 +126,10 @@ export function HistoryView({ program, sessions }: Props) {
       )}
     </>
   )
+}
+
+/** Extra sets on their own line (SPEC §9.2, slice 2). */
+function ExtraLine({ sets }: { sets: LoggedSet[] }) {
+  const extras = formatExtras(sets)
+  return extras ? <p className="muted">{extras}</p> : null
 }

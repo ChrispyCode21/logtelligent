@@ -37,6 +37,8 @@ export interface LoggedSet {
   weight: number
   reps: number
   rpe?: number
+  /** Logged beyond the prescribed sets: recorded, but not counted by the engine (SPEC §9.2, slice 2). */
+  extra?: boolean
 }
 
 /** One exercise's sets within one session, as the engine sees it. */

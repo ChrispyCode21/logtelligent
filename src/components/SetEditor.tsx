@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react'
-import type { LoggedSet } from '../engine'
+import { countedSets, type LoggedSet } from '../engine'
 import type { EffortScale } from '../program/effort'
-import { formFromSet, parseSetForm, prefill, type SetForm } from '../session/setForm'
-import { addSet, removalNeedsEffort, removeFirstSet, removeSet, updateSet } from '../session/sets'
+import { formFromSet, parseSetForm, prefill, prefillExtra, type SetForm } from '../session/setForm'
+import { addExtra, addSet, removalNeedsEffort, removeFirstSet, removeSet, updateSet } from '../session/sets'
 import { Button } from '../ui/Button'
 import { Field } from '../ui/Field'
 import { formatSet } from '../ui/format'
@@ -10,8 +10,10 @@ import { EffortPicker } from './EffortPicker'
 
 interface Props {
   sets: LoggedSet[]
-  /** A new set can be logged; the caller decides when the exercise's sets are all in. */
+  /** A new prescribed set can be logged; the caller decides when the exercise's sets are all in. */
   canAdd: boolean
+  /** "+ Add set" for an extra set is offered (SPEC §9.2, slice 2). */
+  canAddExtra: boolean
   /** Pre-fill for the first set, usually the suggestion. */
   first?: { weight: number; reps: number }
   effortScale: EffortScale
@@ -26,10 +28,14 @@ interface Props {
   onSave: (sets: LoggedSet[]) => Promise<void>
 }
 
-/** Logged sets (tap to edit or delete) and the form for the next set. One working weight per exercise. */
+/**
+ * Logged sets (tap to edit or delete) and the form for the next set. One working weight across the
+ * prescribed sets; extra sets come after them with their own weight and no effort.
+ */
 export function SetEditor({
   sets,
   canAdd,
+  canAddExtra,
   first,
   effortScale,
   rpeRequiredAt,
@@ -41,17 +47,27 @@ export function SetEditor({
   onSave,
 }: Props) {
   const [form, setForm] = useState<SetForm>(() => prefill(sets, first))
-  const [editing, setEditing] = useState<number | null>(null)
+  const [editingIndex, setEditing] = useState<number | null>(null)
+  // A save re-renders with the new sets before this resets, so a deleted last set can leave the
+  // index past the end for one render.
+  const editing = editingIndex !== null && editingIndex < sets.length ? editingIndex : null
+  const [addingExtra, setAddingExtra] = useState(false)
   // Deleting set 1 when set 2 has no effort: the form shows set 2, which needs one (SPEC §9.2, slice 1).
   const [replacingFirst, setReplacingFirst] = useState(false)
 
-  const formIndex = replacingFirst ? 0 : (editing ?? sets.length)
+  const countedCount = countedSets(sets).length
+  const extraMode = addingExtra || (editing !== null && !!sets[editing].extra)
+  const formIndex = replacingFirst ? 0 : (editing ?? countedCount)
   // Logged sets stay editable after the last one is entered.
-  const showForm = editing !== null || canAdd
-  const required = rpeRequiredAt(formIndex)
+  const showForm = editing !== null || addingExtra || canAdd
+  const required = !extraMode && rpeRequiredAt(formIndex)
   const parsed = parseSetForm(form, { allowZeroWeight, rpeRequired: required })
   const weight = Number(form.weight)
   const reps = Number(form.reps)
+  const hasExtras = countedCount < sets.length
+
+  /** "Set 2", or "Extra 1" for the first extra (extras come after the prescribed sets). */
+  const setLabel = (i: number) => (sets[i].extra ? `Extra ${i - countedCount + 1}` : `Set ${i + 1}`)
 
   const stepWeight = (direction: 1 | -1) => {
     const next = step(weight, direction)
@@ -60,10 +76,15 @@ export function SetEditor({
   const stepReps = (delta: number) =>
     setForm({ ...form, reps: String(Math.max(0, (Number.isInteger(reps) ? reps : 0) + delta)) })
 
+  function reset() {
+    setEditing(null)
+    setAddingExtra(false)
+    setReplacingFirst(false)
+  }
+
   async function save(nextSets: LoggedSet[]) {
     await onSave(nextSets)
-    setEditing(null)
-    setReplacingFirst(false)
+    reset()
     setForm(prefill(nextSets, first))
   }
 
@@ -71,6 +92,7 @@ export function SetEditor({
     e.preventDefault()
     if (!parsed) return
     if (replacingFirst) void save(removeFirstSet(sets, parsed))
+    else if (addingExtra) void save(addExtra(sets, parsed))
     else void save(editing === null ? addSet(sets, parsed) : updateSet(sets, editing, parsed))
   }
 
@@ -84,22 +106,29 @@ export function SetEditor({
   }
 
   function startEdit(index: number) {
+    reset()
     setEditing(index)
-    setReplacingFirst(false)
     setForm(formFromSet(sets[index]))
   }
 
-  function cancelEdit() {
-    setEditing(null)
-    setReplacingFirst(false)
+  function startExtra() {
+    reset()
+    setAddingExtra(true)
+    setForm(prefillExtra(sets))
+  }
+
+  function cancel() {
+    reset()
     setForm(prefill(sets, first))
   }
 
   const heading = replacingFirst
     ? 'Set 2 becomes set 1: add its effort'
-    : editing === null
-      ? `Set ${formIndex + 1}`
-      : `Editing set ${editing + 1}`
+    : addingExtra
+      ? 'Extra set'
+      : editing === null
+        ? `Set ${formIndex + 1}`
+        : `Editing ${setLabel(editing).toLowerCase()}`
 
   return (
     <>
@@ -112,7 +141,7 @@ export function SetEditor({
                 aria-current={replacingFirst ? i === 1 : editing === i}
                 onClick={() => startEdit(i)}
               >
-                <span>Set {i + 1}</span>
+                <span>{setLabel(i)}</span>
                 <span>{formatSet(set, effortScale)}</span>
               </Button>
             </li>
@@ -128,7 +157,9 @@ export function SetEditor({
             label={
               <>
                 {weightLabel}
-                {sets.length > 0 && <span className="muted"> · applies to all sets</span>}
+                {!extraMode && countedCount > 0 && (
+                  <span className="muted"> · applies to all sets{hasExtras && ' but extras'}</span>
+                )}
               </>
             }
           >
@@ -163,32 +194,43 @@ export function SetEditor({
             </div>
           </Field>
 
-          <EffortPicker
-            scale={effortScale}
-            value={form.rpe}
-            required={required}
-            onChange={(rpe) => setForm({ ...form, rpe })}
-          />
+          {/* Effort isn't asked on extra sets (SPEC §9.2, slice 2). */}
+          {!extraMode && (
+            <EffortPicker
+              scale={effortScale}
+              value={form.rpe}
+              required={required}
+              onChange={(rpe) => setForm({ ...form, rpe })}
+            />
+          )}
 
           <div className="actions">
             <Button type="submit" variant="primary" disabled={!parsed}>
-              {replacingFirst ? 'Delete set 1' : editing === null ? 'Log set' : 'Save set'}
+              {replacingFirst
+                ? 'Delete set 1'
+                : addingExtra
+                  ? 'Log extra set'
+                  : editing === null
+                    ? 'Log set'
+                    : 'Save set'}
             </Button>
-            {editing !== null && (
-              <>
-                <Button onClick={cancelEdit}>Cancel</Button>
-                {!replacingFirst && (
-                  <Button variant="danger" onClick={() => deleteSet(editing)}>
-                    Delete set
-                  </Button>
-                )}
-              </>
+            {(editing !== null || addingExtra) && <Button onClick={cancel}>Cancel</Button>}
+            {editing !== null && !replacingFirst && (
+              <Button variant="danger" onClick={() => deleteSet(editing)}>
+                Delete set
+              </Button>
             )}
           </div>
         </form>
       )}
 
-      {editing === null && footer}
+      {canAddExtra && !showForm && (
+        <div className="actions">
+          <Button onClick={startExtra}>+ Add set</Button>
+        </div>
+      )}
+
+      {editing === null && !addingExtra && footer}
     </>
   )
 }

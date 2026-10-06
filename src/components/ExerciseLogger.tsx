@@ -22,7 +22,7 @@ import {
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
-import { formatSets } from '../ui/format'
+import { formatSetCount, formatSetsWithExtras } from '../ui/format'
 import { SetEditor } from './SetEditor'
 
 const VOLUME_ONLY_NOTICE = 'This will be tracked as volume only and not used for estimates.'
@@ -103,13 +103,7 @@ export function ExerciseLogger({
           <span className="muted">{finished ? ' · skipped' : ' · skipped today'}</span>
         ) : (
           // A past session shows only what was logged: what was prescribed then isn't stored (SPEC §9.2, slice 1).
-          <span className="muted">
-            {' '}
-            ·{' '}
-            {finished
-              ? `${sets.length} set${sets.length === 1 ? '' : 's'}`
-              : `${sets.length} of ${target} sets`}
-          </span>
+          <span className="muted"> · {formatSetCount(sets, finished ? undefined : target)}</span>
         )}
         {!substitute && !log.skipped && suggestion.kind === 'suggestion' && suggestion.plan === 'deload' && (
           <span className="tag">Deload</span>
@@ -185,11 +179,14 @@ export function ExerciseLogger({
         {header}
         {menu}
         <p className="muted">Volume only: not used for {config.name} estimates or progression.</p>
-        {sets.length > 0 && <p className="muted">Logged before replacing: {formatSets(sets, effortScale)}</p>}
+        {sets.length > 0 && (
+          <p className="muted">Logged before replacing: {formatSetsWithExtras(sets, effortScale)}</p>
+        )}
         <SetEditor
           key="substitute"
           sets={substitute.sets}
           canAdd={!finished && !allSetsLogged(substitute.sets, target)}
+          canAddExtra={!finished && allSetsLogged(substitute.sets, target)}
           effortScale={effortScale}
           rpeRequiredAt={() => false}
           step={(w, dir) => Math.max(0, (Number.isFinite(w) ? w : 0) + dir * SUBSTITUTE_STEP)}
@@ -217,6 +214,7 @@ export function ExerciseLogger({
         key="original"
         sets={sets}
         canAdd={!finished && !allSetsLogged(sets, target)}
+        canAddExtra={!finished && allSetsLogged(sets, target)}
         first={suggestion.kind === 'suggestion' ? suggestion : undefined}
         effortScale={effortScale}
         rpeRequiredAt={(i) => rpeRequired(config.tier, i)}

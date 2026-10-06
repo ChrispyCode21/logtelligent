@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Suggestion } from '../engine'
 import {
+  addExtra,
   addSet,
   allSetsLogged,
   canFinish,
@@ -223,5 +224,55 @@ describe('finishing with the exercise menu (SPEC §5.2)', () => {
       false,
     )
     expect(loggedSets({ exerciseId: 'curl', sets: [{ weight: 30, reps: 12 }], skipped: true })).toEqual([])
+  })
+})
+
+describe('extra sets (SPEC §9.2, slice 2)', () => {
+  const x = (weight: number, reps: number) => ({ weight, reps, extra: true })
+
+  it('are added after the prescribed sets with their own weight and no effort', () => {
+    expect(addExtra([{ weight: 225, reps: 5, rpe: 8 }], { weight: 185, reps: 8, rpe: 7 })).toEqual([
+      { weight: 225, reps: 5, rpe: 8 },
+      x(185, 8),
+    ])
+  })
+
+  it('keep their weight when a prescribed set changes weight, and change alone', () => {
+    const sets = [{ weight: 225, reps: 5, rpe: 8 }, { weight: 225, reps: 4 }, x(185, 8)]
+    expect(updateSet(sets, 1, { weight: 230, reps: 4 }).map((s) => s.weight)).toEqual([230, 230, 185])
+    expect(updateSet(sets, 2, { weight: 175, reps: 10, rpe: 9 })).toEqual([sets[0], sets[1], x(175, 10)])
+  })
+
+  it('stay after a prescribed set logged later, e.g. after deleting one', () => {
+    expect(addSet([{ weight: 225, reps: 5, rpe: 8 }, x(185, 8)], { weight: 225, reps: 4 })).toEqual([
+      { weight: 225, reps: 5, rpe: 8 },
+      { weight: 225, reps: 4 },
+      x(185, 8),
+    ])
+  })
+
+  it('count toward neither "all sets logged" nor the session tally', () => {
+    expect(allSetsLogged([set, set, x(185, 8)], 3)).toBe(false)
+    expect(setTally([{ log: bench([set, set, x(185, 8)]), target: 3 }])).toEqual({ logged: 2, target: 3 })
+  })
+
+  it('never need or supply set 1’s effort, and never become set 1 on a delete', () => {
+    const primary = (i: number) => i === 0
+    expect(hasRequiredEffort('primary', [x(185, 8)])).toBe(true)
+    expect(hasRequiredEffort('primary', [{ ...set, rpe: 8 }, x(185, 8)])).toBe(true)
+    expect(removalNeedsEffort([{ ...set, rpe: 8 }, x(185, 8)], 0, primary)).toBe(false)
+  })
+
+  it('ask for set 2’s effort when set 1 is deleted with extras present, and keep the extras’ weight', () => {
+    const sets = [{ weight: 225, reps: 5, rpe: 8 }, { weight: 225, reps: 4 }, x(185, 8)]
+    expect(removalNeedsEffort(sets, 0, (i) => i === 0)).toBe(true)
+    expect(removeFirstSet(sets, { weight: 220, reps: 4, rpe: 9 })).toEqual([
+      { weight: 220, reps: 4, rpe: 9 },
+      x(185, 8),
+    ])
+  })
+
+  it('show a finished exercise’s outcome only when it has prescribed sets', () => {
+    expect(showsOutcome(true, [x(185, 8)], 3)).toBe(false)
   })
 })

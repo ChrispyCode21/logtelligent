@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseSetForm, prefill } from './setForm'
+import { parseSetForm, prefill, prefillExtra } from './setForm'
 
 describe('set pre-fill (SPEC §5.2)', () => {
   it('fills the next set from the previous one, effort included', () => {
@@ -53,5 +53,21 @@ describe('reading the set form', () => {
     const required = { ...loaded, rpeRequired: true }
     expect(parseSetForm(form('225', '5'), required)).toBeUndefined()
     expect(parseSetForm(form('225', '5', 8), required)).toEqual({ weight: 225, reps: 5, rpe: 8 })
+  })
+})
+
+describe('pre-fill with extra sets (SPEC §9.2, slice 2)', () => {
+  const sets = [
+    { weight: 225, reps: 5, rpe: 8 },
+    { weight: 185, reps: 8, extra: true },
+  ]
+
+  it('fills a prescribed set from the last prescribed set, not an extra', () => {
+    expect(prefill(sets)).toEqual({ weight: '225', reps: '5', rpe: 8 })
+  })
+
+  it('fills an extra from the set before it, without effort', () => {
+    expect(prefillExtra(sets)).toEqual({ weight: '185', reps: '8' })
+    expect(prefillExtra([{ weight: 225, reps: 5, rpe: 8 }])).toEqual({ weight: '225', reps: '5' })
   })
 })

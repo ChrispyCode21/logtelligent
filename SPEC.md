@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is being built** (§9.2, decided 2026-10-04; slice 0 added 2026-10-05): slices 0 and 1 are built.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is being built** (§9.2, decided 2026-10-04; slice 0 added 2026-10-05): slices 0, 1 and 2 are built.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -437,10 +437,23 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
 - **Outcome messages (Decided 2026-10-05):** a finished session shows each exercise's validation message whenever it has sets, not only when all its target sets are in, since the replay judged it however many there were.
 - **Set counts in a past session (Decided 2026-10-05):** an exercise's header shows the sets logged ("3 sets"), not "3 of 4 sets". The prescribed count isn't stored per session, and today's program may differ from what was prescribed then. A live session keeps "n of m".
 
-**Slice 2: Add a set on the fly (Decided).**
+**Slice 2: Add a set on the fly (Decided; built).**
 - Once the configured (or deload) number of sets is logged, an exercise offers **+ Add set**, for originals and substitutes alike.
 - **Extra sets are recorded, not counted:** shown in the session and History, tagged "extra", but excluded from validation (the floor rule and "range filled", §6.5–6.6) and from e1RM. The configured sets are the only ones that steer suggestions, so "sets are never added by progression" (§6.2) still holds.
 - Storage change: extra sets are marked as such, since the configured count can change later. Needs the ARCHITECTURE.md checklist.
+- **Weight (Decided 2026-10-05):** an extra set has its **own weight**, so it can be a lighter back-off set. The one-working-weight rule (§6.3) still holds among the configured sets: changing one changes the others, and never an extra, and changing an extra changes only that extra.
+- **Effort (Decided 2026-10-05):** not asked on extra sets. They log weight × reps only.
+- **History (Decided 2026-10-05):** the configured sets on the usual line, then the extras on their own line: "Extra: 185 × 8 · 185 × 7".
+- **"Only X of Y sets logged" (Decided 2026-10-05):** counts configured sets only, so 2 configured sets plus 1 extra out of 3 still asks "Only 2 of 3".
+- **Smaller defaults (Decided 2026-10-05):**
+  - An exercise's header reads "3 of 3 sets + 1 extra".
+  - An extra pre-fills from the previous set (without effort).
+  - Extras stay extras: deleting a configured set reopens the form for a configured set rather than promoting an extra.
+  - No limit beyond the backup's 100 sets per exercise.
+  - In a finished session, extras can be edited or deleted but not added (adding stays closed, slice 1).
+  - A substitute's extras are tagged the same way.
+- **Only extras left (Decided 2026-10-05):** if every prescribed set of an exercise is deleted but its extras are kept, the session can still finish, and progression treats that exercise as "not done", as with a skip (§5.2): no fail, no stack.
+- **Extras and replacing (Decided 2026-10-05):** extras logged before an exercise is replaced are kept, like its prescribed sets, and shown tagged: "Logged before replacing: 225 × 5 @ 8 · 225 × 4 · Extra: 185 × 8".
 
 **Slice 3: Session notes (Decided).**
 - An optional **note for next time** above Finish on every session; the "Finish anyway?" confirm mentions it. Plain text, up to 200 characters.
@@ -476,3 +489,4 @@ Flagged to revisit after real use (not blocking):
 - ~~**Session notes**~~ — **scoped for v1.2.0** (§9.2 slice 3). Still parked: sending notes to an LLM for evaluation (v2/v3; needs a CSP change and breaks "data never leaves the device").
 - **Keep history for same-named lifts when a template replaces a program:** today a template creates new exercises, so an existing Bench Press starts fresh and its history stays under "Archived" (§9.1 slice 3). Matching by name could carry history and starting numbers over.
 - **Store each session's prescription:** a session stores only the sets logged, so History can't show "3 of 3" for a week when 3 were prescribed, and the progression replay judges old sessions with today's settings (rep range, set count). Saving each exercise's prescription when a session starts would fix both (a stored-data change). Raised while building §9.2 slice 1.
+- **Progression schemes beyond double progression (e.g. 5/3/1):** today every exercise uses one scheme: straight sets at one working weight, double progression, the floor rule and an e1RM from the first set. Programs like 5/3/1 prescribe a different weight and reps per set (percentages of a training max, an AMRAP last set, 3-week waves). Supporting them would add a per-exercise scheme that decides each set's prescription and how a session is judged; the current scheme stays as it is. Logged sets already store a weight each, so storage needn't change shape. Raised while scoping §9.2 slice 2.
