@@ -40,6 +40,33 @@ describe('JSON backup (SPEC §2)', () => {
     expect(() => parseBackup(JSON.stringify(damaged))).toThrow('incomplete or damaged')
   })
 
+  it('round-trips extra sets (SPEC §9.2, slice 2)', () => {
+    const withExtras: Session = {
+      id: 3,
+      dayId: 'upper-a',
+      startedAt: '2026-10-03T10:00:00Z',
+      finishedAt: '2026-10-03T11:00:00Z',
+      exercises: [
+        {
+          exerciseId: 'bench',
+          sets: [
+            { weight: 225, reps: 5, rpe: 8 },
+            { weight: 185, reps: 8, extra: true },
+          ],
+          substitute: { name: 'Machine press', sets: [{ weight: 150, reps: 12, extra: true }] },
+        },
+      ],
+    }
+    const backup = buildBackup(program, [withExtras], new Date('2026-10-04T12:00:00Z'))
+    expect(parseBackup(JSON.stringify(backup))).toEqual(backup)
+  })
+
+  it('rejects an extra flag that is not true or false', () => {
+    const json = JSON.parse(JSON.stringify(buildBackup(program, sessions, new Date())))
+    json.sessions[0].exercises[0].sets[0].extra = 'yes'
+    expect(() => parseBackup(JSON.stringify(json))).toThrow('sessions[0].exercises[0].sets[0].extra')
+  })
+
   it('round-trips a full program and a session using the exercise menu', () => {
     const full = {
       id: 'main' as const,
@@ -131,7 +158,7 @@ describe('JSON backup (SPEC §2)', () => {
   it('drops fields it does not know about', () => {
     const json = JSON.parse(JSON.stringify(buildBackup(program, sessions, new Date())))
     json.sessions[0].injected = '<script>alert(1)</script>'
-    json.sessions[0].exercises[0].sets[0].extra = true
+    json.sessions[0].exercises[0].sets[0].tempo = '3-1-1'
     const parsed = parseBackup(JSON.stringify(json))
     expect(parsed.sessions[0]).not.toHaveProperty('injected')
     expect(parsed.sessions[0].exercises[0].sets[0]).toEqual({ weight: 225, reps: 4, rpe: 8 })

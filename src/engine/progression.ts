@@ -1,5 +1,6 @@
 import { progressAccessory, startingNumbers } from './accessory'
 import { availableLoads, stepDown } from './loads'
+import { countedSets } from './sets'
 import type {
   ExerciseConfig,
   ExerciseSession,
@@ -125,24 +126,29 @@ export function deriveState<S extends ExerciseSession>(config: ExerciseConfig, h
   const sessions: S[] = []
 
   for (const session of sorted) {
-    if (session.replaced || session.sets.length === 0) {
+    // Only prescribed sets count; a session with none (only extras) is "not done", like a skip.
+    const counted = countedSets(session.sets)
+    if (session.replaced || counted.length === 0) {
       sessions.push(session)
       continue
     }
     const isDeload = state.next.kind === 'deload'
-    state = step(config, loads, state, session.sets).state
+    state = step(config, loads, state, counted).state
     sessions.push({ ...session, isDeload })
   }
 
   return { state, sessions }
 }
 
-/** Validate a session in progress against the finished history of its exercise. */
+/**
+ * Validate a session's sets against the finished history of its exercise. Only the prescribed
+ * sets are judged (SPEC §9.2, slice 2); at least one must be logged.
+ */
 export function evaluateSession(
   config: ExerciseConfig,
   history: ExerciseSession[],
   sets: LoggedSet[],
 ): SessionOutcome {
   const { state } = deriveState(config, history)
-  return step(config, availableLoads(config), state, sets)
+  return step(config, availableLoads(config), state, countedSets(sets))
 }

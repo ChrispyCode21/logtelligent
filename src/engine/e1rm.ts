@@ -1,4 +1,5 @@
-import type { ExerciseSession, LoggedSet, RunningE1rm, Seed } from './types'
+import { countedSets } from './sets'
+import type { ExerciseSession, RunningE1rm, Seed } from './types'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const WINDOW_DAYS = 28
@@ -22,7 +23,7 @@ export function effectiveReps(reps: number, rpe: number): number {
   return reps + (10 - rpe)
 }
 
-export function setE1rm(set: Required<LoggedSet>): number {
+export function setE1rm(set: { weight: number; reps: number; rpe: number }): number {
   return estimate1rm(set.weight, effectiveReps(set.reps, set.rpe))
 }
 
@@ -43,9 +44,9 @@ export function repsToFailure(e1rm: number, weight: number): number {
   return (lo + hi) / 2
 }
 
-/** A session e1RM comes from its first set, which must carry an RPE (SPEC §6.3). */
+/** A session e1RM comes from its first (counted) set, which must carry an RPE (SPEC §6.3). */
 export function sessionE1rm(session: ExerciseSession): number | undefined {
-  const first = session.sets[0]
+  const first = countedSets(session.sets)[0]
   if (!first || first.rpe === undefined) return undefined
   return setE1rm({ ...first, rpe: first.rpe })
 }

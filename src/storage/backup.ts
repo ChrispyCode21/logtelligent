@@ -92,6 +92,8 @@ function loggedSet(v: unknown, path: string): LoggedSet {
     weight: num(s.weight, `${path}.weight`, 0, 2000),
     reps: num(s.reps, `${path}.reps`, 0, 1000, true),
     rpe: optional(s.rpe, (r) => num(r, `${path}.rpe`, 1, 10)),
+    // Extra sets (SPEC §9.2, slice 2). Backups from before them have none: every set counted.
+    extra: optional(s.extra, (b) => bool(b, `${path}.extra`)),
   })
 }
 
