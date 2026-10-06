@@ -32,6 +32,7 @@ Results for **v1.0.0** (iPhone, 2026-10-04): all pass. The first run found sidew
 - [ ] **v1.1.0:** the template's "Replace your program…?" `confirm()`, and the seed walkthrough one-handed (stack quick picks, Next, Finish later and resuming from Today).
 - [ ] **v1.2.0 slice 0:** the larger weight and reps fields in a session are easy to read and tap one-handed, and the program and exercise-list summary lines (e.g. "Accessory · 3 × 10–12 per side · Dumbbell") read well where they wrap.
 - [ ] **v1.2.0 slice 1:** the real "Delete Upper A on …?" `confirm()` when deleting a finished session, and editing a set in History one-handed (the Edit button, the set form, Done).
+- [ ] **v1.2.0 slice 2:** "+ Add set" and an extra set one-handed mid-workout (the extra form has no effort buttons), and the "Extra: …" line in History.
 - [x] An update (push a change) appears after reopening the app. (Close it fully, open, close, and open again; the update downloads on one open and applies on the next.)
 
 ## Preview techniques

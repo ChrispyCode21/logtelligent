@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is being built** (§9.2, decided 2026-10-04; slice 0 added 2026-10-05): slices 0 and 1 are built.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is being built** (§9.2, decided 2026-10-04; slice 0 added 2026-10-05): slices 0, 1 and 2 are built.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -437,7 +437,7 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
 - **Outcome messages (Decided 2026-10-05):** a finished session shows each exercise's validation message whenever it has sets, not only when all its target sets are in, since the replay judged it however many there were.
 - **Set counts in a past session (Decided 2026-10-05):** an exercise's header shows the sets logged ("3 sets"), not "3 of 4 sets". The prescribed count isn't stored per session, and today's program may differ from what was prescribed then. A live session keeps "n of m".
 
-**Slice 2: Add a set on the fly (Decided).**
+**Slice 2: Add a set on the fly (Decided; built).**
 - Once the configured (or deload) number of sets is logged, an exercise offers **+ Add set**, for originals and substitutes alike.
 - **Extra sets are recorded, not counted:** shown in the session and History, tagged "extra", but excluded from validation (the floor rule and "range filled", §6.5–6.6) and from e1RM. The configured sets are the only ones that steer suggestions, so "sets are never added by progression" (§6.2) still holds.
 - Storage change: extra sets are marked as such, since the configured count can change later. Needs the ARCHITECTURE.md checklist.
