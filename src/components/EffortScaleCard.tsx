@@ -12,7 +12,8 @@ export function EffortScaleCard({ value }: { value: EffortScale }) {
     <Card>
       <h2>Effort scale</h2>
       <p className="muted">
-        How you rate each set. It estimates your 1-rep maxes, which set your suggested weights.
+        How you rate a primary lift's first set. It estimates your 1-rep maxes, which set your suggested
+        weights.
       </p>
       <div className="segmented three" role="group" aria-label="Effort scale">
         {EFFORT_SCALE_IDS.map((scale) => (
