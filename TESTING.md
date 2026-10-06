@@ -28,12 +28,23 @@ Results for **v1.0.0** (iPhone, 2026-10-04): all pass. The first run found sidew
 - [x] Offline: turn on Airplane Mode, open the app from the home screen, log a set, finish a session.
 - [x] Real `confirm()` dialogs: Finish anyway?, Switch day?, Skip today?, Discard?, Restore backup?
 - [x] Export data saves a `.json` file (Files app), and Restore from file… reads it back.
-- [ ] **v1.1.0:** each effort scale is easy to tap one-handed during a set, including the stacked Perceived effort buttons; the upgrade keeps an existing program on RPE.
-- [ ] **v1.1.0:** the template's "Replace your program…?" `confirm()`, and the seed walkthrough one-handed (stack quick picks, Next, Finish later and resuming from Today).
-- [ ] **v1.2.0 slice 0:** the larger weight and reps fields in a session are easy to read and tap one-handed, and the program and exercise-list summary lines (e.g. "Accessory · 3 × 10–12 per side · Dumbbell") read well where they wrap.
-- [ ] **v1.2.0 slice 1:** the real "Delete Upper A on …?" `confirm()` when deleting a finished session, and editing a set in History one-handed (the Edit button, the set form, Done).
-- [ ] **v1.2.0 slice 2:** "+ Add set" and an extra set one-handed mid-workout (the extra form has no effort buttons), and the "Extra: …" line in History.
-- [ ] **v1.2.0 slice 3:** typing a note one-handed (the on-screen keyboard over the note field, then Finish), the real "Finish anyway? (No note for next time.)" `confirm()`, and "Last time: …" on Today the next time that day comes up. Type a note, tap History with the keyboard still up, come back: the note is kept.
+Results for **v1.1.0 and v1.2.0** (iPhone, 2026-10-06, on v1.2.0): the items below pass, except two parts not yet checked. The pass found two bugs and three ideas, handled in v1.2.1 (SPEC §9.3) or parked (SPEC §11):
+
+- **Bug:** the effort question showed on every set and on accessories. It's now asked only on a primary's first set.
+- **Bug:** logged-set rows had their text at the top.
+- **Idea:** the Effort scale card changed height; it's now fixed.
+- **Idea:** a way to change programs mid-cycle (parked).
+- **Idea:** the walkthrough's Next moving with the card (parked).
+
+- [x] **v1.1.0:** each effort scale is easy to tap one-handed during a set, including the stacked Perceived effort buttons.
+- [ ] **v1.1.0:** the upgrade keeps an existing program on RPE. *(Not yet checked.)*
+- [x] **v1.1.0:** the template's "Replace your program…?" `confirm()`, and the seed walkthrough one-handed (stack quick picks, Next, Finish later and resuming from Today).
+- [x] **v1.2.0 slice 0:** the larger weight and reps fields in a session are easy to read and tap one-handed, and the program and exercise-list summary lines (e.g. "Accessory · 3 × 10–12 per side · Dumbbell") read well where they wrap.
+- [x] **v1.2.0 slice 1:** the real "Delete Upper A on …?" `confirm()` when deleting a finished session, and editing a set in History one-handed (the Edit button, the set form, Done).
+- [x] **v1.2.0 slice 2:** "+ Add set" and an extra set one-handed mid-workout (the extra form has no effort buttons), and the "Extra: …" line in History.
+- [x] **v1.2.0 slice 3:** typing a note one-handed (the on-screen keyboard over the note field, then Finish), and "Last time: …" on Today the next time that day comes up.
+- [ ] **v1.2.0 slice 3:** the real "Finish anyway? (No note for next time.)" `confirm()`, and keeping a note when tapping History with the keyboard still up. *(Not yet checked.)*
+- [ ] **v1.2.1:** effort is asked only on a primary's first set (not on later sets, accessories or substitutes); logged-set rows have their text centred; the Effort scale card keeps its height when switching scales.
 - [x] An update (push a change) appears after reopening the app. (Close it fully, open, close, and open again; the update downloads on one open and applies on the next.)
 
 ## Preview techniques
