@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is being built** (§9.2, decided 2026-10-04; slice 0 added 2026-10-05): slices 0, 1 and 2 are built.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 is being built** (§9.2, decided 2026-10-04; slice 0 added 2026-10-05): slices 0–3 are built; the release PR is next.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -455,7 +455,7 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
 - **Only extras left (Decided 2026-10-05):** if every prescribed set of an exercise is deleted but its extras are kept, the session can still finish, and progression treats that exercise as "not done", as with a skip (§5.2): no fail, no stack.
 - **Extras and replacing (Decided 2026-10-05):** extras logged before an exercise is replaced are kept, like its prescribed sets, and shown tagged: "Logged before replacing: 225 × 5 @ 8 · 225 × 4 · Extra: 185 × 8".
 
-**Slice 3: Session notes (Decided).**
+**Slice 3: Session notes (Decided; built).**
 - An optional **note for next time** above Finish on every session; the "Finish anyway?" confirm mentions it. Plain text, up to 200 characters.
 - **Shown** on the Today screen the next time that training day comes up ("Last time: …"), and on History rows for that session.
 - Editable with the session (slice 1). Storage change: a note on the session. Needs the ARCHITECTURE.md checklist.
