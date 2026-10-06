@@ -37,6 +37,7 @@ public/
   logo.svg        Source for all generated icons (pwa-assets.config.ts)
 scripts/
   check-spec-coverage.mjs   CI: every SPEC §7 example ID has a test named with it
+  check-conventions.mjs     CI: primitives over raw elements, tokens over raw CSS values, shared formatters
   changelog-section.mjs     CI/release: extracts a version's CHANGELOG section
 ```
 
@@ -118,6 +119,39 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 - **Releases** (`release.yml`), semantic versioning:
   1. In a PR, bump `version` in `package.json` and move `CHANGELOG.md`'s "Unreleased" notes under the new version.
   2. When it merges, the workflow sees a version with no release yet, creates the `vX.Y.Z` tag and publishes a GitHub Release with that CHANGELOG section.
+
+## Cleanup backlog
+
+Smaller findings from the v1.2.0 `architecture-reviewer` passes, deferred because they didn't belong in a feature PR. None is a bug. Fold them into whichever slice next touches the file, or batch a few into a small no-visual-change PR (verify with a style snapshot, TESTING.md).
+
+- **`ExerciseLogger`:**
+  - Extract the ⋯ menu and replace form into an `ExerciseMenu` component (about 90 of its lines).
+  - Move the substitute's weight step (5 lb, never below 0) into `session/sets.ts` with a test.
+  - Compute `canAdd`/`canAddExtra` once.
+- **`HistoryView`:**
+  - Move a row into a `HistoryRow` component, and drop the dead `history-row` class.
+  - Build the chart series in `history/timeline.ts` (`e1rmSeries`) rather than inline.
+- **`E1rmChart`:**
+  - The aria-label formats by hand; use `formatE1rm`.
+  - The middle gridline can land on x.5.
+- **`SuggestionCard`:** the `heading` prop always equals `config.name`.
+- **`App.tsx`:** the three tab buttons are written out; map over a list.
+- **`ProgramView`:**
+  - The move/remove button group is repeated for days and exercises (a local `RowActions`).
+  - `saveExercise` scans the program to tell add from edit, though callers know which it is.
+- **`program/`:**
+  - `SeedWalkthrough` reimplements `activeExercises`.
+  - `EffortOption` and `RPE_SCALE` are exported but used only in `effort.ts`.
+  - The new-exercise target RPE (8) is written in both `bank.ts` and `exerciseForm.ts`.
+- **`history/sessions.ts`:**
+  - The "has anything logged" check is written twice.
+  - `exerciseHasHistory` and `dayHasHistory` have no tests.
+  - `exerciseHistory`'s two branches could build one object.
+- **`storage/sessions.ts`:** `saveNote` could use `db.sessions.update`.
+- **`App.css`:**
+  - `minmax(0, 1fr)` columns are set in two ways (in each rule, and in a list at the end).
+  - Two raw `10px` values sit between spacing tokens.
+  - The textarea's padding is set twice.
 
 ## Proposed: UI component layer and design tokens
 

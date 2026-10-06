@@ -38,7 +38,7 @@ Results for **v1.0.0** (iPhone, 2026-10-04): all pass. The first run found sidew
 
 ## Preview techniques
 
-Patterns that worked while building v1.1.0. All run in the page via `javascript_tool`.
+Patterns that worked while building v1.1.0 and v1.2.0. All run in the page via `javascript_tool`.
 
 - **Writing to IndexedDB directly bypasses Dexie.** The app's live query only hears about writes made through Dexie, so after a raw `indexedDB` write (clearing a store, restoring data), **reload the page** before reading the UI. IndexedDB reports Dexie's schema version × 10 (Dexie v3 shows as 30).
 - **Back up the preview's data before destructive flows** (replacing the program with a template, deleting or editing sessions): read every object store into `localStorage`, run the test, then clear the stores, put the rows back, reload, and compare the JSON with the backup to confirm an exact restore.
@@ -46,10 +46,18 @@ Patterns that worked while building v1.1.0. All run in the page via `javascript_
 - **Proving "no visual change" refactors:** script a fixed set of screens (Today, a session, the ⋯ menu, a logged set, History, Program, the exercise form…) and, on each, record the position, size and key computed styles (color, background, border, radius, padding, margin, gap, font size and weight, min sizes) of every element that has its own text, is a control, or draws a box. Save it to `localStorage`, make the change, record again and diff. Run it in light and dark, at the **same viewport width** (set a custom size: the pane's own width can change between turns). Expect harmless diffs when JSX splits text differently (`{value} lb` vs `${value} lb`).
 - **Light and dark:** the pane can follow the desktop app's theme, so set `colorScheme` explicitly with `resize_window` rather than assuming light.
 
+- **Typing into React inputs and textareas:** set the value with the native setter (`Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set`, or `HTMLTextAreaElement` for a textarea), then dispatch an `input` event. Assigning `.value` alone doesn't reach React's state.
+- **A programmatic `.click()` doesn't move focus**, so it reproduces iOS keeping the keyboard (and the focused field) up while another button is tapped. Useful for checking that something saves without a blur.
+- **The app going to the background:** `Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })`, dispatch `visibilitychange` on `document`, then `delete document.visibilityState`.
+- **A clean fixture per check:** the preview's database is usually left empty between slices. Assert it's empty before writing a fixture, and clear both stores afterwards (and reload).
+- **Proving a no-visual-change refactor against `main`:** take the snapshot (above) on the branch, `git switch main` (with a clean tree), reload, snapshot again, switch back, and diff. Remove the snapshot keys from `localStorage` when done.
+
 ## Other caveats
 
 - **Screenshots time out** when the desktop app window is behind another window; the pane stops drawing. Use DOM reads instead, or bring the window forward.
 - **`confirm()` dialogs block automation.** Tests stub `window.confirm` in the page (recording the messages) to get past "Finish anyway?", "Switch day?" and "Discard?" prompts. The real dialogs still need a manual check on a device.
 - **Vite hot reload can get stuck** on a half-written file (seen when files were written by shell heredocs), leaving a stale broken module. Restart the dev server (`preview_stop` / `preview_start`).
 - **Test fixtures written straight to IndexedDB** (a failed session in slice 2, a Squat on Lower A in slice 3) skip the UI. Note which steps used them when reporting results.
+- **The console keeps errors from before a reload or a dev-server restart.** An error that names a module with an old `?t=` timestamp, or one fixed since, is stale. Check the current module with `fetch('/src/…')` before chasing it.
+- **Worktrees inside the repo:** a background task the desktop app starts gets a git worktree under `.claude/worktrees/` (git-ignored). `npm test` runs only `src/`, so its copy isn't picked up. Git refuses to read such a folder ("dubious ownership") on Windows; pass `-c safe.directory=<path>` to a single command rather than changing global config. After its PR merges, `git worktree remove` it; an empty folder left behind is held by that session until it's archived.
 - **The preview's IndexedDB keeps old data** across slices: slice 1–2 bench sessions (no day, old exercise id) are still there and are ignored by the program.
