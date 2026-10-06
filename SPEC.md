@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2. **v1.2.1 — released** (2026-10-06): the fixes in §9.3.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -465,7 +465,7 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
 
 **Not in v1.2.0:** the rest of §11, and the primary-lift deload "resume" rule, which waits for real deload data (§10).
 
-## 9.3 v1.2.1: fixes from the on-device pass (Decided 2026-10-06; built)
+## 9.3 v1.2.1: fixes from the on-device pass (Decided 2026-10-06; released in v1.2.1)
 
 From the owner's v1.2.0 on-device checks (TESTING.md). A patch release; no stored-data change.
 

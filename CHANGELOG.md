@@ -6,6 +6,10 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-10-06
+
+Fixes from the first on-device pass of v1.2.0.
+
 ### Changed
 
 - **Effort is asked only where it's used:** "How hard was it?" (or your scale's question) now appears only on a primary lift's first set, where it sets your estimated 1RM. Later sets, accessories and substitutes no longer ask. Efforts you already logged are kept.
