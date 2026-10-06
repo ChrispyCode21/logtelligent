@@ -66,6 +66,17 @@ export async function dismissWarmup(sessionId: number) {
   await db.sessions.update(sessionId, { warmupDismissed: true })
 }
 
+/** Save the note for next time, or clear it (SPEC §9.2, slice 3). */
+export async function saveNote(sessionId: number, note: string | undefined) {
+  await db.sessions
+    .where('id')
+    .equals(sessionId)
+    .modify((session) => {
+      if (note === undefined) delete session.note
+      else session.note = note
+    })
+}
+
 export async function finishSession(sessionId: number) {
   await db.sessions.update(sessionId, { finishedAt: new Date().toISOString() })
 }

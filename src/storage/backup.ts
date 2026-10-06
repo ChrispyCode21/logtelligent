@@ -130,6 +130,8 @@ function session(v: unknown, path: string): Session {
       exerciseLog(e, `${path}.exercises[${i}]`),
     ),
     warmupDismissed: optional(s.warmupDismissed, (b) => bool(b, `${path}.warmupDismissed`)),
+    // Session notes (SPEC §9.2, slice 3): 1–200 characters. Backups from before them have none.
+    note: optional(s.note, (n) => text(n, `${path}.note`)),
   })
 }
 

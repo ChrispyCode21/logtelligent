@@ -6,6 +6,8 @@ export interface LoggedExerciseSession extends ExerciseSession {
   /** The stored session's id, so History can act on it (SPEC §9.2, slices 1 and 3). */
   sessionId: number
   substitute?: Substitute
+  /** The session's note for next time, shown on each of its History rows (SPEC §9.2, slice 3). */
+  note?: string
 }
 
 /**
@@ -31,8 +33,15 @@ export function exerciseHistory(
         .filter((e) => e.sets.length > 0 || (e.substitute?.sets.length ?? 0) > 0)
         .map((e) =>
           e.substitute
-            ? { sessionId: s.id, date: s.startedAt, sets: e.sets, replaced: true, substitute: e.substitute }
-            : { sessionId: s.id, date: s.startedAt, sets: e.sets },
+            ? {
+                sessionId: s.id,
+                date: s.startedAt,
+                sets: e.sets,
+                replaced: true,
+                substitute: e.substitute,
+                note: s.note,
+              }
+            : { sessionId: s.id, date: s.startedAt, sets: e.sets, note: s.note },
         ),
     )
 }
@@ -53,6 +62,16 @@ export function lastLoggedDayId(sessions: Session[]): string | undefined {
     .filter((s) => s.finishedAt && s.dayId)
     .toSorted((a, b) => Date.parse(a.startedAt) - Date.parse(b.startedAt))
     .at(-1)?.dayId
+}
+
+/**
+ * "Last time: …" for a training day (SPEC §9.2, slice 3): the note of that day's most recent
+ * finished session, if it has one. Older sessions aren't searched.
+ */
+export function lastNoteFor(sessions: Session[], dayId: string): string | undefined {
+  const finished = sessions.filter((s) => s.finishedAt && s.dayId === dayId)
+  const last = finished.reduce<Session | undefined>((a, s) => (!a || cameBefore(a, s) ? s : a), undefined)
+  return last?.note
 }
 
 export function exerciseHasHistory(sessions: Session[], exerciseId: string): boolean {

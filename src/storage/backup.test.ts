@@ -75,6 +75,20 @@ describe('JSON backup (SPEC §2)', () => {
     expect(parsed.filter((s) => !s.extra)).toEqual(sessions[0].exercises[0].sets)
   })
 
+  it('round-trips a session note (SPEC §9.2, slice 3)', () => {
+    const noted: Session = { ...sessions[0], note: 'Shoulder felt tight; go lighter.' }
+    const backup = buildBackup(program, [noted], new Date('2026-10-04T12:00:00Z'))
+    expect(parseBackup(JSON.stringify(backup))).toEqual(backup)
+  })
+
+  it('rejects a note that is empty or over 200 characters', () => {
+    for (const note of ['', 'x'.repeat(201)]) {
+      const json = JSON.parse(JSON.stringify(buildBackup(program, sessions, new Date())))
+      json.sessions[0].note = note
+      expect(() => parseBackup(JSON.stringify(json))).toThrow('sessions[0].note')
+    }
+  })
+
   it('round-trips a full program and a session using the exercise menu', () => {
     const full = {
       id: 'main' as const,

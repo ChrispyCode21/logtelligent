@@ -26,4 +26,6 @@ export interface Session {
   exercises: ExerciseLog[]
   /** The warm-up banner was dismissed for this session (SPEC §5.2). */
   warmupDismissed?: boolean
+  /** A note for next time: plain text, trimmed, 1–200 characters (SPEC §9.2, slice 3). */
+  note?: string
 }
