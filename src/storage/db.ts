@@ -37,3 +37,8 @@ db.version(4).stores({
   sessions: '++id, startedAt',
   programs: 'id',
 })
+// v5: sessions may carry a `note` for next time (SPEC §9.2, slice 3). No index change, no upgrade.
+db.version(5).stores({
+  sessions: '++id, startedAt',
+  programs: 'id',
+})

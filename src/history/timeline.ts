@@ -9,6 +9,8 @@ export interface TimelineEntry {
   isDeload: boolean
   /** Set when the exercise was replaced that session; no e1RM then (SPEC §5.2). */
   substitute?: Substitute
+  /** The session's note for next time (SPEC §9.2, slice 3). */
+  note?: string
   /** That session's e1RM (SPEC §5.3): primary lifts only, none for deloads or replaced sessions. */
   e1rm?: number
 }
@@ -22,6 +24,7 @@ export function exerciseTimeline(config: ExerciseConfig, history: LoggedExercise
       sets: s.sets,
       isDeload: !!s.isDeload,
       substitute: s.substitute,
+      note: s.note,
       e1rm: config.tier === 'primary' && !s.isDeload && !s.replaced ? sessionE1rm(s) : undefined,
     }))
     .reverse()

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Session } from '../session/types'
-import { exerciseHistory, lastLoggedDayId } from './sessions'
+import { exerciseHistory, lastLoggedDayId, lastNoteFor } from './sessions'
 
 describe('exerciseHistory', () => {
   it('includes finished sessions only, mapped to the engine shape', () => {
@@ -101,5 +101,33 @@ describe('exerciseHistory with the exercise menu (SPEC §5.2)', () => {
     expect(exerciseHistory([finished([{ exerciseId: 'bench', sets: [], skipped: true }])], 'bench')).toEqual(
       [],
     )
+  })
+})
+
+describe('"Last time: …" (SPEC §9.2, slice 3)', () => {
+  const session = (id: number, dayId: string, day: number, note?: string, finished = true): Session => {
+    const startedAt = `2026-09-${String(day).padStart(2, '0')}T10:00:00Z`
+    return { id, dayId, startedAt, finishedAt: finished ? startedAt : undefined, exercises: [], note }
+  }
+
+  it("is the note of that day's most recent finished session", () => {
+    const sessions = [
+      session(1, 'upper-a', 1, 'old note'),
+      session(2, 'lower-a', 4, 'legs note'),
+      session(3, 'upper-a', 8, 'shoulder tight'),
+      session(4, 'upper-a', 15, 'in progress', false),
+    ]
+    expect(lastNoteFor(sessions, 'upper-a')).toBe('shoulder tight')
+    expect(lastNoteFor(sessions, 'lower-a')).toBe('legs note')
+  })
+
+  it('is nothing when that session has no note, without looking further back', () => {
+    expect(
+      lastNoteFor([session(1, 'upper-a', 1, 'old note'), session(2, 'upper-a', 8)], 'upper-a'),
+    ).toBeUndefined()
+  })
+
+  it('is nothing for a day never finished', () => {
+    expect(lastNoteFor([session(1, 'upper-a', 1, 'note')], 'lower-a')).toBeUndefined()
   })
 })

@@ -1,14 +1,18 @@
+import { useEffect, useRef, useState } from 'react'
 import { availableLoads } from '../engine'
+import { lastNoteFor } from '../history/sessions'
 import { findExercise } from '../program/program'
 import type { Program } from '../program/types'
 import { sessionExercises } from '../session/context'
+import { finishConfirmMessage, normalizeNote } from '../session/notes'
 import { canFinish, hasAnySets, setTally, targetSets } from '../session/sets'
 import { warmupText } from '../session/warmup'
 import type { ExerciseLog, Session } from '../session/types'
-import { discardSession, dismissWarmup, finishSession } from '../storage/sessions'
+import { discardSession, dismissWarmup, finishSession, saveNote } from '../storage/sessions'
 import { Button } from '../ui/Button'
 import { formatDate } from '../ui/format'
 import { ExerciseLogger } from './ExerciseLogger'
+import { NoteField } from './NoteField'
 
 interface Props {
   session: Session
@@ -38,9 +42,39 @@ export function SessionView({ session, program, sessions, asOf, onClose }: Props
       ? warmupText(first.config.name, first.suggestion.weight, availableLoads(first.config))
       : undefined
 
+  // The note for next time is edited here and saved on leaving the field, Finish and Done (SPEC §9.2, slice 3).
+  const [noteDraft, setNoteDraft] = useState(session.note ?? '')
+  const saveDraft = () => saveNote(session.id, normalizeNote(noteDraft))
+
+  // Leaving the screen is leaving the field too: switching tabs, or the app going to the background,
+  // can skip the blur (iOS keeps the keyboard up), so the draft also saves then (SPEC §9.2, slice 3).
+  const latest = useRef({ draft: noteDraft, stored: session.note })
+  useEffect(() => {
+    latest.current = { draft: noteDraft, stored: session.note }
+  }, [noteDraft, session.note])
+  useEffect(() => {
+    const flush = () => {
+      const note = normalizeNote(latest.current.draft)
+      // A deleted session matches nothing, so flushing after Discard or Delete is harmless.
+      if (note !== latest.current.stored) void saveNote(session.id, note)
+    }
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flush()
+    }
+    document.addEventListener('visibilitychange', onHide)
+    return () => {
+      document.removeEventListener('visibilitychange', onHide)
+      flush()
+    }
+  }, [session.id])
+  // "Last time: …" from this day's previous session, shown while logging (SPEC §9.2, slice 3).
+  const lastTime = !finished && session.dayId ? lastNoteFor(sessions, session.dayId) : undefined
+
   async function finish() {
     // Short sessions are treated as normal once confirmed (SPEC §5.2).
-    if (logged < target && !confirm(`Only ${logged} of ${target} sets logged. Finish anyway?`)) return
+    const message = finishConfirmMessage(logged, target, normalizeNote(noteDraft) !== undefined)
+    if (message && !confirm(message)) return
+    await saveDraft()
     await finishSession(session.id)
   }
 
@@ -76,6 +110,7 @@ export function SessionView({ session, program, sessions, asOf, onClose }: Props
   return (
     <>
       <h2 className="page-title">{finished ? `${dayName} · ${formatDate(session.startedAt)}` : dayName}</h2>
+      {lastTime && <p className="note last-time">Last time: {lastTime}</p>}
       {warmup && !session.warmupDismissed && (
         <div className="note warmup" role="note">
           <p>{warmup}</p>
@@ -97,10 +132,11 @@ export function SessionView({ session, program, sessions, asOf, onClose }: Props
           onLogSaved={(saved) => void afterSave(saved)}
         />
       ))}
+      <NoteField value={noteDraft} onChange={setNoteDraft} onBlur={() => void saveDraft()} />
       <div className="actions">
         {finished ? (
           <>
-            <Button variant="primary" onClick={onClose}>
+            <Button variant="primary" onClick={() => void saveDraft().then(onClose)}>
               Done
             </Button>
             <Button variant="danger" onClick={() => void deleteFinished()}>
