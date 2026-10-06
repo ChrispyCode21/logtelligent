@@ -599,6 +599,8 @@ textarea {
    longest one and switching scales doesn't move the rest of the tab (SPEC §9.3). */
 .scale-descriptions {
   display: grid;
+  /* The spacing a lone paragraph had before. */
+  margin: var(--space-1) 0;
 }
 
 .scale-descriptions > p {

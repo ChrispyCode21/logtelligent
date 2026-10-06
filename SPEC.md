@@ -465,7 +465,7 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
 
 **Not in v1.2.0:** the rest of §11, and the primary-lift deload "resume" rule, which waits for real deload data (§10).
 
-## 9.3 v1.2.1: fixes from the on-device pass (Decided 2026-10-06)
+## 9.3 v1.2.1: fixes from the on-device pass (Decided 2026-10-06; built)
 
 From the owner's v1.2.0 on-device checks (TESTING.md). A patch release; no stored-data change.
 

@@ -6,6 +6,15 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ## [Unreleased]
 
+### Changed
+
+- **Effort is asked only where it's used:** "How hard was it?" (or your scale's question) now appears only on a primary lift's first set, where it sets your estimated 1RM. Later sets, accessories and substitutes no longer ask. Efforts you already logged are kept.
+
+### Fixed
+
+- **Logged sets:** the "Set 1 · 225 × 5" rows have their text centred.
+- **Effort scale card:** it keeps the same height when you switch scales, so the Program tab no longer shifts.
+
 ## [1.2.0] - 2026-10-06
 
 Logging fidelity: fix past sessions, log extra sets, and leave yourself a note for next time.
