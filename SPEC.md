@@ -459,6 +459,10 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
 - An optional **note for next time** above Finish on every session; the "Finish anyway?" confirm mentions it. Plain text, up to 200 characters.
 - **Shown** on the Today screen the next time that training day comes up ("Last time: …"), and on History rows for that session.
 - Editable with the session (slice 1). Storage change: a note on the session. Needs the ARCHITECTURE.md checklist.
+- **The Finish confirm (Decided 2026-10-06):** when "Only X of Y sets logged. Finish anyway?" shows and there's no note, it adds "(No note for next time.)". With a note, or when no confirm shows, nothing changes.
+- **"Last time: …" (Decided 2026-10-06):** shown under the day's name on Today before starting, and at the top of the live session. It's the note from the last finished session of that same training day; if that one has none, nothing shows.
+- **History (Decided 2026-10-06):** the note shows on every exercise's row for that session.
+- **Smaller defaults (Decided 2026-10-06):** the note saves when the field is left and on Finish; whitespace-only counts as no note; a counter shows near the 200-character limit; discarding a session discards its note.
 
 **Not in v1.2.0:** the rest of §11, and the primary-lift deload "resume" rule, which waits for real deload data (§10).
 
