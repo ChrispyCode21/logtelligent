@@ -25,7 +25,7 @@ The progression engine is pure TypeScript in `src/engine/`. See [TESTING.md](TES
 
 Every PR (and every push to `main`) runs:
 
-- **CI / Checks** (`.github/workflows/ci.yml`): Prettier, oxlint (including "the engine imports nothing outside `src/engine`"), SPEC §7 test coverage, CHANGELOG entry for the current version, unit tests, type-check and production build.
+- **CI / Checks** (`.github/workflows/ci.yml`): Prettier, oxlint (including the purity rules: the engine imports nothing outside `src/engine`, and `program/`, `session/` and `history/` import no React, Dexie, storage or UI), UI conventions (`scripts/check-conventions.mjs`), SPEC §7 test coverage, CHANGELOG entry for the current version, unit tests, type-check and production build.
 - **Security** (`.github/workflows/security.yml`): CodeQL on the app code and on the workflows, plus dependency review that blocks PRs adding packages with known vulnerabilities.
 - **Dependabot** opens weekly update PRs for npm packages and the SHA-pinned GitHub Actions.
 

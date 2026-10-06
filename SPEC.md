@@ -338,11 +338,10 @@ Note: this log predates the app and has no RPE or explicit targets, so it's inpu
 The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]`), since the 4-week window, deload exclusion (A5) and substitute exclusion (A6) all need per-session data.
 
 
-- TypeScript types for: `Program`, `TrainingDay`, `ExerciseConfig` (including equipment type and progression profile), `Session`, `LoggedSet`, and per-exercise `ProgressionState` (fatigue stacks, last successful numbers, failed heavier numbers, deload status).
-- Progression engine entry point, roughly:
-  `suggestNext(config: ExerciseConfig, history: LoggedSet[][], state: ProgressionState) => Suggestion`
-- Validation entry point, roughly:
-  `validateExercise(config: ExerciseConfig, sets: LoggedSet[], state: ProgressionState) => { result: ValidationResult, nextState: ProgressionState }`
+- **Types** live in code: `engine/types.ts` (`ExerciseConfig`, `LoggedSet`, `ExerciseSession`, `ProgressionState`, `Suggestion`), `program/types.ts` (`Program`, `ProgramDay`, `ProgramExercise`) and `session/types.ts` (`Session`, `ExerciseLog`, `Substitute`).
+- **Suggestions:** `suggestNext(config, history, asOf) => Suggestion`.
+- **Validation:** `evaluateSession(config, history, sets) => SessionOutcome`.
+- **State is never passed in or stored:** both replay `history` with `deriveState(config, history)` (ARCHITECTURE.md, "Progression state is derived").
 
 ## 9. Build plan (Done — v1.0.0)
 
@@ -479,6 +478,16 @@ Ask the project owner before building anything each one affects:
 
 Flagged to revisit after real use (not blocking):
 - Primary-lift deload: resuming at the last successful numbers (§6.7).
+
+**Open: raised during v1.2.0, not blocking.** Each has a recommended default; settle it with the owner before building anything it affects.
+
+7. **Substitutes and the working weight:** the set editor applies the one-working-weight rule (§6.3) to a substitute's sets too, though §5.2 only says "weight × reps (RPE optional)". *Recommended:* keep it; extra sets (§9.2 slice 2) already allow a different weight.
+8. **Deleting while a session is open:** removing an exercise or day archives it, rather than deleting it, if any session has it, including an unfinished one. An exercise archived that way can show in History's picker with "No sessions logged yet." *Recommended:* count only finished sessions, unless the open session has sets for it.
+9. **Old sessions judged with today's settings:** the replay and the finished-session editor use the current rep range and set count, not what was prescribed then (§9.2 slice 1, "Set counts in a past session"). *Recommended:* schedule §11 "Store each session's prescription" in the next version.
+10. **Tap targets under 44 px:** the warm-up banner's ✕ (32 px) and the Program tab's move/remove buttons (40 px wide). *Recommended:* bring ✕ up to `--tap-target`; check the icon buttons at 320 px first.
+11. **More UI primitives (ARCHITECTURE.md, Proposed):** `SegmentedControl`, used by five toggle groups (tabs, effort scale, tier, stack presets, effort picker), and `Note`. *Recommended:* add `SegmentedControl`; leave `Note` until it needs variants.
+
+Waiting on the owner's phone: TESTING.md's unticked on-device checks for v1.1.0 and v1.2.0.
 
 ## 11. Post-MVP ideas (parked)
 
