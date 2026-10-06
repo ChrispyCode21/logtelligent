@@ -28,6 +28,17 @@ interface Props {
   onSave: (sets: LoggedSet[]) => Promise<void>
 }
 
+/** What the form is doing. */
+type Mode =
+  | { kind: 'new' }
+  | { kind: 'edit'; index: number }
+  // Logging an extra set (SPEC §9.2, slice 2).
+  | { kind: 'extra' }
+  // Deleting set 1 when set 2 has no effort: the form shows set 2, which needs one (SPEC §9.2, slice 1).
+  | { kind: 'replaceFirst' }
+
+const NEW: Mode = { kind: 'new' }
+
 /**
  * Logged sets (tap to edit or delete) and the form for the next set. One working weight across the
  * prescribed sets; extra sets come after them with their own weight and no effort.
@@ -47,19 +58,17 @@ export function SetEditor({
   onSave,
 }: Props) {
   const [form, setForm] = useState<SetForm>(() => prefill(sets, first))
-  const [editingIndex, setEditing] = useState<number | null>(null)
-  // A save re-renders with the new sets before this resets, so a deleted last set can leave the
+  const [modeState, setMode] = useState<Mode>(NEW)
+  // A save re-renders with the new sets before the mode resets, so a deleted last set can leave the
   // index past the end for one render.
-  const editing = editingIndex !== null && editingIndex < sets.length ? editingIndex : null
-  const [addingExtra, setAddingExtra] = useState(false)
-  // Deleting set 1 when set 2 has no effort: the form shows set 2, which needs one (SPEC §9.2, slice 1).
-  const [replacingFirst, setReplacingFirst] = useState(false)
+  const mode: Mode = modeState.kind === 'edit' && modeState.index >= sets.length ? NEW : modeState
 
   const countedCount = countedSets(sets).length
-  const extraMode = addingExtra || (editing !== null && !!sets[editing].extra)
-  const formIndex = replacingFirst ? 0 : (editing ?? countedCount)
+  const editing = mode.kind === 'edit' ? mode.index : null
+  const extraMode = mode.kind === 'extra' || (editing !== null && !!sets[editing].extra)
+  const formIndex = mode.kind === 'replaceFirst' ? 0 : (editing ?? countedCount)
   // Logged sets stay editable after the last one is entered.
-  const showForm = editing !== null || addingExtra || canAdd
+  const showForm = mode.kind !== 'new' || canAdd
   const required = !extraMode && rpeRequiredAt(formIndex)
   const parsed = parseSetForm(form, { allowZeroWeight, rpeRequired: required })
   const weight = Number(form.weight)
@@ -76,24 +85,28 @@ export function SetEditor({
   const stepReps = (delta: number) =>
     setForm({ ...form, reps: String(Math.max(0, (Number.isInteger(reps) ? reps : 0) + delta)) })
 
-  function reset() {
-    setEditing(null)
-    setAddingExtra(false)
-    setReplacingFirst(false)
-  }
-
   async function save(nextSets: LoggedSet[]) {
     await onSave(nextSets)
-    reset()
+    setMode(NEW)
     setForm(prefill(nextSets, first))
   }
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!parsed) return
-    if (replacingFirst) void save(removeFirstSet(sets, parsed))
-    else if (addingExtra) void save(addExtra(sets, parsed))
-    else void save(editing === null ? addSet(sets, parsed) : updateSet(sets, editing, parsed))
+    if (parsed) void save(withSubmitted(parsed))
+  }
+
+  function withSubmitted(set: LoggedSet): LoggedSet[] {
+    switch (mode.kind) {
+      case 'new':
+        return addSet(sets, set)
+      case 'edit':
+        return updateSet(sets, mode.index, set)
+      case 'extra':
+        return addExtra(sets, set)
+      case 'replaceFirst':
+        return removeFirstSet(sets, set)
+    }
   }
 
   function deleteSet(index: number) {
@@ -101,34 +114,38 @@ export function SetEditor({
       void save(removeSet(sets, index))
       return
     }
-    setReplacingFirst(true)
+    setMode({ kind: 'replaceFirst' })
     setForm(formFromSet(sets[1]))
   }
 
   function startEdit(index: number) {
-    reset()
-    setEditing(index)
+    setMode({ kind: 'edit', index })
     setForm(formFromSet(sets[index]))
   }
 
   function startExtra() {
-    reset()
-    setAddingExtra(true)
+    setMode({ kind: 'extra' })
     setForm(prefillExtra(sets))
   }
 
   function cancel() {
-    reset()
+    setMode(NEW)
     setForm(prefill(sets, first))
   }
 
-  const heading = replacingFirst
-    ? 'Set 2 becomes set 1: add its effort'
-    : addingExtra
-      ? 'Extra set'
-      : editing === null
-        ? `Set ${formIndex + 1}`
-        : `Editing ${setLabel(editing).toLowerCase()}`
+  function formText(): { heading: string; submitLabel: string } {
+    switch (mode.kind) {
+      case 'new':
+        return { heading: `Set ${countedCount + 1}`, submitLabel: 'Log set' }
+      case 'edit':
+        return { heading: `Editing ${setLabel(mode.index).toLowerCase()}`, submitLabel: 'Save set' }
+      case 'extra':
+        return { heading: 'Extra set', submitLabel: 'Log extra set' }
+      case 'replaceFirst':
+        return { heading: 'Set 2 becomes set 1: add its effort', submitLabel: 'Delete set 1' }
+    }
+  }
+  const { heading, submitLabel } = formText()
 
   return (
     <>
@@ -138,7 +155,7 @@ export function SetEditor({
             <li key={i}>
               <Button
                 className="set-row"
-                aria-current={replacingFirst ? i === 1 : editing === i}
+                aria-current={mode.kind === 'replaceFirst' ? i === 1 : editing === i}
                 onClick={() => startEdit(i)}
               >
                 <span>{setLabel(i)}</span>
@@ -206,16 +223,10 @@ export function SetEditor({
 
           <div className="actions">
             <Button type="submit" variant="primary" disabled={!parsed}>
-              {replacingFirst
-                ? 'Delete set 1'
-                : addingExtra
-                  ? 'Log extra set'
-                  : editing === null
-                    ? 'Log set'
-                    : 'Save set'}
+              {submitLabel}
             </Button>
-            {(editing !== null || addingExtra) && <Button onClick={cancel}>Cancel</Button>}
-            {editing !== null && !replacingFirst && (
+            {mode.kind !== 'new' && <Button onClick={cancel}>Cancel</Button>}
+            {editing !== null && (
               <Button variant="danger" onClick={() => deleteSet(editing)}>
                 Delete set
               </Button>
@@ -230,7 +241,7 @@ export function SetEditor({
         </div>
       )}
 
-      {editing === null && !addingExtra && footer}
+      {mode.kind === 'new' && footer}
     </>
   )
 }
