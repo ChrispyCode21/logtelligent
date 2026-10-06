@@ -13,12 +13,13 @@ export function formFromSet(set: LoggedSet): SetForm {
 }
 
 /**
- * The next prescribed set pre-fills from the previous one (SPEC §5.2), not from an extra; set 1
- * from `first`, usually the suggestion.
+ * The next prescribed set pre-fills its weight and reps from the previous one (SPEC §5.2), not from
+ * an extra; set 1 from `first`, usually the suggestion. Effort isn't carried over: only a primary's
+ * first set asks for it (SPEC §6.3, §9.3).
  */
 export function prefill(sets: LoggedSet[], first?: { weight: number; reps: number }): SetForm {
   const last = countedSets(sets).at(-1)
-  if (last) return formFromSet(last)
+  if (last) return { weight: String(last.weight), reps: String(last.reps) }
   if (first) return { weight: String(first.weight), reps: String(first.reps) }
   return { weight: '', reps: '' }
 }

@@ -25,7 +25,13 @@ export function EffortScaleCard({ value }: { value: EffortScale }) {
           </Button>
         ))}
       </div>
-      <p className="muted">{EFFORT_SCALES[value].description}</p>
+      <div className="scale-descriptions">
+        {EFFORT_SCALE_IDS.map((scale) => (
+          <p key={scale} className="muted" aria-hidden={scale !== value}>
+            {EFFORT_SCALES[scale].description}
+          </p>
+        ))}
+      </div>
     </Card>
   )
 }

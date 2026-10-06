@@ -6,25 +6,22 @@ interface Props {
   scale: EffortScale
   /** Stored as RPE whatever the scale (SPEC §9.1, slice 1). */
   value: number | undefined
-  required: boolean
-  onChange: (rpe: number | undefined) => void
+  onChange: (rpe: number) => void
 }
 
-/** Effort for a set, asked in the program's effort scale. */
-export function EffortPicker({ scale, value, required, onChange }: Props) {
+/**
+ * Effort for a primary lift's first set, asked in the program's effort scale. It's only asked
+ * where it's required, so a picked value can be changed but not cleared (SPEC §6.3, §9.3).
+ */
+export function EffortPicker({ scale, value, onChange }: Props) {
   const { question, options } = EFFORT_SCALES[scale]
   // A stored value between this scale's buttons shows as the nearest one (e.g. 8.5 in Reps left).
   const selected = value === undefined ? undefined : nearestOption(scale, value).rpe
   return (
-    <Field as="fieldset" label={`${question} ${required ? '(required on set 1)' : '(optional)'}`}>
+    <Field as="fieldset" label={`${question} (required)`}>
       <div className={`effort-buttons ${scale}`}>
         {options.map(({ rpe, label }) => (
-          <Button
-            key={rpe}
-            aria-pressed={selected === rpe}
-            // Tapping the selected value clears it, unless effort is required.
-            onClick={() => onChange(selected === rpe && !required ? undefined : rpe)}
-          >
+          <Button key={rpe} aria-pressed={selected === rpe} onClick={() => onChange(rpe)}>
             {label}
           </Button>
         ))}

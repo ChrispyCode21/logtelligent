@@ -211,12 +211,11 @@ export function SetEditor({
             </div>
           </Field>
 
-          {/* Effort isn't asked on extra sets (SPEC §9.2, slice 2). */}
-          {!extraMode && (
+          {/* Effort is asked only where it's used: a primary lift's first set (SPEC §6.3, §9.3). */}
+          {required && (
             <EffortPicker
               scale={effortScale}
               value={form.rpe}
-              required={required}
               onChange={(rpe) => setForm({ ...form, rpe })}
             />
           )}

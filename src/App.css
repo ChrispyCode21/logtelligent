@@ -98,6 +98,8 @@ button[aria-pressed='true'] {
   width: 100%;
   display: flex;
   justify-content: space-between;
+  /* Flex items otherwise stretch to the 44 px row and sit at its top (SPEC §9.3). */
+  align-items: center;
 }
 
 .set-row[aria-current='true'] {
@@ -591,4 +593,19 @@ textarea {
 
 .note-counter:empty {
   display: none;
+}
+
+/* v1.2.1: the effort scale's descriptions share one grid cell, so it's always as tall as the
+   longest one and switching scales doesn't move the rest of the tab (SPEC §9.3). */
+.scale-descriptions {
+  display: grid;
+}
+
+.scale-descriptions > p {
+  grid-area: 1 / 1;
+  margin: 0;
+}
+
+.scale-descriptions > p[aria-hidden='true'] {
+  visibility: hidden;
 }
