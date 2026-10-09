@@ -4,7 +4,10 @@
 # use and revoke. On failure it logs the exchange's status and error message (never a token) and
 # returns 1. Needs the job's id-token: write.
 get_app_token() {
-  local perms=$1 oidc resp code body attempt
+  local perms oidc resp code body attempt
+  # The exchange refuses permissions without contents ("for workflow validation", HTTP 401), so
+  # read is added unless the caller asked for more.
+  perms=$(jq -c '{contents: "read"} + .' <<<"$1") || { echo "::warning::Bad permissions for the App token."; return 1; }
   oidc=$(curl -sSf -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
     "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=claude-code-github-action" | jq -r '.value // empty') || true
   [ -n "$oidc" ] || { echo "::warning::Couldn't get a GitHub identity token."; return 1; }
@@ -25,6 +28,8 @@ get_app_token() {
       [(.error | objects | .message, .details.error_code), (.error | strings), .message]
       | map(select(. != null)) | join(" / ") | if . == "" then "no message" else . end' <<<"$body" 2>/dev/null \
       | head -c 300 || echo 'the response was not JSON')"
+    # A refusal (4xx) won't change on a retry; a network or server error might.
+    case "$code" in 4??) return 1 ;; esac
     [ "$attempt" = 3 ] || sleep $((attempt * 5))
   done
   return 1
