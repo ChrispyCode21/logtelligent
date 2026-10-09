@@ -1,5 +1,5 @@
 import { countedSets } from './sets'
-import type { ExerciseSession, RunningE1rm, Seed } from './types'
+import type { ExerciseSession, RepRange, RunningE1rm, Seed } from './types'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const WINDOW_DAYS = 28
@@ -44,16 +44,40 @@ export function repsToFailure(e1rm: number, weight: number): number {
   return (lo + hi) / 2
 }
 
-/** A session e1RM comes from its first (counted) set, which must carry an RPE (SPEC §6.3). */
-export function sessionE1rm(session: ExerciseSession): number | undefined {
+/** A session's first (counted) set, when it carries an RPE: the e1RM comes from it alone (SPEC §6.3). */
+function ratedFirstSet(session: ExerciseSession) {
   const first = countedSets(session.sets)[0]
-  if (!first || first.rpe === undefined) return undefined
-  return setE1rm({ ...first, rpe: first.rpe })
+  return first?.rpe === undefined ? undefined : { ...first, rpe: first.rpe }
+}
+
+export function sessionE1rm(session: ExerciseSession): number | undefined {
+  const first = ratedFirstSet(session)
+  return first && setE1rm(first)
+}
+
+/** Sessions prescribed for at most this many effective reps count before higher-rep ones (SPEC §6.4). */
+const LOW_REP_MAX = 10
+
+/**
+ * Whether a prescription is high-rep: the top of its range plus the reps in reserve its target
+ * effort leaves (10 - target RPE) is over 10 (SPEC §6.4). Judged by the prescription, not the reps
+ * done, so a great day on a 6-8 range never drops out of the e1RM.
+ */
+export function isHighRepRange(range: RepRange, targetRpe: number): boolean {
+  return effectiveReps(range.max, targetRpe) > LOW_REP_MAX
+}
+
+/** Sessions of 10 or fewer effective reps when there are any, else all of them (SPEC §6.4). */
+function lowerRepsFirst<T extends { lowReps: boolean }>(sessions: T[]): T[] {
+  const low = sessions.filter((s) => s.lowReps)
+  return low.length > 0 ? low : sessions
 }
 
 /**
  * Running e1RM (SPEC §6.4): the average of up to the last 3 sessions within 4 weeks,
  * else 90% of the most recent session ("returning from a break"), else the seed.
+ * Sessions of 10 or fewer effective reps are used before higher-rep ones, in both cases.
+ * `history` is every session of the lift, on any day (SPEC §9.4 slice 2).
  * Deload and replaced sessions are ignored. Undefined when there is nothing to go on.
  */
 export function runningE1rm(
@@ -63,18 +87,23 @@ export function runningE1rm(
 ): RunningE1rm | undefined {
   const eligible = history
     .filter((s) => !s.isDeload && !s.replaced)
-    .map((s) => ({ time: Date.parse(s.date), e1rm: sessionE1rm(s) }))
-    .filter((s): s is { time: number; e1rm: number } => s.e1rm !== undefined)
+    .map((s) => ({
+      time: Date.parse(s.date),
+      e1rm: sessionE1rm(s),
+      lowReps: !s.highReps,
+    }))
+    .filter((s): s is { time: number; e1rm: number; lowReps: boolean } => s.e1rm !== undefined)
     .sort((a, b) => b.time - a.time)
 
   if (eligible.length > 0) {
     const windowStart = asOf.getTime() - WINDOW_DAYS * DAY_MS
-    const recent = eligible.filter((s) => s.time >= windowStart).slice(0, MAX_SESSIONS)
-    if (recent.length > 0) {
+    const window = eligible.filter((s) => s.time >= windowStart)
+    if (window.length > 0) {
+      const recent = lowerRepsFirst(window).slice(0, MAX_SESSIONS)
       const value = recent.reduce((sum, s) => sum + s.e1rm, 0) / recent.length
       return { value, basis: 'history' }
     }
-    return { value: eligible[0].e1rm * BREAK_FACTOR, basis: 'returningFromBreak' }
+    return { value: lowerRepsFirst(eligible)[0].e1rm * BREAK_FACTOR, basis: 'returningFromBreak' }
   }
 
   if (seed) return { value: setE1rm({ ...seed, rpe: SEED_RPE }), basis: 'seed' }

@@ -1,4 +1,5 @@
 import { suggestNext, type ExerciseConfig, type Suggestion } from '../engine'
+import { otherLiftSessions } from '../history/lifts'
 import { exerciseHistory, type LoggedExerciseSession } from '../history/sessions'
 import { findExercise } from '../program/program'
 import type { Program } from '../program/types'
@@ -38,6 +39,8 @@ export function sessionExercises(
     const history = exerciseHistory(sessions, config.id, finished ? session : undefined).map((h) =>
       h.repRange ? h : { ...h, repRange: current.repRange },
     )
-    return [{ log, config, history, suggestion: suggestNext(config, history, asOf) }]
+    // The lift's other exercises share the e1RM (SPEC §9.4 slice 2).
+    const lift = otherLiftSessions(program, sessions, current, finished ? session : undefined)
+    return [{ log, config, history, suggestion: suggestNext(config, history, asOf, lift) }]
   })
 }

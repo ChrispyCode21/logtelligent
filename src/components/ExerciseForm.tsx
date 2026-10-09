@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { defaultLoads, type EquipmentType } from '../engine'
+import { withLiftGym } from '../history/lifts'
 import { exerciseFromBank, type BankExercise } from '../program/bank'
 import { EFFORT_SCALES, nearestOption, type EffortScale } from '../program/effort'
 import {
@@ -28,14 +29,21 @@ interface Props {
   initial?: ProgramExercise
   /** A new exercise from the bank: its defaults prefill the form. */
   preset?: BankExercise
+  /** A bank exercise joining a lift with history: where its gym setup and starting weight come from (SPEC §9.4 slice 2). */
+  lift?: { exercise: ProgramExercise; weight?: number }
+  /** Whether a lift of this name already has an e1RM: a primary's starting numbers are then optional (SPEC §9.4 slice 2). */
+  liftHasE1rm?: (name: string) => boolean
   effortScale: EffortScale
   onSave: (exercise: ProgramExercise) => void
   onCancel: () => void
 }
 
-export function ExerciseForm({ initial, preset, effortScale, onSave, onCancel }: Props) {
+export function ExerciseForm({ initial, preset, lift, liftHasE1rm, effortScale, onSave, onCancel }: Props) {
   // A bank exercise's defaults are copied in; nothing links back to the bank (SPEC §9.1, slice 2).
-  const [form, setForm] = useState(() => toForm(initial ?? (preset && exerciseFromBank(preset))))
+  // Joining a lift with history, it takes your gym's setup from it (SPEC §9.4 slice 2).
+  const [form, setForm] = useState(() =>
+    toForm(initial ?? (preset && withLiftGym(exerciseFromBank(preset), lift?.exercise))),
+  )
   const [attempted, setAttempted] = useState(false)
   const set = <K extends keyof ExerciseFormFields>(key: K, value: ExerciseFormFields[K]) =>
     setForm({ ...form, [key]: value })
@@ -54,8 +62,13 @@ export function ExerciseForm({ initial, preset, effortScale, onSave, onCancel }:
   const loadsPlaceholder = defaults.length
     ? `Default: ${defaults.slice(0, 6).join(', ')}…`
     : 'e.g. 88, 99, 110, 121, 132'
-  // The bank's starting weight, while its equipment still applies.
-  const bankWeight = preset && form.equipment === preset.equipment ? preset.seedPlaceholder : undefined
+  // The lift's latest weight while its equipment still applies (SPEC §9.4 slice 2), else the bank's.
+  const startingWeight =
+    lift && form.equipment === lift.exercise.equipment
+      ? lift.weight
+      : preset && form.equipment === preset.equipment
+        ? preset.seedPlaceholder
+        : undefined
 
   return (
     <Card as="form" className="exercise-form" onSubmit={submit}>
@@ -141,6 +154,9 @@ export function ExerciseForm({ initial, preset, effortScale, onSave, onCancel }:
         <span>One side at a time (reps are per side)</span>
       </label>
 
+      {primary && form.name.trim() && liftHasE1rm?.(form.name) && (
+        <p className="muted">Optional: {form.name.trim()} already has an estimated 1RM from your history.</p>
+      )}
       <SeedFields
         tier={form.tier}
         name={form.name}
@@ -148,7 +164,7 @@ export function ExerciseForm({ initial, preset, effortScale, onSave, onCancel }:
         unilateral={form.unilateral}
         weight={form.seedWeight}
         reps={form.seedReps}
-        weightPlaceholder={formSeedPlaceholder(form.tier, form.equipment, loads, bankWeight)}
+        weightPlaceholder={formSeedPlaceholder(form.tier, form.equipment, loads, startingWeight)}
         onWeight={(w) => set('seedWeight', w)}
         onReps={(r) => set('seedReps', r)}
         className="seed"

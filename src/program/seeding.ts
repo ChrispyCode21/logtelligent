@@ -82,7 +82,7 @@ const usableLoads = (loads: readonly number[] | undefined) =>
   loads?.length && !hasInvalidLoads([...loads]) ? loads.toSorted((a, b) => a - b) : undefined
 
 /** A bank weight snapped down onto the loads, however they were typed; unchanged without usable loads. */
-function snapBankWeight(weight: number, loads: readonly number[] | undefined): number {
+function snapStartingWeight(weight: number, loads: readonly number[] | undefined): number {
   const usable = usableLoads(loads)
   return usable ? snapDown(weight, usable) : weight
 }
@@ -98,20 +98,25 @@ export function formSeedPlaceholder(
   loads: number[] | undefined,
   bankWeight?: number,
 ): string | undefined {
-  if (bankWeight !== undefined) return String(snapBankWeight(bankWeight, loads))
+  if (bankWeight !== undefined) return String(snapStartingWeight(bankWeight, loads))
   if (tier === 'primary') return undefined
   return ACCESSORY_PLACEHOLDER[equipment] || usableLoads(loads)?.[0]?.toString() || ''
 }
 
 /**
- * Starting numbers to pre-fill: a bank exercise's placeholder weight (snapped down onto the
- * stack, if one is given) and, for primaries, the top of the rep range. Others start blank.
+ * Starting numbers to pre-fill: the lift's latest weight when it has history (SPEC §9.4 slice 2),
+ * else a bank exercise's placeholder weight, snapped down onto the stack if one is given; and, for
+ * primaries, the top of the rep range. Others start blank.
  */
-export function seedPrefill(e: ProgramExercise, stack?: readonly number[]): { weight: string; reps: string } {
-  const bank = findBankExercise(e.name)
-  if (!bank) return { weight: '', reps: '' }
+export function seedPrefill(
+  e: ProgramExercise,
+  stack?: readonly number[],
+  liftWeight?: number,
+): { weight: string; reps: string } {
+  const weight = liftWeight ?? findBankExercise(e.name)?.seedPlaceholder
+  if (weight === undefined) return { weight: '', reps: '' }
   return {
-    weight: String(snapBankWeight(bank.seedPlaceholder, stack)),
+    weight: String(snapStartingWeight(weight, stack)),
     reps: e.tier === 'primary' ? String(e.repRange.max) : '',
   }
 }

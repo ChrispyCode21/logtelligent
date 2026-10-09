@@ -54,6 +54,11 @@ export interface ExerciseSession {
   /** A substitute was logged instead; its sets don't count for this exercise (SPEC §5.2). */
   replaced?: boolean
   /**
+   * Prescribed for more than 10 effective reps (top of range + reps in reserve), so it counts toward
+   * the running e1RM only when no lower-rep session does (SPEC §6.4). Set by the engine's replay.
+   */
+  highReps?: boolean
+  /**
    * The rep range this session was prescribed, saved on Finish (SPEC §9.4 slice 1). Missing for
    * sessions logged before v1.3.0, which are judged by the exercise's current range.
    */

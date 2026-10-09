@@ -1,7 +1,7 @@
 // Ready-made programs (SPEC §9.1, slice 3). A template produces a normal, fully editable program.
 import { BANK, exerciseFromBank } from './bank'
 import { removeDay } from './program'
-import type { Program, ProgramDay } from './types'
+import type { Program, ProgramDay, ProgramExercise } from './types'
 
 export interface ProgramTemplate {
   id: string
@@ -73,15 +73,23 @@ export function templateDays(template: ProgramTemplate): ProgramDay[] {
 
 /**
  * Replace the program's days with a template's (SPEC §9.1, slice 3). Days with history are
- * archived and the rest deleted, as with any delete (§6.1); the effort scale is kept.
+ * archived and the rest deleted, as with any delete (§6.1); the effort scale is kept. Each template
+ * exercise joins the lift of the same name (§9.4 slice 2); `adapt` gives it your gym's setup.
  */
 export function applyTemplate(
   program: Program,
   template: ProgramTemplate,
   dayHasHistory: (dayId: string) => boolean,
+  adapt: (exercise: ProgramExercise) => ProgramExercise = (e) => e,
 ): Program {
+  const days = templateDays(template).map((d) => ({ ...d, exercises: d.exercises.map(adapt) }))
   const cleared = program.days
     .filter((d) => !d.archived)
     .reduce((p, d) => removeDay(p, d.id, dayHasHistory(d.id)), program)
-  return { ...cleared, days: [...cleared.days, ...templateDays(template)] }
+  return { ...cleared, days: [...cleared.days, ...days] }
+}
+
+/** Every exercise name in a template, in order. */
+export function templateExerciseNames(template: ProgramTemplate): string[] {
+  return template.days.flatMap((d) => d.exercises.map((id) => BANK.find((b) => b.id === id)!.name))
 }

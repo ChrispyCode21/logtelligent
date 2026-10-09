@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { countedSets, type LoggedSet } from '../engine'
-import { exerciseTimeline } from '../history/timeline'
+import { liftTimeline } from '../history/timeline'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
 import { historyGroups } from '../history/picker'
-import { exerciseHistory } from '../history/sessions'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
@@ -47,10 +46,11 @@ export function HistoryView({ program, sessions }: Props) {
     )
   }
 
-  const timeline = exerciseTimeline(exercise, exerciseHistory(sessions, exercise.id))
+  // Every session of the lift, on any day (SPEC §5.3, §9.4 slice 2).
+  const timeline = liftTimeline(program, sessions, exercise.name)
   const points = timeline
     .filter((t) => t.e1rm !== undefined)
-    .map((t) => ({ date: t.date, value: t.e1rm! }))
+    .map((t) => ({ date: t.date, value: t.e1rm!, highReps: t.highReps }))
     .reverse()
 
   return (
@@ -74,16 +74,17 @@ export function HistoryView({ program, sessions }: Props) {
         <p className="muted">No sessions logged yet.</p>
       ) : (
         <>
-          {exercise.tier === 'primary' && points.length >= 2 && (
+          {points.length >= 2 && (
             <Card>
               <E1rmChart points={points} />
             </Card>
           )}
           <ol className="history-list">
             {timeline.map((entry) => (
-              <Card as="li" key={entry.sessionId} className="history-row">
+              <Card as="li" key={`${entry.sessionId}-${entry.exerciseId}`} className="history-row">
                 <div className="history-head">
                   <strong>{formatDate(entry.date)}</strong>
+                  {entry.dayName && <span className="muted">{entry.dayName}</span>}
                   {entry.isDeload && <span className="tag">Deload</span>}
                   {entry.e1rm !== undefined && <span className="muted">e1RM {formatE1rm(entry.e1rm)}</span>}
                   <Button
@@ -114,7 +115,7 @@ export function HistoryView({ program, sessions }: Props) {
                     {countedSets(entry.sets).length > 0 && (
                       <p>
                         {formatCountedSets(entry.sets, program.effortScale)}
-                        {exercise.unilateral && <span className="muted"> (per side)</span>}
+                        {entry.unilateral && <span className="muted"> (per side)</span>}
                       </p>
                     )}
                     <ExtraLine sets={entry.sets} />

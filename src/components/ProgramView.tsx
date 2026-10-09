@@ -13,6 +13,7 @@ import {
 import type { BankExercise } from '../program/bank'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
+import { latestInLift, liftHasE1rm, needsStartingNumbers } from '../history/lifts'
 import { dayHasHistory, emptyOpenSessions, exerciseHasHistory } from '../history/sessions'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
@@ -74,6 +75,7 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
   const [editing, setEditing] = useState<Editing | null>(null)
   const [newDayName, setNewDayName] = useState('')
   const days = activeDays(program)
+  const unseeded = new Set(needsStartingNumbers(program, sessions).map((e) => e.id))
 
   const save = (edit: (p: Program) => Program) => void updateProgram(edit)
 
@@ -150,6 +152,7 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
                   <ExerciseForm
                     initial={exercise}
                     effortScale={program.effortScale}
+                    liftHasE1rm={(name) => liftHasE1rm(program, sessions, name)}
                     onSave={(e) => saveExercise((p) => updateExercise(p, e))}
                     onCancel={() => setEditing(null)}
                   />
@@ -162,7 +165,9 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
                   >
                     <strong>{exercise.name}</strong>
                     <span className="muted">{formatPrescription(exercise, program.effortScale)}</span>
-                    {!exercise.seed && <span className="warning-text">Needs starting numbers</span>}
+                    {unseeded.has(exercise.id) && (
+                      <span className="warning-text">Needs starting numbers</span>
+                    )}
                   </Button>
                   <RowActions
                     name={exercise.name}
@@ -187,7 +192,13 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
               <ExerciseForm
                 key={editing.preset === 'custom' ? 'custom' : editing.preset.id}
                 preset={editing.preset === 'custom' ? undefined : editing.preset}
+                lift={
+                  editing.preset === 'custom'
+                    ? undefined
+                    : latestInLift(program, sessions, editing.preset.name)
+                }
                 effortScale={program.effortScale}
+                liftHasE1rm={(name) => liftHasE1rm(program, sessions, name)}
                 onSave={(e) => saveExercise((p) => addExercise(p, day.id, e))}
                 // Back to the picker, in case the wrong exercise was picked.
                 onCancel={() => setEditing({ dayId: day.id })}

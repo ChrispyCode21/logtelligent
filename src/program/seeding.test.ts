@@ -26,6 +26,13 @@ describe('guided seeding (SPEC §9.1, slice 3)', () => {
     expect(seedPrefill(fromBank('Lateral Raise'))).toEqual({ weight: '10', reps: '' })
   })
 
+  it("pre-fills the lift's latest weight before the bank's, snapped onto the stack (SPEC §9.4 slice 2)", () => {
+    expect(seedPrefill(fromBank('Lateral Raise'), undefined, 17.5)).toEqual({ weight: '17.5', reps: '' })
+    expect(seedPrefill(fromBank('Bench Press'), undefined, 225)).toEqual({ weight: '225', reps: '7' })
+    const tenLb = STACK_PRESETS.find((p) => p.id === '10')!.loads
+    expect(seedPrefill(fromBank('Face Pull'), tenLb, 47).weight).toBe('40')
+  })
+
   it('snaps the pre-filled weight onto the chosen stack', () => {
     const tenLb = STACK_PRESETS.find((p) => p.id === '10')!.loads
     expect(seedPrefill(fromBank('Face Pull'), tenLb).weight).toBe('20')

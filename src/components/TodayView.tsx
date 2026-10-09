@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { nextDay, suggestNext } from '../engine'
-import { activeDays, missingSeeds } from '../program/program'
+import { activeDays } from '../program/program'
+import { needsStartingNumbers, otherLiftSessions } from '../history/lifts'
 import type { Program } from '../program/types'
 import type { Session } from '../session/types'
 import { exerciseHistory, lastLoggedDayId, lastNoteFor } from '../history/sessions'
@@ -43,10 +44,12 @@ export function TodayView({ program, sessions, asOf, seeding, onSeeding, onEditP
     )
   }
 
-  // Sessions can't start until every exercise has starting numbers (SPEC §5.1, A12).
-  const unseeded = missingSeeds(program)
+  // Sessions can't start until every exercise has starting numbers (SPEC §5.1, A12), except a
+  // primary whose lift already has an e1RM (§9.4 slice 2, I4).
+  const unseeded = needsStartingNumbers(program, sessions)
   if (unseeded.length > 0) {
-    if (seeding) return <SeedWalkthrough program={program} onClose={() => onSeeding(false)} />
+    if (seeding)
+      return <SeedWalkthrough program={program} sessions={sessions} onClose={() => onSeeding(false)} />
     const which =
       unseeded.length <= 3 ? unseeded.map((e) => e.name).join(', ') : `${unseeded.length} exercises`
     return (
@@ -96,7 +99,12 @@ export function TodayView({ program, sessions, asOf, seeding, onSeeding, onEditP
         <SuggestionCard
           key={exercise.id}
           config={exercise}
-          suggestion={suggestNext(exercise, exerciseHistory(sessions, exercise.id), asOf)}
+          suggestion={suggestNext(
+            exercise,
+            exerciseHistory(sessions, exercise.id),
+            asOf,
+            otherLiftSessions(program, sessions, exercise),
+          )}
           heading={exercise.name}
           effortScale={program.effortScale}
         />

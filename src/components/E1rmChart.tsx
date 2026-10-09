@@ -4,6 +4,8 @@ import { formatDate, formatE1rm } from '../ui/format'
 export interface ChartPoint {
   date: string
   value: number
+  /** Over 10 effective reps: drawn hollow, since it counts only when nothing lower does (SPEC §9.4 slice 2). */
+  highReps?: boolean
 }
 
 const WIDTH = 440
@@ -28,7 +30,9 @@ export function E1rmChart({ points }: Props) {
   // Round the y-domain out to 5 lb so gridlines land on readable numbers.
   const yMin = Math.floor(Math.min(...values) / Y_STEP) * Y_STEP - Y_STEP
   const yMax = Math.ceil(Math.max(...values) / Y_STEP) * Y_STEP + Y_STEP
-  const x = (t: number) => PAD.left + ((t - t0) / (t1 - t0)) * (WIDTH - PAD.left - PAD.right)
+  // Every point on one date (two exercises of a lift in one session, SPEC §9.4 slice 2): the middle.
+  const x = (t: number) =>
+    PAD.left + (t1 === t0 ? 0.5 : (t - t0) / (t1 - t0)) * (WIDTH - PAD.left - PAD.right)
   const y = (v: number) => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * (HEIGHT - PAD.top - PAD.bottom)
   const ticks = [yMin, (yMin + yMax) / 2, yMax]
   const path = points.map((p, i) => `${i ? 'L' : 'M'}${x(times[i])},${y(p.value)}`).join(' ')
@@ -51,6 +55,7 @@ export function E1rmChart({ points }: Props) {
       <figcaption>
         <span className="muted">Estimated 1RM · {label}</span>{' '}
         <strong>{formatE1rm(points[shown].value)}</strong>
+        {points[shown].highReps && <span className="muted"> · high reps</span>}
       </figcaption>
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -86,7 +91,13 @@ export function E1rmChart({ points }: Props) {
         )}
         <path className="series" d={path} />
         {points.map((p, i) => (
-          <circle key={p.date} className="marker" cx={x(times[i])} cy={y(p.value)} r={i === shown ? 5 : 4} />
+          <circle
+            key={i}
+            className={p.highReps ? 'marker high-reps' : 'marker'}
+            cx={x(times[i])}
+            cy={y(p.value)}
+            r={i === shown ? 5 : 4}
+          />
         ))}
       </svg>
     </figure>
