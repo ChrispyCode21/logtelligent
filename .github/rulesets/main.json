@@ -24,6 +24,7 @@
         "strict_required_status_checks_policy": true,
         "required_status_checks": [
           { "context": "Checks" },
+          { "context": "Playwright" },
           { "context": "CodeQL (javascript-typescript)" },
           { "context": "CodeQL (actions)" },
           { "context": "Dependency review" }

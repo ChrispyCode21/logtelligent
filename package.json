@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run --dir src",
     "test:watch": "vitest --dir src",
+    "test:e2e": "playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:spec": "node scripts/check-spec-coverage.mjs",
@@ -23,11 +24,13 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@types/node": "^26.6.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vite-pwa/assets-generator": "^2.0.0",
     "@vitejs/plugin-react": "^6.1.1",
+    "fake-indexeddb": "^6.2.5",
     "oxlint": "^1.81.0",
     "prettier": "^3.9.9",
     "typescript": "~7.0.2",
