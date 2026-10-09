@@ -93,7 +93,7 @@ function loggedSet(v: unknown, path: string): LoggedSet {
     weight: num(s.weight, `${path}.weight`, 0, 2000),
     reps: num(s.reps, `${path}.reps`, 0, 1000, true),
     rpe: optional(s.rpe, (r) => num(r, `${path}.rpe`, 1, 10)),
-    // Extra sets (SPEC §9.2, slice 2). Backups from before them have none: every set counted.
+    // Extra sets (SPEC §5.2). Backups from before them have none: every set counted.
     extra: optional(s.extra, (b) => bool(b, `${path}.extra`)),
   })
 }
@@ -123,7 +123,7 @@ function exerciseLog(v: unknown, path: string): ExerciseLog {
       })
     }),
     skipped: optional(l.skipped, (b) => bool(b, `${path}.skipped`)),
-    // Saved on Finish (SPEC §9.4 slice 1). Backups from before v1.3.0 have none.
+    // Saved on Finish (SPEC §6.8). Backups from before v1.3.0 have none.
     prescription: optional(l.prescription, (p) => {
       const pr = obj(p, `${path}.prescription`)
       return compact<Prescription>({
@@ -145,7 +145,7 @@ function session(v: unknown, path: string): Session {
       exerciseLog(e, `${path}.exercises[${i}]`),
     ),
     warmupDismissed: optional(s.warmupDismissed, (b) => bool(b, `${path}.warmupDismissed`)),
-    // Session notes (SPEC §9.2, slice 3): 1–200 characters. Backups from before them have none.
+    // Session notes (SPEC §5.2): 1–200 characters. Backups from before them have none.
     note: optional(s.note, (n) => normalizeNote(text(n, `${path}.note`))),
   })
 }

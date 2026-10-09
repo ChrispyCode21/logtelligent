@@ -37,7 +37,7 @@ export interface LoggedSet {
   weight: number
   reps: number
   rpe?: number
-  /** Logged beyond the prescribed sets: recorded, but not counted by the engine (SPEC §9.2, slice 2). */
+  /** Logged beyond the prescribed sets: recorded, but not counted by the engine (SPEC §5.2). */
   extra?: boolean
 }
 
@@ -59,7 +59,7 @@ export interface ExerciseSession {
    */
   highReps?: boolean
   /**
-   * The rep range this session was prescribed, saved on Finish (SPEC §9.4 slice 1). Missing for
+   * The rep range this session was prescribed, saved on Finish (SPEC §6.8). Missing for
    * sessions logged before v1.3.0, which are judged by the exercise's current range.
    */
   repRange?: RepRange

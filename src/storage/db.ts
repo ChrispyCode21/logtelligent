@@ -17,7 +17,7 @@ db.version(2).stores({
   sessions: '++id, startedAt',
   programs: 'id',
 })
-// v3: programs gain `effortScale`. One saved before it existed used RPE (SPEC §9.1, slice 1).
+// v3: programs gain `effortScale`. One saved before it existed used RPE (SPEC §5.6).
 db.version(3)
   .stores({
     sessions: '++id, startedAt',
@@ -31,19 +31,19 @@ db.version(3)
         program.effortScale ??= LEGACY_EFFORT_SCALE
       }),
   )
-// v4: logged sets may be marked `extra` (SPEC §9.2, slice 2). No index change and no upgrade:
+// v4: logged sets may be marked `extra` (SPEC §5.2). No index change and no upgrade:
 // a set without the mark is a counted one, as every set before this was.
 db.version(4).stores({
   sessions: '++id, startedAt',
   programs: 'id',
 })
-// v5: sessions may carry a `note` for next time (SPEC §9.2, slice 3). No index change, no upgrade.
+// v5: sessions may carry a `note` for next time (SPEC §5.2). No index change, no upgrade.
 db.version(5).stores({
   sessions: '++id, startedAt',
   programs: 'id',
 })
 // v6: a finished session's exercises may carry a `prescription` (rep range and set count), saved on
-// Finish (SPEC §9.4 slice 1). No index change and no upgrade: one without it is judged by the
+// Finish (SPEC §6.8). No index change and no upgrade: one without it is judged by the
 // exercise's current settings, as every session was before.
 db.version(6).stores({
   sessions: '++id, startedAt',

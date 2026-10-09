@@ -17,7 +17,7 @@ import {
 
 const fromBank = (name: string) => exerciseFromBank(findBankExercise(name)!)
 
-describe('guided seeding (SPEC §9.1, slice 3)', () => {
+describe('guided seeding (SPEC §5.1)', () => {
   it('pre-fills a primary with the bank weight and the top of its range', () => {
     expect(seedPrefill(fromBank('Bench Press'))).toEqual({ weight: '95', reps: '7' })
   })
@@ -26,7 +26,7 @@ describe('guided seeding (SPEC §9.1, slice 3)', () => {
     expect(seedPrefill(fromBank('Lateral Raise'))).toEqual({ weight: '10', reps: '' })
   })
 
-  it("pre-fills the lift's latest weight before the bank's, snapped onto the stack (SPEC §9.4 slice 2)", () => {
+  it("pre-fills the lift's latest weight before the bank's, snapped onto the stack (SPEC §6.9)", () => {
     expect(seedPrefill(fromBank('Lateral Raise'), undefined, 17.5)).toEqual({ weight: '17.5', reps: '' })
     expect(seedPrefill(fromBank('Bench Press'), undefined, 225)).toEqual({ weight: '225', reps: '7' })
     const tenLb = STACK_PRESETS.find((p) => p.id === '10')!.loads
@@ -119,7 +119,7 @@ describe('starting numbers (SPEC §5.1)', () => {
 })
 
 describe("the exercise form's starting-weight placeholder", () => {
-  it("is the bank's weight, snapped down onto typed loads (SPEC §9.2, slice 0)", () => {
+  it("is the bank's weight, snapped down onto typed loads (SPEC §5.1)", () => {
     expect(formSeedPlaceholder('primary', 'barbell', undefined, 95)).toBe('95')
     expect(formSeedPlaceholder('accessory', 'cable', [10, 40, 20, 30], 25)).toBe('20')
     expect(formSeedPlaceholder('accessory', 'cable', [30, 40], 25)).toBe('30')

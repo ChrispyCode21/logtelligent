@@ -20,7 +20,7 @@ interface Props {
   sessions: Session[]
   /** Now, for a live session. A finished one is judged as of when it started. */
   asOf?: Date
-  /** Leave the editor of a finished session (SPEC §9.2, slice 1). */
+  /** Leave the editor of a finished session (SPEC §5.4). */
   onClose?: () => void
 }
 
@@ -42,12 +42,12 @@ export function SessionView({ session, program, sessions, asOf, onClose }: Props
       ? warmupText(first.config.name, first.suggestion.weight, availableLoads(first.config))
       : undefined
 
-  // The note for next time is edited here and saved on leaving the field, Finish and Done (SPEC §9.2, slice 3).
+  // The note for next time is edited here and saved on leaving the field, Finish and Done (SPEC §5.2).
   const [noteDraft, setNoteDraft] = useState(session.note ?? '')
   const saveDraft = () => saveNote(session.id, normalizeNote(noteDraft))
 
   // Leaving the screen is leaving the field too: switching tabs, or the app going to the background,
-  // can skip the blur (iOS keeps the keyboard up), so the draft also saves then (SPEC §9.2, slice 3).
+  // can skip the blur (iOS keeps the keyboard up), so the draft also saves then (SPEC §5.2).
   const latest = useRef({ draft: noteDraft, stored: session.note })
   useEffect(() => {
     latest.current = { draft: noteDraft, stored: session.note }
@@ -67,7 +67,7 @@ export function SessionView({ session, program, sessions, asOf, onClose }: Props
       flush()
     }
   }, [session.id])
-  // "Last time: …" from this day's previous session, shown while logging (SPEC §9.2, slice 3).
+  // "Last time: …" from this day's previous session, shown while logging (SPEC §5.2).
   const lastTime = !finished && session.dayId ? lastNoteFor(sessions, session.dayId) : undefined
 
   async function finish() {
@@ -92,7 +92,7 @@ export function SessionView({ session, program, sessions, asOf, onClose }: Props
   }
 
   // An emptied finished session would drop out of History but still count for the rotation, so
-  // deleting its last set offers to delete it (SPEC §9.2, slice 1).
+  // deleting its last set offers to delete it (SPEC §5.4).
   async function afterSave(saved: ExerciseLog) {
     if (!finished) return
     const logs = session.exercises.map((l) => (l.exerciseId === saved.exerciseId ? saved : l))

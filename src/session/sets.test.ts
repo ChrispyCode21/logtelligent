@@ -89,7 +89,7 @@ describe("a primary's first-set effort (SPEC §6.3)", () => {
   })
 })
 
-describe('editing a finished session (SPEC §9.2, slice 1)', () => {
+describe('editing a finished session (SPEC §5.4)', () => {
   it('knows when no set is left in a session, counting substitutes', () => {
     expect(hasAnySets([bench(), { ...bench(), exerciseId: 'curl' }])).toBe(false)
     expect(hasAnySets([bench(), { ...bench(), substitute: { name: 'Machine press', sets: [set] } }])).toBe(
@@ -106,7 +106,7 @@ describe('editing a finished session (SPEC §9.2, slice 1)', () => {
   })
 })
 
-describe('deleting set 1 (SPEC §9.2, slice 1)', () => {
+describe('deleting set 1 (SPEC §5.4)', () => {
   const primary = (i: number) => i === 0
   const accessory = () => false
 
@@ -230,7 +230,7 @@ describe('finishing with the exercise menu (SPEC §5.2)', () => {
   })
 })
 
-describe('extra sets (SPEC §9.2, slice 2)', () => {
+describe('extra sets (SPEC §5.2)', () => {
   const x = (weight: number, reps: number) => ({ weight, reps, extra: true })
 
   it('are added after the prescribed sets with their own weight and no effort', () => {
@@ -280,7 +280,7 @@ describe('extra sets (SPEC §9.2, slice 2)', () => {
   })
 })
 
-describe('shownTarget (SPEC §9.4 slice 1)', () => {
+describe('shownTarget (SPEC §6.8)', () => {
   it('shows the target live, and in a finished session only with a saved prescription', () => {
     const log = { exerciseId: 'bench', sets: [] }
     const prescribed = { ...log, prescription: { repRange: { min: 3, max: 5 }, sets: 3 } }

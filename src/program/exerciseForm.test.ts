@@ -23,7 +23,7 @@ describe('the exercise form (SPEC §6.1)', () => {
     expect(fromForm(toForm(bench), bench)).toEqual(bench)
   })
 
-  it("starts a bank exercise from the bank's defaults, with no starting numbers (SPEC §9.1, slice 2)", () => {
+  it("starts a bank exercise from the bank's defaults, with no starting numbers (SPEC §5.1)", () => {
     const form = toForm(exerciseFromBank(findBankExercise('Lateral Raise')!))
     expect(form).toMatchObject({ name: 'Lateral Raise', tier: 'accessory', targetRpe: 8, loads: '' })
     expect([form.seedWeight, form.seedReps]).toEqual(['', ''])

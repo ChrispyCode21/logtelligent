@@ -18,7 +18,7 @@ describe('formatSet', () => {
     expect(formatSet({ weight: 225, reps: 4, rpe: 8.5 })).toBe('225 × 4 @ 8.5')
   })
 
-  it('shows effort in the program’s scale (SPEC §9.1, slice 1)', () => {
+  it('shows effort in the program’s scale (SPEC §5.6)', () => {
     expect(formatSet({ weight: 225, reps: 4, rpe: 8 }, 'repsLeft')).toBe('225 × 4 · 2 left')
     expect(formatSet({ weight: 225, reps: 4, rpe: 8 }, 'perceived')).toBe('225 × 4 · Challenging')
     expect(formatSet({ weight: 225, reps: 4, rpe: 8.5 }, 'repsLeft')).toBe('225 × 4 · 1 left')
@@ -76,7 +76,7 @@ describe('formatE1rm', () => {
   })
 })
 
-describe('formatPrescription (SPEC §9.2, slice 0)', () => {
+describe('formatPrescription (SPEC §5.1)', () => {
   const bench = {
     tier: 'primary' as const,
     sets: 3,
@@ -103,7 +103,7 @@ describe('formatPrescription (SPEC §9.2, slice 0)', () => {
   })
 })
 
-describe('formatSetCount (SPEC §9.2, slices 1 and 2)', () => {
+describe('formatSetCount (SPEC §5.2, §5.4)', () => {
   const set = { weight: 225, reps: 5 }
   const extra = { weight: 185, reps: 8, extra: true }
 
@@ -119,7 +119,7 @@ describe('formatSetCount (SPEC §9.2, slices 1 and 2)', () => {
   })
 })
 
-describe('extra sets on a line (SPEC §9.2, slice 2)', () => {
+describe('extra sets on a line (SPEC §5.2)', () => {
   const sets = [
     { weight: 225, reps: 5, rpe: 8 },
     { weight: 225, reps: 4 },

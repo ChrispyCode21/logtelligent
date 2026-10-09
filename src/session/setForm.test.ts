@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { parseSetForm, prefill, prefillExtra } from './setForm'
 
 describe('set pre-fill (SPEC §5.2)', () => {
-  it("fills the next set's weight and reps from the previous one, but not its effort (SPEC §9.3)", () => {
+  it("fills the next set's weight and reps from the previous one, but not its effort (SPEC §5.2)", () => {
     expect(prefill([{ weight: 225, reps: 4, rpe: 8 }], { weight: 235, reps: 5 })).toEqual({
       weight: '225',
       reps: '4',
@@ -55,7 +55,7 @@ describe('reading the set form', () => {
   })
 })
 
-describe('pre-fill with extra sets (SPEC §9.2, slice 2)', () => {
+describe('pre-fill with extra sets (SPEC §5.2)', () => {
   const sets = [
     { weight: 225, reps: 5, rpe: 8 },
     { weight: 185, reps: 8, extra: true },

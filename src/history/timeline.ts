@@ -6,21 +6,21 @@ import { exerciseHistory, type LoggedExerciseSession } from './sessions'
 
 export interface TimelineEntry {
   sessionId: number
-  /** Which exercise of the lift this was (SPEC §9.4 slice 2). */
+  /** Which exercise of the lift this was (SPEC §6.9). */
   exerciseId: string
   date: string
   sets: LoggedSet[]
   isDeload: boolean
   /** Set when the exercise was replaced that session; no e1RM then (SPEC §5.2). */
   substitute?: Substitute
-  /** The session's note for next time (SPEC §9.2, slice 3). */
+  /** The session's note for next time (SPEC §5.2). */
   note?: string
   /** That session's e1RM (SPEC §5.3): primary lifts only, none for deloads or replaced sessions. */
   e1rm?: number
   /** Over 10 effective reps: counted toward the running e1RM only when nothing lower is (SPEC §6.4). */
   highReps?: boolean
   unilateral: boolean
-  /** The day it was logged on, in a lift's timeline (SPEC §9.4 slice 2). */
+  /** The day it was logged on, in a lift's timeline (SPEC §6.9). */
   dayName?: string
 }
 
@@ -46,7 +46,7 @@ export function exerciseTimeline(config: ExerciseConfig, history: LoggedExercise
 }
 
 /**
- * A lift's finished sessions on every day, newest first (SPEC §5.3, §9.4 slice 2). Each exercise is
+ * A lift's finished sessions on every day, newest first (SPEC §5.3, §6.9). Each exercise is
  * replayed on its own, so deloads and stacks stay per exercise.
  */
 export function liftTimeline(program: Program, sessions: Session[], name: string): TimelineEntry[] {

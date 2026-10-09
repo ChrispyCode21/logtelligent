@@ -1,4 +1,4 @@
-// Ready-made programs (SPEC §9.1, slice 3). A template produces a normal, fully editable program.
+// Ready-made programs (SPEC §5.1). A template produces a normal, fully editable program.
 import { BANK, exerciseFromBank } from './bank'
 import type { Program, ProgramDay, ProgramExercise } from './types'
 
@@ -71,9 +71,9 @@ export function templateDays(template: ProgramTemplate): ProgramDay[] {
 }
 
 /**
- * Add a template's days to a program with no active days (SPEC §9.1 slice 3; switching from another
- * program clears it first, §9.4 slice 3). Archived days stay, and the effort scale is kept. Each
- * template exercise joins the lift of the same name (§9.4 slice 2); `adapt` gives it your gym's setup.
+ * Add a template's days to a program with no active days (SPEC §5.1; switching from another
+ * program clears it first, §5.5). Archived days stay, and the effort scale is kept. Each
+ * template exercise joins the lift of the same name (§6.9); `adapt` gives it your gym's setup.
  */
 export function applyTemplate(
   program: Program,

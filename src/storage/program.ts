@@ -8,7 +8,7 @@ import { db } from './db'
  * from whatever copy the UI last rendered.
  *
  * `discardSessions` are deleted in the same transaction: open sessions the edit leaves without a
- * day, or every open session when changing programs (SPEC §9.4 slices 0 and 3).
+ * day, or every open session when changing programs (SPEC §6.1, §5.5).
  */
 export async function updateProgram(edit: (program: Program) => Program, discardSessions: number[] = []) {
   await db.transaction('rw', db.programs, db.sessions, async () => {

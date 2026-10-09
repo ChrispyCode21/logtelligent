@@ -50,7 +50,7 @@ describe('database upgrades', () => {
     expect(await db.programs.count()).toBe(0)
   })
 
-  it('gives a v2 program the RPE effort scale (SPEC §9.1, slice 1)', async () => {
+  it('gives a v2 program the RPE effort scale (SPEC §5.6)', async () => {
     await saveAtVersion(2, { programs: [v2Program], sessions: [session] })
     const program = await db.programs.get('main')
     expect(program).toEqual({ ...v2Program, effortScale: 'rpe' })

@@ -12,7 +12,7 @@ interface Props {
   sessions: Session[]
 }
 
-/** The confirm: the days, the lifts that keep their history (§9.4 slice 2), and the open session. */
+/** The confirm: the days, the lifts that keep their history (§6.9), and the open session. */
 function confirmMessage({ keptLifts, open }: ProgramChange): string {
   const lifts =
     keptLifts.length === 0
@@ -28,7 +28,7 @@ function confirmMessage({ keptLifts, open }: ProgramChange): string {
 }
 
 /**
- * Abandon the program for another (SPEC §9.4 slice 3). The Program tab then shows the
+ * Abandon the program for another (SPEC §5.5). The Program tab then shows the
  * empty-program screen, to pick a template or build your own.
  */
 export function ChangeProgramCard({ program, sessions }: Props) {

@@ -6,7 +6,7 @@ import type { Program } from './types'
 
 const upperLower = TEMPLATES[0]
 
-describe('program templates (SPEC §9.1, slice 3)', () => {
+describe('program templates (SPEC §5.1)', () => {
   it('uses only bank exercises', () => {
     for (const t of TEMPLATES)
       for (const day of t.days) for (const id of day.exercises) expect(BANK.map((b) => b.id)).toContain(id)
@@ -65,7 +65,7 @@ describe('program templates (SPEC §9.1, slice 3)', () => {
     expect(missingSeeds(program)).toHaveLength(22)
   })
 
-  it('adds its days after any archived ones, e.g. after changing programs (SPEC §9.4 slice 3)', () => {
+  it('adds its days after any archived ones, e.g. after changing programs (SPEC §5.5)', () => {
     const bench = exerciseFromBank(BANK[0], 'bench')
     const existing: Program = {
       id: 'main',
@@ -91,7 +91,7 @@ describe('program templates (SPEC §9.1, slice 3)', () => {
     expect(program.effortScale).toBe('rpe')
   })
 
-  it("passes each template exercise through adapt, e.g. to take your gym's setup (SPEC §9.4 slice 2)", () => {
+  it("passes each template exercise through adapt, e.g. to take your gym's setup (SPEC §6.9)", () => {
     const program = applyTemplate(EMPTY_PROGRAM, upperLower, (e) => ({ ...e, unilateral: true }))
     expect(
       activeDays(program)

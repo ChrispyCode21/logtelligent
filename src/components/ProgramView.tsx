@@ -95,7 +95,7 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
 
   function removeDayConfirmed(dayId: string, name: string) {
     const hasHistory = dayHasHistory(sessions, dayId)
-    // An open session on this day with nothing logged goes with it (SPEC §9.4 slice 0).
+    // An open session on this day with nothing logged goes with it (SPEC §6.1).
     const discard = emptyOpenSessions(sessions, [dayId])
     const message =
       removalMessage(name, hasHistory) +

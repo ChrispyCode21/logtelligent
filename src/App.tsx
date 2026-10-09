@@ -12,7 +12,7 @@ type Tab = 'today' | 'history' | 'program'
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('today')
-  // The guided seed walkthrough is open on the Today tab (SPEC §9.1, slice 3).
+  // The guided seed walkthrough is open on the Today tab (SPEC §5.1).
   const [seeding, setSeeding] = useState(false)
 
   // Re-runs (and re-renders) whenever the tables it reads change.

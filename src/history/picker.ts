@@ -6,14 +6,14 @@ import { exerciseHistory } from './sessions'
 
 export interface PickerGroup {
   label: string
-  /** One exercise per lift, standing for it: picking it shows the whole lift (SPEC §9.4 slice 2). */
+  /** One exercise per lift, standing for it: picking it shows the whole lift (SPEC §6.9). */
   exercises: ProgramExercise[]
 }
 
 /**
  * The History tab's picker (SPEC §5.3): each lift once, under the first day it's active on, then an
  * "Archived" group of lifts with no active exercise but finished history (an open session doesn't
- * count, SPEC §9.4 slice 0). Groups with no exercises are left out.
+ * count, SPEC §5.3). Groups with no exercises are left out.
  */
 export function historyGroups(program: Program, sessions: Session[]): PickerGroup[] {
   const seen = new Set<string>()

@@ -4,14 +4,14 @@ import { SegmentedControl } from '../ui/SegmentedControl'
 
 interface Props {
   scale: EffortScale
-  /** Stored as RPE whatever the scale (SPEC §9.1, slice 1). */
+  /** Stored as RPE whatever the scale (SPEC §5.6). */
   value: number | undefined
   onChange: (rpe: number) => void
 }
 
 /**
  * Effort for a primary lift's first set, asked in the program's effort scale. It's only asked
- * where it's required, so a picked value can be changed but not cleared (SPEC §6.3, §9.3).
+ * where it's required, so a picked value can be changed but not cleared (SPEC §6.3).
  */
 export function EffortPicker({ scale, value, onChange }: Props) {
   const { question, options } = EFFORT_SCALES[scale]

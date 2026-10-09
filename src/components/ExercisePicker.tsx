@@ -11,7 +11,7 @@ interface Props {
   onCancel: () => void
 }
 
-/** Choose an exercise from the bank by body area or search, or start a custom one (SPEC §9.1, slice 2). */
+/** Choose an exercise from the bank by body area or search, or start a custom one (SPEC §5.1). */
 export function ExercisePicker({ onPick, onCustom, onCancel }: Props) {
   const [query, setQuery] = useState('')
   const results = searchBank(query)

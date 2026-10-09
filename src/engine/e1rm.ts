@@ -77,7 +77,7 @@ function lowerRepsFirst<T extends { lowReps: boolean }>(sessions: T[]): T[] {
  * Running e1RM (SPEC §6.4): the average of up to the last 3 sessions within 4 weeks,
  * else 90% of the most recent session ("returning from a break"), else the seed.
  * Sessions of 10 or fewer effective reps are used before higher-rep ones, in both cases.
- * `history` is every session of the lift, on any day (SPEC §9.4 slice 2).
+ * `history` is every session of the lift, on any day (SPEC §6.9).
  * Deload and replaced sessions are ignored. Undefined when there is nothing to go on.
  */
 export function runningE1rm(

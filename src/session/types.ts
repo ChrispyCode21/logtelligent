@@ -2,7 +2,7 @@ import type { LoggedSet, RepRange } from '../engine'
 
 /**
  * What an exercise was prescribed, saved with a session on Finish from the program's settings then
- * (SPEC §9.4 slice 1). The replay judges the session by its rep range; the set count is for display.
+ * (SPEC §6.8). The replay judges the session by its rep range; the set count is for display.
  */
 export interface Prescription {
   repRange: RepRange
@@ -29,7 +29,7 @@ export interface ExerciseLog {
 /** A training session. Unfinished sessions are still being logged and can be edited. */
 export interface Session {
   id: number
-  /** The training day this session was. Sessions from slice 1 have none. */
+  /** The training day this session was. The earliest sessions, from before program setup, have none. */
   dayId?: string
   /** ISO 8601 timestamp. */
   startedAt: string
@@ -37,6 +37,6 @@ export interface Session {
   exercises: ExerciseLog[]
   /** The warm-up banner was dismissed for this session (SPEC §5.2). */
   warmupDismissed?: boolean
-  /** A note for next time: plain text, trimmed, 1–200 characters (SPEC §9.2, slice 3). */
+  /** A note for next time: plain text, trimmed, 1–200 characters (SPEC §5.2). */
   note?: string
 }

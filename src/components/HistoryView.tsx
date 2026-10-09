@@ -23,7 +23,7 @@ export function HistoryView({ program, sessions }: Props) {
   const [editingId, setEditingId] = useState<number>()
   const exercise: ProgramExercise | undefined = all.find((e) => e.id === selectedId) ?? all[0]
 
-  // Editing a finished session opens it whole (SPEC §9.2, slice 1). Once it's deleted, the list is back.
+  // Editing a finished session opens it whole (SPEC §5.4). Once it's deleted, the list is back.
   const editing = sessions.find((s) => s.id === editingId)
   if (editing) {
     return (
@@ -46,7 +46,7 @@ export function HistoryView({ program, sessions }: Props) {
     )
   }
 
-  // Every session of the lift, on any day (SPEC §5.3, §9.4 slice 2).
+  // Every session of the lift, on any day (SPEC §5.3, §6.9).
   const timeline = liftTimeline(program, sessions, exercise.name)
   const points = timeline
     .filter((t) => t.e1rm !== undefined)
@@ -131,7 +131,7 @@ export function HistoryView({ program, sessions }: Props) {
   )
 }
 
-/** Extra sets on their own line (SPEC §9.2, slice 2). */
+/** Extra sets on their own line (SPEC §5.2). */
 function ExtraLine({ sets }: { sets: LoggedSet[] }) {
   const extras = formatExtras(sets)
   return extras ? <p className="muted">{extras}</p> : null

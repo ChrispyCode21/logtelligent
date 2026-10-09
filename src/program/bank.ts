@@ -1,4 +1,4 @@
-// The built-in exercise bank (SPEC §9.1, slice 2). Pure data: picking an exercise copies its
+// The built-in exercise bank (SPEC §5.1). Pure data: picking an exercise copies its
 // defaults into a normal program exercise, and nothing links back here.
 import type { EquipmentType, RepRange, Tier } from '../engine'
 import { MAX_RELATIVE_JUMP } from './program'
@@ -7,7 +7,7 @@ import { liftKey } from './lifts'
 
 export type BodyArea = 'chest' | 'back' | 'shoulders' | 'arms' | 'legs' | 'core'
 
-/** Display order and labels. A grouping for browsing, not a muscle-group model (SPEC §11). */
+/** Display order and labels. A grouping for browsing, not a muscle-group model (SPEC §5.1). */
 export const BODY_AREAS: { id: BodyArea; label: string }[] = [
   { id: 'chest', label: 'Chest' },
   { id: 'back', label: 'Back' },

@@ -2,7 +2,7 @@ import { countedSets, type LoggedSet, type Suggestion, type Tier } from '../engi
 import type { ExerciseLog } from './types'
 
 // An exercise's prescribed sets use one working weight (SPEC §6.3, §6.5), so changing the weight on
-// any of them changes it on all of them. Extra sets (SPEC §9.2, slice 2) come after the prescribed
+// any of them changes it on all of them. Extra sets (SPEC §5.2) come after the prescribed
 // ones and keep their own weight, so one can be a lighter back-off set.
 
 /** Log a prescribed set, before any extras. */
@@ -30,7 +30,7 @@ export function removeSet(sets: LoggedSet[], index: number): LoggedSet[] {
 
 /**
  * Removing set 1 would leave a first set without the effort it needs, so the delete must ask for one
- * (SPEC §9.2, slice 1). Removing a later set never asks, even if set 1 already lacks one (e.g. an
+ * (SPEC §5.4). Removing a later set never asks, even if set 1 already lacks one (e.g. an
  * exercise that was an accessory when it was logged). Extras never become set 1.
  */
 export function removalNeedsEffort(
@@ -56,7 +56,7 @@ export const hasAnySets = (logs: ExerciseLog[]) => logs.some((l) => loggedSetCou
 /**
  * When an exercise's validation message shows. Live: once all of today's sets are in (SPEC §5.2,
  * §6.6). Finished: whenever it has prescribed sets, since the replay judged it however many there
- * were (SPEC §9.2, slice 1).
+ * were (SPEC §5.4).
  */
 export const showsOutcome = (finished: boolean, sets: LoggedSet[], target: number) =>
   finished ? countedSets(sets).length > 0 : allSetsLogged(sets, target)
@@ -68,7 +68,7 @@ export function rpeRequired(tier: Tier, index: number): boolean {
 
 /**
  * Whether a primary lift's sets have the effort its first set needs (SPEC §6.3). An exercise with
- * no sets needs no effort. Checked at Finish, and when a finished session is edited (SPEC §9.2, slice 1).
+ * no sets needs no effort. Checked at Finish, and when a finished session is edited (SPEC §5.4).
  */
 export function hasRequiredEffort(tier: Tier, sets: LoggedSet[]): boolean {
   const first = countedSets(sets)[0]
@@ -85,7 +85,7 @@ export function targetSets(log: ExerciseLog, configuredSets: number, suggestion:
 
 /**
  * All of today's prescribed sets are in: validation runs (SPEC §5.2, §6.6), the form for a new set
- * closes, and "+ Add set" is offered (SPEC §9.2, slice 2).
+ * closes, and "+ Add set" is offered (SPEC §5.2).
  */
 export function allSetsLogged(sets: LoggedSet[], target: number): boolean {
   return countedSets(sets).length >= target
@@ -108,7 +108,7 @@ export function loggedSets(log: ExerciseLog): LoggedSet[] {
 /**
  * Prescribed sets logged against sets wanted across a session, for "Only X of Y sets logged"
  * (SPEC §5.2). Skipped exercises count for neither; substitutes count their own sets; extras
- * don't count (SPEC §9.2, slice 2).
+ * don't count (SPEC §5.2).
  */
 export function setTally(entries: { log: ExerciseLog; target: number }[]): {
   logged: number
@@ -136,7 +136,7 @@ export function canFinish(logs: ExerciseLog[], tierOf: (exerciseId: string) => T
 
 /**
  * The set count a header shows against what's logged: today's target in a live session, and in a
- * finished one only if its prescription was saved (SPEC §9.4 slice 1). Before v1.3.0 it wasn't, so
+ * finished one only if its prescription was saved (SPEC §6.8). Before v1.3.0 it wasn't, so
  * those show what was logged alone.
  */
 export function shownTarget(log: ExerciseLog, finished: boolean, target: number): number | undefined {
