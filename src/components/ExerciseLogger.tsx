@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import {
   availableLoads,
   evaluateSession,
@@ -18,21 +17,11 @@ import {
   targetSets,
 } from '../session/sets'
 import type { ExerciseLog } from '../session/types'
-import {
-  replaceExercise,
-  restoreExercise,
-  saveSets,
-  saveSubstituteSets,
-  skipExercise,
-  undoReplace,
-} from '../storage/sessions'
-import { Button } from '../ui/Button'
+import { saveSets, saveSubstituteSets } from '../storage/sessions'
 import { Card } from '../ui/Card'
-import { Field } from '../ui/Field'
 import { formatSetCount, formatSetsWithExtras } from '../ui/format'
+import { ExerciseMenu } from './ExerciseMenu'
 import { SetEditor } from './SetEditor'
-
-const VOLUME_ONLY_NOTICE = 'This will be tracked as volume only and not used for estimates.'
 
 interface Props {
   sessionId: number
@@ -58,10 +47,6 @@ export function ExerciseLogger({
   finished = false,
   onLogSaved,
 }: Props) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [replacing, setReplacing] = useState(false)
-  const [substituteName, setSubstituteName] = useState('')
-
   const target = targetSets(log, config.sets, suggestion)
   const substitute = log.substitute
   const sets = log.sets
@@ -70,123 +55,39 @@ export function ExerciseLogger({
   const canAdd = !finished && !allLogged
   const canAddExtra = !finished && allLogged
 
-  function closeMenu() {
-    setMenuOpen(false)
-    setReplacing(false)
-  }
-
-  async function confirmReplace(e: React.FormEvent) {
-    e.preventDefault()
-    const name = substituteName.trim()
-    if (!name) return
-    await replaceExercise(sessionId, config.id, name)
-    setSubstituteName('')
-    closeMenu()
-  }
-
-  async function undo() {
-    const count = substitute?.sets.length ?? 0
-    const message = `Undo the replace? The ${count} set${count === 1 ? '' : 's'} logged for ${substitute?.name} will be discarded.`
-    if (count === 0 || confirm(message)) await undoReplace(sessionId, config.id)
-    closeMenu()
-  }
-
-  async function skip() {
-    const count = sets.length + (substitute?.sets.length ?? 0)
-    const message = `Skip ${config.name} today? The ${count} set${count === 1 ? '' : 's'} logged for it will be discarded.`
-    if (count === 0 || confirm(message)) await skipExercise(sessionId, config.id)
-    closeMenu()
-  }
-
-  async function restore() {
-    await restoreExercise(sessionId, config.id)
-    closeMenu()
-  }
-
-  const header = (
-    <div className="logger-head">
-      <h2>
-        {config.name}
-        {substitute ? (
-          <span className="muted"> → {substitute.name}</span>
-        ) : log.skipped ? (
-          <span className="muted">{finished ? ' · skipped' : ' · skipped today'}</span>
-        ) : (
-          <span className="muted"> · {formatSetCount(sets, shownTarget(log, finished, target))}</span>
-        )}
-        {!substitute && !log.skipped && suggestion.kind === 'suggestion' && suggestion.plan === 'deload' && (
-          <span className="tag">Deload</span>
-        )}
-      </h2>
-      {!finished && (
-        <Button
-          className="menu-button"
-          aria-label={`Options for ${config.name}`}
-          aria-expanded={menuOpen}
-          onClick={() => (menuOpen ? closeMenu() : setMenuOpen(true))}
-        >
-          ⋯
-        </Button>
+  const heading = (
+    <h2>
+      {config.name}
+      {substitute ? (
+        <span className="muted"> → {substitute.name}</span>
+      ) : log.skipped ? (
+        <span className="muted">{finished ? ' · skipped' : ' · skipped today'}</span>
+      ) : (
+        <span className="muted"> · {formatSetCount(sets, shownTarget(log, finished, target))}</span>
       )}
-    </div>
+      {!substitute && !log.skipped && suggestion.kind === 'suggestion' && suggestion.plan === 'deload' && (
+        <span className="tag">Deload</span>
+      )}
+    </h2>
   )
 
-  // Exercise menu (SPEC §5.2): replace or skip; undo either until the session is finished.
-  const menu = menuOpen && (
-    <div className="exercise-menu">
-      {replacing ? (
-        <form className="replace-form" onSubmit={confirmReplace}>
-          <p className="note">{VOLUME_ONLY_NOTICE}</p>
-          <Field label={<>Replace {config.name} with</>}>
-            <input
-              autoFocus
-              value={substituteName}
-              placeholder="e.g. Machine chest press"
-              onChange={(e) => setSubstituteName(e.target.value)}
-            />
-          </Field>
-          <div className="actions">
-            <Button type="submit" variant="primary" disabled={!substituteName.trim()}>
-              Replace
-            </Button>
-            <Button onClick={closeMenu}>Cancel</Button>
-          </div>
-        </form>
-      ) : (
-        <div className="actions">
-          {log.skipped ? (
-            <Button onClick={() => void restore()}>Restore</Button>
-          ) : (
-            <>
-              {substitute ? (
-                <Button onClick={() => void undo()}>Undo replace</Button>
-              ) : (
-                <Button onClick={() => setReplacing(true)}>Replace…</Button>
-              )}
-              <Button variant="danger" onClick={() => void skip()}>
-                Skip today
-              </Button>
-            </>
-          )}
-        </div>
-      )}
-    </div>
+  // A finished session has no menu (SPEC §9.2, slice 1).
+  const header = finished ? (
+    <div className="logger-head">{heading}</div>
+  ) : (
+    <ExerciseMenu sessionId={sessionId} config={config} log={log}>
+      {heading}
+    </ExerciseMenu>
   )
 
   if (log.skipped) {
-    return (
-      <Card className="skipped">
-        {header}
-        {menu}
-      </Card>
-    )
+    return <Card className="skipped">{header}</Card>
   }
 
   if (substitute) {
     return (
       <Card>
         {header}
-        {menu}
         <p className="muted">Volume only: not used for {config.name} estimates or progression.</p>
         {sets.length > 0 && (
           <p className="muted">Logged before replacing: {formatSetsWithExtras(sets, effortScale)}</p>
@@ -218,7 +119,6 @@ export function ExerciseLogger({
   return (
     <Card>
       {header}
-      {menu}
       <SetEditor
         key="original"
         sets={sets}
