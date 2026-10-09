@@ -151,6 +151,7 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 - **Actions:** `anthropics/claude-code-action`, pinned to a commit SHA like every other action. It runs Claude Code headless on a fresh runner, which reads CLAUDE.md and `.claude/agents/` as a desktop session does.
 - **Identity:** the Claude GitHub App (`claude[bot]`). Its token is needed because pushes and PRs made with the default `GITHUB_TOKEN` don't trigger other workflows, so CI would never run on the agent's PRs.
 - **No stored key: Workload Identity Federation** (Decided 2026-10-09, replacing an `ANTHROPIC_API_KEY` secret). Each run, GitHub gives the workflow a short-lived signed token saying which repo, branch and workflow it is; Anthropic exchanges it for an API token that expires within minutes (the Action refreshes it during long runs). The Claude Console holds the trust setup: GitHub Actions registered as an issuer, a service account, and a federation rule that accepts only this repo's agent workflow on `main`. The IDs the workflow needs are identifiers, not credentials, and live in repo variables.
+- **Except the Code job: a spend-capped API key** (Decided 2026-10-09). Federation needs a job that may request GitHub identity tokens, and with that permission anything the job runs could also get a Claude App write token. The Code job runs Claude with a shell, so it gets no such permission; Claude logs in there with an `ANTHROPIC_API_KEY` secret created in the "github-actions" workspace, so a leak is bounded by that workspace's spend limit and revoked in the Console. Triage (no shell) and Publish (no Claude) keep federation.
 - **Spending:** usage is billed per token to a dedicated Console workspace ("github-actions") with its own monthly limit. When the limit is reached, runs fail until the month resets or the limit is raised; re-adding `agent-ready` retries. Revoking access is deleting the federation rule.
 - **Repo stays public:** Actions minutes are free, and only the owner can add labels.
 
@@ -168,6 +169,7 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 | `agent-needs-info` | yellow | The agent asked questions and stopped. The owner answers in a comment and re-adds `agent-ready`. |
 | `agent-followup` | purple | Found by the agent but needs the owner's input (a style or product decision) before it can be built. |
 | `touches-data` | red | The PR changes what's stored (see "Merge safety"). |
+| `touches-gates` | orange | The PR changes what decides "green": the check scripts, lint, format, type or test config, the security headers or hosting (see "Merge safety"). |
 
 README.md ("Setting up a new deployment") has the commands that create them.
 
@@ -194,13 +196,14 @@ On branch `agent/issue-<n>-<slug>`, the agent follows CLAUDE.md's "Building a sl
 Decided 2026-10-09:
 
 - **Claude can't push; a fixed step publishes.** Claude works with the job's read-only token: it edits, commits, and runs the checks and the reviewer, then returns the PR's title and description as structured output. The publish step copies its commits into a fresh clone, refuses if they touch a guardrail path (below) or there are none, then gets a Claude App token limited to contents and pull requests (from the same Anthropic endpoint the Action uses; it's undocumented, so a change there makes publishing fail visibly) and pushes the branch and opens the PR. A PR opened with that token runs CI, which one opened with the default token wouldn't. If Claude finds a question the thread doesn't answer, it returns the questions instead and nothing is published.
-- **No new dependencies.** The coding run can't `npm install`; an issue that needs a new package comes back with a question.
+- **No new dependencies or scripts.** The coding run can't `npm install`, and Publish refuses any change to `package.json` or `package-lock.json` beyond the version (so releases still work) and any `.npmrc`. An issue that needs a new package comes back with a question.
+- **Changes to the gates are labeled, not refused.** A PR that touches `scripts/`, the lint, format, type or Playwright config, `public/_headers` or `wrangler.jsonc` gets `touches-gates`, so the owner looks before merging.
 - **One branch per issue.** If `agent/issue-<n>-…` already exists, the run stops and says so; close the PR or delete the branch to build it again. Changes to an open agent PR come with step 6.
 
 **How it runs** (`.github/workflows/agent.yml`, built): a `ready` triage starts three more jobs.
 
-- **Code** checks out `main` on a new branch, installs dependencies and the Playwright browsers, and runs Claude (Opus 5.5) with the prompt in `.github/agent/code.md`, the issue, the thread and triage's plan. Claude can edit, commit and run the repo's npm scripts, tests and read-only git commands, but not push, install packages or reach the web, and its shell commands run sandboxed so they can't reach the job's token-request credentials. It returns `{ status, pr_title, pr_body, touches_data, comment }`, and its commits leave the job as a git bundle.
-- **Publish**, on a fresh machine, reads the bundle into a clean clone and refuses commits that touch a guardrail path or `package.json`'s dependencies. It then pushes the branch and opens the PR (`Closes #n`, a footer with the run and cost, and `touches-data` when `src/storage/` changed or Claude said so) with the limited Claude App token.
+- **Code** checks out `main` on a new branch, installs dependencies and the Playwright browsers, and runs Claude (Opus 5.5) with the prompt in `.github/agent/code.md`, the issue, the thread and triage's plan. Claude can edit, commit and run the repo's npm scripts, tests and read-only git commands; push, `npm install`, `curl`, `wget` and the web tools are denied. The job can't request GitHub identity tokens, so nothing it runs can get a write token; its shell commands also run sandboxed, as defense in depth. It returns `{ status, pr_title, pr_body, touches_data, comment }`, and its commits leave the job as a git bundle.
+- **Publish**, on a fresh machine, reads the bundle into a clean clone and refuses commits that touch a guardrail path or change `package.json` or `package-lock.json` beyond the version. It then pushes the branch and opens the PR (`Closes #n`, a footer with the run and cost) with the limited Claude App token, and labels it `touches-data` (when `src/storage/` changed or Claude said so) or `touches-gates`.
 - **Report** comments on the issue only when there's no PR: Claude's questions (with `agent-needs-info`), an existing branch, a refusal, or a run that didn't finish. When there's a PR, the PR is the report.
 
 The agent never merges, and never edits its own guardrails: `.github/workflows/`, `.github/rulesets/`, `.github/agent/` (its prompts) and `.claude/` (its reviewer subagent and any Claude settings) (Decided 2026-10-09). Everything else, release PRs included, it may do.
@@ -234,7 +237,7 @@ The owner may merge an agent PR once it's green. That rests on the required chec
 - a **Playwright check**: every screen at 375px and 320px for sideways scrolling and clipped labels, with seeded data, plus smoke tests of the main flows (TESTING.md's preview checks, automated; `e2e/`);
 - for stored-data changes, **upgrade tests** (see "Changing the data model", step 5).
 
-A PR that changes what's stored gets `touches-data`. Code review stays optional; the one thing it asks of the owner is to **export a backup on the phone before merging**, because reverting the PR can't undo an upgrade already applied to real data.
+A PR that changes what's stored gets `touches-data`, and one that changes the checks themselves gets `touches-gates` (read those before merging: green means less if the checks changed). Code review stays optional; the one thing it asks of the owner is to **export a backup on the phone before merging**, because reverting the PR can't undo an upgrade already applied to real data.
 
 ### Build order
 

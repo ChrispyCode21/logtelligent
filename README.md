@@ -73,6 +73,9 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
    ```powershell
    gh label create touches-data --color B60205 --description 'Changes what is stored; export a backup on the phone before merging' --force
    ```
+   ```powershell
+   gh label create touches-gates --color D93F0B --description 'Changes the checks, config, headers or hosting; read before merging' --force
+   ```
 6. Claude for the agent pipeline, with no stored key (Workload Identity Federation; ARCHITECTURE.md, "Agent pipeline"):
    1. Install the [Claude GitHub App](https://github.com/apps/claude) on this repository only.
    2. In the [Claude Console](https://platform.claude.com) (the developer API, billed separately from a Claude plan): add credits under **Billing**, and create a workspace `github-actions` with a monthly spend limit.
@@ -89,6 +92,10 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
       ```
       ```powershell
       gh variable set ANTHROPIC_FEDERATION_RULE_ID --body '<fdrl_…>'
+      ```
+   5. For the coding run, which doesn't use federation (ARCHITECTURE.md, "Where it lives"): in the `github-actions` workspace, create an API key under **API keys**, then store it as a secret. `gh secret set` asks for the value, so it isn't saved in your shell history:
+      ```powershell
+      gh secret set ANTHROPIC_API_KEY
       ```
 
 ## Install on iPhone

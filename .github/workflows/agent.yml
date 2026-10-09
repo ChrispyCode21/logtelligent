@@ -1,8 +1,8 @@
 # The agent pipeline (ARCHITECTURE.md, "Agent pipeline"): an issue labeled agent-ready by the owner is
 # triaged by Claude, and a ready one is built and opened as a PR. Claude never holds a write token:
 # it returns its results as structured output, and fixed steps post comments, set labels, check its
-# commits and publish them. Keep this file's name: the Anthropic federation rule accepts only
-# .github/workflows/agent.yml on main, so no other workflow can get a token.
+# commits and publish them. Keep this file's name: the Anthropic federation rule (used by triage)
+# accepts only .github/workflows/agent.yml on main, so no other workflow can get a token.
 name: Agent
 
 on:
@@ -153,13 +153,14 @@ jobs:
       cancel-in-progress: false
     env:
       MODEL: claude-opus-5-5
-      # Claude's shell commands run sandboxed (their own process namespace, secrets removed from their
-      # environment), so they can't reach this job's token-request credentials.
+      # Defense in depth: Claude's shell commands run sandboxed, with secrets removed from their
+      # environment. The real boundary is the permissions below.
       CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: '1'
+    # No id-token: this job can't request GitHub identity tokens, so nothing it runs can get a write
+    # token. Claude logs in with an API key from the spend-capped "github-actions" workspace instead.
     permissions:
       contents: read
       issues: read
-      id-token: write # only for the Anthropic token exchange; GitHub access is this job's read-only token
     outputs:
       status: ${{ steps.branch.outputs.status || steps.bundle.outputs.status || steps.result.outputs.status }}
       result: ${{ steps.claude.outputs.structured_output }}
@@ -229,10 +230,7 @@ jobs:
         timeout-minutes: 45
         uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b # v1.0.247
         with:
-          anthropic_federation_rule_id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
-          anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
-          anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
-          anthropic_workspace_id: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # Read-only: Claude commits locally and can't push. The publish job does that.
           github_token: ${{ github.token }}
           prompt: Build the issue in .agent-input/ by following .github/agent/code.md. You're on branch ${{ steps.branch.outputs.branch }}.
@@ -338,9 +336,15 @@ jobs:
           [ "$(pkg origin/main)" = "$(pkg "$BRANCH")" ] && [ "$(lock origin/main)" = "$(lock "$BRANCH")" ] \
             || refuse "The commits change package.json or package-lock.json beyond the version, which the agent may not do."
 
-          touches_data=false
+          # Labels that ask the owner to look before merging (ARCHITECTURE.md, "Merge safety").
+          labels=()
           if grep -q '^src/storage/' <<<"$changed" || [ "$(jq -r '.touches_data // false' <<<"$RESULT")" = true ]; then
-            touches_data=true
+            labels+=(touches-data)
+          fi
+          # Files that decide what "green" means: the check scripts, lint, format, type and test config,
+          # and the security headers and hosting.
+          if grep -qE '^(scripts/|\.oxlintrc\.json$|\.prettier|playwright\.config\.ts$|vite\.config\.ts$|tsconfig[^/]*\.json$|public/_headers$|wrangler\.jsonc$)' <<<"$changed"; then
+            labels+=(touches-gates)
           fi
           title=$(jq -r '.pr_title // empty' <<<"$RESULT")
           [ -n "$title" ] || title="Issue #$ISSUE"
@@ -376,10 +380,10 @@ jobs:
           pr_url=$(GH_TOKEN="$token" gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" \
             --title "$title" --body-file "$RUNNER_TEMP/pr-body.md")
           echo "status=published" >> "$GITHUB_OUTPUT"
-          if [ "$touches_data" = true ]; then
-            GH_TOKEN="$token" gh pr edit "$pr_url" --add-label touches-data \
-              || echo "::warning::Couldn't add the touches-data label to $pr_url; add it by hand."
-          fi
+          for label in "${labels[@]}"; do
+            GH_TOKEN="$token" gh pr edit "$pr_url" --add-label "$label" \
+              || echo "::warning::Couldn't add the $label label to $pr_url; add it by hand."
+          done
 
   # When there's a PR, it's the report: it closes the issue and carries the run and cost. This job
   # comments only when there isn't one, so a run never ends silently.
