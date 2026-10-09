@@ -197,7 +197,7 @@ jobs:
           [ -n "$proposal" ] || stop "there's no split proposal on this issue to create them from."
           proposed_at=$(jq -r .created_at <<<"$proposal")
           jq -e --arg owner "$OWNER" --arg at "$proposed_at" \
-            'any(.[]; .user.login == $owner and .created_at > $at and (.body | ascii_downcase | test("^\s*approved")))' comments.json >/dev/null \
+            'any(.[]; .user.login == $owner and .created_at > $at and (.body | ascii_downcase | test("^[[:space:]]*approved")))' comments.json >/dev/null \
             || stop "there's no reply from the owner starting \"approved\" after the latest proposal."
           # The last marker is the workflow's own (it comes after Claude's text), checked again here.
           subs=$(jq -r '[.body | match("<!-- agent-split:([A-Za-z0-9+/=]+) -->"; "g")] | last | .captures[0].string' <<<"$proposal" \
