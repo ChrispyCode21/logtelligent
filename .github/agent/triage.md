@@ -47,10 +47,17 @@ The workflow shows them under your `comment`, so the comment is only a sentence 
 - the tests: unit tests for pure logic, SPEC §7 IDs if any, and new screens or states for `e2e/layout.spec.ts`;
 - whether it changes stored data (the PR would carry `touches-data`).
 
-Also return a `complexity`, which picks the model that builds it. Judge the reasoning the build needs, not its size: a change across 40 files can be routine, and a 10-line function can be complex.
+Also return a `complexity`, which picks the model that builds it. Judge the reasoning the build needs and how quietly a mistake could pass, not its size: a change across many files can be routine, and a few lines can be complex.
 
-- **`routine`** (Sonnet): your plan pins down what to write, and the work is mechanical or follows a pattern already in the code (copy, renames, moving code, wiring something in the way it's done elsewhere). A reader can see it's right, and the existing tests and checks would catch a slip.
-- **`complex`** (Opus): anything that needs reasoning your plan can't pin down, however small: an algorithm or anything where a naive version would be wrong or slow, the progression engine and its math, stored data and upgrades, the check scripts or config (`touches-gates`), a design choice, or an issue that leaves room for interpretation. When unsure, `complex`.
+- **`routine`** (Sonnet): your plan pins down what to write, and the work is mechanical or repeats a pattern already in the code (renames, moving code, wiring something in the way it's done elsewhere). A reader can see it's right, and an existing test or check would fail on a slip. Judge the plan, not the issue's wording: the same text in many places is routine to change only if the plan doesn't call for consolidating it first.
+- **`complex`** (Opus): anything where a plausible-looking change can be quietly wrong, however small:
+  - the progression engine and its math (e1RM, rounding to loads), state derived by replaying history (stacks, deloads, rep extensions), and dates;
+  - stored data and Dexie upgrades, where a mistake reaches existing data;
+  - the check scripts or config (`touches-gates`);
+  - a design choice, a new abstraction, or an issue that leaves room for interpretation;
+  - edge cases your plan names that no existing test covers.
+
+  When unsure, `complex`.
 
 ## Writing the comment
 
