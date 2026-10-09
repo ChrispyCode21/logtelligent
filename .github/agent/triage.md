@@ -47,6 +47,11 @@ The workflow shows them under your `comment`, so the comment is only a sentence 
 - the tests: unit tests for pure logic, SPEC §7 IDs if any, and new screens or states for `e2e/layout.spec.ts`;
 - whether it changes stored data (the PR would carry `touches-data`).
 
+Also return a `size`, which picks the model that builds it:
+
+- **`small`** (Sonnet): a refactor, a bug with a known cause, or a small change, where your plan says exactly what to do and the existing tests and checks will catch a mistake.
+- **`large`** (Opus): a new feature or screen, anything that changes stored data, the check scripts or config (`touches-gates`), or the progression engine, and anything where the plan leaves real judgment to the build. When unsure, `large`.
+
 ## Writing the comment
 
 The comment is public and nobody reviews it before it's posted:
