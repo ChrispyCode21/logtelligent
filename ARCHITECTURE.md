@@ -135,7 +135,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Agent pipeline
 
-*Status: **Decided 2026-10-09.** Built in the PRs listed under "Build order" below; each PR marks its part built there. Built so far: steps 2, 3, 4 and 5a.*
+*Status: **Decided 2026-10-09.** Built in the PRs listed under "Build order" below; each PR marks its part built there. Built so far: steps 2, 3, 4 and 5.*
 
 Work can start from a GitHub issue instead of a desktop session: an issue labeled `agent-ready` triggers Claude in GitHub Actions, which checks the issue, asks questions if it's underspecified, or builds it on a branch following CLAUDE.md's "Building a slice" and opens a PR. The PR passes the same gates as any other, and the owner merges it.
 
@@ -176,7 +176,7 @@ README.md ("Setting up a new deployment") has the commands that create them.
 
 **Issue forms** (`.github/ISSUE_TEMPLATE/`): **Task** (what should change, why, where it's specified, done when, out of scope) and **Bug** (what happened, what was expected, steps, where). They ask for what triage needs, so fewer issues come back with questions; blank issues still work.
 
-Each version has a **milestone** (v1.3.0, v2.0.0…). The agent creates it when the version is scoped in SPEC.md (§9.x), unless it already exists (Decided 2026-10-09), and puts every issue it creates in the right milestone: sub-issues in their parent's, release issues in their version's. In practice a fixed step does it, not Claude: after each merge to `main` it reads SPEC.md's `## 9.x vX.Y.Z` headings and creates a milestone for each version that isn't released and has none. Releasing a version closes its milestone.
+Each version has a **milestone** (v1.3.0, v2.0.0…). The agent creates it when the version is scoped in SPEC.md (§9.x), unless it already exists (Decided 2026-10-09), and puts every issue it creates in the right milestone: sub-issues in their parent's, release issues in their version's. In practice a fixed step does it, not Claude: after each merge to `main`, `.github/workflows/release.yml` reads SPEC.md's `## 9.x vX.Y.Z` headings and creates a milestone for each version that isn't released and has none. Releasing a version closes its milestone.
 
 ### Triage (Claude Sonnet 5.5, 10 minutes)
 
@@ -189,7 +189,15 @@ Triage reads the issue, SPEC.md, this document and CLAUDE.md, then does one of t
    - **Unblocking needs completed blockers.** A blocked sub-issue gets `agent-ready` only when every blocker is closed as completed. A blocker closed as not planned leaves it for the owner to decide. Only sub-issues the agent created this way are labeled automatically.
 3. **Ready.** Otherwise it comments a short plan and the coding run starts.
 
-**How it runs** (`.github/workflows/agent.yml`, built): the **Triage** job checks out `main`, writes the issue (as it was when labeled, from the event) and its filtered thread to `.agent-input/`, and runs Claude with the prompt in `.github/agent/triage.md`. The job holds only read permissions, and the Action is given that job's token rather than a Claude App token. Claude has read-only tools (Read, Grep, Glob; no shell, no web, no edits) and returns its answer as structured output, `{ decision, comment }`, checked against a schema. The **Respond** job, which holds the only write permission (`issues: write`), posts the comment with a footer (the run and its cost) and sets the labels: `agent-ready` always comes off, so re-adding it starts the next run, and `agent-needs-info` goes on for questions and splits. If triage fails or returns nothing usable, Respond says so on the issue instead. A ready issue goes on to the coding run. Until step 5b, nothing acts on an approved split (creating sub-issues comes with it), so splits wait until then.
+**How it runs** (`.github/workflows/agent.yml`, built): the **Triage** job checks out `main`, writes the issue (as it was when labeled, from the event) and its filtered thread to `.agent-input/` (with `.github/agent/collect.sh`, which for a sub-issue also writes its parent and the parent's thread), and runs Claude with the prompt in `.github/agent/triage.md`. The job holds only read permissions, and the Action is given that job's token rather than a Claude App token. Claude has read-only tools (Read, Grep, Glob; no shell, no web, no edits) and returns its answer as structured output, `{ decision, comment, subissues }`, checked against a schema (`subissues` only for a split: 2–8, each blocked only by earlier ones). The **Respond** job, which holds triage's only write permission (`issues: write`), posts the comment with a footer (the run and its cost) and sets the labels: `agent-ready` always comes off, so re-adding it starts the next run, and `agent-needs-info` goes on for questions and splits. For a split, Respond shows the sub-issues under Claude's comment and keeps them in it as data (a hidden, encoded block). If triage fails or returns nothing usable, Respond says so on the issue instead. A ready issue goes on to the coding run.
+
+When triage judges that the owner approved the latest proposal (`approved_split`), the **Split** job creates the sub-issues from that posted proposal, never from new output. It checks that an owner comment follows the proposal and that the issue has no sub-issues yet, then, with a Claude App token limited to issues (issues and labels it adds start runs; ones added with the job's own token wouldn't), creates each one in the parent's milestone with "Part of #n", links it as a sub-issue and its blockers as "blocked by", and labels the unblocked ones `agent-ready` last. If it stops part way it says what exists, for the owner to finish by hand.
+
+**After an issue closes** (the **After an issue closes** job, one at a time so two closes can't both open a release issue), with fixed text only:
+
+1. If it closed as completed, each open sub-issue of the agent's that it was blocking gets `agent-ready` once all its blockers are closed as completed (and it has no `agent-` label already).
+2. If it was one of the agent's sub-issues and its parent's sub-issues are now all closed, the parent closes.
+3. If its milestone is a version (`vX.Y.Z`) with nothing left open, no "Release vX.Y.Z" issue yet and no release, it opens one ("Releases" below).
 
 Any `agent-ready` issue is in scope, new features included. New features are scoped in SPEC.md from the owner's answers, as a desktop session would.
 
@@ -206,7 +214,7 @@ Decided 2026-10-09:
 
 **How it runs** (`.github/workflows/agent.yml`, built): a `ready` triage starts three more jobs.
 
-- **Code** checks out `main` on a new branch, installs dependencies and the Playwright browsers, and runs Claude (Opus 5.5) with the prompt in `.github/agent/code.md`, the issue, the thread and triage's plan. Claude can edit, commit and run the repo's npm scripts, tests and read-only git commands; push, `npm install`, `curl`, `wget` and the web tools are denied. Its shell commands run sandboxed, which reduces the accepted risk above. It returns `{ status, pr_title, pr_body, touches_data, comment }`, and its commits leave the job as a git bundle.
+- **Code** checks out `main` on a new branch, installs dependencies and the Playwright browsers, and runs Claude (Opus 5.5) with the prompt in `.github/agent/code.md`, the issue, the thread (and a sub-issue's parent) and triage's plan. Claude can edit, commit and run the repo's npm scripts, tests and read-only git commands; push, `npm install`, `curl`, `wget` and the web tools are denied. Its shell commands run sandboxed, which reduces the accepted risk above. It returns `{ status, pr_title, pr_body, touches_data, comment }`, and its commits leave the job as a git bundle.
 - **Publish**, on a fresh machine, reads the bundle into a clean clone and refuses commits that touch a guardrail path or change `package.json` or `package-lock.json` beyond the version. It then pushes the branch and opens the PR (`Closes #n`, a footer with the run and cost) with the limited Claude App token, and labels it `touches-data` (when `src/storage/` changed or Claude said so) or `touches-gates`.
 - **Report** comments on the issue only when there's no PR: Claude's questions (with `agent-needs-info`), an existing branch, a refusal, or a run that didn't finish. When there's a PR, the PR is the report.
 
@@ -251,7 +259,7 @@ A PR that changes what's stored gets `touches-data`, and one that changes the ch
 4. Triage workflow. Before it: the owner installs the Claude GitHub App, sets up federation in the Claude Console, and adds the repo variables (README.md). **Built.**
 5. Coding run, in two PRs:
    - 5a: branch, slice, PR. **Built.**
-   - 5b: sub-issues for an approved split (and labeling unblocked ones), release issues, milestones, and `claude[bot]` as a label sender.
+   - 5b: sub-issues for an approved split (and labeling unblocked ones), release issues, milestones, and `claude[bot]` as a label sender. **Built.**
 6. PR follow-through: fresh review, follow-up issues, CI auto-fix, keeping PRs current.
 7. Later: lift it into a shared `agent-pipeline` repo.
 
