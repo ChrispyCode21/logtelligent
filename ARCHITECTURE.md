@@ -135,7 +135,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 Issues labeled `agent-ready` are built by Claude in GitHub Actions and arrive as PRs through the same gates as any other; the owner merges.
 
-- **Labels:** `agent-ready`: build this (the owner adds it). `agent-needs-info`: the agent asked questions and stopped; answer, then re-add `agent-ready`. `agent-followup`: found by the agent, needs the owner's decision first. `touches-data`: the PR changes what's stored. `touches-gates`: the PR changes the checks, lint, config, headers or hosting.
+- **Labels:** `agent-ready`: build this (the owner adds it; the agent only on issues it created, see PIPELINE.md). `agent-needs-info`: the agent asked questions and stopped; answer, then re-add `agent-ready`. `agent-followup`: found by the agent, needs the owner's decision first. `touches-data`: the PR changes what's stored. `touches-gates`: the PR changes the checks, lint, config, headers or hosting.
 - **Merge safety:** read `touches-data` and `touches-gates` PRs before merging (green means less if the checks changed), and export a backup on the phone before merging a `touches-data` one: reverting can't undo an upgrade already applied to real data.
 - The agent never merges, and never edits `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`.
 

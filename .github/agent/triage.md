@@ -25,7 +25,7 @@ The owner's numbered replies to earlier questions are **decisions**. Use them; d
 **`questions`** when anything is still open:
 
 - behavior the issue and SPEC.md don't settle (what it looks like, wording, edge cases, what happens to existing data);
-- anything it touches that SPEC.md doesn't cover, or that's still open as an issue (labeled `question`);
+- anything it touches that SPEC.md doesn't cover, or that's still open as an issue (labeled `question`). You can't see issues, so SPEC.md marks a rule that's open with "under review: #n"; changing such a rule needs the owner's answer first;
 - a new feature with no milestone: ask which milestone it belongs to (recommend the next minor, after anything already scoped) and settle its scope;
 - a change the agent may not make: `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`. Say so, and ask whether the owner will make that part.
 

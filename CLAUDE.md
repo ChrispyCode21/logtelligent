@@ -13,7 +13,7 @@ Standing instructions for any Claude session working in this repo.
 
 - **SPEC.md is the source of truth** for what the app does and why; read it before starting work. Build to what it says.
 - **Ask the project owner before** building any behavior SPEC.md doesn't cover. Do not guess and move on. Say what's undecided, offer a recommended default, and wait for an answer.
-- **Undecided things are GitHub issues** (open questions labeled `question`, ideas `enhancement`), never notes in the docs.
+- **Undecided things are GitHub issues** (open questions labeled `question`, ideas `enhancement`), never notes in the docs. When a built rule in SPEC.md is itself open, the rule says "under review: #n", so agent runs (which can't see issues) know to ask; remove the note when the issue is decided.
 - When the owner makes a decision, **change SPEC.md's text** in the same change, so the spec never drifts from the code.
 
 ## Stack

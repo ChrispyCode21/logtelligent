@@ -197,7 +197,7 @@ Per exercise, set at program-setup time:
 A fixed pound increment doesn't work across exercises. +5 lb on a 300 lb squat is under 2%; +2.5 lb on a 12.5 lb lateral raise is 20%. Each exercise needs its own description of how it progresses.
 
 **Three layers, combined:**
-1. **Equipment-type defaults** supply the available loads:
+1. **Equipment-type defaults** supply the available loads (the default values are under review: #61):
    - Barbell: 5 lb total jumps (2.5 lb plate per side), starting at a 45 lb empty bar. A different bar uses the per-exercise override.
    - Dumbbell: a standard rack list (e.g. 10, 12.5, 15, 17.5, 20, 22.5, 25, 30…).
    - Cable / machine: a stack list I enter (e.g. …99, 110, 121…).
@@ -241,10 +241,10 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
   - **Judged by the prescription, not the reps done,** so a great day on a 6–8 range (9 reps @ 8) never drops out (I9). The range is the session's saved one (§6.8), else today's; the target RPE is today's (it isn't saved).
 - **Running e1RM:** the average of the e1RMs from **up to the last 3 sessions within the last 4 weeks**.
   - Average over **however many sessions exist** (1, 2, or 3). Never pad missing sessions with 0 or any placeholder; divide by the actual count.
-  - **Returning from a break** (no session in the 4-week window): use **90% of the most recent session's e1RM** and show a "returning from a break" note. The next real session then replaces it. The session is picked with the same lower-rep preference, so the most recent lower-rep session is used however old it is, even over a more recent higher-rep one (I8).
+  - **Returning from a break** (no session in the 4-week window; which session it picks is under review: #59): use **90% of the most recent session's e1RM** and show a "returning from a break" note. The next real session then replaces it. The session is picked with the same lower-rep preference, so the most recent lower-rep session is used however old it is, even over a more recent higher-rep one (I8).
   - Layoff overshoot beyond that is caught by the fail/deload logic in §6.6.
 - **No history yet:** a primary lift's first e1RM comes from its **setup seed** (§5.1): weight × reps treated as RPE 7. The seed is used **only until the lift's first real session** (on any day) — it is **not** averaged into the running e1RM afterward, so an optimistic or pessimistic guess can't linger for three sessions.
-- **Data-driven targets:** given the running e1RM and a weight, the engine predicts expected reps by inverting the formula (e.g. Epley inverted: reps to failure ≈ `30 × (e1RM / w − 1)`), minus the target reps in reserve. The program stores **intent** (e.g. "3 sets, first set ~RPE 8, 3–5 reps") and the engine chooses the weight.
+- **Data-driven targets** (under review: #60)**:** given the running e1RM and a weight, the engine predicts expected reps by inverting the formula (e.g. Epley inverted: reps to failure ≈ `30 × (e1RM / w − 1)`), minus the target reps in reserve. The program stores **intent** (e.g. "3 sets, first set ~RPE 8, 3–5 reps") and the engine chooses the weight.
 - **Weight-selection rule:**
   1. Target reps = **midpoint of the rep range, rounded up** (3–5 → 4; 5–7 → 6). The midpoint leaves room on both sides: a good day lands above it, a bad day can still clear the floor.
   2. For each available load, predicted reps = reps to failure (the averaged formula, inverted numerically) − (10 − target RPE).
