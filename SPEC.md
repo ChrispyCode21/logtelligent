@@ -1,12 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **released** v1.0.0 (§9), v1.1.0 (§9.1), v1.2.0 (§9.2), v1.2.1 (§9.3) and v1.3.0 (§9.4); CHANGELOG.md has the dates.
-> The source of truth for what the app does and why. Anything built should trace back to a section here.
-
-Legend used throughout:
-- **Decided** — settled; build to it.
-- **Proposed** — suggested during design, not yet confirmed.
-- **Open** — needs a decision before the related slice is built.
+> What the app does now, and why: the source of truth for its behavior. Anything built traces back to a section here; behavior it doesn't cover is asked about before it's built (CLAUDE.md). Open questions and ideas are GitHub issues (§9).
 
 ---
 
@@ -16,31 +10,20 @@ Hand-typed workout notes (e.g. in Apple Notes) record what happened but don't te
 
 **The app is an intelligent logger:** I log my sets in the gym, and it uses my own history to suggest next session's weights and reps. "Intelligent" means a deterministic progression algorithm — **no LLM/AI service**.
 
-## 2. Platform & architecture (Decided)
+## 2. Platform & architecture
 
 - **PWA** (installable web app, added to the iPhone home screen). No App Store.
 - **React + TypeScript**, built with **Vite**.
-- **Local-only data** in the browser's IndexedDB, via **Dexie**. No backend, no accounts.
+- **Local-only data** in the browser's IndexedDB, via **Dexie**. No backend, no accounts. Data never leaves the device except through a backup the user exports.
 - **Offline-capable** (service worker via `vite-plugin-pwa`) — gym signal is unreliable.
-- **Free static hosting** (Decided): Cloudflare, deployed from `main` on every push, on the app's own origin (ARCHITECTURE.md, "Hosting and security"). Security headers in `public/_headers`.
-- **JSON export** from day one as the backup mechanism. **Decided:** export downloads `logtelligent-YYYY-MM-DD.json` (program + all sessions, with a format version); **import** restores a backup file, replacing all data after a confirm.
+- **Free static hosting:** Cloudflare, deployed from `main` on every push, on the app's own origin (ARCHITECTURE.md, "Hosting and security"). Security headers in `public/_headers`.
+- **Pounds only.**
+- **Backup:** export downloads `logtelligent-YYYY-MM-DD.json` (program + all sessions, with a format version); **import** restores a backup file, replacing all data after a confirm.
 - **Progression engine is pure TypeScript** — no React, no database access — so it can be unit-tested in isolation (Vitest).
 
-## 3. Definition of done (MVP)
+## 3. Non-goals
 
-The MVP is done when I can, for a full training cycle, using only the app (features below are built and verified in v1.0.0; **the full-training-cycle use itself is still to be done**):
-
-- [x] Define my program: training days in rotation, exercises per day, and per-exercise settings (tier, rep range / intent, set count, equipment type, progression profile).
-- [x] Open the app and see **today's session** (next day in rotation) with a **suggested weight and rep target** for each exercise.
-- [x] Log every working set (weight, reps, and RPE where applicable) quickly on my phone.
-- [x] See the result of the session's validation (e.g. "Failed to hit minimums, next week's weight will be lowered") and any deload notice.
-- [x] View history per exercise.
-- [x] Export all data to JSON.
-- [x] All progression rules in §6 are covered by passing unit tests built from the worked examples in §7.
-
-## 4. Non-goals (MVP)
-
-Explicitly **out of scope** until the MVP is done:
+Not part of the app; adding one is a scoping decision for the owner:
 
 - Rest timer (rest is self-judged).
 - Push notifications / reminders.
@@ -51,100 +34,183 @@ Explicitly **out of scope** until the MVP is done:
 - Logging warm-up sets.
 - Visual polish beyond "clear and fast to use one-handed."
 
-See §11 for ideas parked until after the MVP.
+## 4. Screens and UI conventions
+
+- Three tabs: **Today** (the next session, or the one in progress), **History** (§5.3) and **Program** (§5.1, §5.5, §5.6, backup).
+- Built for one hand on a phone: every tap target is at least 44 px (the warm-up banner's ✕ and the Program tab's move and remove buttons included), and no screen scrolls sideways or clips a button label at 375 px or 320 px wide.
+- The weight and reps inputs use a large text size. A logged-set row's text ("Set 1 · 225 × 5") is centred vertically in its row.
+- Confirms for destructive or unusual actions are the browser's native `confirm()`, so their buttons are OK and Cancel.
 
 ## 5. Core user flows
 
 ### 5.1 Set up a program
 1. Create training days in rotation order (e.g. Upper A, Lower A, Upper B, Lower B for a ULRUL split).
-2. Add exercises to each day, in order.
-3. Configure each exercise (see §6.1).
-4. **Seed starting numbers (Decided — required gate for v1):** the app cannot start a session until every exercise has a seed.
-   - **Primary lifts:** enter a weight × reps you could do confidently — with effort, but no risk of failing. Prompt along the lines of: *"Enter a weight and reps you're confident you could do: hard, but you wouldn't fail."* This is recorded as a set at **RPE 7** and produces the seed e1RM (§6.4).
-   - **Accessory lifts (Decided):** the prompt asks for a weight at the **bottom of the configured rep range**, e.g. *"What's a weight you can do 15 lateral raises (per side) with that would be hard, but achievable?"* The form shows a placeholder value as a suggestion. The answer is recorded as weight × bottom-of-range reps at **RPE 8**. Accessories don't use e1RM, so the RPE is informational; the first suggestion is that weight at the bottom of the range.
-   - The seed is an estimate. If it's off, the progression rules correct it: at worst, one easy (or failed) week, and the next is accurate.
+2. Add exercises to each day, in order, from the exercise bank or as custom exercises.
+3. Configure each exercise (§6.1).
+4. Enter each exercise's starting numbers (below).
 
-**Decided:** each day has a fixed set of exercises. Upper A and Upper B use different exercises; swapping exercises within the same day from week to week is discouraged, because it breaks tracking.
+Each day has a fixed set of exercises. Upper A and Upper B use different exercises; swapping exercises within the same day from week to week is discouraged, because it breaks tracking.
 
-**Rotation (Decided):**
+**The Program tab**, top to bottom: the effort scale card (§5.6); while there are no active days, the templates (below); the days and their exercises; while there are active days, the "Change your program" card (§5.5); backup. Each exercise shows one summary line, the same format everywhere ("Primary · 3 × 5–7 · Barbell"): equipment by its label, "per side" wherever it applies, and the effort target only on the Program tab.
+
+**Exercise bank:** the 57 exercises in `src/program/bank.ts`, built into the app (no network), text only, no images. Each has a name, tier, equipment, default rep range, sets, unilateral, a one-line description, and a placeholder starting weight.
+- "Add exercise" opens the bank grouped by body area (Chest, Back, Shoulders, Arms, Legs, Core). Groups start collapsed, with a count. Typing in the search box filters across all groups and opens every group with a match. The body area is a display label only, not a muscle-group model.
+- **Search** matches the name and a few common nicknames per exercise (e.g. "RDL" → Romanian Deadlift, "OHP" → Overhead Press), ignoring case and punctuation; every word typed must match.
+- **Custom…** covers anything not listed.
+- **After picking,** the usual exercise form opens, prefilled with the bank's defaults, its description and its placeholder starting weight: review, enter starting numbers, Save. One flow for bank and custom exercises. The defaults are copied into a normal, fully editable exercise; no link to the bank is stored. An exercise joining a lift with history copies some setup from it instead (§6.9).
+
+**Starting numbers (seed):** the app cannot start a session until every exercise has them (a primary joining a lift with history is the exception, §6.9).
+- **Primary lifts:** enter a weight × reps you could do confidently — with effort, but no risk of failing. Prompt along the lines of: *"Enter a weight and reps you're confident you could do: hard, but you wouldn't fail."* This is recorded as a set at **RPE 7** and produces the seed e1RM (§6.4).
+- **Accessory lifts:** the prompt asks for a weight at the **bottom of the configured rep range**, e.g. *"What's a weight you can do 15 lateral raises (per side) with that would be hard, but achievable?"* The answer is recorded as weight × bottom-of-range reps at **RPE 8**. Accessories don't use e1RM, so the RPE is informational; the first suggestion is that weight at the bottom of the range.
+- The seed is an estimate. If it's off, the progression rules correct it: at worst, one easy (or failed) week, and the next is accurate.
+- The exercise form and the walkthrough (below) share one starting-numbers entry with this wording. The form shows a **placeholder** weight as a suggestion: the bank's, snapped down onto the exercise's typed loads. The walkthrough fills in a value instead, and only it offers stack quick picks.
+
+**Templates:** one ships, a **4-day Upper/Lower**, built from bank exercises with their bank defaults:
+- **Upper A:** Bench Press, Barbell Row, Dumbbell Shoulder Press, Lat Pulldown, Lateral Raise, Triceps Pushdown
+- **Lower A:** Back Squat, Romanian Deadlift, Leg Press, Lying Leg Curl, Standing Calf Raise
+- **Upper B:** Overhead Press, Pull-Up, Incline Dumbbell Press, Seated Cable Row, Dumbbell Curl, Face Pull
+- **Lower B:** Deadlift, Bulgarian Split Squat, Leg Extension, Seated Leg Curl, Hanging Leg Raise
+
+Templates are offered while the program has no active days, with building your own as the alternative; switching from another program is "Change your program" first (§5.5). Applying one needs no confirm. It produces a normal, fully editable program, its days added after any archived ones; the effort scale is kept. Each template exercise joins the lift of the same name (§6.9).
+
+**Guided starting-numbers walkthrough:** after picking a template, and from Today's seed gate for any program with exercises missing starting numbers. One screen per exercise still missing them; the seed gate's rules are unchanged, this is just a faster way through it.
+- **Next** saves that exercise's starting numbers straight away. **Finish later** leaves; the seed gate resumes at the first exercise still missing numbers. There is no Back button (edit an exercise on the Program tab instead).
+- **Pre-fill:** the lift's latest weight when it has history (§6.9), else the bank's placeholder weight for an exercise whose name matches a bank exercise, snapped down onto its stack; primaries also get the **top of their rep range** as reps. Others start blank.
+- **Weight stacks:** a cable or machine exercise without a stack asks for one on its screen, with quick picks (5 lb steps, 10 lb steps) or the gym's own list typed in. The last pick is offered first on the next cable/machine exercise. Stacks stay per exercise (§6.2).
+
+**Rotation:**
 - The rotation contains **training days only**; rest days are not slots.
 - The next day is the one after the last day logged, wrapping from the final day back to the first (`(lastIndex + 1) % days.length`). After Lower B comes Upper A.
-- **Days with no exercises are skipped** by the rotation and the Today screen (Decided, slice 3).
-- **If the last day logged has since been archived**, the rotation starts again at the first day (Decided, slice 3).
+- **Days with no exercises are skipped** by the rotation and the Today screen.
+- **If the last day logged has since been archived** (e.g. after changing programs), the rotation starts again at the first day.
+- "The last day logged" is the latest finished session's day, even if all its sets were deleted afterwards; deleting a session moves the rotation back to the session before it (§5.4).
 - One full pass through the rotation = one **week** (cycle). "Last week's numbers" means the previous pass.
 
 ### 5.2 Run a session (the main flow)
-1. App opens to the **next day in the rotation** (Decided).
-2. I can choose a different day, but only after an explicit acknowledgement (Decided). Example: I did Lower A but forgot to log it; I can still log Upper B. A skipped day is simply not logged, and the rotation continues from the day I *did* log.
-3. A **warm-up reminder banner** appears at the top with a short suggestion (one sentence or 2–3 bullets). Warm-up sets are not logged (Decided).
-   - **Decided:** shown at the top of an active session, dismissible for that session. It ramps to the day's first exercise at its suggested weight: *"Warm up for Bench Press (225): 5–10 min easy cardio, then ramp: 45 × 10, 110 × 5, 155 × 3, 190 × 1."* Ramp weights are the lightest load, then ~50%, ~70% and ~85% of the working weight, snapped down to available loads (duplicates dropped). With no working weight to ramp to (e.g. unweighted bodyweight), only the cardio line shows.
+1. The app opens to the **next day in the rotation**, with the day's "Last time: …" note under its name (below).
+2. I can choose a different day, but only after an explicit acknowledgement. Example: I did Lower A but forgot to log it; I can still log Upper B. A skipped day is simply not logged, and the rotation continues from the day I *did* log.
+3. A **warm-up reminder banner** at the top of the session, dismissible for that session. It ramps to the day's first exercise at its suggested weight: *"Warm up for Bench Press (225): 5–10 min easy cardio, then ramp: 45 × 10, 110 × 5, 155 × 3, 190 × 1."* Ramp weights are the lightest load, then ~50%, ~70% and ~85% of the working weight, snapped down to available loads (duplicates dropped). With no working weight to ramp to (e.g. unweighted bodyweight), only the cardio line shows. Warm-up sets are not logged.
 4. Each exercise shows its suggested weight and rep target. Exercises in a deload week are marked as such (§6.7).
-5. I log each working set. The next set **pre-fills** from the previous set's values, so a repeat set is one tap (Decided).
-6. When the last set of an exercise is entered, validation runs (see §6.6) and any message is shown.
-7. Finish the session.
-   - **Short sessions (Decided):** finishing with fewer sets than configured asks for confirmation ("Only 2 of 3 sets logged. Finish anyway?"). The session is then treated as normal: validation runs on the logged sets only, and a missing set is not a fail. (Leaving early or feeling unwell shouldn't count against progression.)
-   - **Set count in the UI (Decided):** once the configured number of sets is logged, the form for a new set is hidden; logged sets stay editable until the session is finished.
+5. I log each working set. The next set **pre-fills** from the previous set's weight and reps (never its effort), so a repeat set is one tap.
+6. When the last set of an exercise is entered, validation runs (§6.6) and any message is shown.
+7. Finish the session (below), or discard it ("Discard this session? Its logged sets will be deleted."), which also discards its note.
 
-**Exercise menu (⋯) — Decided:** each exercise in a session has a menu with options such as **replace** and **delete**.
-- Replacing shows a notice along the lines of: *"This will be tracked as volume only and not used for estimates."*
-- A substitute's sets are kept out of the original exercise's progression data.
-- **Substitute (Decided):** a free-text name; its sets are logged as weight × reps (no RPE asked, §9.3), with no suggestion, floor rule or stacks. Any sets already logged for the original that day stay recorded, but the whole session is kept out of the original's progression (A6).
-- **Delete (Decided):** skips the exercise **for today only**, discarding any sets logged for it today. The program is unchanged, and progression treats it as not done (no fail, no stack).
-- **Undo (Decided):** while the session is open, a replaced exercise can be un-replaced (discarding the substitute's sets) and a skipped one restored. After Finish, both are read-only.
-- **History (Decided):** a replaced session shows under the original exercise as "Replaced with …" with the substitute's sets, and no e1RM or chart point.
+**Sets:**
+- **Set target:** the configured count, halved (rounded up) in a deload week (§6.7); a substitute's is the configured count. The exercise's header shows "2 of 3 sets", and "3 of 3 sets + 1 extra" with extras.
+- Once the target is logged, the form for a new set is hidden and **+ Add set** offers an extra set (below), for originals and substitutes alike.
+- Logged sets stay editable (weight, reps, effort where it's asked) and deletable until the session is finished, and afterwards in the finished-session editor (§5.4).
+- **One working weight** among the prescribed sets: changing one changes the others (§6.3). Effort is asked on a primary's first set only (§6.3).
+- **Deleting set 1 of a primary:** if the set that would become set 1 has no effort, the delete asks for one: that set opens in the form with effort required, and the delete and the effort are saved together; Cancel keeps set 1. Deleting a later set never asks.
+- **Deleting every prescribed set** of an exercise makes it "not done" for that session (no fail, no stack), as with a skip.
+
+**Extra sets** (beyond the prescribed ones):
+- **Recorded, not counted:** shown in the session and in History, tagged "extra", but left out of validation (the floor rule and "range filled", §6.5–6.6) and of the e1RM. The prescribed sets are the only ones that steer suggestions, so "sets are never added by progression" (§6.2) still holds. They're stored marked as extra, since the configured count can change later.
+- **Own weight,** so an extra can be a lighter back-off set: changing a prescribed set's weight never changes an extra, and changing an extra changes only that extra.
+- **No effort asked:** weight × reps only. An extra pre-fills from the set before it (without effort).
+- **Extras stay extras:** deleting a prescribed set reopens the form for a prescribed set rather than promoting an extra.
+- No limit beyond the backup's 100 sets per exercise. A substitute's extras are tagged the same way.
+- If every prescribed set of an exercise is deleted but extras are kept, the session can still finish, and that exercise is "not done" (no fail, no stack).
+
+**Finishing:**
+- **Short sessions:** finishing with fewer prescribed sets than the target asks for confirmation: "Only 2 of 3 sets logged. Finish anyway?" Only prescribed sets count, so 2 prescribed sets plus 1 extra out of 3 still asks "Only 2 of 3". With no note, it adds "(No note for next time.)"; with a note, or when no confirm shows, nothing changes. The session is then treated as normal: validation runs on the logged sets only, and a missing set is not a fail. (Leaving early or feeling unwell shouldn't count against progression.)
+- Finishing saves each exercise's prescription (§6.8).
+
+**Note for next time:**
+- An optional note above Finish on every session. Plain text, up to 200 characters, with a counter near the limit; whitespace only counts as no note.
+- It saves when the field is left (leaving the session screen, or the app going to the background, counts) and on Finish. Discarding a session discards its note. It's editable with the session (§5.4).
+- **"Last time: …"** shows under the day's name on Today before starting, and at the top of the live session: the note from the last finished session of that same training day. If that one has none, nothing shows.
+- History shows it on every exercise's row for that session.
+
+**Exercise menu (⋯):** each exercise in a live session has a menu with **replace** and **delete**.
+- **Replace** shows a notice along the lines of: *"This will be tracked as volume only and not used for estimates."* The substitute is a free-text name; its sets are logged as weight × reps (no effort asked), with no suggestion, floor rule or stacks, and with one working weight, as for any exercise (§6.3). Its sets are kept out of the original exercise's progression data: any sets already logged for the original that day (extras included) stay recorded, but the whole session is kept out of the original's progression (A6). They're shown tagged: "Logged before replacing: 225 × 5 @ 8 · 225 × 4 · Extra: 185 × 8".
+- **Delete** skips the exercise **for today only**, discarding any sets logged for it today. The program is unchanged, and progression treats it as not done (no fail, no stack).
+- **Undo:** while the session is open, a replaced exercise can be un-replaced (discarding the substitute's sets) and a skipped one restored. After Finish, both are read-only.
+- **History:** a replaced session shows under the original exercise as "Replaced with …" with the substitute's sets, and no e1RM or chart point.
 
 ### 5.3 Review history
-1. Pick an exercise.
-2. See past sessions: date, every set (weight × reps, RPE where logged), and the estimated 1RM over time for primary lifts.
+1. Pick a **lift** (exercises with the same name, §6.9).
+2. See every finished session of that lift from every day, newest first, each tagged with its day: date, every set (weight × reps, effort where logged, §5.6), the extras on their own line ("Extra: 185 × 8 · 185 × 7"), the note (§5.2), and the estimated 1RM over time for primary lifts. Each row has **Edit** (§5.4).
 
-**Decided:**
-- Each e1RM point is **that session's e1RM** (from its first set alone, §6.4), not the running average. Deload sessions are listed and tagged but get no e1RM point.
-- Shown as a **small line chart** (inline SVG, no chart library) above the session list, with the e1RM also on each session row.
-- The exercise picker includes **active exercises** (grouped by day) and **archived exercises that have history** (in an "Archived" group).
-- **Lifts (Decided 2026-10-08, §9.4 slice 2):** the picker lists each **lift** once (exercises with the same name, §6.4), under the first day it's on, and picking it shows every session of that lift from every day, newest first, each tagged with its day. Archived lifts are those with no active exercise.
+- **The picker** lists each lift once, under the first day it's on: **active lifts** grouped by day, and lifts with no active exercise that have history in an **"Archived"** group. Only finished sessions count as history, so an exercise archived mid-session appears once a finished session has it, never with "No sessions logged yet."
+- **e1RM:** each point is **that session's e1RM** (from its first set alone, §6.4), not the running average. Deload sessions are listed and tagged but get no e1RM point. It's shown as a **small line chart** (inline SVG, no chart library) above the session list, and on each session row. Sessions over 10 effective reps are marked on the chart (drawn hollow), since they count toward the running e1RM only when nothing lower does (§6.4).
+- A session whose sets were all deleted drops out of History (§5.4).
+
+### 5.4 Edit a finished session
+- **Any finished session** can be edited, however old: each History row's **Edit** opens that whole session, every exercise in it, with the same set list and set form as a live session. There's no form for a new set, no ⋯ menu, no warm-up banner and no Finish; **Done** closes it. Each change saves as it's made.
+- **What can change:** a set's weight, reps and effort; deleting a set (extras included); the note; deleting the whole session. Adding sets (extras too), and undoing a replace or skip, stay closed.
+- **Same rules as a live session:** one working weight among the prescribed sets; set 1 of a primary keeps its effort (deleting set 1, §5.2); deleting every prescribed set makes the exercise "not done" (no fail, no stack).
+- **Progression recomputes:** state is derived by replaying history (§6.6), so an edit recomputes everything after it, and no cut-off is needed. The session's validation messages are judged against the sessions before it in **replay order**: by start time, then by id for sessions that started at the same moment. It's judged by its saved prescription (§6.8); editing doesn't change that prescription.
+- **Outcome messages:** each exercise's validation message shows whenever it has sets, not only when all its target sets are in, since the replay judged it however many there were.
+- **Set counts:** a session with a saved prescription shows "2 of 3 sets" (the target halved for a deload week), as when live. One without (finished before v1.3.0) shows the sets logged, "3 sets" or "1 set + 2 extras", since today's program may differ from what was prescribed then.
+- **Deleting the session:** from the editor, after a confirm that names the day and date and says every exercise's sets in it are deleted, not just the one whose History row was tapped. It's removed entirely, and the rotation continues from the session before it (§5.1).
+- **Deleting the last set** asks whether to delete the whole session. No keeps it, empty: it drops out of History but still counts as that day's session for the rotation.
+
+### 5.5 Change your program
+Abandons the current program entirely, to pick a template or build your own.
+- **Where:** with active days, a **"Change your program"** card at the bottom of the Program tab: the note *"Consistency beats novelty: most programs work if you stick with them."* and a **Change your program…** button. With no active days, the templates show instead, at the top (§5.1). There's no direct "replace with a template": switching to one is Change your program, then the template.
+- **The confirm:** *"Change your program? Days with logged sessions are archived and their history kept; the rest are deleted."*, then the lifts with history among the active exercises (up to 3 names, then "and 4 more"): *"Bench Press, Back Squat and Deadlift keep their history for your next program."* ("keeps its" for one), then the open session, if any: with sets, *"Your open session (4 sets logged) will be discarded."* (it may have started on an earlier day), like losing unsaved progress; with none, *"Your open session has nothing logged yet, so it will be discarded."*
+- **OK:** days with finished history are archived and their history kept, as with any delete (§6.1); the rest are deleted. Every open session is discarded; its sets aren't history, so they don't decide whether a day is archived. Same-named lifts pick their history up in the next program (§6.9). The rotation starts at the new program's first day (§5.1). The effort scale is kept.
+
+### 5.6 Effort scales
+The program has an **effort scale** that sets how effort is entered and shown. All three are stored as an **RPE number** (6–10), so the engine, logged sets and e1RM math (§6.4) are the same for each, and switching loses nothing.
+
+| Scale | Input | Maps to RPE |
+|---|---|---|
+| **RPE** | A picker, half steps 6–10 | as entered |
+| **Reps left** | "How many more reps could you have done?" 0 · 1 · 2 · 3 · 4+ | 10 · 9 · 8 · 7 · 6 |
+| **Perceived effort** | 5 labeled buttons, stacked (the labels don't fit five across a phone): Easy · Moderate · Challenging · Very hard · Failed on the last rep | 6 · 7 · 8 · 9 · 10 |
+
+- Chosen on a card at the top of the Program tab, with a one-line explanation that it estimates 1-rep maxes, which drive suggested weights. The card's description area is always as tall as the longest of the three descriptions, so switching scales doesn't move the rest of the tab.
+- **Default for a new program: Reps left.** A program (or backup) with no stored scale means **RPE**.
+- The scale sets the wording of the target-effort field (§6.1), the effort input in a session (§6.3) and how a set is shown. The seed prompt (§5.1) mentions no effort, so it's the same on every scale.
+- **Showing a set:** RPE `225 × 4 @ 8`; Reps left `225 × 4 · 2 left`; Perceived effort `225 × 4 · Challenging`.
+- **Values between a scale's buttons:** a stored value that doesn't match a scale's buttons (e.g. 8.5 in Reps left) is shown as the nearest label, **rounding toward harder** on a tie (8.5 → "1 left" / "Very hard"). Only the display rounds; the stored value is unchanged unless re-entered.
+- **Switching** is allowed at any time, including during a session. Nothing stored changes; the pickers and labels re-render in the new scale.
 
 ## 6. Domain rules
 
 ### 6.1 Exercise configuration
 Per exercise, set at program-setup time:
 
-| Setting | Notes | Status |
-|---|---|---|
-| Tier: **primary** or **accessory** | My call per exercise — "primary" means compound-like demands, not a fixed list of lifts | Decided |
-| Rep range / intent | Configurable, never hard-coded. For primary lifts, ideally derived from data (§6.4) | Decided (configurable); mechanism Proposed |
-| Number of working sets | | Decided |
-| **Equipment type** | e.g. `barbell`, `dumbbell`, `cable`, `machine`, `bodyweight`. Supplies default load steps (§6.2) | Decided |
-| **Progression profile** | How this exercise's load can change — see §6.2 | Decided (needed); values Proposed |
-| Unilateral | Reps are always recorded **per side** (e.g. single-arm or alternating DB curls: 30×15 = 15 each side) | Decided |
-| Target RPE (primary lifts) | First-set target, half steps, default 8 | Decided |
-| Starting numbers (seed) | See §5.1 | Decided |
+| Setting | Notes |
+|---|---|
+| Tier: **primary** or **accessory** | My call per exercise — "primary" means compound-like demands, not a fixed list of lifts |
+| Rep range / intent | Configurable, never hard-coded |
+| Number of working sets | |
+| **Equipment type** | e.g. `barbell`, `dumbbell`, `cable`, `machine`, `bodyweight`. Supplies default load steps (§6.2) |
+| **Progression profile** | How this exercise's load can change — see §6.2 |
+| Unilateral | Reps are always recorded **per side** (e.g. single-arm or alternating DB curls: 30×15 = 15 each side) |
+| Target RPE (primary lifts) | First-set target, half steps, default 8; worded in the program's effort scale (§5.6) |
+| Starting numbers (seed) | See §5.1 |
 
-**Not in the setup form (Decided):** the max relative jump is a fixed 10% for every exercise (§6.2).
+**Not in the setup form:** the max relative jump is a fixed 10% for every exercise (§6.2).
 
-**Editing the program (Decided):** any setting can be changed at any time; progression replays history under the current settings. Deleting an exercise or day that has logged sessions **archives** it (hidden from the program, history kept); one with no sessions is deleted outright.
+**Editing the program:** any setting can be changed at any time; progression replays history under the current settings, except that each finished session keeps its own saved rep range (§6.8). Deleting an exercise or day that has history **archives** it (hidden from the program, history kept); one with none is deleted outright.
+- **History** here means finished sessions, plus the open session if it has sets for that exercise or day.
+- **Removing the open session's day:** if the open session is on that day and has no sets, it's discarded along with the day, and the confirm says so. (Changing programs discards every open session, §5.5.)
 
-**Bodyweight (Decided):** bodyweight exercises can only be **accessories**. Their loads are **added weight** — 0, 5, 10, 15… lb (overridable). Every jump from 0 exceeds 10%, so they progress by reps up to the rep ceiling, then add 5 lb.
+**Bodyweight:** bodyweight exercises can only be **accessories**. Their loads are **added weight** — 0, 5, 10, 15… lb (overridable). Every jump from 0 exceeds 10%, so they progress by reps up to the rep ceiling, then add 5 lb.
 
-**Dumbbells (Decided):** dumbbell weights are **per hand** (incline press 70 = 70 lb in each hand).
+**Dumbbells:** dumbbell weights are **per hand** (incline press 70 = 70 lb in each hand).
 
 ### 6.2 Progression profile (load steps)
-**Decided:** a fixed pound increment doesn't work across exercises. +5 lb on a 300 lb squat is under 2%; +2.5 lb on a 12.5 lb lateral raise is 20%. Each exercise needs its own description of how it progresses.
+A fixed pound increment doesn't work across exercises. +5 lb on a 300 lb squat is under 2%; +2.5 lb on a 12.5 lb lateral raise is 20%. Each exercise needs its own description of how it progresses.
 
-**Decided — three layers, combined:**
+**Three layers, combined:**
 1. **Equipment-type defaults** supply the available loads:
-   - Barbell: 5 lb total jumps (2.5 lb plate per side), starting at a 45 lb empty bar (Decided). A different bar uses the per-exercise override.
+   - Barbell: 5 lb total jumps (2.5 lb plate per side), starting at a 45 lb empty bar. A different bar uses the per-exercise override.
    - Dumbbell: a standard rack list (e.g. 10, 12.5, 15, 17.5, 20, 22.5, 25, 30…).
    - Cable / machine: a stack list I enter (e.g. …99, 110, 121…).
 2. **Per-exercise override** of those loads for my gym's actual equipment (e.g. "this gym has 22.5s").
 3. **Max relative jump** on top: if the next available load is a bigger jump than this, progress by **reps** instead of weight, extending the effective top of the rep range.
 
-**Rep ceiling (Decided):** the rep extension in layer 3 is capped at **120% of the top of the configured range, rounded up** — `ceil(top × 1.2)`. Once the ceiling is reached, the engine takes the next load step anyway, even if it exceeds the max relative jump. This prevents getting stuck doing lateral raises for sets of 25+ because the next dumbbell is a big relative jump.
+**Rep ceiling:** the rep extension in layer 3 is capped at **120% of the top of the configured range, rounded up** — `ceil(top × 1.2)`. Once the ceiling is reached, the engine takes the next load step anyway, even if it exceeds the max relative jump. This prevents getting stuck doing lateral raises for sets of 25+ because the next dumbbell is a big relative jump.
 - Examples: 3–5 → ceiling 6; 8–12 → 15 (14.4 rounded up); 15–20 → 24.
-- A percentage was chosen over a fixed "+5" because it scales with the range: +5 is huge on a 3–5 range and small on a 15–20 range.
+- A percentage, not a fixed "+5", because it scales with the range: +5 is huge on a 3–5 range and small on a 15–20 range.
 
-**Max relative jump (Decided):** ≈ 10%.
+**Max relative jump:** ≈ 10%.
 
-**Rep extension step (Decided):** when the range is filled but the next load is too big a jump, the effective top of the range rises by **10% of the configured top, rounded up, minimum 1** — `Math.max(Math.ceil(top * 0.1), 1)`. When that new top is filled (same >50% rule), it rises again, capped at the ceiling.
+**Rep extension step:** when the range is filled but the next load is too big a jump, the effective top of the range rises by **10% of the configured top, rounded up, minimum 1** — `Math.max(Math.ceil(top * 0.1), 1)`. When that new top is filled (same >50% rule), it rises again, capped at the ceiling.
 - Examples: top 5 → step 1; top 7 → 1; top 12 → 2; top 20 → 2 (so 15–20 extends 20 → 22 → 24).
 - Note: it's `Math.max`, not `Math.min` — `Math.min(x, 1)` would cap every step at 1.
 
@@ -154,59 +220,62 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
 
 **Where this matters in practice:** mostly dumbbell and cable exercises (e.g. lateral raise 20 → 22.5 lb is a 12.5% jump). For barbell primaries, a 5 lb jump is usually well under 10% (225 → 230 ≈ 2%), and a set far above the range (e.g. 12 reps on a 3–5 range) is handled by the e1RM instead: the new estimate raises next session's weight to match (§6.4).
 
-**Sets are never added by progression (Decided).** The working-set count is fixed in configuration; progression changes only reps and load.
+**Sets are never added by progression.** The working-set count is fixed in configuration; progression changes only reps and load. (Extra sets are the lifter's, and aren't counted, §5.2.)
 
 ### 6.3 Primary lifts
-- **RPE is asked on the first set only, and required there** (Decided; changed 2026-10-06, §9.3). Later sets don't ask for it: only the first set's effort is ever used (§6.4). Efforts logged on later sets before v1.2.1 are kept and shown.
-- **RPE is entered in half steps from 6 to 10** (6, 6.5 … 10) (Decided). From v1.1.0 this is one of three input modes chosen per program; the others map onto the same scale (§9.1, slice 1).
-- **The first set is the source of truth** for progression: its weight, reps, and RPE drive next session's suggestion (Decided).
-- **All sets use one working weight**; no changing weight from set to set (Decided).
-- Sets 2+ are recorded in full. They don't steer the progression math, but they **feed validation** (§6.6) (Decided).
+- **Effort is asked on the first set only, and required there.** Later sets don't ask for it: only the first set's effort is ever used (§6.4). Efforts already stored on later sets are kept and shown.
+- **Effort is RPE in half steps from 6 to 10** (6, 6.5 … 10), entered in the program's effort scale (§5.6).
+- **The first set is the source of truth** for progression: its weight, reps, and RPE drive next session's suggestion.
+- **All sets use one working weight**; no changing weight from set to set (extra sets aside, §5.2).
+- Sets 2+ are recorded in full. They don't steer the progression math, but they **feed validation** (§6.6).
 
 ### 6.4 Estimated 1RM (primary lifts)
-- Each first set produces an **estimated 1RM (e1RM)**, adjusted for RPE: reps in reserve are added to the reps performed. 225×7 @ RPE 7 (~3 in reserve) is estimated as a ~10-rep-max effort. Effective reps = `reps + (10 − RPE)` (Decided).
-- **Formula (Decided):** the e1RM is the **average of Epley, Brzycki, and Lombardi**:
+- Each first set produces an **estimated 1RM (e1RM)**, adjusted for RPE: reps in reserve are added to the reps performed. 225×7 @ RPE 7 (~3 in reserve) is estimated as a ~10-rep-max effort. Effective reps = `reps + (10 − RPE)`.
+- **Formula:** the e1RM is the **average of Epley, Brzycki, and Lombardi**:
   - Epley `w × (1 + r/30)`
   - Brzycki `w × 36 / (37 − r)`
   - Lombardi `w × r^0.1`
   - Note: these are three curve-fits applied to the same set, not three independent measurements. Their agreement is a sanity check, not added confidence.
-- **Lifts share the e1RM (Decided 2026-10-08, §9.4 slice 2):** exercises with the **same name** (ignoring case and punctuation) are one **lift**, wherever they are in the program. The running e1RM below is the lift's, from the first sets of all its sessions on every day. Progression (the prescription, floor rule, stacks, deloads, rep extension, §6.2–6.7) stays per exercise.
-- **Lower-rep sessions first (Decided 2026-10-08):** a session counts toward the running e1RM only if it was prescribed for **10 or fewer effective reps** (the top of its rep range plus the reps in reserve its target effort leaves, `max + (10 − target RPE)`), unless none in the window were; then the higher-rep ones are used. The same preference picks the session for "returning from a break". Rep-max formulas are least reliable at high reps, and people differ in how many reps they manage at a given load. **Judged by the prescription, not the reps done (Decided 2026-10-08, from review):** so a great day on a 6–8 range (9 reps @ 8) never drops out (I9). The range is the session's saved one (§9.4 slice 1), else today's; the target RPE is today's (it isn't saved).
-- **Running e1RM (Decided):** the average of the e1RMs from **up to the last 3 sessions within the last 4 weeks**.
+- **Shared by the lift:** the running e1RM below is the lift's (§6.9), from the first sets of all its sessions on every day.
+- **Lower-rep sessions first:** a session counts toward the running e1RM only if it was prescribed for **10 or fewer effective reps** (the top of its rep range plus the reps in reserve its target effort leaves, `max + (10 − target RPE)`), unless none in the window were; then the higher-rep ones are used. Rep-max formulas are least reliable at high reps, and people differ in how many reps they manage at a given load.
+  - **Judged by the prescription, not the reps done,** so a great day on a 6–8 range (9 reps @ 8) never drops out (I9). The range is the session's saved one (§6.8), else today's; the target RPE is today's (it isn't saved).
+- **Running e1RM:** the average of the e1RMs from **up to the last 3 sessions within the last 4 weeks**.
   - Average over **however many sessions exist** (1, 2, or 3). Never pad missing sessions with 0 or any placeholder; divide by the actual count.
-  - **Returning from a break** (no session in the 4-week window): use **90% of the most recent session's e1RM** and show a "returning from a break" note. The next real session then replaces it.
+  - **Returning from a break** (no session in the 4-week window): use **90% of the most recent session's e1RM** and show a "returning from a break" note. The next real session then replaces it. The session is picked with the same lower-rep preference, so the most recent lower-rep session is used however old it is, even over a more recent higher-rep one (I8).
   - Layoff overshoot beyond that is caught by the fail/deload logic in §6.6.
-- **No history yet (Decided):** a primary lift's first e1RM comes from its **setup seed** (§5.1): weight × reps treated as RPE 7. The seed is used **only until the lift's first real session** (on any day) — it is **not** averaged into the running e1RM afterward, so an optimistic or pessimistic guess can't linger for three sessions.
-- **Data-driven targets (Decided as a goal; mechanism Proposed):** given the running e1RM and a weight, the engine predicts expected reps by inverting the formula (e.g. Epley inverted: reps to failure ≈ `30 × (e1RM / w − 1)`), minus the target reps in reserve. The program stores **intent** (e.g. "3 sets, first set ~RPE 8, 3–5 reps") and the engine chooses the weight.
-- **Weight-selection rule (Decided):**
+- **No history yet:** a primary lift's first e1RM comes from its **setup seed** (§5.1): weight × reps treated as RPE 7. The seed is used **only until the lift's first real session** (on any day) — it is **not** averaged into the running e1RM afterward, so an optimistic or pessimistic guess can't linger for three sessions.
+- **Data-driven targets:** given the running e1RM and a weight, the engine predicts expected reps by inverting the formula (e.g. Epley inverted: reps to failure ≈ `30 × (e1RM / w − 1)`), minus the target reps in reserve. The program stores **intent** (e.g. "3 sets, first set ~RPE 8, 3–5 reps") and the engine chooses the weight.
+- **Weight-selection rule:**
   1. Target reps = **midpoint of the rep range, rounded up** (3–5 → 4; 5–7 → 6). The midpoint leaves room on both sides: a good day lands above it, a bad day can still clear the floor.
   2. For each available load, predicted reps = reps to failure (the averaged formula, inverted numerically) − (10 − target RPE).
-  3. Suggest the **heaviest available load whose predicted reps ≥ target reps**.
+  3. Suggest the **heaviest available load whose predicted reps ≥ target reps**. If none does (only possible with a very low e1RM), suggest the lightest load.
   - Progress is implicit: if I get stronger, the e1RM rises and the chosen load rises with it. If I don't, the load holds — which is honest.
 
 ### 6.5 Accessory lifts
-- RPE is not asked (Decided; changed 2026-10-06, §9.3). Accessories don't use e1RM, so it was informational only. Efforts logged before v1.2.1 are kept and shown.
-- **All sets use one working weight**, as for primary lifts (Decided).
-- Progression by **double progression** (Decided): work up through the rep range at a fixed weight; once the range is filled, move up one load step (§6.2) and drop back to the bottom of the range.
-- **"Range filled" (Decided): more than 50% of working sets reach the top of the range.** In practice: 2 sets → both; 3 sets → 2; 4 sets → 3.
+- Effort is not asked. Accessories don't use e1RM, so it would be informational only. Efforts already stored are kept and shown.
+- **All sets use one working weight**, as for primary lifts.
+- Progression by **double progression**: work up through the rep range at a fixed weight; once the range is filled, move up one load step (§6.2) and drop back to the bottom of the range.
+- **"Range filled": more than 50% of working sets reach the top of the range.** In practice: 2 sets → both; 3 sets → 2; 4 sets → 3.
 
 ### 6.6 Validation: floor rule and fatigue stacks
-**Floor rule (Decided):** when the last set of an exercise is entered, check every working set against the **bottom of its rep range**. Any set below the floor = a **failed** session for that exercise.
+Progression state (stacks, the last successful numbers, deloads, rep extensions) is never stored: it's derived by replaying each exercise's finished sessions, oldest first, under the rules below.
 
-(A total-volume comparison was considered and **rejected**: volume naturally drops when weight goes up and reps reset, so it would penalize successful progression.)
+**Floor rule:** when the last set of an exercise is entered, check every working set against the **bottom of its rep range**. Any set below the floor = a **failed** session for that exercise.
 
-**Fatigue stacks (Decided):** each exercise carries its own fatigue-stack count.
+(Not a total-volume comparison: volume naturally drops when weight goes up and reps reset, so it would penalize successful progression.)
+
+**Fatigue stacks:** each exercise carries its own fatigue-stack count.
 - A **failed** session adds **one stack** and **reverts** next session to the last successful numbers.
   Message: *"Failed to hit minimums, next week's weight will be lowered."*
 - If the reverted session **succeeds**, the next session retries the heavier numbers that failed.
 - If the reverted session **also fails**, that is a second stack.
 - **A stack clears only on success at the heavier numbers that originally failed.** Success at the reverted weight does *not* clear it — otherwise alternating A-success / B-fail would loop forever without ever triggering a deload.
 - Reaching **two stacks on the same exercise** triggers a **deload** for that exercise (§6.7). Stacks never combine across exercises: one stack on bench plus one on lateral raises is not two stacks.
-- Stacks **reset to 0 after a deload** (Decided).
-- **While an exercise has stacks > 0, the stack logic decides next session's numbers, not the e1RM rule** (Decided). In shorthand: `stacks > 0 ? stackState.nextNumbers : e1rmPick`, where `nextNumbers` is either the **revert** (last successful numbers) or the **retry** (the exact numbers that failed) — not always "the previous weight."
+- Stacks **reset to 0 after a deload**.
+- **While an exercise has stacks > 0, the stack logic decides next session's numbers, not the e1RM rule.** In shorthand: `stacks > 0 ? stackState.nextNumbers : e1rmPick`, where `nextNumbers` is either the **revert** (last successful numbers) or the **retry** (the exact numbers that failed) — not always "the previous weight."
 - "Last successful numbers" = the weight and rep target of the most recent session for that exercise that passed the floor rule.
-- **No successful session yet (Decided):** if a session fails before any session has succeeded (e.g. an optimistic seed), the stack is added as usual and the revert goes to **one load step below the failed weight** (accessories: at the bottom of the range). Those numbers then act as the last successful numbers.
-- **Off-plan weight (Decided):** sessions are classified by the weight actually lifted. At or above the weight that failed counts as the **retry** (success clears the stack); below it counts as a revert-level session (success keeps the stack, a fail adds one).
+- **No successful session yet:** if a session fails before any session has succeeded (e.g. an optimistic seed), the stack is added as usual and the revert goes to **one load step below the failed weight** (accessories: at the bottom of the range). Those numbers then act as the last successful numbers.
+- **Off-plan weight:** sessions are classified by the weight actually lifted. At or above the weight that failed counts as the **retry** (success clears the stack); below it counts as a revert-level session (success keeps the stack, a fail adds one).
 
 Example:
 | Week | Attempt | Result | Stacks after | Next week |
@@ -217,26 +286,43 @@ Example:
 | 4 | Weight B | Success | 0 | Progress normally from B |
 | 3 (alt.) | Weight A | Fail | 2 | **Deload** |
 
-**Scope (Decided): the floor rule and fatigue stacks apply to every exercise, primary and accessory.** Stacks are tracked **per exercise**, so fatigue on an accessory can never stall or deload a primary lift (or any other exercise). What differs by tier is the deload itself (§6.7).
+**Scope: the floor rule and fatigue stacks apply to every exercise, primary and accessory.** Stacks are tracked **per exercise**, so fatigue on an accessory can never stall or deload a primary lift (or any other exercise). What differs by tier is the deload itself (§6.7).
 
-### 6.7 Deload (Decided)
+### 6.7 Deload
 Triggered per exercise when that exercise reaches two fatigue stacks. Lasts **one week** (one pass through the rotation). Deload sessions are **excluded from e1RM and progression calculations** and are **not subject to the floor rule**. Afterward, stacks are at 0.
 
 **Primary lifts:**
 - **Volume:** about half the working sets (rounded up).
-- **Load:** about 10% lighter than the last successful weight, **snapped down** to an available load (§6.2) (Decided). Target effort ~RPE 6. **Reps (Decided):** the last successful rep target (e.g. 225 × 4 → deload 2 × 4 @ 200). ("Intensity" in lifting means load relative to max, not perceived effort — halving it would be far too light.)
-- **Afterward:** resume at the last successful numbers. *Flagged to revisit once there's real deload data* — whether this is too aggressive or too timid is best answered by a few actual cycles.
+- **Load:** about 10% lighter than the last successful weight, **snapped down** to an available load (§6.2). Target effort ~RPE 6. **Reps:** the last successful rep target (e.g. 225 × 4 → deload 2 × 4 @ 200). ("Intensity" in lifting means load relative to max, not perceived effort — halving it would be far too light.)
+- **Afterward:** resume at the last successful numbers (under review: #58).
 
-**Accessory lifts (Decided):**
+**Accessory lifts:**
 - **Same load, about half the working sets (rounded up)**, at the last successful rep target, for one week — the same set-halving as primary lifts. Edge case: a 1-set exercise stays at 1 set (`ceil(0.5) = 1`).
 - **Afterward:** resume at the last successful numbers.
-- Rationale: accessories are mostly volume work; a lighter-touch deload is enough, and keeps this from blocking the rest of the app.
+- Rationale: accessories are mostly volume work; a lighter-touch deload is enough.
 
 Note: deload conventions vary between coaches and programs; these values are a sensible starting point, not settled science.
 
+### 6.8 Stored prescriptions
+- **What's saved:** each exercise's **rep range and set count**, on **Finish**, from the program's settings at that moment. Not the target RPE (the e1RM uses the effort logged, not the target), tier, or loads (the gym's equipment, not a prescription). An open session uses the current settings, so a range fixed mid-session applies to it. Editing a finished session doesn't change its prescription.
+- **Judging:** the progression replay and the finished-session editor judge each session by its own rep range (floor rule, "range filled", rep ceiling and extension, §6.2–6.6). Sessions finished before v1.3.0 have none and use the exercise's current settings everywhere they're judged (History, Today and the finished-session editor alike), so a range change can still re-judge them, even when saved ones follow. The rep range is the only stored setting the replay reads; the set count is for display (§5.4).
+- **A rep-range change is a fresh start:** when a session's range differs from the one before it, or the current range differs from the last session's, progression starts afresh from there. Fatigue stacks, the last successful numbers and any pending revert, retry or deload are cleared. Primary lifts go back to the e1RM rule (§6.4), which doesn't depend on the range; accessories restart at the bottom of the new range at the weight they'd have been suggested. A fail before the next success reverts one load step below, as with no success yet (§6.6). Examples H1–H5 (§7.H).
+
+### 6.9 Lifts
+Bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a light one.
+- **A lift is a name:** exercises with the same name, ignoring case and punctuation (as the bank search compares names), are one lift, wherever they are in the program. Nothing extra is stored: sessions belong to the exercise, so renaming one ("Bench" → "Bench Press") brings its sessions into that lift, and renaming one to something new ("Paused Bench") makes it a lift of its own, with its sessions.
+- **Whatever the equipment:** a custom dumbbell "Bench Press" shares its e1RM with a barbell one. To keep them apart, name them differently ("DB Bench Press"). Bank and template additions copy the lift's equipment, so they match.
+- **Shared:** History (§5.3) and the running e1RM, with lower-rep sessions first (§6.4). Each exercise's deload weeks, worked out by its own replay, stay out of the e1RM (§6.7). The seed is dropped once the lift has a real session on any day (§6.4).
+- **Per exercise:** the prescription, floor rule, stacks, reverts, retries, deloads and rep extension (§6.2–6.8). A failed heavy day never reverts or deloads the light day.
+- **A new exercise joining a lift with history** (added, or from a template):
+  - a **primary** needs no starting numbers, since the lift's e1RM picks its weight; the exercise form shows them as optional: "Optional: Bench Press already has an estimated 1RM from your history.";
+  - an **accessory** is still asked, since its range may differ, pre-filled with the lift's latest weight (skipping deload weeks);
+  - a **bank or template** exercise copies **equipment, loads and one-sided** from the lift's most recently logged exercise (your gym), and keeps the bank's rep range, sets and target RPE (the programming). A custom exercise is entered by hand.
+- **Templates** need no matching: a template exercise joins the lift of the same name, so its history is simply there. Examples I1–I9 (§7.I).
+
 ## 7. Worked examples → test cases
 
-Each example below becomes one unit test. IDs are stable so tests can reference them (e.g. `it('B3: ...')`). Numbers were computed with the formulas in §6.4, not estimated. Examples that depend on a **Proposed** rule say so; if that rule changes, update the example.
+Each example below becomes one unit test. IDs are stable so tests can reference them (e.g. `it('B3: ...')`). Numbers were computed with the formulas in §6.4, not estimated. If a rule changes, update its examples.
 
 Shared assumptions unless stated: barbell loads in 5 lb steps; dumbbell rack 10, 12.5, 15, 17.5, 20, 22.5, 25, 30, 35…; e1RM values rounded to 0.1 lb (tests should allow ±0.1).
 
@@ -335,7 +421,7 @@ Upper A, logged 2026-10-01 (bench target range set to 3–5 for this example):
 
 Note: this log predates the app and has no RPE or explicit targets, so it's input for shaping examples, not a gold standard.
 
-### 7.H Stored prescriptions (§9.4 slice 1)
+### 7.H Stored prescriptions (§6.8)
 
 Bench: primary, 3 sets. Lateral raise: accessory, 3 sets, dumbbell rack as above. "Stored" means the session saved that rep range on Finish.
 
@@ -347,7 +433,7 @@ Bench: primary, 3 sets. Lateral raise: accessory, 3 sets, dumbbell rack as above
 | H4 | Bench at 3–5, stored: 225×5 @8, 225×5, 225×4 ✓, then 235×4 @8, 235×3, 235×2 ✗ (stacks 1, revert to 225). The range is now 5–7 | Fresh start → stacks **0**, **no revert**: next from the e1RM rule |
 | H5 | H3, then a session stored at 10–12: 15×9, 15×8, 15×8 | Below 10 → **fail**, stacks 1. No success since the fresh start → **revert to 12.5 × 10** (one step below) |
 
-### 7.I Lifts (§9.4 slice 2)
+### 7.I Lifts (§6.9)
 
 Bench Press on two days: Upper A at 3–5 @ RPE 8 and Upper B at 10–12 @ RPE 8, both primary, barbell. Sessions within 4 weeks unless stated.
 
@@ -363,204 +449,15 @@ Bench Press on two days: Upper A at 3–5 @ RPE 8 and Upper B at 10–12 @ RPE 8
 | I9 | A 6–8 @ RPE 8 primary: 225×7 @8, then a great day 225×9 @8 (9 + 2 = 11 effective reps) | 6–8 @ 8 isn't high-rep (8 + 2 = 10), so **both count**: (287.4 + 301.7) / 2 = **294.5** |
 | I8 | No session in 4 weeks; Upper A's 225×5 @8 six weeks ago, Upper B's 185×12 @8 five weeks ago | Returning from a break from the most recent **lower-rep** session: 273.6 × 0.9 = **246.2**; Upper A suggests **205 × 4** (predicted 4.5) |
 
-## 8. Contracts (Decided as a starting point — signatures are finalized in code, `src/engine/`)
+## 8. Contracts (signatures are in code, `src/engine/`)
 
 The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]`), since the 4-week window, deload exclusion (A5) and substitute exclusion (A6) all need per-session data.
 
 - **Types** live in code: `engine/types.ts` (`ExerciseConfig`, `LoggedSet`, `ExerciseSession`, `ProgressionState`, `Suggestion`), `program/types.ts` (`Program`, `ProgramDay`, `ProgramExercise`) and `session/types.ts` (`Session`, `ExerciseLog`, `Substitute`, `Prescription`).
-- **Suggestions:** `suggestNext(config, history, asOf, lift = []) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by its own replay; they feed only the e1RM (§9.4 slice 2).
+- **Suggestions:** `suggestNext(config, history, asOf, lift = []) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by its own replay; they feed only the e1RM (§6.9).
 - **Validation:** `evaluateSession(config, history, sets) => SessionOutcome`.
 - **State is never passed in or stored:** both replay `history` with `deriveState(config, history)` (ARCHITECTURE.md, "Progression state is derived").
 
-## 9. Build plan (Done — v1.0.0)
+## 9. Open questions and ideas
 
-Vertical slices, each usable on its own; all built and live.
-
-1. One primary exercise → log sets → see next session's suggestion. Engine + tests first. Sets can be edited or deleted until the session is finished (finished sessions became editable in §9.2 slice 1).
-2. Floor-rule validation, fatigue stacks, revert message, and deload, with accessory double progression in the engine.
-3. Program setup (days, exercises, configuration), the seed gate (§5.1) and rotation.
-4. History view per exercise.
-5. Exercise ⋯ menu (replace / delete) with the volume-only notice.
-6. Warm-up banner, JSON export, PWA install and offline polish.
-
-## 9.1 v1.1.0 scope (Decided 2026-10-04 — released in v1.1.0)
-
-Answers three complaints from friends trying v1.0.0: RPE friction, having to build a program, and not knowing exercise names.
-
-**Slice 0: UI groundwork (Decided; built).** Design tokens, the first primitives and shared formatters (ARCHITECTURE.md, "Proposed: UI component layer and design tokens"). No user-facing change.
-
-**Slice 1: Effort scale, chosen per program (Decided; built).**
-- The program has an **effort scale** that sets how effort is entered. All three modes are stored as an **RPE number** (6–10), so the engine, logged sets and e1RM math (§6.4) don't change, and switching modes later loses nothing.
-  | Mode | Input | Maps to RPE |
-  |---|---|---|
-  | **RPE** | Today's picker, half steps 6–10 | as entered |
-  | **Reps left** | "How many more reps could you have done?" 0 · 1 · 2 · 3 · 4+ | 10 · 9 · 8 · 7 · 6 |
-  | **Perceived effort** | 5 labeled buttons, stacked (the labels don't fit five across a phone): Easy · Moderate · Challenging · Very hard · Failed on the last rep | 6 · 7 · 8 · 9 · 10 |
-- Chosen during program setup, with a one-line explanation that it estimates 1-rep maxes, which drive suggested weights. Editable later on the Program tab. **Until slice 3 adds a setup flow (Decided):** a card at the top of the Program tab.
-- **Default for a new program: Reps left.** Existing programs (no stored value) and older backups mean **RPE**.
-- The mode also sets the wording of the target-effort field (§6.1 Target RPE), the seed prompt (§5.1, which mentions no RPE and so is unchanged), the RPE input in a session (§6.3), and how history shows a set.
-- **Showing a set (Decided):** RPE `225 × 4 @ 8` (as today); Reps left `225 × 4 · 2 left`; Perceived effort `225 × 4 · Challenging`.
-- **Values between a mode's buttons (Decided):** a stored value that doesn't match a mode's buttons (e.g. 8.5 in Reps left) is shown as the nearest label, **rounding toward harder** on a tie (8.5 → "1 left" / "Very hard"). Only the display rounds; the stored value is unchanged unless re-entered.
-- **Switching modes (Decided):** allowed at any time, including during a session. Nothing stored changes; the pickers and labels re-render in the new mode.
-- Stored as `effortScale` on the program; `FORMAT` stays 1, since a missing field means RPE.
-
-**Slice 2: Exercise bank (Decided; built).**
-- About 50 common exercises **built into the app** (no network): name, tier, equipment, default rep range, sets, unilateral, a one-line description, and a placeholder starting weight for the seed prompt.
-- "Add exercise" searches the bank, with a **Custom…** option for anything not listed. Picking a bank exercise **copies its defaults** into a normal exercise, which is then fully editable. No link to the bank is stored (no storage change).
-- **Browsing (Decided):** the bank is grouped by body area (Chest, Back, Shoulders, Arms, Legs, Core), since not knowing exercise names was the complaint. Groups start collapsed, with a count, and a search opens every group with a match. Typing in the search box filters across all groups. The body area is a display label only, not the parked muscle-group store (§11).
-- **Search (Decided):** matches the name and a few common nicknames per exercise (e.g. "RDL" → Romanian Deadlift, "OHP" → Overhead Press), ignoring case and punctuation; every word typed must match.
-- **After picking (Decided):** the usual exercise form opens, prefilled with the bank's defaults, its description, and its placeholder starting weight. Review, enter starting numbers, Save. One flow for bank and custom exercises.
-- **Text only, no images.**
-- **The list and its defaults (Decided 2026-10-04):** the 57 exercises in `src/program/bank.ts` (PR #8).
-
-**Slice 3: Program templates and guided seeding (Decided; built).**
-- One template ships: a **4-day Upper/Lower**, built from bank exercises with their bank defaults. **Days and exercises (Decided 2026-10-04):**
-  - **Upper A:** Bench Press, Barbell Row, Dumbbell Shoulder Press, Lat Pulldown, Lateral Raise, Triceps Pushdown
-  - **Lower A:** Back Squat, Romanian Deadlift, Leg Press, Lying Leg Curl, Standing Calf Raise
-  - **Upper B:** Overhead Press, Pull-Up, Incline Dumbbell Press, Seated Cable Row, Dumbbell Curl, Face Pull
-  - **Lower B:** Deadlift, Bulgarian Split Squat, Leg Extension, Seated Leg Curl, Hanging Leg Raise
-- Offered when the program has no active days (alongside "Build my own"); switching from another program is "Change your program" first (§9.4 slice 3). A template produces a normal, fully editable program (no storage change), and the effort scale is kept.
-- **Guided seed walkthrough:** after picking a template, step through each exercise on its own screen to enter its seed, pre-filled with the bank's placeholder weight. The seed gate (§5.1) is unchanged; the walkthrough is just a faster way through it.
-  - **Saves each step (Decided):** Next saves that exercise's starting numbers straight away. "Finish later" leaves; Today's seed gate resumes at the first exercise still missing numbers. There is no Back button (edit an exercise on the Program tab instead).
-  - **Any program (Decided):** the seed gate offers the walkthrough for any program with exercises missing starting numbers, not only templates.
-  - **Pre-fill (Decided):** an exercise whose name matches a bank exercise gets the bank's placeholder weight; primaries also get the **top of their rep range** as reps. Others start blank.
-  - **Weight stacks (Decided):** a cable or machine exercise without a stack asks for one on its screen, with quick picks (5 lb steps, 10 lb steps) or the gym's own list typed in. The last pick is offered first on the next cable/machine exercise. Stacks stay per exercise (§6.2 unchanged).
-
-## 9.2 v1.2.0 scope (Decided 2026-10-04 — released in v1.2.0)
-
-Theme: **logging fidelity**: fixes for things noticed in the owner's daily use.
-
-**Slice 0: Quality groundwork (Decided 2026-10-05; built).** Session rules, history helpers and starting-numbers entry moved into the pure, tested layers (ARCHITECTURE.md, "Folder map"). What it settled:
-- **History before a session (Decided 2026-10-05):** an edited session is judged against the sessions before it in **replay order**: by start time, then by id for sessions that started at the same moment, so editing sees exactly the history the replay used.
-- **Set target:** an original's set count is halved in a deload week; a substitute's is the configured count.
-- **One starting-numbers entry:** the exercise form and the walkthrough share one seed entry with the §5.1 wording. The form's bank placeholder weight snaps onto the exercise's typed loads, as the walkthrough's pre-fill does. Otherwise they keep their Decided differences: the form shows a placeholder, the walkthrough fills in a value (§9.1 slices 2 and 3), and stack quick picks stay walkthrough-only.
-- **Stepper font (fix):** the weight and reps inputs use the large text size they were built with.
-- **One exercise summary line** ("Primary · 3 × 5–7 · Barbell") from one shared formatter: equipment by its label everywhere, "per side" wherever it applies, and the effort target only on the Program tab.
-
-**Slice 1: Edit finished sessions (Decided; resolves §10 #2; built).**
-- **Any finished session** can be edited, however old. Progression state is derived by replaying history (ARCHITECTURE.md), so an edit recomputes everything after it, and no cut-off is needed.
-- **What can change:** a set's weight, reps and effort; **delete a set**; **delete the whole session** (with a confirm). Adding sets, and undoing a replace or skip, stay closed once a session is finished.
-- **Same rules as during a session:** one working weight per exercise; set 1 of a primary keeps its effort. Deleting every set of an exercise makes it "not done" for that session (no fail, no stack), as with a skip (§5.2).
-- **Deleting a session** removes it entirely; the rotation then continues from the session before it (§5.1).
-- **Where (Decided 2026-10-05):** each History row has an **Edit** button that opens that whole session for editing: every exercise in it, with the same set list and set form as a live session. There's no form for a new set, no ⋯ menu, no warm-up banner and no Finish. **Done** closes it. Each change saves as it's made, as during a session. Validation messages are judged against the history before that session (slice 0).
-- **Deleting a session (Decided 2026-10-05):** from the editor, after a confirm that names the day and date and says every exercise's sets in it are deleted, not just the one whose History row was tapped.
-- **Deleting set 1 of a primary (Decided 2026-10-05):** if the set that would become set 1 has no effort, the delete asks for one. That set opens in the form with effort required, and the delete and the effort are saved together; Cancel keeps set 1. The same applies during a live session, which shares the set editor.
-- **An emptied session (Decided 2026-10-05):** a finished session whose sets are all deleted, but which is kept, still counts as that day's session for the rotation (§5.1). Only deleting the session moves the rotation back. **Deleting the last set (Decided 2026-10-05):** an emptied session drops out of History, so deleting the last set in a finished session asks whether to delete the whole session; No keeps it, empty, as above.
-- **Outcome messages (Decided 2026-10-05):** a finished session shows each exercise's validation message whenever it has sets, not only when all its target sets are in, since the replay judged it however many there were.
-- **Set counts in a past session (Decided 2026-10-05):** an exercise's header shows the sets logged ("3 sets"), since today's program may differ from what was prescribed then. A live session keeps "n of m", and so does a session with a saved prescription (§9.4 slice 1).
-
-**Slice 2: Add a set on the fly (Decided; built).**
-- Once the configured (or deload) number of sets is logged, an exercise offers **+ Add set**, for originals and substitutes alike.
-- **Extra sets are recorded, not counted:** shown in the session and History, tagged "extra", but excluded from validation (the floor rule and "range filled", §6.5–6.6) and from e1RM. The configured sets are the only ones that steer suggestions, so "sets are never added by progression" (§6.2) still holds.
-- Extra sets are stored marked as such, since the configured count can change later.
-- **Weight (Decided 2026-10-05):** an extra set has its **own weight**, so it can be a lighter back-off set. The one-working-weight rule (§6.3) still holds among the configured sets: changing one changes the others, and never an extra, and changing an extra changes only that extra.
-- **Effort (Decided 2026-10-05):** not asked on extra sets. They log weight × reps only.
-- **History (Decided 2026-10-05):** the configured sets on the usual line, then the extras on their own line: "Extra: 185 × 8 · 185 × 7".
-- **"Only X of Y sets logged" (Decided 2026-10-05):** counts configured sets only, so 2 configured sets plus 1 extra out of 3 still asks "Only 2 of 3".
-- **Smaller defaults (Decided 2026-10-05):**
-  - An exercise's header reads "3 of 3 sets + 1 extra".
-  - An extra pre-fills from the previous set (without effort).
-  - Extras stay extras: deleting a configured set reopens the form for a configured set rather than promoting an extra.
-  - No limit beyond the backup's 100 sets per exercise.
-  - In a finished session, extras can be edited or deleted but not added (adding stays closed, slice 1).
-  - A substitute's extras are tagged the same way.
-- **Only extras left (Decided 2026-10-05):** if every prescribed set of an exercise is deleted but its extras are kept, the session can still finish, and progression treats that exercise as "not done", as with a skip (§5.2): no fail, no stack.
-- **Extras and replacing (Decided 2026-10-05):** extras logged before an exercise is replaced are kept, like its prescribed sets, and shown tagged: "Logged before replacing: 225 × 5 @ 8 · 225 × 4 · Extra: 185 × 8".
-
-**Slice 3: Session notes (Decided; built).**
-- An optional **note for next time** above Finish on every session; the "Finish anyway?" confirm mentions it. Plain text, up to 200 characters.
-- **Shown** on the Today screen the next time that training day comes up ("Last time: …"), and on History rows for that session.
-- Stored on the session, and editable with it (slice 1).
-- **The Finish confirm (Decided 2026-10-06):** when "Only X of Y sets logged. Finish anyway?" shows and there's no note, it adds "(No note for next time.)". With a note, or when no confirm shows, nothing changes.
-- **"Last time: …" (Decided 2026-10-06):** shown under the day's name on Today before starting, and at the top of the live session. It's the note from the last finished session of that same training day; if that one has none, nothing shows.
-- **History (Decided 2026-10-06):** the note shows on every exercise's row for that session.
-- **Smaller defaults (Decided 2026-10-06):** the note saves when the field is left (leaving the session screen, or the app going to the background, counts) and on Finish; whitespace-only counts as no note; a counter shows near the 200-character limit; discarding a session discards its note.
-
-## 9.3 v1.2.1: fixes from the on-device pass (Decided 2026-10-06; released in v1.2.1)
-
-From the owner's v1.2.0 on-device checks (TESTING.md). A patch release; no stored-data change.
-
-- **Effort only where it's used:** asked on a primary lift's first set only (required there, as before). No effort picker on a primary's later sets, on accessories, on substitutes or on extra sets, and pre-fill no longer copies set 1's effort onto later sets. Efforts already logged stay as they are. The engine only ever used the primary's first set, so suggestions don't change (§6.3, §6.5).
-- **Logged-set rows:** the "Set 1 · 225 × 5" row's text is centred vertically (it sat at the top of the 44 px row).
-- **Effort scale card:** its description area is always as tall as the longest of the three descriptions, so switching scales doesn't move the rest of the Program tab.
-
-## 9.4 v1.3.0 scope (Decided 2026-10-08 — released in v1.3.0)
-
-Theme: **change programs without losing history**. A lift's history can follow it into a new program, and each old session is judged by what was prescribed at the time, so carried-over history stays accurate.
-
-**Slice 0: Groundwork (Decided; resolves §10 #8, #10, #11; built).** No stored-data change.
-- **History while a session is open (#8):** removing an exercise or day from the program counts only **finished** sessions as history, plus the open session if it has sets for that exercise or day. With no such history, the exercise or day is deleted outright rather than archived.
-- **Removing the open session's day (#8):** if the open session is on that day and has no sets, it's discarded along with the day, and the confirm says so. (Changing programs discards every open session, slice 3.)
-- **History's picker (Decided 2026-10-08):** counts only finished sessions, so an exercise archived mid-session appears there once a finished session has it, never with "No sessions logged yet."
-- **Tap targets (#10):** the warm-up banner's ✕ goes up to `--tap-target` (44 px), and the Program tab's move and remove buttons to 44 px wide.
-- **`SegmentedControl` (#11):** one primitive for the four `aria-pressed` toggle groups (tier, effort scale, stack presets, effort picker), not the tabs, which are navigation. `Note` waits until it needs variants.
-
-**Slice 1: Store each session's prescription (Decided 2026-10-08; resolves §10 #9; built).**
-- **What's saved (Decided 2026-10-08):** each exercise's **rep range and set count**. Not target RPE (the e1RM uses the effort logged, not the target), tier, or loads (the gym's equipment, not a prescription).
-- **When (Decided 2026-10-08):** on **Finish**, from the program's settings at that moment. An open session uses the current settings, as now, so a range fixed mid-session applies to it. Editing a finished session doesn't change its prescription.
-- **Judging:** the progression replay and the finished-session editor judge each session by its own rep range (floor rule, "range filled", rep ceiling and extension, §6.2–6.6). Sessions logged before v1.3.0 have none and use the exercise's current settings, as now, everywhere they're judged (History, Today and the finished-session editor alike). The rep range is the only stored setting the replay reads; the set count is for display.
-- **Older sessions aren't refined further (Decided 2026-10-08):** a range change can still re-judge sessions finished before v1.3.0, even when saved ones follow them. The owner's call: no one has data from before v1.3.0.
-- **A rep-range change is a fresh start (Decided 2026-10-08):** when a session's range differs from the one before it, or the current range differs from the last session's, progression starts afresh from there. Fatigue stacks, the last successful numbers and any pending revert, retry or deload are cleared. Primary lifts go back to the e1RM rule (§6.4), which doesn't depend on the range; accessories restart at the bottom of the new range at the weight they'd have been suggested. A fail before the next success reverts one load step below, as with no success yet (§6.6). Examples H1–H5 (§7.H).
-- **Display (Decided 2026-10-08):** a finished session's editor shows "2 of 3 sets" again for sessions with a saved prescription (halved for a deload week), replacing "3 sets" from §9.2 slice 1. Sessions from before v1.3.0 keep "3 sets". History rows are unchanged.
-- Stored as an optional prescription on each exercise in a finished session; `FORMAT` stays 1, since a missing prescription means the current settings.
-
-**Slice 2: Lifts share history and e1RM (Decided 2026-10-08; built).**
-Bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a light one.
-- **A lift is a name:** exercises with the same name, ignoring case and punctuation (as the bank search compares names), are one lift. Nothing new is stored: sessions still belong to the exercise, so renaming one ("Bench" → "Bench Press") brings its sessions into that lift, and renaming one to something new ("Paused Bench") makes it a lift of its own, with its sessions.
-- **Shared:** history and the running e1RM, with lower-rep sessions first (§6.4). Each exercise's deload weeks, worked out by its own replay, stay out of the e1RM (§6.7). **Per exercise, as before:** the prescription, floor rule, stacks, reverts, retries, deloads and rep extension. A failed heavy day never reverts or deloads the light day.
-- **A new exercise joining a lift with history** (added, or from a template): a **primary** needs no starting numbers, since the lift's e1RM picks its weight; an **accessory** is still asked, pre-filled with the lift's latest weight (skipping deload weeks, Decided 2026-10-08), since its range may differ. The exercise form shows a primary's starting numbers as optional then: "Optional: Bench Press already has an estimated 1RM from your history." (Decided 2026-10-08). A bank exercise or a template exercise copies **equipment, loads and one-sided** from the lift's most recently logged exercise (your gym), and keeps the bank's rep range, sets and target RPE (the programming). A custom exercise is entered by hand, as now.
-- **Templates:** need no matching: a template exercise joins the lift of the same name, so its history is simply there. The "Change your program?" confirm (slice 3) names the lifts that keep their history ("Bench Press, Back Squat and Deadlift keep their history…", up to 3, then "and 4 more").
-- **History:** one entry per lift (§5.3). Each session row is tagged with its day. On the chart, sessions over 10 effective reps are marked, since they count only when there's nothing lower.
-- **A lift is a name, whatever the equipment (Decided 2026-10-08, from review):** a custom dumbbell "Bench Press" shares its e1RM with a barbell one. To keep them apart, name them differently ("DB Bench Press"). Bank and template additions copy the lift's equipment, so they match.
-- No stored-data change. Examples I1–I9 (§7.I).
-
-**Slice 3: Change your program (Decided 2026-10-09; built).**
-- A way to abandon the current program entirely, then pick a template or build your own. Days with history are archived and their history kept, as with any delete (§6.1); same-named lifts pick their history up in the next program (slice 2). The rotation starts at the new program's first day (§5.1, archived last day). The effort scale is kept.
-- **One card that follows the program (Decided 2026-10-09):** at the bottom of the Program tab, with active days, a **"Change your program"** card: the note *"Consistency beats novelty: most programs work if you stick with them."* and a **Change your program…** button. With no active days, the template options as before (§9.1 slice 3), at the top of the tab. The "Replace with …" buttons go: switching to a template is Change your program, then the template.
-- **The confirm:** *"Change your program? Days with logged sessions are archived and their history kept; the rest are deleted. Bench Press, Back Squat and 4 more keep their history for your next program."* (the lifts with history among the active exercises, up to 3 names, slice 2), then the open session, if any.
-- **An open session is discarded (Decided 2026-10-09):** with sets, the confirm adds *"Your open session (4 sets logged) will be discarded."* (it may have started on an earlier day), like losing unsaved progress; with none, *"Your open session has nothing logged yet, so it will be discarded."* (slice 0). OK discards it and changes the program. The dialog is the native `confirm()` (ARCHITECTURE.md), so its buttons are OK and Cancel; a dialog with its own button labels ("Discard today's session") is left for later. Its sets aren't history, so they don't decide whether a day is archived.
-- Applying a template to an empty program needs no confirm.
-
-## 10. Open questions (summary)
-
-Ask the project owner before building anything each one affects:
-
-1. ~~**Incomplete sessions**~~ — **Decided:** validation runs on the logged sets only; a missing set is not a fail (§5.2).
-2. ~~**Editing / undoing a logged set**~~ — **Decided (v1.2.0, §9.2 slice 1):** any finished session can be edited (set numbers, delete a set, delete the session), and later state recomputes by replay.
-3. ~~**Units**~~ — **Decided:** pounds only for v1.
-4. ~~**Dumbbell weight convention**~~ — **Decided:** per hand (§6.1).
-5. ~~**Barbell minimum load**~~ — **Decided:** 45 lb empty bar, 5 lb steps (§6.2).
-6. ~~**No load reaches the target reps**~~ — **Decided:** if even the lightest available load predicts fewer than the target reps (only possible with a very low e1RM), the engine suggests the lightest load (as built in v1.0.0).
-
-Flagged to revisit after real use (not blocking):
-- Primary-lift deload: resuming at the last successful numbers (§6.7).
-- "Returning from a break" (§6.4) uses the most recent lower-rep session however old it is, even over a higher-rep one from five weeks ago. Kept as specified (raised in the §9.4 slice 2 review).
-
-**Raised during v1.2.0; settled 2026-10-08 while scoping v1.3.0 (§9.4).**
-
-7. ~~**Substitutes and the working weight**~~ — **Decided:** no change in v1.3.0; a substitute keeps the one-working-weight rule. The owner's view is that the rule itself (§6.3) is wrong for originals and substitutes alike, and that the simplest fix is to let weight change set to set the way reps do. Parked in §11 ("Weight per set").
-8. ~~**Deleting while a session is open**~~ — **Decided (§9.4 slice 0):** only finished sessions count, plus the open session if it has sets for the exercise or day; an open session with no sets on a removed day is discarded with it.
-9. ~~**Old sessions judged with today's settings**~~ — **Decided (§9.4 slice 1):** each session stores its rep range and set count on Finish; a rep-range change is a fresh start for progression.
-10. ~~**Tap targets under 44 px**~~ — **Decided (§9.4 slice 0):** the warm-up ✕ and the Program tab's move/remove buttons go to 44 px.
-11. ~~**More UI primitives**~~ — **Decided (§9.4 slice 0):** add `SegmentedControl` for the four toggle groups (not the tabs); leave `Note` until it needs variants.
-
-Waiting on the owner's phone: TESTING.md's unticked on-device checks.
-
-## 11. Post-MVP ideas (parked)
-
-### Earlier ideas
-
-- **e1RM confidence measure:** the spread between recent session e1RMs (max − min, or standard deviation). Tight spread = stable estimate; wide spread = noisy. Formula agreement within one set is *not* a confidence signal (§6.4).
-- Rest timer, possibly with push notifications via a small serverless function.
-- Cloud sync / backup (natural first cloud project).
-- ~~Option to run primary lifts **without e1RMs**~~ — **superseded:** the effort scales (§9.1 slice 1) remove the RPE friction behind it, and an exercise can already be set as an accessory to use plain double progression.
-- **Muscle-group-aware substitutes** (v2/v3): when replacing an exercise, offer exercises tagged with the same primary muscle and tier (e.g. replacing Bench suggests other pec-primary lifts). Needs a muscle-group store: exercise ↔ muscle group is **many-to-many** (a join table with a primary/secondary role).
-- ~~**Add a set on the fly**~~ — **scoped for v1.2.0** (§9.2 slice 2).
-- ~~**Session notes**~~ — **scoped for v1.2.0** (§9.2 slice 3). Still parked: sending notes to an LLM for evaluation (v2/v3; needs a CSP change and breaks "data never leaves the device").
-- ~~**Keep history for same-named lifts when a template replaces a program**~~ — **superseded** by lifts sharing history and e1RM (§9.4 slice 2).
-- ~~**Store each session's prescription**~~ — **built in v1.3.0** (§9.4 slice 1).
-- **Progression schemes beyond double progression (e.g. 5/3/1):** today every exercise uses one scheme: straight sets at one working weight, double progression, the floor rule and an e1RM from the first set. Programs like 5/3/1 prescribe a different weight and reps per set (percentages of a training max, an AMRAP last set, 3-week waves). Supporting them would add a per-exercise scheme that decides each set's prescription and how a session is judged; the current scheme stays as it is. Logged sets already store a weight each, so storage needn't change shape. Raised while scoping §9.2 slice 2.
-- ~~**Change programs mid-cycle**~~ — **built in v1.3.0** (§9.4 slice 3).
-- **A fixed action footer:** the walkthrough's Next (and, during a session, Log set and Finish) move as cards above them grow and shrink. A footer pinned to the bottom of the screen could hold each screen's main buttons. Owner's note: probably not needed, since the walkthrough is meant to be read, not tapped through quickly. Raised in the v1.2.0 on-device pass.
-- **Weight per set:** let each set's weight be changed the way its reps are, dropping the one-working-weight rule (§6.3). The owner prefers this to a full scheme engine (above) as the first step. The engine needs decisions first: e1RM already uses the first set alone (§6.4), but the floor rule and "range filled" (§6.5–6.6) would be judging sets at different weights, and the stack logic classifies a session by the weight lifted (§6.6, "Off-plan weight"). Raised while scoping v1.3.0 (§10 #7).
-- **A personal strength–endurance curve:** the e1RM formulas assume everyone manages the same reps at a given percentage of their max; people differ (a lifter with good endurance does more reps at 70% than the formulas expect). With a lift's sessions across rep ranges (§9.4 slice 2), the app could fit its own curve per lift instead of the averaged formulas. Related: after a rep-range change (§9.4 slice 1) the running e1RM still bridges from the old range's sessions for up to three sessions. Raised while scoping §9.4 slice 2.
+They're GitHub issues, labeled `question` (undecided behavior) or `enhancement` (ideas for later versions), not kept here.
