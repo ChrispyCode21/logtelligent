@@ -1,6 +1,6 @@
 # Architecture
 
-How Logtelligent is put together, and why. [SPEC.md](SPEC.md) says *what* the app does; this says *how*. The last section holds **Proposed** strategies that need a decision before they're built.
+How Logtelligent is put together, and the rules for changing it. [SPEC.md](SPEC.md) says *what* the app does; this says *how*.
 
 ## Overview
 
@@ -15,10 +15,10 @@ src/
     e1rm.ts         e1RM formulas, reps-to-failure inversion, running e1RM (SPEC §6.4)
     loads.ts        Available loads per equipment, snap/step helpers (SPEC §6.2)
     accessory.ts    Double progression, rep ceiling, rep extension (SPEC §6.2, §6.5)
-    progression.ts  Floor rule, fatigue stacks, deloads; deriveState / evaluateSession (SPEC §6.6–6.7)
+    progression.ts  Floor rule, fatigue stacks, deloads; deriveState / evaluateSession (SPEC §6.6–6.8)
     suggest.ts      suggestNext: the entry point the UI calls (SPEC §6.4 weight selection)
     rotation.ts     nextDay (SPEC §5.1)
-    sets.ts         countedSets: extra sets are recorded but never judged (SPEC §9.2 slice 2)
+    sets.ts         countedSets: extra sets are recorded but never judged (SPEC §5.2)
   program/      Program model (days → exercises), pure editing functions (add, move, archive, clear…) effort scales (effort.ts), the built-in exercise bank with search (bank.ts), program templates (templates.ts), entering starting numbers: validation, pre-fill, placeholders and stack presets (seeding.ts), the exercise form's fields and validation (exerciseForm.ts), and lifts: same-named exercises (lifts.ts)
   session/      Session types (types.ts) and pure session rules: set editing (one working weight), each exercise's set target,
                 the "Only X of Y" tally, the first-set effort check, canFinish and a substitute's weight step (sets.ts); set pre-fill and the set form's
@@ -52,7 +52,7 @@ Tests sit next to the code (`*.test.ts`). Every SPEC §7 worked example is a tes
 ## Data flow
 
 1. **Read:** `App.tsx` runs one Dexie `useLiveQuery` that loads the program and all sessions. Dexie re-runs it (and React re-renders) whenever those tables change, so there's no client-side cache to keep in sync. The current time (`asOf`) is captured inside the query, which keeps renders pure.
-2. **Compute:** views call the engine with plain data: `suggestNext(config, history, asOf, lift)` for suggestions, where `lift` is the other same-named exercises' sessions (`otherLiftSessions`, each marked by its own replay), which share the running e1RM while progression comes from `history` alone (SPEC §9.4 slice 2); `evaluateSession(config, history, sets)` for the validation message. `history/sessions.ts` maps stored sessions into the engine's `ExerciseSession[]` shape, keeping each one's session id. For a session that's already finished, pass it as `before` so it's judged only against the sessions that came before it.
+2. **Compute:** views call the engine with plain data: `suggestNext(config, history, asOf, lift)` for suggestions, where `lift` is the other same-named exercises' sessions (`otherLiftSessions`, each marked by its own replay), which share the running e1RM while progression comes from `history` alone (SPEC §6.9); `evaluateSession(config, history, sets)` for the validation message. `history/sessions.ts` maps stored sessions into the engine's `ExerciseSession[]` shape, keeping each one's session id. For a session that's already finished, pass it as `before` so it's judged only against the sessions that came before it.
 3. **Write:** components call functions in `storage/` (`saveSets`, `startSession`, `updateProgram`…). The live query picks up the change; nothing is pushed into React state by hand.
 
 ### Progression state is derived, never stored
@@ -60,9 +60,9 @@ Tests sit next to the code (`*.test.ts`). Every SPEC §7 worked example is a tes
 Fatigue stacks, the last successful numbers, deload status and accessory rep extensions are **not stored**. `deriveState` replays an exercise's finished sessions, oldest first, through the same `step` function used to validate a live session. Consequences:
 
 - One source of truth (the logged sets); state can't drift from history.
-- Editing or importing history automatically recomputes everything after it. Editing a finished session (SPEC §9.2, slice 1) relies on this: `session/context.ts` judges it against only the sessions before it, as of when it started.
+- Editing or importing history automatically recomputes everything after it. Editing a finished session (SPEC §5.4) relies on this: `session/context.ts` judges it against only the sessions before it, as of when it started.
 - Deload and replaced sessions are identified during the replay, which is how they're excluded from e1RM (A5, A6).
-- Each session is judged by the rep range it was prescribed (`ExerciseSession.repRange`, from the saved prescription; SPEC §9.4 slice 1), or the current range for sessions finished before v1.3.0. A range change between sessions, or from the last session to today's settings, is a fresh start (`freshStart`): stacks and pending plans are cleared. A finished session's editor uses `prescribedConfig`, so it's judged and counted as it was when finished.
+- Each session is judged by the rep range it was prescribed (`ExerciseSession.repRange`, from the saved prescription; SPEC §6.8), or the current range for sessions without one. A range change between sessions, or from the last session to today's settings, is a fresh start (`freshStart`): stacks and pending plans are cleared. A finished session's editor uses `prescribedConfig`, so it's judged and counted as it was when finished.
 - Cost is negligible at this scale (a few hundred sessions per exercise at most).
 
 ## Storage
@@ -71,14 +71,14 @@ Dexie wraps IndexedDB. Database `logtelligent`, schema in `storage/db.ts`; the s
 
 | Version | Tables | Notes |
 |---|---|---|
-| 1 | `sessions` (`++id, startedAt`) | Slice 1 |
-| 2 | + `programs` (`id`) | Slice 3. One row, `id: 'main'`. |
-| 3 | (no index change) | v1.1.0 slice 1. Upgrade sets `effortScale: 'rpe'` on an existing program. |
-| 4 | (no index change) | v1.2.0 slice 2. Logged sets may carry `extra: true`; no upgrade, since an unmarked set is a counted one. |
-| 5 | (no index change) | v1.2.0 slice 3. Sessions may carry a `note` (1–200 characters); no upgrade. |
-| 6 | (no index change) | v1.3.0 slice 1. A finished session's exercises may carry a `prescription` (rep range, set count); no upgrade, since one without it is judged by today's settings. |
+| 1 | `sessions` (`++id, startedAt`) | |
+| 2 | + `programs` (`id`) | One row, `id: 'main'`. |
+| 3 | (no index change) | Upgrade sets `effortScale: 'rpe'` on an existing program. |
+| 4 | (no index change) | Logged sets may carry `extra: true`; no upgrade, since an unmarked set is a counted one. |
+| 5 | (no index change) | Sessions may carry a `note` (1–200 characters); no upgrade. |
+| 6 | (no index change) | A finished session's exercises may carry a `prescription` (rep range, set count); no upgrade, since one without it is judged by today's settings. |
 
-- **`programs`**: the whole program as one document (`days[] → exercises[]`, each exercise an `ExerciseConfig` plus `archived?`; and `effortScale`, the scale effort is entered and shown in: `rpe`, `repsLeft` or `perceived`). Effort is always stored as RPE, whatever the scale (`program/effort.ts` maps labels ↔ RPE). Edits go through `updateProgram(edit, discardSessions?)`, which reads and writes inside one transaction so quick successive edits can't overwrite each other. Removing a day discards in that same transaction any open session on it with nothing logged, whether the day is deleted or archived (SPEC §9.4 slice 0; `history/sessions.ts` decides which days and exercises count as having history); changing programs discards every open session (slice 3).
+- **`programs`**: the whole program as one document (`days[] → exercises[]`, each exercise an `ExerciseConfig` plus `archived?`; and `effortScale`, the scale effort is entered and shown in: `rpe`, `repsLeft` or `perceived`). Effort is always stored as RPE, whatever the scale (`program/effort.ts` maps labels ↔ RPE). Edits go through `updateProgram(edit, discardSessions?)`, which reads and writes inside one transaction so quick successive edits can't overwrite each other. Removing a day discards in that same transaction any open session on it with nothing logged, whether the day is deleted or archived (SPEC §6.1; `history/sessions.ts` decides which days and exercises count as having history); changing programs discards every open session (SPEC §5.5).
 - **`sessions`**: one row per training session: `dayId`, `startedAt`, `finishedAt?` (unfinished = in progress, editable), `warmupDismissed?`, `note?` (the note for next time), and `exercises[]` of `ExerciseLog` (`exerciseId`, `sets[]`, `substitute? { name, sets }`, `skipped?`, `prescription? { repRange, sets }`, saved on Finish from the stored program in the same transaction). A set is `{ weight, reps, rpe?, extra? }`; extra sets come after the prescribed ones in `sets[]`.
 - Archived exercises and days stay in the program so their history still resolves.
 
@@ -89,21 +89,21 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 1. **Dexie:** add a new `db.version(n)` (never edit an old one); add an `.upgrade()` if existing rows need transforming.
 2. **Backup validator:** update `storage/backup.ts`. It copies only known, validated fields, so **a new field that isn't added there is silently dropped on restore**. Each validator passes its type to `compact<T>`, which requires every field of `T`, so a field left out fails to compile. Validate it properly, then add a round-trip test.
 3. **Backup format:** if old backups can no longer be read as-is, bump `FORMAT` and teach `parseBackup` to read the older format.
-4. **SPEC.md:** record the decision.
+4. **SPEC.md:** describe the new behavior.
 5. **Upgrade tests** in `storage/db.test.ts`: a database saved at the previous version opens with its data intact (and transformed, if there's an `.upgrade()`), and a backup from before the change still restores. Its version test fails until the new version is acknowledged there, as a reminder.
 
 ## Backup format
 
-`logtelligent-YYYY-MM-DD.json`: `{ app: 'logtelligent', format: 1, exportedAt, program, sessions }`. Restore validates every field (types, ranges, enums), copies into fresh objects, drops unknown fields, and replaces all data in one transaction. Errors name the bad field. A program without `effortScale` (backups from before v1.1.0) is read as `rpe`, so `format` is still 1.
+`logtelligent-YYYY-MM-DD.json`: `{ app: 'logtelligent', format: 1, exportedAt, program, sessions }`. Restore validates every field (types, ranges, enums), copies into fresh objects, drops unknown fields, and replaces all data in one transaction. Errors name the bad field. A missing optional field means its default (a program without `effortScale` is `rpe`; a session without a prescription is judged by today's settings), so `format` is still 1.
 
 ## UI
 
 - **Tabs:** `TodayView` (next day, suggestions, seed gate → `SeedWalkthrough`, active `SessionView`), `HistoryView` (picker of lifts, `E1rmChart` with high-rep points hollow, the lift's timeline on every day tagged by day; a row's Edit opens that session in `SessionView`), `ProgramView` (`EffortScaleCard`, `TemplateCard` while there are no active days, days, `ExercisePicker` → `ExerciseForm`, `ChangeProgramCard` once there are, `BackupCard`).
-- **Templates and seeding:** `TemplateCard` applies `program/templates.ts` to a program with no active days and tells `App` to open the walkthrough on Today. Switching from another program is `ChangeProgramCard` first: after a confirm, `clearProgram` archives the days with finished history and deletes the rest, and any open session is discarded in the same transaction (SPEC §9.4 slice 3); the template card then shows. `SeedWalkthrough` always shows the first exercise still missing starting numbers and saves each one on Next, so leaving and coming back resumes without any stored progress. The bank match for pre-fill is by name, since programs store no link to the bank. Both `SeedWalkthrough` and `ExerciseForm` enter starting numbers through `SeedFields` (stateless; each keeps its own state) and the rules in `program/seeding.ts`.
+- **Templates and seeding:** `TemplateCard` applies `program/templates.ts` to a program with no active days and tells `App` to open the walkthrough on Today. Switching from another program is `ChangeProgramCard` first: after a confirm, `clearProgram` archives the days with finished history and deletes the rest, and any open session is discarded in the same transaction (SPEC §5.5); the template card then shows. `SeedWalkthrough` always shows the first exercise still missing starting numbers and saves each one on Next, so leaving and coming back resumes without any stored progress. The bank match for pre-fill is by name, since programs store no link to the bank. Both `SeedWalkthrough` and `ExerciseForm` enter starting numbers through `SeedFields` (stateless; each keeps its own state) and the rules in `program/seeding.ts`.
 - **Adding an exercise:** `ExercisePicker` browses `program/bank.ts` by body area or search; picking one opens `ExerciseForm` with `preset` (the bank defaults are copied in, nothing links back), and "Custom exercise…" opens it blank.
 - **Session:** `SessionView` (warm-up banner, "Last time" note, `NoteField`, finish/discard) → `ExerciseLogger` per exercise (substitute, validation message; `ExerciseMenu` holds the heading row's ⋯ menu and the replace form) → `SetEditor` (set list + form, shared by originals and substitutes) → `EffortPicker` (the program's effort scale; shown only on a primary's first set, SPEC §6.3). A finished session uses the same components in a finished mode (no warm-up, menu or new-set form; Done and Delete session), opened from History. Edits save through the same `storage/sessions.ts` writes as a live session. Once the prescribed sets are in, a live session offers "+ Add set" for extra sets: own weight, no effort, and left out of validation and e1RM by the engine (`countedSets`), so callers pass all sets.
-- **Styling:** design tokens (colors with light/dark values, spacing, radius, tap target, type scale) in `src/styles/tokens.css`; use a token rather than a raw value, except 1px hairlines and one-off optical tweaks. All component styles are in `src/App.css` as shared classes (`.card`, `.field`, `.actions`, `.note`, `.tag`, `.muted`, `.list-button`, `button.primary` / `.danger`), sectioned by slice. Any `aria-pressed` button gets the pressed style from one rule, so a new toggle group needs no CSS of its own.
-- **Primitives (`src/ui/`):** `Button` (`variant` primary / secondary / danger, `block`; defaults to `type="button"`), `Card` (`as` section / li / form), `Field` (label or fieldset, optional `hint`) and `SegmentedControl` (a row of `aria-pressed` toggles, one pressed; `className` sets the layout). New UI uses them instead of raw elements with class names. Display formatting goes through `src/ui/format.ts`, including an exercise's summary line (`formatPrescription`) and the equipment and tier labels. Single-column grids use `minmax(0, 1fr)` so content can't widen the page on small phones (see TESTING.md).
+- **Styling:** design tokens in `src/styles/tokens.css`: colors with light/dark values, `--space-1…6` (4, 6, 8, 12, 16, 24px), `--radius-sm/md/lg/pill`, `--tap-target` / `--tap-target-lg` (44, 52px) and the type scale `--text-xs…display`. Use a token rather than a raw value, except 1px hairlines and one-off optical tweaks. All component styles are in `src/App.css` as shared classes (`.card`, `.field`, `.actions`, `.note`, `.tag`, `.muted`, `.list-button`, `button.primary` / `.danger`), sectioned by feature. Any `aria-pressed` button gets the pressed style from one rule, so a new toggle group needs no CSS of its own.
+- **Primitives (`src/ui/`):** `Button` (`variant` primary / secondary / danger, `block`; defaults to `type="button"`), `Card` (`as` section / li / form), `Field` (label or fieldset, optional `hint`) and `SegmentedControl` (a row of `aria-pressed` toggles, one pressed, for toggle groups such as tier, effort scale, stack presets and the effort picker, not the tabs, which are navigation; `className` sets the layout). New UI uses them instead of raw elements with class names. Display formatting goes through `src/ui/format.ts`, including an exercise's summary line (`formatPrescription`) and the equipment and tier labels. Single-column grids use `minmax(0, 1fr)` so content can't widen the page on small phones (see TESTING.md).
 - **Dialogs:** native `confirm()` for destructive or unusual actions.
 
 ## PWA and offline
@@ -113,7 +113,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 ## Hosting and security
 
 - **Cloudflare Workers static assets**, configured by `wrangler.jsonc`. Workers Builds deploys `main` to production (`npx wrangler deploy`) and other branches to preview URLs (`npx wrangler preview`, which needs the `previews` block). Unknown paths serve `index.html`.
-- **Own origin:** the app must not share an origin with other sites, because IndexedDB is per-origin. (It moved off `*.github.io` for this reason.)
+- **Own origin:** the app must not share an origin with other sites (such as `*.github.io`), because IndexedDB is per-origin.
 - **Headers (`public/_headers`):** a strict Content-Security-Policy where everything is `'self'`; no framing; `nosniff`; `no-referrer`; a locked-down permissions policy; COOP; HSTS.
 - **CSP constraint for future features:** the app may load only its own files and may not call any other host. Exercise images from a CDN, web fonts, analytics or any API (e.g. an LLM) will be **blocked** until the matching directive (`img-src`, `font-src`, `connect-src`…) in `_headers` is widened. Prefer bundling assets into the app over allowing third-party hosts.
 - **Data:** never leaves the device except through a user-initiated export.
@@ -121,21 +121,19 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 ## Quality gates and releases
 
 - **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the purity rules for the engine and for program/, session/ and history/), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
-- **Architecture and quality review:** the read-only `architecture-reviewer` subagent (`.claude/agents/architecture-reviewer.md`) reports ranked findings on a branch or module against this document and CLAUDE.md. Run it before opening a PR (CLAUDE.md, "Building a slice").
+- **Architecture and quality review:** the read-only `architecture-reviewer` subagent (`.claude/agents/architecture-reviewer.md`) reports ranked findings on a branch or module against this document and CLAUDE.md. Run it before opening a PR (CLAUDE.md, "Building a slice"). Small findings that don't belong in a feature PR go on the cleanup backlog (below).
 - **Playwright** (`ci.yml`, check "Playwright"): `e2e/` in WebKit and Chromium at 375px and 320px: every screen for sideways scrolling and clipped button labels, and smoke tests of the main flows. On failure the traces are kept as a run artifact (open with `npx playwright show-trace`).
 - **Security** (`security.yml`): CodeQL on the app and the workflows; dependency review on PRs.
   - **"Code scanning results / CodeQL" neutral, "1 configuration not found":** GitHub timed out processing a scan upload, so it can't compare the PR with `main`. Not required and not the code's fault; re-run the Security workflow.
 - **Dependabot:** weekly npm and GitHub Actions update PRs. Actions are pinned to commit SHAs.
 - **`main` is protected** (`.github/rulesets/main.json`): changes arrive by PR, all checks must pass, and there are no force-pushes or deletions.
-- **Releases** (`release.yml`), semantic versioning: a release PR (CLAUDE.md, "How to work") bumps `package.json`; when it merges, the workflow sees a version with no release yet, creates the `vX.Y.Z` tag and publishes a GitHub Release with that CHANGELOG section.
+- **Releases** (`release.yml`), semantic versioning: a release PR (CLAUDE.md, "How to work") bumps `package.json`; when it merges, the workflow sees a version with no release yet, creates the `vX.Y.Z` tag, publishes a GitHub Release with that CHANGELOG section, and closes the version's milestone.
 - **Production is every merge to `main`**, not the release tag (see Hosting). The tag and GitHub Release only record the version.
 - **Agent pipeline:** issues labeled `agent-ready` are built by Claude in GitHub Actions and arrive as PRs through the same gates (see "Agent pipeline" below).
 
 ## Agent pipeline
 
-*Status: **Decided 2026-10-09.** Built through step 5 of "Build order" below; each PR marks its part built there.*
-
-An issue labeled `agent-ready` triggers Claude in GitHub Actions, which asks questions if the issue is underspecified, or builds it on a branch following CLAUDE.md's "Building a slice" and opens a PR. The PR passes the same gates as any other, and the owner merges it.
+An issue labeled `agent-ready` triggers Claude in GitHub Actions, which asks questions if the issue is underspecified, or builds it on a branch following CLAUDE.md's "Building a slice" and opens a PR. The PR passes the same gates as any other, and the owner merges it. Everything below is built except PR follow-through (#75) and lifting it into a shared repo (#76).
 
 ```
 issue + agent-ready ─► triage ─┬─► questions on the issue, label agent-needs-info, stop
@@ -145,11 +143,11 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 
 ### Where it lives
 
-- **In this repo first.** The workflows and prompts can be lifted into a shared `agent-pipeline` repo later (a reusable workflow each project calls), once proven on real issues here. Nothing in them is specific to Logtelligent: the rules come from the repo's own CLAUDE.md, SPEC.md and this document.
+- **In this repo,** for now (#76). Nothing in the workflows or prompts is specific to Logtelligent: the rules come from the repo's own CLAUDE.md, SPEC.md and this document.
 - **Actions:** `anthropics/claude-code-action`, pinned to a commit SHA like every other action. It runs Claude Code headless on a fresh runner, which reads CLAUDE.md and `.claude/agents/` as a desktop session does.
 - **Identity:** the Claude GitHub App (`claude[bot]`). Its token is needed because pushes and PRs made with the default `GITHUB_TOKEN` don't trigger other workflows, so CI would never run on the agent's PRs.
-- **No stored key: Workload Identity Federation** (Decided 2026-10-09, replacing an `ANTHROPIC_API_KEY` secret). Each run, GitHub gives the workflow a short-lived signed token saying which repo, branch and workflow it is; Anthropic exchanges it for an API token that expires within minutes (the Action refreshes it during long runs). The Claude Console holds the trust setup: GitHub Actions registered as an issuer, a service account, and a federation rule that accepts only this repo's agent workflow on `main`. The IDs the workflow needs are identifiers, not credentials, and live in repo variables.
-- **Accepted risk: federation in the Code job** (Decided 2026-10-09, over a stored API key for that job). Federation needs a job that may request GitHub identity tokens, and with that permission code running in the job could also get a Claude App write token and act outside the Publish checks (push to other branches, open unchecked PRs). The Code job runs Claude with a shell, so this would take an issue that tricks Claude (prompt injection). It's accepted because only the owner labels issues, and only issues the owner wrote or has read get labeled; Claude's shell commands also run sandboxed. Since step 5b the agent labels too, but only issues it created itself, from text the owner approved (sub-issues) or fixed text (release issues). That widens the risk a little: a hijacked run could also create and label an issue, starting more runs, though each still needs its own successful trick. If the agent ever builds text the owner didn't write (e.g. its own follow-up issues, step 6), those wait for the owner's look before they're labeled.
+- **No stored key: Workload Identity Federation.** Each run, GitHub gives the workflow a short-lived signed token saying which repo, branch and workflow it is; Anthropic exchanges it for an API token that expires within minutes (the Action refreshes it during long runs). The Claude Console holds the trust setup: GitHub Actions registered as an issuer, a service account, and a federation rule that accepts only this repo's agent workflow on `main`. The IDs the workflow needs are identifiers, not credentials, and live in repo variables.
+- **Accepted risk: federation in the Code job** (rather than a stored API key for that job). Federation needs a job that may request GitHub identity tokens, and with that permission code running in the job could also get a Claude App write token and act outside the Publish checks (push to other branches, open unchecked PRs). The Code job runs Claude with a shell, so this would take an issue that tricks Claude (prompt injection). It's accepted because only the owner labels issues, and only issues the owner wrote or has read get labeled; Claude's shell commands also run sandboxed. The agent labels too, but only issues it created itself, from text the owner approved (sub-issues) or fixed text (release issues). That widens the risk a little: a hijacked run could also create and label an issue, starting more runs, though each still needs its own successful trick. If the agent ever builds text the owner didn't write (e.g. its own follow-up issues), those wait for the owner's look before they're labeled.
 - **Spending:** usage is billed per token to a dedicated Console workspace ("github-actions") with its own monthly limit. When the limit is reached, runs fail until the month resets or the limit is raised; re-adding `agent-ready` retries. Revoking access is deleting the federation rule.
 - **Repo stays public:** Actions minutes are free, and only the owner (and the agent, through the workflow) can add labels.
 
@@ -157,8 +155,8 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 
 - A run starts when `agent-ready` is added to an issue. The workflow checks who added it: the owner, or `claude[bot]` on an issue `claude[bot]` created (for the follow-ups, unblocked sub-issues and release issues below). Anyone else's label is ignored.
 - Comments from anyone other than the owner never reach the agent: the workflow passes it only the issue and the owner's and its own comments. Those are data too; an issue describes what to build but can't change the agent's rules.
-- **One triage and one coding run at a time** across the repo, each in its own concurrency group, so a waiting coding run can't be replaced by another issue's triage (Decided 2026-10-09).
-- **Waiting runs queue** (Decided 2026-10-09, replacing "the newer replaces it"): each group holds up to 100 waiting runs and starts them in order (GitHub's `queue: max`), so the sub-issues of one split all get built. Only past 100 is a waiting run dropped; re-adding `agent-ready` retries.
+- **One triage and one coding run at a time** across the repo, each in its own concurrency group, so a waiting coding run can't be replaced by another issue's triage.
+- **Waiting runs queue:** each group holds up to 100 waiting runs and starts them in order (GitHub's `queue: max`), so the sub-issues of one split all get built. Only past 100 is a waiting run dropped; re-adding `agent-ready` retries.
 
 ### Labels and milestones
 
@@ -170,24 +168,24 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 | `touches-data` | red | The PR changes what's stored (see "Merge safety"). |
 | `touches-gates` | orange | The PR changes what decides "green": the check scripts, lint, format, type or test config, the security headers or hosting (see "Merge safety"). |
 
-README.md ("Setting up a new deployment") has the commands that create them.
+README.md ("Setting up a new deployment") has the commands that create them. Open questions and ideas carry GitHub's `question` and `enhancement` labels.
 
 **Issue forms** (`.github/ISSUE_TEMPLATE/`): **Task** (what should change, why, where it's specified, done when, out of scope) and **Bug** (what happened, what was expected, steps, where). They ask for what triage needs, so fewer issues come back with questions; blank issues still work.
 
-Each version has a **milestone** (v1.3.0, v2.0.0…). The agent creates it when the version is scoped in SPEC.md (§9.x), unless it already exists (Decided 2026-10-09), and puts every issue it creates in the right milestone: sub-issues in their parent's, release issues in their version's. In practice a fixed step does it, not Claude: after each merge to `main`, `.github/workflows/release.yml` reads SPEC.md's `## 9.x vX.Y.Z` headings and creates a milestone for each version that isn't released and has none. Releasing a version closes its milestone.
+Each version has a **milestone** (v1.4.0, v2.0.0…), created by the owner when the version is scoped. The agent puts every issue it creates in the right milestone: sub-issues in their parent's, release issues in their version's. Releasing a version closes its milestone (`release.yml`).
 
 ### Triage (Claude Sonnet 5.5, 10 minutes)
 
 Triage reads the issue, SPEC.md, this document and CLAUDE.md, then does one of three things:
 
-1. **Questions.** If the issue leaves behavior open, or touches anything Proposed or Open, it comments numbered questions, each with a recommended default (CLAUDE.md, "Building a slice" step 1), swaps `agent-ready` for `agent-needs-info`, and stops. The owner answers with numbered replies and re-adds the label; the next run reads the whole thread.
-2. **Split.** If the issue has natural seams (e.g. several new components and the work that wires them in), it comments a proposed split and stops. On the owner's approval it creates the sub-issues, linked with GitHub's "blocked by" where one depends on another, in the issue's milestone. Sub-issues with no blockers get `agent-ready` straight away; a blocked one gets it when its last blocker closes. Independent ones can be open as PRs at the same time. Decided 2026-10-09:
+1. **Questions.** If the issue leaves behavior open, touches behavior SPEC.md doesn't cover or that's open as an issue, or is a new feature with no milestone, it comments numbered questions, each with a recommended default (CLAUDE.md, "Building a slice" step 1), swaps `agent-ready` for `agent-needs-info`, and stops. The owner answers with numbered replies and re-adds the label; the next run reads the whole thread.
+2. **Split.** If the issue has natural seams (e.g. several new components and the work that wires them in), it comments a proposed split and stops. On the owner's approval it creates the sub-issues, linked with GitHub's "blocked by" where one depends on another, in the issue's milestone. Sub-issues with no blockers get `agent-ready` straight away; a blocked one gets it when its last blocker closes. Independent ones can be open as PRs at the same time.
    - **Sub-issues are the text the owner approved.** The proposal lists each sub-issue's title, text and blockers, and the sub-issues are created from that posted proposal word for word, not rewritten on approval. So every `agent-ready` issue is text the owner has read (see the accepted risk above). A reply asking for changes gets a revised proposal, approved the same way.
    - **The parent is context.** Triage and coding runs for a sub-issue also read its parent issue and the parent's thread, where the decisions are. The parent closes itself when its last sub-issue closes.
    - **Unblocking needs completed blockers.** A blocked sub-issue gets `agent-ready` only when every blocker is closed as completed. A blocker closed as not planned leaves it for the owner to decide. Only sub-issues the agent created this way are labeled automatically.
 3. **Ready.** Otherwise it comments a short plan and the coding run starts.
 
-**How it runs** (`.github/workflows/agent.yml`, built): the **Triage** job checks out `main`, writes the issue (as it was when labeled, from the event) and its filtered thread to `.agent-input/` (with `.github/agent/collect.sh`, which for a sub-issue also writes its parent and the parent's thread; a parent someone else wrote and edited after the split is left out), and runs Claude with the prompt in `.github/agent/triage.md`. The job holds only read permissions, and the Action is given that job's token rather than a Claude App token. Claude has read-only tools (Read, Grep, Glob; no shell, no web, no edits) and returns its answer as structured output, `{ decision, comment, complexity, subissues }`, checked against a schema (`complexity` only when ready; `subissues` only for a split: 2–8, each blocked only by earlier ones). The **Respond** job, which holds triage's only write permission (`issues: write`), posts the comment with a footer (the run and its cost) and sets the labels: `agent-ready` always comes off, so re-adding it starts the next run, and `agent-needs-info` goes on for questions and splits. For a split, Respond shows the sub-issues under Claude's comment and keeps them in it as data (a hidden, compressed block after Claude's text). If triage fails or returns nothing usable, Respond says so on the issue instead. A ready issue goes on to the coding run.
+**How it runs** (`.github/workflows/agent.yml`): the **Triage** job checks out `main`, writes the issue (as it was when labeled, from the event) and its filtered thread to `.agent-input/` (with `.github/agent/collect.sh`, which for a sub-issue also writes its parent and the parent's thread; a parent someone else wrote and edited after the split is left out), and runs Claude with the prompt in `.github/agent/triage.md`. The job holds only read permissions, and the Action is given that job's token rather than a Claude App token. Claude has read-only tools (Read, Grep, Glob; no shell, no web, no edits) and returns its answer as structured output, `{ decision, comment, complexity, subissues }`, checked against a schema (`complexity` only when ready; `subissues` only for a split: 2–8, each blocked only by earlier ones). The **Respond** job, which holds triage's only write permission (`issues: write`), posts the comment with a footer (the run and its cost) and sets the labels: `agent-ready` always comes off, so re-adding it starts the next run, and `agent-needs-info` goes on for questions and splits. For a split, Respond shows the sub-issues under Claude's comment and keeps them in it as data (a hidden, compressed block after Claude's text). If triage fails or returns nothing usable, Respond says so on the issue instead. A ready issue goes on to the coding run.
 
 When triage judges that the owner approved the latest proposal (`approved_split`), the **Split** job creates the sub-issues from that posted proposal, never from new output. It checks that an owner comment starting "approved" follows the proposal, that the proposal's data passes the same checks as triage's result (`.github/agent/split-valid.jq`, which also refuses HTML comments, since they wouldn't show), and that the issue has no sub-issues yet, then, with a Claude App token limited to issues and reading contents, which the exchange requires (issues and labels it adds start runs; ones added with the job's own token wouldn't), creates each one in the parent's milestone with "Part of #n", links it as a sub-issue and its blockers as "blocked by", and labels the unblocked ones `agent-ready` last. If it stops part way it says what exists, for the owner to finish by hand.
 
@@ -197,29 +195,27 @@ When triage judges that the owner approved the latest proposal (`approved_split`
 2. If it was one of the agent's sub-issues and its parent's sub-issues are now all closed, the parent closes.
 3. If its milestone is a version (`vX.Y.Z`) with nothing left open, no "Release vX.Y.Z" issue yet and no release, it opens one ("Releases" below).
 
-Any `agent-ready` issue is in scope, new features included. New features are scoped in SPEC.md from the owner's answers, as a desktop session would.
+Any `agent-ready` issue is in scope, new features included. A new feature's behavior is recorded in SPEC.md from the owner's answers, as a desktop session would.
 
 ### Coding run (Claude Sonnet 5.5 or Opus 5.5, 45 minutes)
 
 On branch `agent/issue-<n>-<slug>`, the agent follows CLAUDE.md's "Building a slice", with two differences: step 1 happened in triage (the answers are on the issue, and step 2 records them in SPEC.md first), and step 5's preview check is replaced by the Playwright check in CI plus a line in the PR saying the preview wasn't used. It runs every CI command and the `architecture-reviewer` subagent before opening the PR, which links the issue (`Closes #n`). The PR's footer carries the run and its cost; a run that ends without a PR says why on the issue, with the same footer.
 
-Decided 2026-10-09:
-
 - **Triage picks the model, by the reasoning the build needs and how quietly a mistake could pass, not by size.** With a ready plan, triage returns a complexity: `routine` (the plan pins down what to write, the work is mechanical or repeats an existing pattern however many files it touches, and a test or check would fail on a slip) is built by Sonnet 5.5, at about half the cost per token; `complex`, or no answer, by Opus 5.5. Complex is anything where a plausible-looking change can be quietly wrong, however small: the engine and its math, state replayed from history, rounding and dates, stored data and upgrades, the gates, design choices, an issue open to interpretation, or edges no test covers. Speed is rarely the risk here (one person's history is small); subtle correctness is. The `architecture-reviewer` subagent stays on Opus either way (`model: opus` in its definition), since it's what catches what a cheaper build gets wrong. Compare a few Sonnet-built PRs before relying on it.
 - **Claude can't push; a fixed step publishes.** Claude works with the job's read-only token: it edits, commits, and runs the checks and the reviewer, then returns the PR's title and description as structured output. The publish step copies its commits into a fresh clone, refuses if they touch a guardrail path (below) or there are none, then gets a Claude App token limited to contents and pull requests (from the same Anthropic endpoint the Action uses; it's undocumented, so a change there makes publishing fail visibly) and pushes the branch and opens the PR. A PR opened with that token runs CI, which one opened with the default token wouldn't. If Claude finds a question the thread doesn't answer, it returns the questions instead and nothing is published.
 - **No new dependencies or scripts.** The coding run can't `npm install`, and Publish refuses any change to `package.json` or `package-lock.json` beyond the version (so releases still work) and any `.npmrc`. An issue that needs a new package comes back with a question.
 - **Changes to the gates are labeled, not refused.** A PR that touches `scripts/`, the lint, format, type or Playwright config, `public/_headers` or `wrangler.jsonc` gets `touches-gates`, so the owner looks before merging.
-- **One branch per issue.** If `agent/issue-<n>-…` already exists, the run stops and says so; close the PR or delete the branch to build it again. Changes to an open agent PR come with step 6.
+- **One branch per issue.** If `agent/issue-<n>-…` already exists, the run stops and says so; close the PR or delete the branch to build it again. Changes to an open agent PR come with PR follow-through (#75).
 
-**How it runs** (`.github/workflows/agent.yml`, built): a `ready` triage starts three more jobs.
+**How it runs** (`.github/workflows/agent.yml`): a `ready` triage starts three more jobs.
 
 - **Code** checks out `main` on a new branch, installs dependencies and the Playwright browsers, and runs Claude (the model triage's complexity picked) with the prompt in `.github/agent/code.md`, the issue, the thread (and a sub-issue's parent) and triage's plan. Claude can edit, commit and run the repo's npm scripts, tests and read-only git commands; push, `npm install`, `curl`, `wget` and the web tools are denied. Its shell commands run sandboxed, which reduces the accepted risk above. It returns `{ status, pr_title, pr_body, touches_data, comment }`, and its commits leave the job as a git bundle.
 - **Publish**, on a fresh machine, reads the bundle into a clean clone and refuses commits that touch a guardrail path or change `package.json` or `package-lock.json` beyond the version. It then pushes the branch and opens the PR (`Closes #n`, a footer with the run and cost) with the limited Claude App token, and labels it `touches-data` (when `src/storage/` changed or Claude said so) or `touches-gates`.
 - **Report** comments on the issue only when there's no PR: Claude's questions (with `agent-needs-info`), an existing branch, a refusal, or a run that didn't finish. When there's a PR, the PR is the report.
 
-The agent never merges, and never edits its own guardrails: `.github/workflows/`, `.github/rulesets/`, `.github/agent/` (its prompts) and `.claude/` (its reviewer subagent and any Claude settings) (Decided 2026-10-09). Everything else, release PRs included, it may do.
+The agent never merges, and never edits its own guardrails: `.github/workflows/`, `.github/rulesets/`, `.github/agent/` (its prompts) and `.claude/` (its reviewer subagent and any Claude settings). Everything else, release PRs included, it may do.
 
-### What the agent writes (Decided 2026-10-09)
+### What the agent writes
 
 Everything the agent writes on GitHub (PR descriptions, issue comments, commit messages) is public and unreviewed until the owner reads it. Secret scanning catches known key formats; these rules cover the rest.
 
@@ -228,18 +224,20 @@ Everything the agent writes on GitHub (PR descriptions, issue comments, commit m
 
 ### PR follow-through
 
+Not built yet (#75); until then, the coding run lists out-of-scope findings in its PR as suggested follow-ups.
+
 - **Fresh review:** when the agent opens a PR, a separate run reviews it from scratch (correctness, plus `architecture-reviewer`) and posts its findings. Must-fix findings are fixed on the branch.
 - **Out-of-scope findings** become follow-up issues, linked from the PR ("Seen. Out of scope for this task; tracked in #n"):
   - `agent-ready` when the problem and the fix are both clear (a bug with an obvious cause);
   - `agent-followup` when it needs a decision (e.g. how dates should look).
   - **One level deep:** a follow-up found while working on an agent-created follow-up is always `agent-followup`, so the agent can't keep queuing work for itself.
 - **CI auto-fix:** if a check fails on an agent PR, the agent tries to fix it, at most 2 times per PR.
-- **Which checks the coding run runs before the PR** (*Open*, decide when scoping step 6). Today it runs every CI command first, because nothing can fix a red PR after its run ends; the full build and Playwright cost the most turns. With CI auto-fix, it could run only the fast checks (format, lint, unit tests) and leave the build and Playwright to CI, at the cost of more PRs that go red before they're fixed. CLAUDE.md's "Before pushing, run what CI runs" would then differ for agent runs.
+- **Checks before the PR:** the coding run runs every CI command first, since nothing can fix a red PR after its run ends. Whether that changes once CI auto-fix exists is #73.
 - **Keeping PRs current:** the ruleset requires a PR to be up to date with `main`, so after each merge a workflow updates the agent's open PRs, and the agent resolves any conflicts. (GitHub's merge queue does this, but only on organization-owned repos.)
 
 ### Releases
 
-When the last open issue in a version's milestone closes, the agent creates a "Release vX.Y.Z" issue in it, labeled `agent-ready`. Issues in other milestones don't hold it back. It isn't created twice, or for a version already released, and its text is fixed in the workflow, not written by Claude. Its PR bumps `package.json` and moves CHANGELOG.md's "Unreleased" notes under the version; merging it tags the release as before.
+When the last open issue in a version's milestone closes, the agent creates a "Release vX.Y.Z" issue in it, labeled `agent-ready`. Issues in other milestones don't hold it back. It isn't created twice, or for a version already released, and its text is fixed in the workflow, not written by Claude. Its PR bumps `package.json` and moves CHANGELOG.md's "Unreleased" notes under the version; merging it tags the release.
 
 ### Merge safety
 
@@ -247,35 +245,6 @@ The owner may merge an agent PR once it's green. That rests on the required chec
 
 A PR that changes what's stored gets `touches-data`, and one that changes the checks themselves gets `touches-gates` (read those before merging: green means less if the checks changed). Code review stays optional; the one thing it asks of the owner is to **export a backup on the phone before merging**, because reverting the PR can't undo an upgrade already applied to real data.
 
-### Build order
-
-1–5. **Built:** these decisions; the Playwright check and upgrade tests; issue forms and labels; triage (setup in README.md); the coding run (5a: branch, slice, PR; 5b: approved splits, release issues, milestones, `claude[bot]` as a label sender).
-6. PR follow-through: fresh review, follow-up issues, CI auto-fix, keeping PRs current.
-7. Later: lift it into a shared `agent-pipeline` repo.
-
 ## Cleanup backlog
 
-Small `architecture-reviewer` findings that didn't belong in a feature PR; none is a bug. Fold them into whichever slice next touches the file, or batch a few into a small no-visual-change PR (verify with a style snapshot, TESTING.md).
-
-- **`HistoryView`:**
-  - Move a row into a `HistoryRow` component, and drop the dead `history-row` class.
-  - Build the chart series in `history/timeline.ts` (`e1rmSeries`) rather than inline.
-- **`E1rmChart`:** the middle gridline can land on x.5.
-- **`SuggestionCard`:** the `heading` prop always equals `config.name`.
-- **`App.tsx`:** the three tab buttons are written out; map over a list.
-- **`program/`:**
-  - `EffortOption` and `RPE_SCALE` are exported but used only in `effort.ts`.
-  - The new-exercise target RPE (8) is written in both `bank.ts` and `exerciseForm.ts`.
-- **`storage/sessions.ts`:** `saveNote` could use `db.sessions.update`.
-- **`App.css`:**
-  - `minmax(0, 1fr)` columns are set in two ways (in each rule, and in a list at the end).
-  - Two raw `10px` values sit between spacing tokens.
-  - The textarea's padding is set twice.
-
-## Proposed: UI component layer and design tokens
-
-*Status: **partly built.** Built: the tokens (`--space-1…6` = 4, 6, 8, 12, 16, 24px; `--radius-sm/md/lg/pill`; `--tap-target` / `--tap-target-lg` = 44, 52px; `--text-xs…display`), the primitives `Button`, `Field`, `Card` (SPEC §9.1 slice 0) and `SegmentedControl` (SPEC §9.4 slice 0), and the shared formatters (see "UI"). The rest stays **Proposed**, to come as it's needed:*
-
-1. **More primitives** in `src/ui/`: `Stepper`, `Note` (info/warning) and `Tag`, composed by feature components instead of raw elements and class names.
-2. **Co-located styles** via CSS Modules (`Button.module.css`; built into Vite, no new dependency), so each primitive owns its CSS. `App.css` shrinks to layout only.
-3. **Incrementally:** one primitive at a time, each a small PR verified at 375px and 320px.
+Small `architecture-reviewer` findings that didn't belong in a feature PR (none is a bug) are tracked in #74: fold them into whichever change next touches the file, or batch a few into a small no-visual-change PR (verify with a style snapshot, TESTING.md).
