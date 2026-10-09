@@ -25,7 +25,7 @@ The owner's numbered replies to earlier questions are **decisions**. Use them; d
 - behavior the issue and SPEC.md don't settle (what it looks like, wording, edge cases, what happens to existing data);
 - anything it touches that's tagged Proposed or Open;
 - a new feature with no version scoped for it in SPEC.md: ask which version it belongs to (recommend the next minor, after anything already scoped) and settle its scope;
-- a change the agent may not make: `.github/workflows/`, `.github/rulesets/` or `.github/agent/`. Say so, and ask whether the owner will make that part.
+- a change the agent may not make: `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`. Say so, and ask whether the owner will make that part.
 
 Write numbered questions, each with a recommended default and a short reason, e.g. `1. **Empty state:** what should History show before any session? Recommended: "No sessions yet", matching Today's empty state.` Ask only what's needed to build it; a sensible default the owner can accept in one word beats an open question.
 
