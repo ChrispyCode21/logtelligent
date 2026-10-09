@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2. **v1.2.1 — released** (2026-10-06): the fixes in §9.3. **v1.3.0 — in progress** (scoped 2026-10-08): slices 0–3 of §9.4 built.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2. **v1.2.1 — released** (2026-10-06): the fixes in §9.3. **v1.3.0 — released** (2026-10-09): slices 0–3 in §9.4.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -504,7 +504,7 @@ From the owner's v1.2.0 on-device checks (TESTING.md). A patch release; no store
 - **Logged-set rows:** the "Set 1 · 225 × 5" row's text is centred vertically (it sat at the top of the 44 px row).
 - **Effort scale card:** its description area is always as tall as the longest of the three descriptions, so switching scales doesn't move the rest of the Program tab.
 
-## 9.4 v1.3.0 scope (Decided 2026-10-08)
+## 9.4 v1.3.0 scope (Decided 2026-10-08 — released in v1.3.0)
 
 Theme: **change programs without losing history**. A lift's history can follow it into a new program, and each old session is judged by what was prescribed at the time, so carried-over history stays accurate. Built in this order, each slice a small PR or two, then a release PR. Each slice's details are settled with the owner before it's built (CLAUDE.md, "Building a slice").
 
