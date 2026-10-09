@@ -134,7 +134,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Agent pipeline
 
-*Status: **Decided 2026-10-09.** Built in the PRs listed under "Build order" below; each PR marks its part built there. Built so far: step 2.*
+*Status: **Decided 2026-10-09.** Built in the PRs listed under "Build order" below; each PR marks its part built there. Built so far: steps 2 and 3.*
 
 Work can start from a GitHub issue instead of a desktop session: an issue labeled `agent-ready` triggers Claude in GitHub Actions, which checks the issue, asks questions if it's underspecified, or builds it on a branch following CLAUDE.md's "Building a slice" and opens a PR. The PR passes the same gates as any other, and the owner merges it.
 
@@ -160,12 +160,16 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 
 ### Labels and milestones
 
-| Label | Meaning |
-|---|---|
-| `agent-ready` | Build this. Added by the owner, or by the agent where this section allows it. |
-| `agent-needs-info` | The agent asked questions and stopped. The owner answers in a comment and re-adds `agent-ready`. |
-| `agent-followup` | Found by the agent but needs the owner's input (a style or product decision) before it can be built. |
-| `touches-data` | The PR changes what's stored (see "Merge safety"). |
+| Label | Color | Meaning |
+|---|---|---|
+| `agent-ready` | green | Build this. Added by the owner, or by the agent where this section allows it. |
+| `agent-needs-info` | yellow | The agent asked questions and stopped. The owner answers in a comment and re-adds `agent-ready`. |
+| `agent-followup` | purple | Found by the agent but needs the owner's input (a style or product decision) before it can be built. |
+| `touches-data` | red | The PR changes what's stored (see "Merge safety"). |
+
+README.md ("Setting up a new deployment") has the commands that create them.
+
+**Issue forms** (`.github/ISSUE_TEMPLATE/`): **Task** (what should change, why, where it's specified, done when, out of scope) and **Bug** (what happened, what was expected, steps, where). They ask for what triage needs, so fewer issues come back with questions; blank issues still work.
 
 Each version has a **milestone** (v1.3.0, v2.0.0…). The agent puts every issue it creates in the right milestone.
 
@@ -220,7 +224,7 @@ A PR that changes what's stored gets `touches-data`. Code review stays optional;
 
 1. These decisions (this section, and CLAUDE.md's note on headless runs).
 2. Playwright check in CI, and the upgrade-test setup (`fake-indexeddb`). The owner adds the new check to the ruleset. **Built.**
-3. Issue template and labels.
+3. Issue template and labels. **Built.**
 4. Triage workflow. Before it: the owner installs the Claude GitHub App and adds the API key.
 5. Coding run: branch, slice, PR, sub-issues and release issues.
 6. PR follow-through: fresh review, follow-up issues, CI auto-fix, keeping PRs current.
