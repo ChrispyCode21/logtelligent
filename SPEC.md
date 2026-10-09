@@ -322,92 +322,94 @@ Bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a ligh
 
 ## 7. Worked examples → test cases
 
-Each example below becomes one unit test. IDs are stable so tests can reference them (e.g. `it('B3: ...')`). Numbers were computed with the formulas in §6.4, not estimated. If a rule changes, update its examples.
+Each example is one unit test named with its stable ID (e.g. `it('B3: ...')`). Numbers come from the formulas in §6.4, not estimates. If a rule changes, update its examples.
 
-Shared assumptions unless stated: barbell loads in 5 lb steps; dumbbell rack 10, 12.5, 15, 17.5, 20, 22.5, 25, 30, 35…; e1RM values rounded to 0.1 lb (tests should allow ±0.1).
+Unless stated: barbell loads in 5 lb steps; dumbbell rack 10, 12.5, 15, 17.5, 20, 22.5, 25, 30, 35…; e1RM values rounded to 0.1 lb (tests allow ±0.1). `225×4 @8` is 225 lb for 4 reps at RPE 8.
 
 ### 7.A Estimated 1RM (§6.4)
 
-| ID | Input | Expected |
+| ID | Given | Expected |
 |---|---|---|
-| A1 | First set 225×4 @ RPE 8 | Effective reps 6. Epley 270.0, Brzycki 261.3, Lombardi 269.2 → **e1RM 266.8** |
-| A2 | First set 225×4 @ RPE 10 | Effective reps 4 → **e1RM 253.0** (no reps in reserve added) |
+| A1 | First set 225×4 @8 | Effective reps 6. Epley 270.0, Brzycki 261.3, Lombardi 269.2 → **e1RM 266.8** |
+| A2 | First set 225×4 @10 | Effective reps 4 (no reps in reserve added) → **e1RM 253.0** |
 | A3 | Last 3 sessions within 4 weeks: 225×4 @8, 225×5 @8, 230×4 @8 | Session e1RMs 266.8, 273.6, 272.7 → **running e1RM 271.1** |
-| A4 | Most recent session 6 weeks ago (225×4 @8), none since | 266.8 × 0.9 → running e1RM **240.1** + **"returning from a break"** note. With 3–5 @ RPE 8 this suggests **200 × 4** (vs. 225 before the break) |
-| A5 | Last 3 sessions, the middle one a deload | Deload session **ignored**; average uses the 3 most recent *non-deload* sessions in the window |
-| A6 | Session where the exercise was **replaced** by a substitute | Substitute's sets **ignored** for the original exercise's e1RM (§5.2) |
+| A4 | Most recent session 6 weeks ago (225×4 @8), none since | 266.8 × 0.9 → running e1RM **240.1** + **"returning from a break"** note. At 3–5 @8 this suggests **200 × 4** (225 before the break) |
+| A5 | Last 3 sessions, the middle one a deload | Deload **ignored**: the average uses the 3 most recent *non-deload* sessions in the window |
+| A6 | A session where the exercise was **replaced** by a substitute | Substitute's sets **ignored** for the original exercise's e1RM (§5.2) |
 | A7 | Only 2 sessions ever, both within 4 weeks: 225×4 @8, 225×5 @8 | (266.8 + 273.6) / **2** → **270.2**. Not divided by 3; no zero padding |
 | A8 | Only 1 session ever, within 4 weeks: 225×4 @8 | Running e1RM **266.8** (divided by 1; no break penalty) |
-| A9 | Primary lift, zero sessions, seed 225×5 (treated as RPE 7), range 3–5 @ RPE 8 | Seed e1RM **280.4** → **suggest 235 × 4** (predicted 4.2) |
-| A10 | Seed 225×5, then one real session 225×4 @8 | Running e1RM **266.8** — the real session alone; the seed is **dropped**, not averaged |
-| A11 | Accessory, zero sessions, seed 15 lb for 15 reps (recorded RPE 8), range 15–20 | **Suggest 15 × 15** (bottom of range) |
+| A9 | Primary, no sessions, seed 225×5 (treated as RPE 7), range 3–5 @8 | Seed e1RM **280.4** → **suggest 235 × 4** (predicted 4.2) |
+| A10 | Seed 225×5, then one real session 225×4 @8 | Running e1RM **266.8**: the real session alone; the seed is **dropped**, not averaged |
+| A11 | Accessory, no sessions, seed 15 lb × 15 (recorded RPE 8), range 15–20 | **Suggest 15 × 15** (bottom of range) |
 | A12 | Any exercise with no seed | App **blocks** starting a session and routes to setup |
 
 ### 7.B Primary-lift suggestions (§6.4 weight-selection rule)
 
-| ID | Input | Expected |
+| ID | Given | Expected |
 |---|---|---|
-| B1 | Running e1RM 271.1; intent 3–5 @ RPE 8 | Target reps 4. At 225, predicted 4.6 ✓; at 230, predicted 3.8 ✗ → **suggest 225 × 4** |
-| B2 | Last first set 225×12 @ RPE 8 (far above 3–5 range); only session | e1RM 325.0 → **suggest 270 × 4** (predicted 4.6). The overshoot is corrected by the e1RM, not the rep ceiling |
-| B3 | Last first set 225×7 @ RPE 7; intent 5–7 @ RPE 8; only session | e1RM 294.4; target 6 → **suggest 235 × 6** (predicted 6.2). This is the original "hit the top of the range with RPE to spare, so bump the weight" case |
-| B4 | Primary exercise with stacks > 0 | Suggestion comes from stack state (see 7.D), **not** from B-rule |
+| B1 | Running e1RM 271.1; 3–5 @8 | Target 4. At 225 predicted 4.6 ✓; at 230 predicted 3.8 ✗ → **suggest 225 × 4** |
+| B2 | Only session: first set 225×12 @8 (far above 3–5) | e1RM 325.0 → **suggest 270 × 4** (predicted 4.6). The e1RM corrects the overshoot, not the rep ceiling |
+| B3 | Only session: first set 225×7 @7; 5–7 @8 | e1RM 294.4; target 6 → **suggest 235 × 6** (predicted 6.2) |
+| B4 | Primary with stacks > 0 | From stack state (7.D), **not** the B rule |
 
 ### 7.C Accessory double progression (§6.2, §6.5)
 
-Lateral raise: range 15–20, 3 sets, dumbbell, ceiling `ceil(20 × 1.2)` = 24.
+Incline DB press: range 6–8, 3 sets. Lateral raise: range 15–20, 3 sets, dumbbell, ceiling `ceil(20 × 1.2)` = 24.
 
-| ID | Input | Expected |
+| ID | Given | Expected |
 |---|---|---|
-| C1 | Incline DB press, range 6–8, 3 sets: 70×8, 70×8, 70×7 | 2 of 3 at top → filled. 70 → 75 is 7.1% (≤ 10%) → **suggest 75 × 6** |
-| C2 | Same, but 70×8, 70×7, 70×6 | 1 of 3 at top → not filled → **suggest 70, target 8** |
-| C3 | 2 sets: 70×8, 70×7 | 1 of 2 at top; more than 50% of 2 = both → not filled → **suggest 70, target 8** |
-| C4 | Lateral raise 15×20, 15×20, 15×18 | Filled. 15 → 17.5 is 16.7% (> 10%) → step `max(ceil(20 × 0.1), 1)` = 2 → **suggest 15, effective top 22** |
+| C1 | Incline: 70×8, 70×8, 70×7 | 2 of 3 at top → filled. 70 → 75 is 7.1% (≤ 10%) → **suggest 75 × 6** |
+| C2 | Incline: 70×8, 70×7, 70×6 | 1 of 3 at top → not filled → **suggest 70, target 8** |
+| C3 | Incline, 2 sets: 70×8, 70×7 | 1 of 2 at top; more than 50% of 2 = both → not filled → **suggest 70, target 8** |
+| C4 | Lateral raise: 15×20, 15×20, 15×18 | Filled. 15 → 17.5 is 16.7% (> 10%) → step `max(ceil(20 × 0.1), 1)` = 2 → **suggest 15, effective top 22** |
 | C5 | Lateral raise, effective top 22: 15×22, 15×22, 15×19 | Filled → 22 + 2 = **effective top 24** (the ceiling) |
 | C6 | Lateral raise, effective top 24: 15×24, 15×24, 15×22 | Ceiling filled → take the jump anyway → **suggest 17.5 × 15** (reset to bottom) |
-| C9 | Rep extension step sizes | top 5 → 1; top 7 → 1; top 12 → 2; top 20 → 2 |
 | C7 | Lat pulldown, cable stack …110, 121, 132…, range 8–12: 121×12, 121×12, 121×10 | Filled. 121 → 132 is 9.1% (≤ 10%) → **suggest 132 × 8** |
-| C8 | Ceiling values | 3–5 → 6; 5–7 → 9; 8–12 → 15; 15–20 → 24 |
+| C8 | Ceilings | 3–5 → 6; 5–7 → 9; 8–12 → 15; 15–20 → 24 |
+| C9 | Rep extension steps | Top 5 → 1; top 7 → 1; top 12 → 2; top 20 → 2 |
 
 ### 7.D Floor rule and fatigue stacks (§6.6)
 
-Bench, range 3–5, 3 sets. Weight A = 225, weight B = 235.
+Bench, range 3–5, 3 sets. Given is the state before the session, then the session.
 
-| ID | Starting state | Session | Expected |
-|---|---|---|---|
-| D1 | Stacks 0 | 225×5, 225×4, 225×3 | All ≥ 3 → **success**. Stacks 0. Next from e1RM rule |
-| D2 | Stacks 0, last success 225 | 235×4, 235×3, 235×2 | Set 3 < 3 → **fail**. Stacks **1**. Next **225** (revert). Message: *"Failed to hit minimums, next week's weight will be lowered."* |
-| D3 | Stacks 1, failed numbers 235 | 225×5, 225×4, 225×3 | Success at reverted weight → stacks **stay 1**. Next **235** (retry) |
-| D4 | Stacks 1, retrying 235 | 235×4, 235×3, 235×3 | Success at the failed weight → stacks **0**. Next from e1RM rule |
-| D5 | Stacks 1, reverted to 225 | 225×4, 225×3, 225×2 | Fail again → stacks **2** → **deload** next week |
-| D6 | Bench stacks 1, lateral raise stacks 1 | — | **No deload** for either. Stacks never combine across exercises |
-| D7 | Loop check. Stacks 0; then 235 ✗, 225 ✓, 235 ✗ | — | First 235 fail → stacks 1; 225 success → stays 1; second 235 fail → stacks **2** → **deload**. The A-success / B-fail loop cannot continue forever |
-| D8 | Accessory (lateral raise, 15–20) | 15×20, 15×16, 15×14 | Set 3 < 15 → **fail**, stacks +1. Floor rule applies to accessories too |
+| ID | Given | Expected |
+|---|---|---|
+| D1 | Stacks 0; 225×5, 225×4, 225×3 | All ≥ 3 → **success**. Stacks 0. Next from the e1RM rule |
+| D2 | Stacks 0, last success 225; 235×4, 235×3, 235×2 | Set 3 < 3 → **fail**. Stacks **1**. Next **225** (revert). Message: *"Failed to hit minimums, next week's weight will be lowered."* |
+| D3 | Stacks 1, failed numbers 235; 225×5, 225×4, 225×3 | Success at the reverted weight → stacks **stay 1**. Next **235** (retry) |
+| D4 | Stacks 1, retrying 235; 235×4, 235×3, 235×3 | Success at the failed weight → stacks **0**. Next from the e1RM rule |
+| D5 | Stacks 1, reverted to 225; 225×4, 225×3, 225×2 | Fail again → stacks **2** → **deload** next week |
+| D6 | Bench stacks 1, lateral raise stacks 1 | **No deload** for either. Stacks never combine across exercises |
+| D7 | Stacks 0; then 235 ✗, 225 ✓, 235 ✗ | Stacks 1, stays 1, then **2** → **deload**. The 225-success / 235-fail loop cannot continue forever |
+| D8 | Accessory (lateral raise, 15–20): 15×20, 15×16, 15×14 | Set 3 < 15 → **fail**, stacks +1. The floor rule applies to accessories too |
 
 ### 7.E Deload (§6.7)
 
-| ID | Input | Expected |
+E1–E2c give the deload session.
+
+| ID | Given | Expected |
 |---|---|---|
-| E1 | Bench (primary), 3 sets, last success 225 × 4, stacks 2 | Deload: **2 sets** (`ceil(3/2)`), **200 lb** (225 × 0.9 = 202.5, snapped down), target RPE 6 |
-| E2 | Lateral raise (accessory), 3 sets, last success 15, stacks 2 | Deload: **2 sets** (`ceil(3/2)`), **same load 15** |
-| E2b | Accessory with 4 sets | Deload: **2 sets** (`ceil(4/2)`), same load |
-| E2c | Accessory with 1 set | Deload: **1 set** (`ceil(1/2)` = 1), same load |
-| E3 | Deload session with a set below the floor | **No fail**, no stack added (floor rule doesn't apply) |
-| E4 | Week after the deload | Resume at **last successful numbers** (bench 225 × 4); stacks **0** |
+| E1 | Bench (primary), 3 sets, last success 225 × 4, stacks 2 | **2 sets** (`ceil(3/2)`), **200 lb** (225 × 0.9 = 202.5, snapped down), target RPE 6 |
+| E2 | Lateral raise (accessory), 3 sets, last success 15, stacks 2 | **2 sets** (`ceil(3/2)`), **same load 15** |
+| E2b | Accessory, 4 sets | **2 sets** (`ceil(4/2)`), same load |
+| E2c | Accessory, 1 set | **1 set** (`ceil(1/2)` = 1), same load |
+| E3 | Deload session with a set below the floor | **No fail**, no stack added (the floor rule doesn't apply) |
+| E4 | The week after the deload | Resume at the **last successful numbers** (bench 225 × 4); stacks **0** |
 
 ### 7.F Rotation (§5.1)
 
 Days: [Upper A, Lower A, Upper B, Lower B].
 
-| ID | Input | Expected |
+| ID | Given | Expected |
 |---|---|---|
 | F1 | No sessions logged yet | **Upper A** (index 0) |
-| F2 | Last logged: Upper B (index 2) | **Lower B** |
-| F3 | Last logged: Lower B (index 3) | **Upper A** (wraps: `(3 + 1) % 4 = 0`) — start of a new week |
-| F4 | Last logged Upper A; user overrides to Upper B and logs it | Next is **Lower B** (rotation continues from the day actually logged) |
+| F2 | Last logged Upper B (index 2) | **Lower B** |
+| F3 | Last logged Lower B (index 3) | **Upper A** (wraps: `(3 + 1) % 4 = 0`), the start of a new week |
+| F4 | Last logged Upper A; the user overrides to Upper B and logs it | **Lower B** (rotation continues from the day actually logged) |
 
 ### 7.G Reference data
 
-Upper A, logged 2026-10-01 (bench target range set to 3–5 for this example):
+Upper A, logged 2026-10-01 (bench target range set to 3–5 for this example). This log predates the app and has no RPE or explicit targets, so it's input for shaping examples, not a gold standard.
 
 | Exercise | Sets |
 |---|---|
@@ -419,35 +421,33 @@ Upper A, logged 2026-10-01 (bench target range set to 3–5 for this example):
 | DB Overhead Extension | 25×15, 25×12, 25×7 |
 | DB Curl | 30×15 (per side), 30×9 (per side) |
 
-Note: this log predates the app and has no RPE or explicit targets, so it's input for shaping examples, not a gold standard.
-
 ### 7.H Stored prescriptions (§6.8)
 
 Bench: primary, 3 sets. Lateral raise: accessory, 3 sets, dumbbell rack as above. "Stored" means the session saved that rep range on Finish.
 
-| ID | Input | Expected |
+| ID | Given | Expected |
 |---|---|---|
-| H1 | Bench session stored at 3–5: 225×4, 225×4, 225×3. The range is now 8–12 | Judged at 3–5 → **success**, stacks 0. The range changed since, so a fresh start: **next from the e1RM rule** |
+| H1 | Bench session stored at 3–5: 225×4, 225×4, 225×3. Range now 8–12 | Judged at 3–5 → **success**, stacks 0. The range changed since, so a fresh start: **next from the e1RM rule** |
 | H2 | The same session with no stored range (logged before v1.3.0); range now 8–12 | Judged at today's 8–12 → **fail**, stacks 1 (the current settings, as before v1.3.0) |
-| H3 | Lateral raise at 15–20, stored: seed 15, then 15×20, 15×20, 15×18 (plan: 15, effective top 22, C4). The range is now 10–12 | Fresh start → **suggest 15 × 10, effective top 12**, stacks 0 |
-| H4 | Bench at 3–5, stored: 225×5 @8, 225×5, 225×4 ✓, then 235×4 @8, 235×3, 235×2 ✗ (stacks 1, revert to 225). The range is now 5–7 | Fresh start → stacks **0**, **no revert**: next from the e1RM rule |
+| H3 | Lateral raise at 15–20, stored: seed 15, then 15×20, 15×20, 15×18 (plan: 15, effective top 22, C4). Range now 10–12 | Fresh start → **suggest 15 × 10, effective top 12**, stacks 0 |
+| H4 | Bench at 3–5, stored: 225×5 @8, 225×5, 225×4 ✓, then 235×4 @8, 235×3, 235×2 ✗ (stacks 1, revert to 225). Range now 5–7 | Fresh start → stacks **0**, **no revert**: next from the e1RM rule |
 | H5 | H3, then a session stored at 10–12: 15×9, 15×8, 15×8 | Below 10 → **fail**, stacks 1. No success since the fresh start → **revert to 12.5 × 10** (one step below) |
 
 ### 7.I Lifts (§6.9)
 
-Bench Press on two days: Upper A at 3–5 @ RPE 8 and Upper B at 10–12 @ RPE 8, both primary, barbell. Sessions within 4 weeks unless stated.
+Bench Press on two days: Upper A at 3–5 @8 and Upper B at 10–12 @8, both primary, barbell. Sessions within 4 weeks unless stated.
 
-| ID | Input | Expected |
+| ID | Given | Expected |
 |---|---|---|
-| I1 | Upper A: 225×5 @8 (e1RM 273.6). Upper B: 185×12 @8 (e1RM 267.3) | Upper B's 10–12 @ 8 is high-rep (12 + 2 > 10), so with a lower-rep session in the window it's skipped: lift e1RM **273.6**. Upper A suggests **230 × 4** (predicted 4.1); Upper B (target 11) suggests **190 × 11** (predicted 11.9) |
+| I1 | Upper A: 225×5 @8 (e1RM 273.6). Upper B: 185×12 @8 (e1RM 267.3) | Upper B's 10–12 @8 is high-rep (12 + 2 > 10), so with a lower-rep session in the window it's skipped: lift e1RM **273.6**. Upper A suggests **230 × 4** (predicted 4.1); Upper B (target 11) suggests **190 × 11** (predicted 11.9) |
 | I2 | Only Upper B's 185×12 @8 in the window | No lower-rep session, so the high-rep one counts: lift e1RM **267.3**. Upper A suggests **225 × 4** (predicted 4.1) |
 | I3 | Upper A: 225×5, 225×4, 225×3 ✓, then 235×4, 235×3, 235×2 ✗. Upper B: one success | Upper A: stacks **1**, revert to 225. Upper B: stacks **0**, plan normal. Stacks never cross exercises, even within a lift |
 | I4 | A new primary Bench Press, no starting numbers, joins the lift from I1 (range 3–5) | **Not blocked** by the seed gate (A12 doesn't apply): suggests **230 × 4** from the lift's 273.6 |
-| I5 | Upper A has a seed 225×5 and no sessions; Upper B has one real session 225×4 @8 | Upper A's running e1RM is **266.8**: the lift has a real session, so the seed is dropped (A10 across days) |
+| I5 | Upper A: seed 225×5, no sessions. Upper B: one real session 225×4 @8 | Upper A's running e1RM is **266.8**: the lift has a real session, so the seed is dropped (A10 across days) |
 | I6 | Upper B's deload week (its own replay says deload) logs 205×5 @6 | **Ignored** in the lift's e1RM, as A5 |
 | I7 | Names "Bench Press", "bench-press" and "BENCH  PRESS"; and "Paused Bench" | The first three are **one lift**; "Paused Bench" is another |
-| I9 | A 6–8 @ RPE 8 primary: 225×7 @8, then a great day 225×9 @8 (9 + 2 = 11 effective reps) | 6–8 @ 8 isn't high-rep (8 + 2 = 10), so **both count**: (287.4 + 301.7) / 2 = **294.5** |
 | I8 | No session in 4 weeks; Upper A's 225×5 @8 six weeks ago, Upper B's 185×12 @8 five weeks ago | Returning from a break from the most recent **lower-rep** session: 273.6 × 0.9 = **246.2**; Upper A suggests **205 × 4** (predicted 4.5) |
+| I9 | A 6–8 @8 primary: 225×7 @8, then a great day 225×9 @8 (9 + 2 = 11 effective reps) | 6–8 @8 isn't high-rep (8 + 2 = 10), so **both count**: (287.4 + 301.7) / 2 = **294.5** |
 
 ## 8. Contracts (signatures are in code, `src/engine/`)
 
