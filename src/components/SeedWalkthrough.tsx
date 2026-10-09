@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { findBankExercise } from '../program/bank'
-import { activeDays, missingSeeds, updateExercise } from '../program/program'
+import { activeDays, activeExercises, missingSeeds, updateExercise } from '../program/program'
 import {
   needsStack,
   seedPrefill,
@@ -15,6 +15,7 @@ import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
+import { SegmentedControl } from '../ui/SegmentedControl'
 import { formatPrescription } from '../ui/format'
 import { SeedFields } from './SeedFields'
 
@@ -34,7 +35,7 @@ export function SeedWalkthrough({ program, onClose }: Props) {
   // cable/machine exercise.
   const [lastStack, setLastStack] = useState<StackPick>({ choice: '5', custom: '' })
   const days = activeDays(program)
-  const all = days.flatMap((d) => d.exercises)
+  const all = activeExercises(program)
   const missing = missingSeeds(program)
   const exercise = missing[0]
   if (!exercise) return null
@@ -107,23 +108,15 @@ function SeedStep({ exercise, dayName, progress, last, initialStack, onSave, onL
 
       {askStack && (
         <Field as="fieldset" label="Weight stack" hint="The weights on this machine at your gym.">
-          <div className="segmented three">
-            {STACK_PRESETS.map((p) => (
-              <Button
-                key={p.id}
-                aria-pressed={stack.choice === p.id}
-                onClick={() => setStack({ ...stack, choice: p.id })}
-              >
-                {p.label}
-              </Button>
-            ))}
-            <Button
-              aria-pressed={stack.choice === 'custom'}
-              onClick={() => setStack({ ...stack, choice: 'custom' })}
-            >
-              Other
-            </Button>
-          </div>
+          <SegmentedControl
+            className="segmented three"
+            options={[
+              ...STACK_PRESETS.map((p) => ({ value: p.id, label: p.label })),
+              { value: 'custom' as const, label: 'Other' },
+            ]}
+            value={stack.choice}
+            onChange={(choice) => setStack({ ...stack, choice })}
+          />
           {stack.choice === 'custom' && (
             <input
               aria-label="Stack weights (lb)"

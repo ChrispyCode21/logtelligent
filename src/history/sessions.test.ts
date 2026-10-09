@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { Session } from '../session/types'
-import { exerciseHistory, lastLoggedDayId, lastNoteFor } from './sessions'
+import {
+  dayHasHistory,
+  emptyOpenSessions,
+  exerciseHasHistory,
+  exerciseHistory,
+  lastLoggedDayId,
+  lastNoteFor,
+} from './sessions'
 
 describe('exerciseHistory', () => {
   it('includes finished sessions only, mapped to the engine shape', () => {
@@ -101,6 +108,77 @@ describe('exerciseHistory with the exercise menu (SPEC §5.2)', () => {
     expect(exerciseHistory([finished([{ exerciseId: 'bench', sets: [], skipped: true }])], 'bench')).toEqual(
       [],
     )
+  })
+})
+
+describe('history when removing from the program (SPEC §6.1, §9.4 slice 0)', () => {
+  const set = { weight: 225, reps: 5 }
+  const session = (
+    id: number,
+    dayId: string,
+    finished: boolean,
+    exercises: Session['exercises'] = [],
+  ): Session => ({
+    id,
+    dayId,
+    startedAt: '2026-10-01T10:00:00Z',
+    finishedAt: finished ? '2026-10-01T11:00:00Z' : undefined,
+    exercises,
+  })
+
+  describe('exerciseHasHistory', () => {
+    it('counts sets in a finished session or the open one', () => {
+      expect(
+        exerciseHasHistory([session(1, 'a', true, [{ exerciseId: 'bench', sets: [set] }])], 'bench'),
+      ).toBe(true)
+      expect(
+        exerciseHasHistory([session(1, 'a', false, [{ exerciseId: 'bench', sets: [set] }])], 'bench'),
+      ).toBe(true)
+    })
+
+    it("counts a substitute's sets", () => {
+      const substitute = { name: 'Machine press', sets: [set] }
+      expect(
+        exerciseHasHistory([session(1, 'a', true, [{ exerciseId: 'bench', sets: [], substitute }])], 'bench'),
+      ).toBe(true)
+    })
+
+    it('ignores logs with nothing in them, and other exercises', () => {
+      const sessions = [
+        session(1, 'a', true, [{ exerciseId: 'bench', sets: [], skipped: true }]),
+        session(2, 'a', false, [
+          { exerciseId: 'bench', sets: [] },
+          { exerciseId: 'row', sets: [set] },
+        ]),
+      ]
+      expect(exerciseHasHistory(sessions, 'bench')).toBe(false)
+    })
+  })
+
+  describe('dayHasHistory', () => {
+    it('counts any finished session on the day, even an emptied one', () => {
+      expect(dayHasHistory([session(1, 'a', true)], 'a')).toBe(true)
+    })
+
+    it('counts the open session only once it has sets', () => {
+      expect(dayHasHistory([session(1, 'a', false, [{ exerciseId: 'bench', sets: [] }])], 'a')).toBe(false)
+      expect(dayHasHistory([session(1, 'a', false, [{ exerciseId: 'bench', sets: [set] }])], 'a')).toBe(true)
+    })
+
+    it('ignores other days', () => {
+      expect(dayHasHistory([session(1, 'b', true)], 'a')).toBe(false)
+    })
+  })
+
+  describe('emptyOpenSessions', () => {
+    it('is the open sessions on those days with nothing logged, even on a day with finished history', () => {
+      const empty = session(1, 'a', false, [{ exerciseId: 'bench', sets: [] }])
+      const logging = session(2, 'b', false, [{ exerciseId: 'squat', sets: [set] }])
+      const finished = session(3, 'a', true)
+      const otherDay = session(4, 'c', false)
+      const ids = emptyOpenSessions([empty, logging, finished, otherDay], ['a', 'b']).map((s) => s.id)
+      expect(ids).toEqual([1])
+    })
   })
 })
 

@@ -45,6 +45,7 @@ Results for **v1.1.0 and v1.2.0** (iPhone, 2026-10-06, on v1.2.0): the items bel
 - [x] **v1.2.0 slice 3:** typing a note one-handed (the on-screen keyboard over the note field, then Finish), and "Last time: …" on Today the next time that day comes up.
 - [ ] **v1.2.0 slice 3:** the real "Finish anyway? (No note for next time.)" `confirm()`, and keeping a note when tapping History with the keyboard still up. *(Not yet checked.)*
 - [ ] **v1.2.1:** effort is asked only on a primary's first set (not on later sets, accessories or substitutes); logged-set rows have their text centred; the Effort scale card keeps its height when switching scales.
+- [ ] **v1.3.0 slice 0:** the warm-up ✕ and the Program tab's ↑ ↓ ✕ buttons are easy to hit one-handed, and long exercise names still read well beside them at phone width; the real "Delete Upper A? Its open session has nothing logged yet…" `confirm()`.
 - [x] An update (push a change) appears after reopening the app. (Close it fully, open, close, and open again; the update downloads on one open and applies on the next.)
 
 ## Preview techniques

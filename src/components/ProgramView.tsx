@@ -13,7 +13,7 @@ import {
 import type { BankExercise } from '../program/bank'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
-import { dayHasHistory, exerciseHasHistory } from '../history/sessions'
+import { dayHasHistory, emptyOpenSessions, exerciseHasHistory } from '../history/sessions'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
@@ -39,6 +39,31 @@ function removalMessage(name: string, hasHistory: boolean) {
     : `Delete ${name}?`
 }
 
+interface RowActionsProps {
+  name: string
+  first: boolean
+  last: boolean
+  onMove: (direction: -1 | 1) => void
+  onRemove: () => void
+}
+
+/** Move up, move down and remove, for a day or an exercise. */
+function RowActions({ name, first, last, onMove, onRemove }: RowActionsProps) {
+  return (
+    <div className="icon-buttons">
+      <Button aria-label={`Move ${name} up`} disabled={first} onClick={() => onMove(-1)}>
+        ↑
+      </Button>
+      <Button aria-label={`Move ${name} down`} disabled={last} onClick={() => onMove(1)}>
+        ↓
+      </Button>
+      <Button variant="danger" aria-label={`Remove ${name}`} onClick={onRemove}>
+        ✕
+      </Button>
+    </div>
+  )
+}
+
 interface Props {
   program: Program
   sessions: Session[]
@@ -60,15 +85,24 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
     setNewDayName('')
   }
 
-  function saveExercise(dayId: string, exercise: ProgramExercise) {
-    const exists = program.days.some((d) => d.exercises.some((e) => e.id === exercise.id))
-    save((p) => (exists ? updateExercise(p, exercise) : addExercise(p, dayId, exercise)))
+  function saveExercise(edit: (p: Program) => Program) {
+    save(edit)
     setEditing(null)
   }
 
   function removeDayConfirmed(dayId: string, name: string) {
     const hasHistory = dayHasHistory(sessions, dayId)
-    if (confirm(removalMessage(name, hasHistory))) save((p) => removeDay(p, dayId, hasHistory))
+    // An open session on this day with nothing logged goes with it (SPEC §9.4 slice 0).
+    const discard = emptyOpenSessions(sessions, [dayId])
+    const message =
+      removalMessage(name, hasHistory) +
+      (discard.length > 0 ? ' Its open session has nothing logged yet, so it will be discarded too.' : '')
+    if (confirm(message)) {
+      void updateProgram(
+        (p) => removeDay(p, dayId, hasHistory),
+        discard.map((s) => s.id),
+      )
+    }
   }
 
   function removeExerciseConfirmed(exercise: ProgramExercise) {
@@ -100,29 +134,13 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
                 if (name && name !== day.name) save((p) => renameDay(p, day.id, name))
               }}
             />
-            <div className="icon-buttons">
-              <Button
-                aria-label={`Move ${day.name} up`}
-                disabled={dayIndex === 0}
-                onClick={() => save((p) => moveDay(p, day.id, -1))}
-              >
-                ↑
-              </Button>
-              <Button
-                aria-label={`Move ${day.name} down`}
-                disabled={dayIndex === days.length - 1}
-                onClick={() => save((p) => moveDay(p, day.id, 1))}
-              >
-                ↓
-              </Button>
-              <Button
-                variant="danger"
-                aria-label={`Remove ${day.name}`}
-                onClick={() => removeDayConfirmed(day.id, day.name)}
-              >
-                ✕
-              </Button>
-            </div>
+            <RowActions
+              name={day.name}
+              first={dayIndex === 0}
+              last={dayIndex === days.length - 1}
+              onMove={(direction) => save((p) => moveDay(p, day.id, direction))}
+              onRemove={() => removeDayConfirmed(day.id, day.name)}
+            />
           </div>
 
           <ol className="exercise-list">
@@ -132,7 +150,7 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
                   <ExerciseForm
                     initial={exercise}
                     effortScale={program.effortScale}
-                    onSave={(e) => saveExercise(day.id, e)}
+                    onSave={(e) => saveExercise((p) => updateExercise(p, e))}
                     onCancel={() => setEditing(null)}
                   />
                 </li>
@@ -146,29 +164,13 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
                     <span className="muted">{formatPrescription(exercise, program.effortScale)}</span>
                     {!exercise.seed && <span className="warning-text">Needs starting numbers</span>}
                   </Button>
-                  <div className="icon-buttons">
-                    <Button
-                      aria-label={`Move ${exercise.name} up`}
-                      disabled={i === 0}
-                      onClick={() => save((p) => moveExercise(p, day.id, exercise.id, -1))}
-                    >
-                      ↑
-                    </Button>
-                    <Button
-                      aria-label={`Move ${exercise.name} down`}
-                      disabled={i === day.exercises.length - 1}
-                      onClick={() => save((p) => moveExercise(p, day.id, exercise.id, 1))}
-                    >
-                      ↓
-                    </Button>
-                    <Button
-                      variant="danger"
-                      aria-label={`Remove ${exercise.name}`}
-                      onClick={() => removeExerciseConfirmed(exercise)}
-                    >
-                      ✕
-                    </Button>
-                  </div>
+                  <RowActions
+                    name={exercise.name}
+                    first={i === 0}
+                    last={i === day.exercises.length - 1}
+                    onMove={(direction) => save((p) => moveExercise(p, day.id, exercise.id, direction))}
+                    onRemove={() => removeExerciseConfirmed(exercise)}
+                  />
                 </li>
               ),
             )}
@@ -186,7 +188,7 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
                 key={editing.preset === 'custom' ? 'custom' : editing.preset.id}
                 preset={editing.preset === 'custom' ? undefined : editing.preset}
                 effortScale={program.effortScale}
-                onSave={(e) => saveExercise(day.id, e)}
+                onSave={(e) => saveExercise((p) => addExercise(p, day.id, e))}
                 // Back to the picker, in case the wrong exercise was picked.
                 onCancel={() => setEditing({ dayId: day.id })}
               />

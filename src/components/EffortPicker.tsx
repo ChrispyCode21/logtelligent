@@ -1,6 +1,6 @@
 import { EFFORT_SCALES, nearestOption, type EffortScale } from '../program/effort'
-import { Button } from '../ui/Button'
 import { Field } from '../ui/Field'
+import { SegmentedControl } from '../ui/SegmentedControl'
 
 interface Props {
   scale: EffortScale
@@ -19,13 +19,12 @@ export function EffortPicker({ scale, value, onChange }: Props) {
   const selected = value === undefined ? undefined : nearestOption(scale, value).rpe
   return (
     <Field as="fieldset" label={`${question} (required)`}>
-      <div className={`effort-buttons ${scale}`}>
-        {options.map(({ rpe, label }) => (
-          <Button key={rpe} aria-pressed={selected === rpe} onClick={() => onChange(rpe)}>
-            {label}
-          </Button>
-        ))}
-      </div>
+      <SegmentedControl
+        className={`effort-buttons ${scale}`}
+        options={options.map(({ rpe, label }) => ({ value: rpe, label }))}
+        value={selected}
+        onChange={onChange}
+      />
     </Field>
   )
 }
