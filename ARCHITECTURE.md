@@ -236,6 +236,7 @@ Everything the agent writes on GitHub (PR descriptions, issue comments, commit m
   - `agent-followup` when it needs a decision (e.g. how dates should look).
   - **One level deep:** a follow-up found while working on an agent-created follow-up is always `agent-followup`, so the agent can't keep queuing work for itself.
 - **CI auto-fix:** if a check fails on an agent PR, the agent tries to fix it, at most 2 times per PR.
+- **Which checks the coding run runs before the PR** (*Open*, decide when scoping step 6). Today it runs every CI command first, because nothing can fix a red PR after its run ends; the full build and Playwright cost the most turns. With CI auto-fix, it could run only the fast checks (format, lint, unit tests) and leave the build and Playwright to CI, at the cost of more PRs that go red before they're fixed. CLAUDE.md's "Before pushing, run what CI runs" would then differ for agent runs.
 - **Keeping PRs current:** the ruleset requires a PR to be up to date with `main`, so after each merge a workflow updates the agent's open PRs, and the agent resolves any conflicts. (GitHub's merge queue does this, but only on organization-owned repos.)
 
 ### Releases
