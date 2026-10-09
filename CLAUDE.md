@@ -5,7 +5,7 @@ Standing instructions for any Claude session working in this repo.
 ## Read first
 
 - **SPEC.md**: what the app does and why (the source of truth). §9.1–§9.4 hold v1.1.0, v1.2.0, the v1.2.1 fixes and v1.3.0 (all released); §10 holds open questions; §11 holds ideas for later versions. No version after v1.3.0 is scoped yet.
-- **ARCHITECTURE.md**: how it's built: folder map, data flow, storage, hosting, gates, releases, and Proposed strategies.
+- **ARCHITECTURE.md**: how it's built: folder map, data flow, storage, hosting, gates, releases, the agent pipeline, and Proposed strategies.
 - **TESTING.md**: the phone checklists (every release, and the current release) and how to verify changes in the preview, with its known quirks.
 - **CHANGELOG.md**: what shipped in each version.
 
@@ -58,5 +58,14 @@ v1.1.0 was built one slice per PR, in this order (step 7 was added for v1.2.0):
 6. **Update the docs in the same PR:** ARCHITECTURE.md (folder map, UI, storage), CHANGELOG.md "Unreleased" for user-facing changes, SPEC.md (the slice marked built), and, for anything the preview can't check, a note in the PR for the release's phone checklist (TESTING.md).
 7. **Review:** run the `architecture-reviewer` subagent (`.claude/agents/`) on the branch's diff. Fix the must-fix findings; fix worth-fixing ones or say in the PR why not; raise its questions with the owner.
 8. **Open the PR** with what changed, how it was verified, anything worth the owner's attention, and any Proposed data to review. Run the CI checks first.
+
+### Running from an issue (GitHub Actions)
+
+Issues labeled `agent-ready` are built in GitHub Actions with no one to ask mid-run (ARCHITECTURE.md, "Agent pipeline"; Decided, not yet built). The steps above still apply, except:
+
+- **Step 1 becomes a comment.** Post numbered questions on the issue, each with a recommended default, swap `agent-ready` for `agent-needs-info`, and stop. Never guess and carry on. The owner's numbered answers in the thread are the decisions; record them in SPEC.md (step 2) before any code.
+- **Step 5 is the Playwright check in CI**, since there's no preview. Say in the PR that the preview wasn't used.
+- **Never merge, and never edit `.github/workflows/` or `.github/rulesets/`.**
+- **Out-of-scope findings become issues**, linked from the PR, with the labels ARCHITECTURE.md sets out.
 
 Personal working preferences, if any, live in `CLAUDE.local.md` (git-ignored, never committed).
