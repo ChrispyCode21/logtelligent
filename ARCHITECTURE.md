@@ -41,9 +41,13 @@ scripts/
   check-spec-coverage.mjs   CI: every SPEC §7 example ID has a test named with it
   check-conventions.mjs     CI: primitives over raw elements, tokens over raw CSS values, shared formatters
   changelog-section.mjs     CI/release: extracts a version's CHANGELOG section
+e2e/            Playwright, against the production build (playwright.config.ts: WebKit and Chromium, at 375px and 320px)
+  layout.spec.ts    Every screen: no sideways scrolling, no clipped button labels (TESTING.md)
+  smoke.spec.ts     The main flows: template → starting numbers → a session → History; backup restore and export
+  support.ts        The phone-width check, flow helpers, and a small fixture backup (typed as the app's Backup)
 ```
 
-Tests sit next to the code (`*.test.ts`). Every SPEC §7 worked example is a test named with its ID (e.g. `it('B3: …')`).
+Tests sit next to the code (`*.test.ts`). Every SPEC §7 worked example is a test named with its ID (e.g. `it('B3: …')`). Upgrade tests (`storage/db.test.ts`) run against `fake-indexeddb`, an in-memory IndexedDB. Browser tests live in `e2e/` (`npm run test:e2e`).
 
 ## Data flow
 
@@ -86,7 +90,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 2. **Backup validator:** update `storage/backup.ts`. It copies only known, validated fields, so **a new field that isn't added there is silently dropped on restore**. Each validator passes its type to `compact<T>`, which requires every field of `T`, so a field left out fails to compile. Validate it properly, then add a round-trip test.
 3. **Backup format:** if old backups can no longer be read as-is, bump `FORMAT` and teach `parseBackup` to read the older format.
 4. **SPEC.md:** record the decision.
-5. **Upgrade tests** (Decided 2026-10-09; the test setup arrives with the agent pipeline, build step 2): a database at the previous version upgrades correctly, and a backup from before the change still restores.
+5. **Upgrade tests** in `storage/db.test.ts`: a database saved at the previous version opens with its data intact (and transformed, if there's an `.upgrade()`), and a backup from before the change still restores. Its version test fails until the new version is acknowledged there, as a reminder.
 
 ## Backup format
 
@@ -118,6 +122,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 - **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the purity rules for the engine and for program/, session/ and history/), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
 - **Architecture and quality review:** the `architecture-reviewer` subagent (`.claude/agents/architecture-reviewer.md`) reviews a branch or a module against this document and CLAUDE.md and reports ranked findings; it is read-only. Run it before opening a PR (CLAUDE.md, "Building a slice").
+- **Playwright** (`ci.yml`, check "Playwright"): `e2e/` in WebKit and Chromium at 375px and 320px: every screen for sideways scrolling and clipped button labels, and smoke tests of the main flows. On failure the traces are kept as a run artifact (open with `npx playwright show-trace`).
 - **Security** (`security.yml`): CodeQL on the app and the workflows; dependency review on PRs.
 - **Dependabot:** weekly npm and GitHub Actions update PRs. Actions are pinned to commit SHAs.
 - **`main` is protected** (`.github/rulesets/main.json`): changes arrive by PR, all checks must pass, and there are no force-pushes or deletions.
@@ -129,7 +134,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Agent pipeline
 
-*Status: **Decided 2026-10-09, not yet built.** Built in the PRs listed under "Build order" below; each PR marks its part built here.*
+*Status: **Decided 2026-10-09.** Built in the PRs listed under "Build order" below; each PR marks its part built there. Built so far: step 2.*
 
 Work can start from a GitHub issue instead of a desktop session: an issue labeled `agent-ready` triggers Claude in GitHub Actions, which checks the issue, asks questions if it's underspecified, or builds it on a branch following CLAUDE.md's "Building a slice" and opens a PR. The PR passes the same gates as any other, and the owner merges it.
 
@@ -199,7 +204,7 @@ When the last open issue in a version's milestone closes, the agent creates a "R
 The owner may merge an agent PR once it's green. That rests on the required checks:
 
 - the existing ones (CI "Checks", CodeQL, dependency review);
-- a **Playwright check**: every screen at 375px and 320px for sideways scrolling and clipped labels, with seeded data, plus smoke tests of the main flows (TESTING.md's preview checks, automated);
+- a **Playwright check**: every screen at 375px and 320px for sideways scrolling and clipped labels, with seeded data, plus smoke tests of the main flows (TESTING.md's preview checks, automated; `e2e/`);
 - for stored-data changes, **upgrade tests** (see "Changing the data model", step 5).
 
 A PR that changes what's stored gets `touches-data`. Code review stays optional; the one thing it asks of the owner is to **export a backup on the phone before merging**, because reverting the PR can't undo an upgrade already applied to real data.
@@ -207,7 +212,7 @@ A PR that changes what's stored gets `touches-data`. Code review stays optional;
 ### Build order
 
 1. These decisions (this section, and CLAUDE.md's note on headless runs).
-2. Playwright check in CI, and the upgrade-test setup (`fake-indexeddb`). The owner adds the new check to the ruleset.
+2. Playwright check in CI, and the upgrade-test setup (`fake-indexeddb`). The owner adds the new check to the ruleset. **Built.**
 3. Issue template and labels.
 4. Triage workflow. Before it: the owner installs the Claude GitHub App and adds the API key.
 5. Coding run: branch, slice, PR, sub-issues and release issues.

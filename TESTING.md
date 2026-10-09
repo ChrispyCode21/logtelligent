@@ -1,8 +1,21 @@
 # Testing notes
 
+## Playwright (automated, in CI)
+
+`npm run test:e2e` runs `e2e/` against the production build (`vite preview`, under the production headers) in WebKit, the iPhone's engine, and Chromium, each at 375×812 and 320×640. CI runs it as the "Playwright" check.
+
+- **`layout.spec.ts`** walks every screen and state: the empty tabs, each step of the starting-numbers walkthrough, Today, a live session and its exercise menu, History (with a chart), a finished session being edited, the Program tab, the exercise form and picker, and Change your program. On each it runs the two checks below: sideways scrolling (naming the elements that stick out) and clipped button labels.
+- **`smoke.spec.ts`** runs the main flows: template → starting numbers → log a session → the next day comes up and History shows it; restoring a backup; exporting what was restored.
+- **Adding a screen:** add the state to `layout.spec.ts` (the helpers in `support.ts` set up a program, log a session, or restore the fixture backup).
+- **Running it locally:** `npx playwright install chromium webkit` once, then `npm run test:e2e`. A failure keeps a trace in `test-results/`; open it with `npx playwright show-trace <path>/trace.zip`.
+
+It doesn't replace the phone: real touch, the home-screen install, offline, and native `confirm()` dialogs stay on the on-device checklist below. The in-app preview is still useful for poking at a change by hand, with the quirks that follow.
+
+## The in-app preview
+
 Known quirks when verifying the app in the Claude desktop app's Browser pane (the in-app preview). Not app bugs, but they shape how results should be read.
 
-## Preview clicks land in the wrong place at phone size
+### Preview clicks land in the wrong place at phone size
 
 When the pane emulates a phone viewport (the `mobile` preset, 375×812), the pane reports a different viewport (e.g. 424×919) and clicks by element ref are scaled to the wrong coordinates. Seen in slices 1–3:
 
