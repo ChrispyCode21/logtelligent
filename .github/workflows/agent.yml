@@ -1,8 +1,7 @@
 # The agent pipeline (ARCHITECTURE.md, "Agent pipeline"): an issue labeled agent-ready by the owner is
 # triaged by Claude, and a ready one is built and opened as a PR. Claude never holds a write token:
 # it returns its results as structured output, and fixed steps post comments, set labels, check its
-# commits and publish them. Keep this file's name: the Anthropic federation rule (used by triage)
-# accepts only .github/workflows/agent.yml on main, so no other workflow can get a token.
+# commits and publish them. Keep this file's name: the Anthropic federation rule accepts only .github/workflows/agent.yml on main, so no other workflow can get a token.
 name: Agent
 
 on:
@@ -153,14 +152,13 @@ jobs:
       cancel-in-progress: false
     env:
       MODEL: claude-opus-5-5
-      # Defense in depth: Claude's shell commands run sandboxed, with secrets removed from their
-      # environment. The real boundary is the permissions below.
+      # Claude's shell commands run sandboxed, with secrets removed from their environment. The
+      # accepted risk this reduces is in ARCHITECTURE.md ("Where it lives").
       CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: '1'
-    # No id-token: this job can't request GitHub identity tokens, so nothing it runs can get a write
-    # token. Claude logs in with an API key from the spend-capped "github-actions" workspace instead.
     permissions:
       contents: read
       issues: read
+      id-token: write # only for the Anthropic token exchange; GitHub access is this job's read-only token
     outputs:
       status: ${{ steps.branch.outputs.status || steps.bundle.outputs.status || steps.result.outputs.status }}
       result: ${{ steps.claude.outputs.structured_output }}
@@ -230,7 +228,10 @@ jobs:
         timeout-minutes: 45
         uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b # v1.0.247
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_federation_rule_id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
+          anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+          anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+          anthropic_workspace_id: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
           # Read-only: Claude commits locally and can't push. The publish job does that.
           github_token: ${{ github.token }}
           prompt: Build the issue in .agent-input/ by following .github/agent/code.md. You're on branch ${{ steps.branch.outputs.branch }}.

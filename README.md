@@ -93,10 +93,6 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
       ```powershell
       gh variable set ANTHROPIC_FEDERATION_RULE_ID --body '<fdrl_…>'
       ```
-   5. For the coding run, which doesn't use federation (ARCHITECTURE.md, "Where it lives"): in the `github-actions` workspace, create an API key under **API keys**, then store it as a secret. `gh secret set` asks for the value, so it isn't saved in your shell history:
-      ```powershell
-      gh secret set ANTHROPIC_API_KEY
-      ```
 
 ## Install on iPhone
 
