@@ -66,13 +66,11 @@ export function latestInLift(
   return latest && { exercise: latest.exercise, weight: latest.weight }
 }
 
-/** A new exercise joining a lift takes your gym's setup from it: equipment, loads, one-sided. */
-export function withLiftGym(
-  exercise: ProgramExercise,
-  program: Program,
-  sessions: Session[],
-): ProgramExercise {
-  const from = latestInLift(program, sessions, exercise.name)?.exercise
+/**
+ * A new exercise joining a lift takes your gym's setup from the lift's most recently logged
+ * exercise (`latestInLift`): equipment, loads, one-sided (SPEC §9.4 slice 2).
+ */
+export function withLiftGym(exercise: ProgramExercise, from: ProgramExercise | undefined): ProgramExercise {
   // Bodyweight is accessory-only (SPEC §6.1), so a primary keeps its own equipment then.
   if (!from || (exercise.tier === 'primary' && from.equipment === 'bodyweight')) return exercise
   return { ...exercise, equipment: from.equipment, loads: from.loads, unilateral: from.unilateral }

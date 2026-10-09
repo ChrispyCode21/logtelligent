@@ -1,11 +1,4 @@
-import {
-  deriveState,
-  LOW_REP_MAX,
-  sessionE1rm,
-  sessionEffectiveReps,
-  type ExerciseConfig,
-  type LoggedSet,
-} from '../engine'
+import { deriveState, sessionE1rm, isHighRepSession, type ExerciseConfig, type LoggedSet } from '../engine'
 import { liftExercises } from '../program/lifts'
 import type { Program } from '../program/types'
 import type { Session, Substitute } from '../session/types'
@@ -27,6 +20,8 @@ export interface TimelineEntry {
   /** Over 10 effective reps: counted toward the running e1RM only when nothing lower is (SPEC §6.4). */
   highReps?: boolean
   unilateral: boolean
+  /** The day it was logged on, in a lift's timeline (SPEC §9.4 slice 2). */
+  dayName?: string
 }
 
 /** An exercise's finished sessions for the history view, newest first. */
@@ -43,7 +38,7 @@ export function exerciseTimeline(config: ExerciseConfig, history: LoggedExercise
         substitute: s.substitute,
         note: s.note,
         e1rm,
-        highReps: e1rm !== undefined && (sessionEffectiveReps(s) ?? 0) > LOW_REP_MAX,
+        highReps: e1rm !== undefined && isHighRepSession(s),
         unilateral: config.unilateral,
       }
     })
@@ -54,17 +49,11 @@ export function exerciseTimeline(config: ExerciseConfig, history: LoggedExercise
  * A lift's finished sessions on every day, newest first (SPEC §5.3, §9.4 slice 2). Each exercise is
  * replayed on its own, so deloads and stacks stay per exercise.
  */
-export function liftTimeline(
-  program: Program,
-  sessions: Session[],
-  name: string,
-): (TimelineEntry & { dayName?: string })[] {
-  const dayOf = (sessionId: number) => {
-    const dayId = sessions.find((s) => s.id === sessionId)?.dayId
-    return program.days.find((d) => d.id === dayId)?.name
-  }
+export function liftTimeline(program: Program, sessions: Session[], name: string): TimelineEntry[] {
+  const dayNames = new Map(program.days.map((d) => [d.id, d.name]))
+  const dayOf = new Map(sessions.map((s) => [s.id, s.dayId && dayNames.get(s.dayId)]))
   return liftExercises(program, name)
     .flatMap((e) => exerciseTimeline(e, exerciseHistory(sessions, e.id)))
-    .map((entry) => ({ ...entry, dayName: dayOf(entry.sessionId) }))
+    .map((entry) => ({ ...entry, dayName: dayOf.get(entry.sessionId) }))
     .sort((a, b) => Date.parse(b.date) - Date.parse(a.date) || b.sessionId - a.sessionId)
 }

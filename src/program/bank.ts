@@ -3,6 +3,7 @@
 import type { EquipmentType, RepRange, Tier } from '../engine'
 import { MAX_RELATIVE_JUMP } from './program'
 import type { ProgramExercise } from './types'
+import { liftKey } from './lifts'
 
 export type BodyArea = 'chest' | 'back' | 'shoulders' | 'arms' | 'legs' | 'core'
 
@@ -166,8 +167,8 @@ export function searchBank(query: string, bank: BankExercise[] = BANK): BankExer
 
 /** The bank exercise with this name, ignoring case and spacing, if any. The program stores no link. */
 export function findBankExercise(name: string, bank: BankExercise[] = BANK): BankExercise | undefined {
-  const key = words(name).join(' ')
-  return bank.find((e) => words(e.name).join(' ') === key)
+  const key = liftKey(name)
+  return bank.find((e) => liftKey(e.name) === key)
 }
 
 /** A new program exercise with a bank exercise's defaults, and no starting numbers yet. */

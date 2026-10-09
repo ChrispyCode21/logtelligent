@@ -13,7 +13,7 @@ import {
 import type { BankExercise } from '../program/bank'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
-import { latestInLift, needsStartingNumbers, withLiftGym } from '../history/lifts'
+import { latestInLift, needsStartingNumbers } from '../history/lifts'
 import { dayHasHistory, emptyOpenSessions, exerciseHasHistory } from '../history/sessions'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
@@ -194,10 +194,7 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
                 lift={
                   editing.preset === 'custom'
                     ? undefined
-                    : {
-                        withGym: (e) => withLiftGym(e, program, sessions),
-                        weight: latestInLift(program, sessions, editing.preset.name)?.weight,
-                      }
+                    : latestInLift(program, sessions, editing.preset.name)
                 }
                 effortScale={program.effortScale}
                 onSave={(e) => saveExercise((p) => addExercise(p, day.id, e))}

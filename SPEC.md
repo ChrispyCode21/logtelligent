@@ -369,7 +369,7 @@ The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]
 
 
 - **Types** live in code: `engine/types.ts` (`ExerciseConfig`, `LoggedSet`, `ExerciseSession`, `ProgressionState`, `Suggestion`), `program/types.ts` (`Program`, `ProgramDay`, `ProgramExercise`) and `session/types.ts` (`Session`, `ExerciseLog`, `Substitute`, `Prescription`).
-- **Suggestions:** `suggestNext(config, history, asOf) => Suggestion`.
+- **Suggestions:** `suggestNext(config, history, asOf, lift = []) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by its own replay; they feed only the e1RM (§9.4 slice 2).
 - **Validation:** `evaluateSession(config, history, sets) => SessionOutcome`.
 - **State is never passed in or stored:** both replay `history` with `deriveState(config, history)` (ARCHITECTURE.md, "Progression state is derived").
 

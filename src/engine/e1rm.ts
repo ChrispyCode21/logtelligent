@@ -44,20 +44,24 @@ export function repsToFailure(e1rm: number, weight: number): number {
   return (lo + hi) / 2
 }
 
-/** A session e1RM comes from its first (counted) set, which must carry an RPE (SPEC §6.3). */
-export function sessionE1rm(session: ExerciseSession): number | undefined {
+/** A session's first (counted) set, when it carries an RPE: the e1RM comes from it alone (SPEC §6.3). */
+function ratedFirstSet(session: ExerciseSession) {
   const first = countedSets(session.sets)[0]
-  if (!first || first.rpe === undefined) return undefined
-  return setE1rm({ ...first, rpe: first.rpe })
+  return first?.rpe === undefined ? undefined : { ...first, rpe: first.rpe }
+}
+
+export function sessionE1rm(session: ExerciseSession): number | undefined {
+  const first = ratedFirstSet(session)
+  return first && setE1rm(first)
 }
 
 /** A session's first set at or under this many effective reps counts before higher-rep ones (SPEC §6.4). */
-export const LOW_REP_MAX = 10
+const LOW_REP_MAX = 10
 
-/** The effective reps of a session's first counted set, when it has an RPE. */
-export function sessionEffectiveReps(session: ExerciseSession): number | undefined {
-  const first = countedSets(session.sets)[0]
-  return first?.rpe === undefined ? undefined : effectiveReps(first.reps, first.rpe)
+/** Over 10 effective reps on the first set: counted only when nothing lower is (SPEC §6.4). */
+export function isHighRepSession(session: ExerciseSession): boolean {
+  const first = ratedFirstSet(session)
+  return first !== undefined && effectiveReps(first.reps, first.rpe) > LOW_REP_MAX
 }
 
 /** Sessions of 10 or fewer effective reps when there are any, else all of them (SPEC §6.4). */
@@ -83,7 +87,7 @@ export function runningE1rm(
     .map((s) => ({
       time: Date.parse(s.date),
       e1rm: sessionE1rm(s),
-      lowReps: (sessionEffectiveReps(s) ?? Infinity) <= LOW_REP_MAX,
+      lowReps: !isHighRepSession(s),
     }))
     .filter((s): s is { time: number; e1rm: number; lowReps: boolean } => s.e1rm !== undefined)
     .sort((a, b) => b.time - a.time)

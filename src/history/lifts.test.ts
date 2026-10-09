@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { suggestNext, type LoggedSet } from '../engine'
 import { liftKey } from '../program/lifts'
+import { sessionExercises } from '../session/context'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
 import { latestInLift, liftsWithHistory, needsStartingNumbers, otherLiftSessions, withLiftGym } from './lifts'
@@ -79,6 +80,33 @@ describe('7.I Lifts (SPEC §9.4 slice 2)', () => {
   })
 })
 
+describe('I6 and editing, through the replay (SPEC §9.4 slice 2)', () => {
+  it("I6: the other exercise's deload week comes back marked by its own replay, and stays out of the e1RM", () => {
+    // Upper B: a success, two fails (deload due), then the deload week at RPE 6.
+    const b = [
+      finished('upper-b', 1, 'bench-b', firstRpe(185, [12, 12, 12])),
+      finished('upper-b', 2, 'bench-b', firstRpe(195, [9, 9, 8])),
+      finished('upper-b', 3, 'bench-b', firstRpe(185, [9, 9, 9])),
+      finished('upper-b', 4, 'bench-b', [
+        { weight: 165, reps: 12, rpe: 6 },
+        { weight: 165, reps: 12 },
+      ]),
+    ]
+    const benchA0 = { ...benchA, seed: undefined }
+    const other = otherLiftSessions(program(), b, benchA0)
+    expect(other.map((s) => !!s.isDeload)).toEqual([false, false, false, true])
+    const withFlags = suggestNext(benchA0, [], asOf, other)
+    const withoutDeload = suggestNext(benchA0, [], asOf, other.slice(0, 3))
+    expect(withFlags).toEqual(withoutDeload)
+  })
+
+  it("editing a finished session ignores the other exercise's later sessions", () => {
+    // Upper A on the 1st, Upper B on the 3rd: as of the 1st, the lift had only the seed.
+    const [bench] = sessionExercises(heavy, program(), [heavy, light], asOf)
+    expect(bench.suggestion).toMatchObject({ kind: 'suggestion', e1rm: { basis: 'seed' } })
+  })
+})
+
 describe('lift helpers (SPEC §9.4 slice 2)', () => {
   it("passes the other exercises' sessions, not this one's", () => {
     const other = otherLiftSessions(program(), [heavy, light], benchA)
@@ -105,19 +133,18 @@ describe('lift helpers (SPEC §9.4 slice 2)', () => {
       equipment: 'dumbbell',
       unilateral: false,
     })
-    expect(withLiftGym(fromBank, p, [later])).toMatchObject({
+    expect(withLiftGym(fromBank, raise)).toMatchObject({
       equipment: 'cable',
       loads: [10, 15, 20],
       unilateral: true,
     })
-    expect(withLiftGym(fromBank, p, [])).toBe(fromBank)
+    expect(withLiftGym(fromBank, undefined)).toBe(fromBank)
   })
 
   it('a primary never copies bodyweight equipment', () => {
     const dips = exercise('dips', 'Dip', { tier: 'accessory', equipment: 'bodyweight' })
-    const p: Program = { ...program(), days: [{ id: 'd', name: 'D', exercises: [dips] }] }
     const primaryDip = exercise('dip-2', 'Dip')
-    expect(withLiftGym(primaryDip, p, [finished('d', 2, 'dips', [{ weight: 0, reps: 10 }])])).toBe(primaryDip)
+    expect(withLiftGym(primaryDip, dips)).toBe(primaryDip)
   })
 
   it('names the lifts with history once each, in order', () => {

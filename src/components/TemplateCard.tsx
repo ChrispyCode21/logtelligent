@@ -2,7 +2,7 @@ import { activeDays } from '../program/program'
 import { applyTemplate, templateExerciseNames, TEMPLATES } from '../program/templates'
 import type { Program } from '../program/types'
 import type { Session } from '../session/types'
-import { liftsWithHistory, withLiftGym } from '../history/lifts'
+import { latestInLift, liftsWithHistory, withLiftGym } from '../history/lifts'
 import { dayHasHistory, emptyOpenSessions } from '../history/sessions'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
@@ -47,7 +47,7 @@ export function TemplateCard({ program, sessions, onApplied }: Props) {
           p,
           template,
           (dayId) => dayHasHistory(sessions, dayId),
-          (e) => withLiftGym(e, program, sessions),
+          (e) => withLiftGym(e, latestInLift(program, sessions, e.name)?.exercise),
         ),
       discard.map((s) => s.id),
     )

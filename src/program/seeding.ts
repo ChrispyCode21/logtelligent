@@ -82,7 +82,7 @@ const usableLoads = (loads: readonly number[] | undefined) =>
   loads?.length && !hasInvalidLoads([...loads]) ? loads.toSorted((a, b) => a - b) : undefined
 
 /** A bank weight snapped down onto the loads, however they were typed; unchanged without usable loads. */
-function snapBankWeight(weight: number, loads: readonly number[] | undefined): number {
+function snapStartingWeight(weight: number, loads: readonly number[] | undefined): number {
   const usable = usableLoads(loads)
   return usable ? snapDown(weight, usable) : weight
 }
@@ -98,7 +98,7 @@ export function formSeedPlaceholder(
   loads: number[] | undefined,
   bankWeight?: number,
 ): string | undefined {
-  if (bankWeight !== undefined) return String(snapBankWeight(bankWeight, loads))
+  if (bankWeight !== undefined) return String(snapStartingWeight(bankWeight, loads))
   if (tier === 'primary') return undefined
   return ACCESSORY_PLACEHOLDER[equipment] || usableLoads(loads)?.[0]?.toString() || ''
 }
@@ -116,7 +116,7 @@ export function seedPrefill(
   const weight = liftWeight ?? findBankExercise(e.name)?.seedPlaceholder
   if (weight === undefined) return { weight: '', reps: '' }
   return {
-    weight: String(snapBankWeight(weight, stack)),
+    weight: String(snapStartingWeight(weight, stack)),
     reps: e.tier === 'primary' ? String(e.repRange.max) : '',
   }
 }
