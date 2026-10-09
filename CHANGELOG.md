@@ -8,7 +8,7 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ### Changed
 
-- **Removing a day mid-session:** if today's open session is on that day and nothing is logged in it yet, the session is discarded along with the day (the confirm says so), and the day is deleted rather than archived. The same goes for the days a template replaces.
+- **Removing a day mid-session:** if today's open session is on that day and nothing is logged in it yet, the session is discarded along with the day (the confirm says so), and that empty session no longer stops a day without other history from being deleted outright. The same goes for the days a template replaces.
 - **History's exercise list** shows a removed exercise once a finished session has it, not while its only sets are in a session still open.
 
 ### Fixed

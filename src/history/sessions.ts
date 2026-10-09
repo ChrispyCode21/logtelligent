@@ -93,8 +93,8 @@ export function dayHasHistory(sessions: Session[], dayId: string): boolean {
 
 /**
  * Open sessions on these days with nothing logged yet. Removing their day, by hand or by applying
- * a template, discards them too, so no session is left on a day that no longer exists (SPEC §9.4
- * slice 0).
+ * a template, discards them too, whether the day is deleted or archived: nothing is lost, and no
+ * session is left on a day that's gone from the program (SPEC §9.4 slice 0).
  */
 export function emptyOpenSessions(sessions: Session[], dayIds: string[]): Session[] {
   return sessions.filter(

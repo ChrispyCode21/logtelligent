@@ -75,8 +75,7 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
   const [newDayName, setNewDayName] = useState('')
   const days = activeDays(program)
 
-  const save = (edit: (p: Program) => Program, discardSessions?: number[]) =>
-    void updateProgram(edit, discardSessions)
+  const save = (edit: (p: Program) => Program) => void updateProgram(edit)
 
   function submitDay(e: React.FormEvent) {
     e.preventDefault()
@@ -94,12 +93,12 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
   function removeDayConfirmed(dayId: string, name: string) {
     const hasHistory = dayHasHistory(sessions, dayId)
     // An open session on this day with nothing logged goes with it (SPEC §9.4 slice 0).
-    const discard = hasHistory ? [] : emptyOpenSessions(sessions, [dayId])
+    const discard = emptyOpenSessions(sessions, [dayId])
     const message =
       removalMessage(name, hasHistory) +
       (discard.length > 0 ? ' Its open session has nothing logged yet, so it will be discarded too.' : '')
     if (confirm(message)) {
-      save(
+      void updateProgram(
         (p) => removeDay(p, dayId, hasHistory),
         discard.map((s) => s.id),
       )

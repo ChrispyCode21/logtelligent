@@ -171,7 +171,7 @@ describe('history when removing from the program (SPEC §6.1, §9.4 slice 0)', (
   })
 
   describe('emptyOpenSessions', () => {
-    it('is the open sessions on those days with nothing logged', () => {
+    it('is the open sessions on those days with nothing logged, even on a day with finished history', () => {
       const empty = session(1, 'a', false, [{ exerciseId: 'bench', sets: [] }])
       const logging = session(2, 'b', false, [{ exerciseId: 'squat', sets: [set] }])
       const finished = session(3, 'a', true)
