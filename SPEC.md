@@ -1,7 +1,7 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2. **v1.2.1 — released** (2026-10-06): the fixes in §9.3. **v1.3.0 — released** (2026-10-09): slices 0–3 in §9.4.
-> Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
+> Status: **released** v1.0.0 (§9), v1.1.0 (§9.1), v1.2.0 (§9.2), v1.2.1 (§9.3) and v1.3.0 (§9.4); CHANGELOG.md has the dates.
+> The source of truth for what the app does and why. Anything built should trace back to a section here.
 
 Legend used throughout:
 - **Decided** — settled; build to it.
@@ -22,7 +22,7 @@ Hand-typed workout notes (e.g. in Apple Notes) record what happened but don't te
 - **React + TypeScript**, built with **Vite**.
 - **Local-only data** in the browser's IndexedDB, via **Dexie**. No backend, no accounts.
 - **Offline-capable** (service worker via `vite-plugin-pwa`) — gym signal is unreliable.
-- **Free static hosting** (GitHub Pages or Cloudflare Pages). **Decided:** Cloudflare Pages, built from the GitHub repo on every push to `main` (moved from GitHub Pages so the app has its own origin; other `*.github.io` sites on the account shared it). Security headers in `public/_headers`.
+- **Free static hosting** (Decided): Cloudflare, deployed from `main` on every push, on the app's own origin (ARCHITECTURE.md, "Hosting and security"). Security headers in `public/_headers`.
 - **JSON export** from day one as the backup mechanism. **Decided:** export downloads `logtelligent-YYYY-MM-DD.json` (program + all sessions, with a format version); **import** restores a backup file, replacing all data after a confirm.
 - **Progression engine is pure TypeScript** — no React, no database access — so it can be unit-tested in isolation (Vitest).
 
@@ -63,7 +63,6 @@ See §11 for ideas parked until after the MVP.
    - **Primary lifts:** enter a weight × reps you could do confidently — with effort, but no risk of failing. Prompt along the lines of: *"Enter a weight and reps you're confident you could do: hard, but you wouldn't fail."* This is recorded as a set at **RPE 7** and produces the seed e1RM (§6.4).
    - **Accessory lifts (Decided):** the prompt asks for a weight at the **bottom of the configured rep range**, e.g. *"What's a weight you can do 15 lateral raises (per side) with that would be hard, but achievable?"* The form shows a placeholder value as a suggestion. The answer is recorded as weight × bottom-of-range reps at **RPE 8**. Accessories don't use e1RM, so the RPE is informational; the first suggestion is that weight at the bottom of the range.
    - The seed is an estimate. If it's off, the progression rules correct it: at worst, one easy (or failed) week, and the next is accurate.
-   - Opting out of e1RMs entirely is a v2+ idea (§11).
 
 **Decided:** each day has a fixed set of exercises. Upper A and Upper B use different exercises; swapping exercises within the same day from week to week is discouraged, because it breaks tracking.
 
@@ -368,7 +367,6 @@ Bench Press on two days: Upper A at 3–5 @ RPE 8 and Upper B at 10–12 @ RPE 8
 
 The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]`), since the 4-week window, deload exclusion (A5) and substitute exclusion (A6) all need per-session data.
 
-
 - **Types** live in code: `engine/types.ts` (`ExerciseConfig`, `LoggedSet`, `ExerciseSession`, `ProgressionState`, `Suggestion`), `program/types.ts` (`Program`, `ProgramDay`, `ProgramExercise`) and `session/types.ts` (`Session`, `ExerciseLog`, `Substitute`, `Prescription`).
 - **Suggestions:** `suggestNext(config, history, asOf, lift = []) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by its own replay; they feed only the e1RM (§9.4 slice 2).
 - **Validation:** `evaluateSession(config, history, sets) => SessionOutcome`.
@@ -376,23 +374,20 @@ The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]
 
 ## 9. Build plan (Done — v1.0.0)
 
-Vertical slices, each usable on its own. All six are built, tested and live.
+Vertical slices, each usable on its own; all built and live.
 
-1. One hard-coded primary exercise → log sets → see next session's suggestion. Engine + tests first.
-   - **Decided:** the exercise is barbell bench, 3 sets, 3–5 @ RPE 8, with a hard-coded seed of 225 × 5. The seed-entry gate (§5.1, A12 in the UI) arrives with program setup in slice 3.
-   - **Decided:** sets can be edited or deleted until the session is finished; finished sessions are read-only for now (see §10 #2).
-2. Floor-rule validation, fatigue stacks, revert message, and deload.
-   - **Decided:** accessory double progression (§6.2, §6.5; C1–C9, A11) is built into the engine in this slice, since stacks and deloads apply to accessories. The UI stays bench-only until slice 3.
-3. Program setup (days, exercises, configuration) and rotation.
+1. One primary exercise → log sets → see next session's suggestion. Engine + tests first. Sets can be edited or deleted until the session is finished (finished sessions became editable in §9.2 slice 1).
+2. Floor-rule validation, fatigue stacks, revert message, and deload, with accessory double progression in the engine.
+3. Program setup (days, exercises, configuration), the seed gate (§5.1) and rotation.
 4. History view per exercise.
 5. Exercise ⋯ menu (replace / delete) with the volume-only notice.
 6. Warm-up banner, JSON export, PWA install and offline polish.
 
 ## 9.1 v1.1.0 scope (Decided 2026-10-04 — released in v1.1.0)
 
-Answers the three complaints from friends trying v1.0.0: RPE friction ("oh, this is that annoying RPE stuff, huh?"), having to build a program ("So, I have to create a program? I can't just pick one?"), and not knowing exercise names ("Is there an exercise bank? I don't really know the names of things."). All changes are additive (minor version). Built in this order, each slice a small PR or two, then a release PR.
+Answers three complaints from friends trying v1.0.0: RPE friction, having to build a program, and not knowing exercise names.
 
-**Slice 0: UI groundwork (Decided: trimmed version of the ARCHITECTURE.md strategy; built).** Design tokens (spacing, radius, tap target, type scale), the primitives the new screens need (`Button`, `Field`, `Card`), and shared formatters (`formatSet`, `formatDate`, `formatWeight`, one RPE scale constant). The other primitives come later, as they're needed. No user-facing change.
+**Slice 0: UI groundwork (Decided; built).** Design tokens, the first primitives and shared formatters (ARCHITECTURE.md, "Proposed: UI component layer and design tokens"). No user-facing change.
 
 **Slice 1: Effort scale, chosen per program (Decided; built).**
 - The program has an **effort scale** that sets how effort is entered. All three modes are stored as an **RPE number** (6–10), so the engine, logged sets and e1RM math (§6.4) don't change, and switching modes later loses nothing.
@@ -407,7 +402,7 @@ Answers the three complaints from friends trying v1.0.0: RPE friction ("oh, this
 - **Showing a set (Decided):** RPE `225 × 4 @ 8` (as today); Reps left `225 × 4 · 2 left`; Perceived effort `225 × 4 · Challenging`.
 - **Values between a mode's buttons (Decided):** a stored value that doesn't match a mode's buttons (e.g. 8.5 in Reps left) is shown as the nearest label, **rounding toward harder** on a tie (8.5 → "1 left" / "Very hard"). Only the display rounds; the stored value is unchanged unless re-entered.
 - **Switching modes (Decided):** allowed at any time, including during a session. Nothing stored changes; the pickers and labels re-render in the new mode.
-- Storage change: a new `effortScale` field on the program. Needs the ARCHITECTURE.md checklist (Dexie version, backup validator, round-trip test). `FORMAT` stays 1, since a missing field means RPE.
+- Stored as `effortScale` on the program; `FORMAT` stays 1, since a missing field means RPE.
 
 **Slice 2: Exercise bank (Decided; built).**
 - About 50 common exercises **built into the app** (no network): name, tier, equipment, default rep range, sets, unilateral, a one-line description, and a placeholder starting weight for the seed prompt.
@@ -416,7 +411,7 @@ Answers the three complaints from friends trying v1.0.0: RPE friction ("oh, this
 - **Search (Decided):** matches the name and a few common nicknames per exercise (e.g. "RDL" → Romanian Deadlift, "OHP" → Overhead Press), ignoring case and punctuation; every word typed must match.
 - **After picking (Decided):** the usual exercise form opens, prefilled with the bank's defaults, its description, and its placeholder starting weight. Review, enter starting numbers, Save. One flow for bank and custom exercises.
 - **Text only, no images.**
-- **The list and its defaults (Decided 2026-10-04):** the 57 exercises in `src/program/bank.ts`, approved as proposed in PR #8.
+- **The list and its defaults (Decided 2026-10-04):** the 57 exercises in `src/program/bank.ts` (PR #8).
 
 **Slice 3: Program templates and guided seeding (Decided; built).**
 - One template ships: a **4-day Upper/Lower**, built from bank exercises with their bank defaults. **Days and exercises (Decided 2026-10-04):**
@@ -424,53 +419,40 @@ Answers the three complaints from friends trying v1.0.0: RPE friction ("oh, this
   - **Lower A:** Back Squat, Romanian Deadlift, Leg Press, Lying Leg Curl, Standing Calf Raise
   - **Upper B:** Overhead Press, Pull-Up, Incline Dumbbell Press, Seated Cable Row, Dumbbell Curl, Face Pull
   - **Lower B:** Deadlift, Bulgarian Split Squat, Leg Extension, Seated Leg Curl, Hanging Leg Raise
-- Offered when the program is empty (alongside "Build my own"), and from the Program tab, where picking one **replaces** the program after a confirm (superseded in v1.3.0: switching is "Change your program", then the template, §9.4 slice 3). A template produces a normal, fully editable program (no storage change). **Replacing (Decided):** days from the replaced program that have history are archived (history kept), and ones without history are deleted, as with any delete (§6.1). The effort scale is kept.
+- Offered when the program has no active days (alongside "Build my own"); switching from another program is "Change your program" first (§9.4 slice 3). A template produces a normal, fully editable program (no storage change), and the effort scale is kept.
 - **Guided seed walkthrough:** after picking a template, step through each exercise on its own screen to enter its seed, pre-filled with the bank's placeholder weight. The seed gate (§5.1) is unchanged; the walkthrough is just a faster way through it.
   - **Saves each step (Decided):** Next saves that exercise's starting numbers straight away. "Finish later" leaves; Today's seed gate resumes at the first exercise still missing numbers. There is no Back button (edit an exercise on the Program tab instead).
   - **Any program (Decided):** the seed gate offers the walkthrough for any program with exercises missing starting numbers, not only templates.
   - **Pre-fill (Decided):** an exercise whose name matches a bank exercise gets the bank's placeholder weight; primaries also get the **top of their rep range** as reps. Others start blank.
   - **Weight stacks (Decided):** a cable or machine exercise without a stack asks for one on its screen, with quick picks (5 lb steps, 10 lb steps) or the gym's own list typed in. The last pick is offered first on the next cable/machine exercise. Stacks stay per exercise (§6.2 unchanged).
 
-**Not in v1.1.0:** editing finished sessions (§10 #2) and the "Earlier ideas" in §11.
-
 ## 9.2 v1.2.0 scope (Decided 2026-10-04 — released in v1.2.0)
 
-Theme: **logging fidelity**. Fixes for things noticed in daily use, from the owner's own use rather than friends' feedback. All additive (minor version); no backend. Built in this order, each slice a small PR or two, then a release PR.
+Theme: **logging fidelity**: fixes for things noticed in the owner's daily use.
 
-**Slice 0: Quality groundwork (Decided 2026-10-05; from the v1.2.0 quality pass).** Prepares the code the three feature slices build on, from an `architecture-reviewer` pass over all of `main`. One small PR per group, in this order. Groups 1–3 change no behavior; group 4 makes the visible changes listed.
-1. **Pure-layer groundwork (built).**
-   - Session types (`Session`, `ExerciseLog`, `Substitute`) and the pure history helpers (`exerciseHistory`, `lastLoggedDayId`, `exerciseHasHistory`, `dayHasHistory`) move out of `storage/` into the pure layer, so `session/` and `history/` stop importing from storage. `storage/db.ts` imports the types, as it already does for the program.
-   - `exerciseHistory` can return history **before a given session**. Slice 1 needs this, so an edited session is judged against what came before it, not against itself and later sessions. **"Before" is replay order (Decided 2026-10-05):** by start time, then by id for sessions that started at the same moment, so editing sees exactly the history the replay used.
-   - The backup validator fails to compile if a stored field is left out, so slices 2 and 3 can't silently drop their new fields on restore.
-   - History rows carry their session id (slices 1 and 3).
-2. **Session rules in `src/session/`, with tests (built).** The set target (deload-halved for originals, configured for substitutes), the "Only X of Y" tally, set pre-fill (§5.2), set-form validation, and the "set 1 of a primary has effort" check, which slice 1 also needs since editing has no Finish step. These were inline in the session components.
-3. **One starting-numbers entry (built).** `ExerciseForm` and `SeedWalkthrough` share one seed-entry component and pure, tested seed and exercise-form helpers in `src/program/`.
-   - Both show the §5.1 wording ("Enter a weight and reps you're confident you could do…"); the walkthrough's hint had drifted.
-   - The exercise form's bank placeholder weight snaps onto the exercise's typed loads, as the walkthrough's pre-fill does. Otherwise the two flows keep their Decided differences: the form shows a placeholder, the walkthrough fills in a value (§9.1 slices 2 and 3), and stack quick picks stay walkthrough-only.
-4. **Fixes and CSS/format cleanup (built).**
-   - **Stepper font (fix):** the weight and reps inputs go back to the large text size they were built with. A later global input rule has overridden it since before v1.0.0 shipped.
-   - **One exercise summary line:** the "Primary · 3 × 5–7 · Barbell" line, built three ways today, comes from one shared formatter. Equipment is shown by its label everywhere, "per side" wherever it applies, and the effort target only on the Program tab.
-   - **No visible change:**
-     - The History picker's grouping (§5.3) moves into `src/history/` with tests.
-     - `EffortPicker` uses the `Field` primitive.
-     - The pressed-button style and the duplicate list-button styles are each defined once.
+**Slice 0: Quality groundwork (Decided 2026-10-05; built).** Session rules, history helpers and starting-numbers entry moved into the pure, tested layers (ARCHITECTURE.md, "Folder map"). What it settled:
+- **History before a session (Decided 2026-10-05):** an edited session is judged against the sessions before it in **replay order**: by start time, then by id for sessions that started at the same moment, so editing sees exactly the history the replay used.
+- **Set target:** an original's set count is halved in a deload week; a substitute's is the configured count.
+- **One starting-numbers entry:** the exercise form and the walkthrough share one seed entry with the §5.1 wording. The form's bank placeholder weight snaps onto the exercise's typed loads, as the walkthrough's pre-fill does. Otherwise they keep their Decided differences: the form shows a placeholder, the walkthrough fills in a value (§9.1 slices 2 and 3), and stack quick picks stay walkthrough-only.
+- **Stepper font (fix):** the weight and reps inputs use the large text size they were built with.
+- **One exercise summary line** ("Primary · 3 × 5–7 · Barbell") from one shared formatter: equipment by its label everywhere, "per side" wherever it applies, and the effort target only on the Program tab.
 
 **Slice 1: Edit finished sessions (Decided; resolves §10 #2; built).**
 - **Any finished session** can be edited, however old. Progression state is derived by replaying history (ARCHITECTURE.md), so an edit recomputes everything after it, and no cut-off is needed.
 - **What can change:** a set's weight, reps and effort; **delete a set**; **delete the whole session** (with a confirm). Adding sets, and undoing a replace or skip, stay closed once a session is finished.
 - **Same rules as during a session:** one working weight per exercise; set 1 of a primary keeps its effort. Deleting every set of an exercise makes it "not done" for that session (no fail, no stack), as with a skip (§5.2).
 - **Deleting a session** removes it entirely; the rotation then continues from the session before it (§5.1).
-- **Where (Decided 2026-10-05):** each History row has an **Edit** button that opens that whole session for editing: every exercise in it, with the same set list and set form as a live session. There's no form for a new set, no ⋯ menu, no warm-up banner and no Finish. **Done** closes it. Each change saves as it's made, as during a session. Validation messages are judged against the history before that session (§9.2 slice 0, group 1).
+- **Where (Decided 2026-10-05):** each History row has an **Edit** button that opens that whole session for editing: every exercise in it, with the same set list and set form as a live session. There's no form for a new set, no ⋯ menu, no warm-up banner and no Finish. **Done** closes it. Each change saves as it's made, as during a session. Validation messages are judged against the history before that session (slice 0).
 - **Deleting a session (Decided 2026-10-05):** from the editor, after a confirm that names the day and date and says every exercise's sets in it are deleted, not just the one whose History row was tapped.
-- **Deleting set 1 of a primary (Decided 2026-10-05):** if the set that would become set 1 has no effort, the delete asks for one. That set opens in the form with effort required, and the delete and the effort are saved together; Cancel keeps set 1. The same applies during a live session, since it shares the set editor; before this, Finish was silently disabled instead.
+- **Deleting set 1 of a primary (Decided 2026-10-05):** if the set that would become set 1 has no effort, the delete asks for one. That set opens in the form with effort required, and the delete and the effort are saved together; Cancel keeps set 1. The same applies during a live session, which shares the set editor.
 - **An emptied session (Decided 2026-10-05):** a finished session whose sets are all deleted, but which is kept, still counts as that day's session for the rotation (§5.1). Only deleting the session moves the rotation back. **Deleting the last set (Decided 2026-10-05):** an emptied session drops out of History, so deleting the last set in a finished session asks whether to delete the whole session; No keeps it, empty, as above.
 - **Outcome messages (Decided 2026-10-05):** a finished session shows each exercise's validation message whenever it has sets, not only when all its target sets are in, since the replay judged it however many there were.
-- **Set counts in a past session (Decided 2026-10-05):** an exercise's header shows the sets logged ("3 sets"), not "3 of 4 sets". The prescribed count isn't stored per session, and today's program may differ from what was prescribed then. A live session keeps "n of m".
+- **Set counts in a past session (Decided 2026-10-05):** an exercise's header shows the sets logged ("3 sets"), since today's program may differ from what was prescribed then. A live session keeps "n of m", and so does a session with a saved prescription (§9.4 slice 1).
 
 **Slice 2: Add a set on the fly (Decided; built).**
 - Once the configured (or deload) number of sets is logged, an exercise offers **+ Add set**, for originals and substitutes alike.
 - **Extra sets are recorded, not counted:** shown in the session and History, tagged "extra", but excluded from validation (the floor rule and "range filled", §6.5–6.6) and from e1RM. The configured sets are the only ones that steer suggestions, so "sets are never added by progression" (§6.2) still holds.
-- Storage change: extra sets are marked as such, since the configured count can change later. Needs the ARCHITECTURE.md checklist.
+- Extra sets are stored marked as such, since the configured count can change later.
 - **Weight (Decided 2026-10-05):** an extra set has its **own weight**, so it can be a lighter back-off set. The one-working-weight rule (§6.3) still holds among the configured sets: changing one changes the others, and never an extra, and changing an extra changes only that extra.
 - **Effort (Decided 2026-10-05):** not asked on extra sets. They log weight × reps only.
 - **History (Decided 2026-10-05):** the configured sets on the usual line, then the extras on their own line: "Extra: 185 × 8 · 185 × 7".
@@ -488,13 +470,11 @@ Theme: **logging fidelity**. Fixes for things noticed in daily use, from the own
 **Slice 3: Session notes (Decided; built).**
 - An optional **note for next time** above Finish on every session; the "Finish anyway?" confirm mentions it. Plain text, up to 200 characters.
 - **Shown** on the Today screen the next time that training day comes up ("Last time: …"), and on History rows for that session.
-- Editable with the session (slice 1). Storage change: a note on the session. Needs the ARCHITECTURE.md checklist.
+- Stored on the session, and editable with it (slice 1).
 - **The Finish confirm (Decided 2026-10-06):** when "Only X of Y sets logged. Finish anyway?" shows and there's no note, it adds "(No note for next time.)". With a note, or when no confirm shows, nothing changes.
 - **"Last time: …" (Decided 2026-10-06):** shown under the day's name on Today before starting, and at the top of the live session. It's the note from the last finished session of that same training day; if that one has none, nothing shows.
 - **History (Decided 2026-10-06):** the note shows on every exercise's row for that session.
 - **Smaller defaults (Decided 2026-10-06):** the note saves when the field is left (leaving the session screen, or the app going to the background, counts) and on Finish; whitespace-only counts as no note; a counter shows near the 200-character limit; discarding a session discards its note.
-
-**Not in v1.2.0:** the rest of §11, and the primary-lift deload "resume" rule, which waits for real deload data (§10).
 
 ## 9.3 v1.2.1: fixes from the on-device pass (Decided 2026-10-06; released in v1.2.1)
 
@@ -506,14 +486,14 @@ From the owner's v1.2.0 on-device checks (TESTING.md). A patch release; no store
 
 ## 9.4 v1.3.0 scope (Decided 2026-10-08 — released in v1.3.0)
 
-Theme: **change programs without losing history**. A lift's history can follow it into a new program, and each old session is judged by what was prescribed at the time, so carried-over history stays accurate. Built in this order, each slice a small PR or two, then a release PR. Each slice's details are settled with the owner before it's built (CLAUDE.md, "Building a slice").
+Theme: **change programs without losing history**. A lift's history can follow it into a new program, and each old session is judged by what was prescribed at the time, so carried-over history stays accurate.
 
 **Slice 0: Groundwork (Decided; resolves §10 #8, #10, #11; built).** No stored-data change.
 - **History while a session is open (#8):** removing an exercise or day from the program counts only **finished** sessions as history, plus the open session if it has sets for that exercise or day. With no such history, the exercise or day is deleted outright rather than archived.
-- **Removing the open session's day (#8):** if the open session is on that day and has no sets, it's discarded along with the day, and the confirm says so. **Applying a template (Decided 2026-10-08)** followed the same rule for the days it removed; since slice 3 a template only fills an empty program, and changing programs discards every open session.
+- **Removing the open session's day (#8):** if the open session is on that day and has no sets, it's discarded along with the day, and the confirm says so. (Changing programs discards every open session, slice 3.)
 - **History's picker (Decided 2026-10-08):** counts only finished sessions, so an exercise archived mid-session appears there once a finished session has it, never with "No sessions logged yet."
-- **Tap targets (#10):** the warm-up banner's ✕ goes up to `--tap-target` (44 px), and the Program tab's move and remove buttons to 44 px wide. Check that exercise and day names still wrap cleanly at 320 px. Folds in the cleanup backlog's shared `RowActions` for days and exercises.
-- **`SegmentedControl` (#11):** one primitive for the four `aria-pressed` toggle groups (tier, effort scale, stack presets, effort picker). The tabs stay as they are, since they're navigation, not a toggle. `Note` waits until it needs variants. No visible change.
+- **Tap targets (#10):** the warm-up banner's ✕ goes up to `--tap-target` (44 px), and the Program tab's move and remove buttons to 44 px wide.
+- **`SegmentedControl` (#11):** one primitive for the four `aria-pressed` toggle groups (tier, effort scale, stack presets, effort picker), not the tabs, which are navigation. `Note` waits until it needs variants.
 
 **Slice 1: Store each session's prescription (Decided 2026-10-08; resolves §10 #9; built).**
 - **What's saved (Decided 2026-10-08):** each exercise's **rep range and set count**. Not target RPE (the e1RM uses the effort logged, not the target), tier, or loads (the gym's equipment, not a prescription).
@@ -522,15 +502,14 @@ Theme: **change programs without losing history**. A lift's history can follow i
 - **Older sessions aren't refined further (Decided 2026-10-08):** a range change can still re-judge sessions finished before v1.3.0, even when saved ones follow them. The owner's call: no one has data from before v1.3.0.
 - **A rep-range change is a fresh start (Decided 2026-10-08):** when a session's range differs from the one before it, or the current range differs from the last session's, progression starts afresh from there. Fatigue stacks, the last successful numbers and any pending revert, retry or deload are cleared. Primary lifts go back to the e1RM rule (§6.4), which doesn't depend on the range; accessories restart at the bottom of the new range at the weight they'd have been suggested. A fail before the next success reverts one load step below, as with no success yet (§6.6). Examples H1–H5 (§7.H).
 - **Display (Decided 2026-10-08):** a finished session's editor shows "2 of 3 sets" again for sessions with a saved prescription (halved for a deload week), replacing "3 sets" from §9.2 slice 1. Sessions from before v1.3.0 keep "3 sets". History rows are unchanged.
-- Storage change: an optional prescription on each exercise in a finished session. Needs the ARCHITECTURE.md checklist (Dexie version, backup validator, round-trip test). `FORMAT` stays 1, since a missing prescription means the current settings.
-- **Built with extra care (owner's note):** it changes what the replay reads, which every suggestion depends on. Tests cover a session judged by its stored prescription after the program's settings change, and old sessions behaving exactly as before.
+- Stored as an optional prescription on each exercise in a finished session; `FORMAT` stays 1, since a missing prescription means the current settings.
 
-**Slice 2: Lifts share history and e1RM (Decided 2026-10-08; replaces "Keep history for same-named lifts"; built).**
-Raised by the owner: bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a light one. Before this, each exercise had its own history and e1RM, so a template couldn't know which of two Bench Presses to take over.
+**Slice 2: Lifts share history and e1RM (Decided 2026-10-08; built).**
+Bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a light one.
 - **A lift is a name:** exercises with the same name, ignoring case and punctuation (as the bank search compares names), are one lift. Nothing new is stored: sessions still belong to the exercise, so renaming one ("Bench" → "Bench Press") brings its sessions into that lift, and renaming one to something new ("Paused Bench") makes it a lift of its own, with its sessions.
 - **Shared:** history and the running e1RM, with lower-rep sessions first (§6.4). Each exercise's deload weeks, worked out by its own replay, stay out of the e1RM (§6.7). **Per exercise, as before:** the prescription, floor rule, stacks, reverts, retries, deloads and rep extension. A failed heavy day never reverts or deloads the light day.
 - **A new exercise joining a lift with history** (added, or from a template): a **primary** needs no starting numbers, since the lift's e1RM picks its weight; an **accessory** is still asked, pre-filled with the lift's latest weight (skipping deload weeks, Decided 2026-10-08), since its range may differ. The exercise form shows a primary's starting numbers as optional then: "Optional: Bench Press already has an estimated 1RM from your history." (Decided 2026-10-08). A bank exercise or a template exercise copies **equipment, loads and one-sided** from the lift's most recently logged exercise (your gym), and keeps the bank's rep range, sets and target RPE (the programming). A custom exercise is entered by hand, as now.
-- **Templates:** replacing the program needs no matching: a template exercise joins the lift of the same name, so its history is simply there. The confirm that switches programs names the lifts that keep their history ("Bench Press, Back Squat and Deadlift keep their history…", up to 3, then "and 4 more"); since slice 3 that's the "Change your program?" confirm.
+- **Templates:** need no matching: a template exercise joins the lift of the same name, so its history is simply there. The "Change your program?" confirm (slice 3) names the lifts that keep their history ("Bench Press, Back Squat and Deadlift keep their history…", up to 3, then "and 4 more").
 - **History:** one entry per lift (§5.3). Each session row is tagged with its day. On the chart, sessions over 10 effective reps are marked, since they count only when there's nothing lower.
 - **A lift is a name, whatever the equipment (Decided 2026-10-08, from review):** a custom dumbbell "Bench Press" shares its e1RM with a barbell one. To keep them apart, name them differently ("DB Bench Press"). Bank and template additions copy the lift's equipment, so they match.
 - No stored-data change. Examples I1–I9 (§7.I).
@@ -540,9 +519,7 @@ Raised by the owner: bench is bench, whether it's 3 × 3–5 on a heavy day or 3
 - **One card that follows the program (Decided 2026-10-09):** at the bottom of the Program tab, with active days, a **"Change your program"** card: the note *"Consistency beats novelty: most programs work if you stick with them."* and a **Change your program…** button. With no active days, the template options as before (§9.1 slice 3), at the top of the tab. The "Replace with …" buttons go: switching to a template is Change your program, then the template.
 - **The confirm:** *"Change your program? Days with logged sessions are archived and their history kept; the rest are deleted. Bench Press, Back Squat and 4 more keep their history for your next program."* (the lifts with history among the active exercises, up to 3 names, slice 2), then the open session, if any.
 - **An open session is discarded (Decided 2026-10-09):** with sets, the confirm adds *"Your open session (4 sets logged) will be discarded."* (it may have started on an earlier day), like losing unsaved progress; with none, *"Your open session has nothing logged yet, so it will be discarded."* (slice 0). OK discards it and changes the program. The dialog is the native `confirm()` (ARCHITECTURE.md), so its buttons are OK and Cancel; a dialog with its own button labels ("Discard today's session") is left for later. Its sets aren't history, so they don't decide whether a day is archived.
-- Applying a template to an empty program needs no confirm, as before; so slice 2's "Replace your program…?" confirm naming the lifts is now this confirm.
-
-**Not in v1.3.0:** a personal strength–endurance curve (§11), weight per set (§10 #7, §11), other progression schemes such as 5/3/1, the e1RM confidence measure, and the rest of §11.
+- Applying a template to an empty program needs no confirm.
 
 ## 10. Open questions (summary)
 
@@ -567,7 +544,7 @@ Flagged to revisit after real use (not blocking):
 10. ~~**Tap targets under 44 px**~~ — **Decided (§9.4 slice 0):** the warm-up ✕ and the Program tab's move/remove buttons go to 44 px.
 11. ~~**More UI primitives**~~ — **Decided (§9.4 slice 0):** add `SegmentedControl` for the four toggle groups (not the tabs); leave `Note` until it needs variants.
 
-Waiting on the owner's phone: TESTING.md's unticked on-device checks for v1.1.0 and v1.2.0.
+Waiting on the owner's phone: TESTING.md's unticked on-device checks.
 
 ## 11. Post-MVP ideas (parked)
 
@@ -580,10 +557,10 @@ Waiting on the owner's phone: TESTING.md's unticked on-device checks for v1.1.0 
 - **Muscle-group-aware substitutes** (v2/v3): when replacing an exercise, offer exercises tagged with the same primary muscle and tier (e.g. replacing Bench suggests other pec-primary lifts). Needs a muscle-group store: exercise ↔ muscle group is **many-to-many** (a join table with a primary/secondary role).
 - ~~**Add a set on the fly**~~ — **scoped for v1.2.0** (§9.2 slice 2).
 - ~~**Session notes**~~ — **scoped for v1.2.0** (§9.2 slice 3). Still parked: sending notes to an LLM for evaluation (v2/v3; needs a CSP change and breaks "data never leaves the device").
-- ~~**Keep history for same-named lifts when a template replaces a program**~~ — **superseded** by lifts sharing history and e1RM (§9.4 slice 2). Was: today a template creates new exercises, so an existing Bench Press starts fresh and its history stays under "Archived" (§9.1 slice 3). Matching by name could carry history and starting numbers over.
-- **Scoped for v1.3.0 (§9.4 slice 1): store each session's prescription:** a session stores only the sets logged, so History can't show "3 of 3" for a week when 3 were prescribed, and the progression replay judges old sessions with today's settings (rep range, set count). Saving each exercise's prescription with the session would fix both (a stored-data change; built on Finish, §9.4 slice 1). Raised while building §9.2 slice 1.
+- ~~**Keep history for same-named lifts when a template replaces a program**~~ — **superseded** by lifts sharing history and e1RM (§9.4 slice 2).
+- ~~**Store each session's prescription**~~ — **built in v1.3.0** (§9.4 slice 1).
 - **Progression schemes beyond double progression (e.g. 5/3/1):** today every exercise uses one scheme: straight sets at one working weight, double progression, the floor rule and an e1RM from the first set. Programs like 5/3/1 prescribe a different weight and reps per set (percentages of a training max, an AMRAP last set, 3-week waves). Supporting them would add a per-exercise scheme that decides each set's prescription and how a session is judged; the current scheme stays as it is. Logged sets already store a weight each, so storage needn't change shape. Raised while scoping §9.2 slice 2.
-- ~~**Change programs mid-cycle**~~ — **built in v1.3.0** (§9.4 slice 3). Was: a way to drop the current program (e.g. two weeks into an Upper/Lower template, switching to 5/3/1) and start or build another, **keeping the history** of the lifts already logged. Today a template replaces the program after a confirm (days with history are archived, §9.1 slice 3), but there's no "start over" or "delete program" for building your own from scratch. Raised by the owner in the v1.2.0 on-device pass.
+- ~~**Change programs mid-cycle**~~ — **built in v1.3.0** (§9.4 slice 3).
 - **A fixed action footer:** the walkthrough's Next (and, during a session, Log set and Finish) move as cards above them grow and shrink. A footer pinned to the bottom of the screen could hold each screen's main buttons. Owner's note: probably not needed, since the walkthrough is meant to be read, not tapped through quickly. Raised in the v1.2.0 on-device pass.
 - **Weight per set:** let each set's weight be changed the way its reps are, dropping the one-working-weight rule (§6.3). The owner prefers this to a full scheme engine (above) as the first step. The engine needs decisions first: e1RM already uses the first set alone (§6.4), but the floor rule and "range filled" (§6.5–6.6) would be judging sets at different weights, and the stack logic classifies a session by the weight lifted (§6.6, "Off-plan weight"). Raised while scoping v1.3.0 (§10 #7).
 - **A personal strength–endurance curve:** the e1RM formulas assume everyone manages the same reps at a given percentage of their max; people differ (a lifter with good endurance does more reps at 70% than the formulas expect). With a lift's sessions across rep ranges (§9.4 slice 2), the app could fit its own curve per lift instead of the averaged formulas. Related: after a rep-range change (§9.4 slice 1) the running e1RM still bridges from the old range's sessions for up to three sessions. Raised while scoping §9.4 slice 2.
