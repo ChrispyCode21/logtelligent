@@ -10,41 +10,45 @@ on:
 
 permissions: {}
 
-# One agent run at a time across the repo; others queue.
-concurrency:
-  group: agent
-  cancel-in-progress: false
-
 jobs:
   triage:
     name: Triage
     if: github.event.label.name == 'agent-ready' && github.event.sender.login == github.repository_owner
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # One agent run at a time across the repo. GitHub keeps one waiting run per group, and a newer
+    # one replaces it (ARCHITECTURE.md, "Triggers and who can start a run").
+    concurrency:
+      group: agent
+      cancel-in-progress: false
+    env:
+      MODEL: claude-sonnet-5-5
     permissions:
       contents: read
       issues: read
-      id-token: write # the GitHub token that Anthropic exchanges for a short-lived API token
+      id-token: write # only for the Anthropic token exchange; GitHub access is this job's read-only token
     outputs:
       result: ${{ steps.claude.outputs.structured_output }}
       cost: ${{ steps.cost.outputs.usd }}
+      model: ${{ env.MODEL }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      # The thread Claude sees: the issue, and only the owner's and the agent's own comments, so
-      # anyone else's comment never reaches it.
+      # What Claude sees: the issue as it was when the owner labeled it (from the event, so a later
+      # edit doesn't count), and only the owner's and the agent's own comments.
       - name: Collect the issue and its thread
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE: ${{ github.event.issue.number }}
+          ISSUE_JSON: ${{ toJSON(github.event.issue) }}
           OWNER: ${{ github.repository_owner }}
         run: |
           mkdir -p .agent-input
-          gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE" \
-            --jq '{number, title, author: .user.login, labels: [.labels[].name], milestone: .milestone.title, body}' \
-            > .agent-input/issue.json
+          jq --arg owner "$OWNER" \
+            '{number, title, author: .user.login, owner: $owner, labels: [.labels[].name], milestone: .milestone.title, body}' \
+            <<<"$ISSUE_JSON" > .agent-input/issue.json
           gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" \
             --jq ".[] | select(.user.login == \"$OWNER\" or .user.login == \"github-actions[bot]\") | {author: .user.login, created_at, body}" \
             | jq -s . > .agent-input/comments.json
@@ -57,13 +61,15 @@ jobs:
           anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
           anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
           anthropic_workspace_id: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
+          # The job's own read-only token. Without it the Action fetches a write-scoped Claude App token.
+          github_token: ${{ github.token }}
           prompt: Triage the issue in .agent-input/ by following .github/agent/triage.md.
           claude_args: |
-            --model claude-sonnet-5-5
+            --model ${{ env.MODEL }}
             --max-turns 40
             --allowedTools Read,Grep,Glob
             --disallowedTools Bash,Edit,Write,NotebookEdit,WebFetch,WebSearch
-            --json-schema '{"type":"object","properties":{"decision":{"type":"string","enum":["questions","split","ready"]},"comment":{"type":"string","minLength":1}},"required":["decision","comment"],"additionalProperties":false}'
+            --json-schema '{"type":"object","properties":{"decision":{"type":"string","enum":["questions","split","ready"]},"comment":{"type":"string","minLength":1,"maxLength":6000}},"required":["decision","comment"],"additionalProperties":false}'
 
       - name: Read the run's cost
         id: cost
@@ -90,6 +96,7 @@ jobs:
           TRIAGE: ${{ needs.triage.result }}
           RESULT: ${{ needs.triage.outputs.result }}
           COST: ${{ needs.triage.outputs.cost }}
+          MODEL: ${{ needs.triage.outputs.model }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
@@ -105,8 +112,8 @@ jobs:
             comment="Triage didn't finish. The run's log has the details; re-add \`agent-ready\` to try again."
           fi
 
-          footer="Triage by Claude (Sonnet 5.5) · [run]($RUN_URL)"
-          if [ -n "$COST" ]; then footer="$footer · \$$(printf '%.2f' "$COST")"; fi
+          footer="Triage by Claude (${MODEL:-unknown model}) · [run]($RUN_URL)"
+          if [ -n "${COST:-}" ]; then footer="$footer · \$$(printf '%.2f' "$COST")"; fi
           case "$decision" in
             questions) next="Answer with numbered replies, then re-add \`agent-ready\`." ;;
             split) next="Reply \"approved\" (or with changes), then re-add \`agent-ready\`." ;;
