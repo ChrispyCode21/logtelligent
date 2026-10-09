@@ -135,7 +135,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Agent pipeline
 
-*Status: **Decided 2026-10-09.** Built in the PRs listed under "Build order" below; each PR marks its part built there. Built so far: steps 2 and 3.*
+*Status: **Decided 2026-10-09.** Built in the PRs listed under "Build order" below; each PR marks its part built there. Built so far: steps 2, 3 and 4.*
 
 Work can start from a GitHub issue instead of a desktop session: an issue labeled `agent-ready` triggers Claude in GitHub Actions, which checks the issue, asks questions if it's underspecified, or builds it on a branch following CLAUDE.md's "Building a slice" and opens a PR. The PR passes the same gates as any other, and the owner merges it.
 
@@ -150,14 +150,15 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 - **In this repo first.** The workflows and prompts are written so they can be lifted into a shared `agent-pipeline` repo later (as a reusable workflow that each project calls), once it has run on real issues here. Nothing in them is specific to Logtelligent: the rules come from the repo's own CLAUDE.md, SPEC.md and this document.
 - **Actions:** `anthropics/claude-code-action`, pinned to a commit SHA like every other action. It runs Claude Code headless on a fresh runner, which reads CLAUDE.md and `.claude/agents/` as a desktop session does.
 - **Identity:** the Claude GitHub App (`claude[bot]`). Its token is needed because pushes and PRs made with the default `GITHUB_TOKEN` don't trigger other workflows, so CI would never run on the agent's PRs.
-- **Secret:** `ANTHROPIC_API_KEY` (pay per token), with a monthly spending cap set in the Anthropic Console. When the cap is reached runs fail until the month resets or the cap is raised; re-adding `agent-ready` retries.
+- **No stored key: Workload Identity Federation** (Decided 2026-10-09, replacing an `ANTHROPIC_API_KEY` secret). Each run, GitHub gives the workflow a short-lived signed token saying which repo, branch and workflow it is; Anthropic exchanges it for an API token that expires within minutes (the Action refreshes it during long runs). The Claude Console holds the trust setup: GitHub Actions registered as an issuer, a service account, and a federation rule that accepts only this repo's agent workflow on `main`. The IDs the workflow needs are identifiers, not credentials, and live in repo variables.
+- **Spending:** usage is billed per token to a dedicated Console workspace ("github-actions") with its own monthly limit. When the limit is reached, runs fail until the month resets or the limit is raised; re-adding `agent-ready` retries. Revoking access is deleting the federation rule.
 - **Repo stays public:** Actions minutes are free, and only the owner can add labels.
 
 ### Triggers and who can start a run
 
 - A run starts when `agent-ready` is added to an issue. The workflow checks who added it: the owner, or `claude[bot]` (for the follow-ups, unblocked sub-issues and release issues below). Anyone else's label is ignored.
-- Comments from anyone other than the owner are read as data, never as instructions.
-- **One agent run at a time** across the repo (a concurrency group); others queue.
+- Comments from anyone other than the owner never reach the agent: the workflow passes it only the issue and the owner's and its own comments. Those are data too; an issue describes what to build but can't change the agent's rules.
+- **One agent run at a time** across the repo (a concurrency group). GitHub keeps only one waiting run: if another issue is labeled while one waits, the newer replaces it, and the earlier issue keeps `agent-ready` with no comment. Re-adding the label retries (Decided 2026-10-09: accepted rather than building a queue).
 
 ### Labels and milestones
 
@@ -172,7 +173,7 @@ README.md ("Setting up a new deployment") has the commands that create them.
 
 **Issue forms** (`.github/ISSUE_TEMPLATE/`): **Task** (what should change, why, where it's specified, done when, out of scope) and **Bug** (what happened, what was expected, steps, where). They ask for what triage needs, so fewer issues come back with questions; blank issues still work.
 
-Each version has a **milestone** (v1.3.0, v2.0.0…). The agent puts every issue it creates in the right milestone.
+Each version has a **milestone** (v1.3.0, v2.0.0…). The agent creates it when the version is scoped in SPEC.md (§9.x), unless it already exists (Decided 2026-10-09), and puts every issue it creates in the right milestone.
 
 ### Triage (Claude Sonnet 5.5, 10 minutes)
 
@@ -182,13 +183,15 @@ Triage reads the issue, SPEC.md, this document and CLAUDE.md, then does one of t
 2. **Split.** If the issue has natural seams (e.g. several new components and the work that wires them in), it comments a proposed split and stops. On the owner's approval it creates the sub-issues, linked with GitHub's "blocked by" where one depends on another, in the issue's milestone. Sub-issues with no blockers get `agent-ready` straight away; a blocked one gets it when its last blocker closes. Independent ones can be open as PRs at the same time.
 3. **Ready.** Otherwise it comments a short plan and the coding run starts.
 
+**How it runs** (`.github/workflows/agent.yml`, built): the **Triage** job checks out `main`, writes the issue (as it was when labeled, from the event) and its filtered thread to `.agent-input/`, and runs Claude with the prompt in `.github/agent/triage.md`. The job holds only read permissions, and the Action is given that job's token rather than a Claude App token. Claude has read-only tools (Read, Grep, Glob; no shell, no web, no edits) and returns its answer as structured output, `{ decision, comment }`, checked against a schema. The **Respond** job, which holds the only write permission (`issues: write`), posts the comment with a footer (the run and its cost) and sets the labels: `agent-ready` always comes off, so re-adding it starts the next run, and `agent-needs-info` goes on for questions and splits. If triage fails or returns nothing usable, Respond says so on the issue instead. Until step 5, a ready issue stops at the plan, and nothing acts on an approved split (creating sub-issues comes with step 5), so splits wait until then.
+
 Any `agent-ready` issue is in scope, new features included. New features are scoped in SPEC.md from the owner's answers, as a desktop session would.
 
 ### Coding run (Claude Opus 5.5, 45 minutes)
 
 On branch `agent/issue-<n>-<slug>`, the agent follows CLAUDE.md's "Building a slice", with two differences: step 1 happened in triage (the answers are on the issue, and step 2 records them in SPEC.md first), and step 5's preview check is replaced by the Playwright check in CI plus a line in the PR saying the preview wasn't used. It runs every CI command and the `architecture-reviewer` subagent before opening the PR, which links the issue (`Closes #n`). Each run posts its cost on the issue if the Action reports it.
 
-The agent never merges, and never edits its own guardrails: `.github/workflows/` and `.github/rulesets/`. Everything else, release PRs included, it may do.
+The agent never merges, and never edits its own guardrails: `.github/workflows/`, `.github/rulesets/`, `.github/agent/` (its prompts) and `.claude/` (its reviewer subagent and any Claude settings) (Decided 2026-10-09). Everything else, release PRs included, it may do.
 
 ### What the agent writes (Decided 2026-10-09)
 
@@ -226,7 +229,7 @@ A PR that changes what's stored gets `touches-data`. Code review stays optional;
 1. These decisions (this section, and CLAUDE.md's note on headless runs).
 2. Playwright check in CI, and the upgrade-test setup (`fake-indexeddb`). The owner adds the new check to the ruleset. **Built.**
 3. Issue template and labels. **Built.**
-4. Triage workflow. Before it: the owner installs the Claude GitHub App and adds the API key.
+4. Triage workflow. Before it: the owner installs the Claude GitHub App, sets up federation in the Claude Console, and adds the repo variables (README.md). **Built.**
 5. Coding run: branch, slice, PR, sub-issues and release issues.
 6. PR follow-through: fresh review, follow-up issues, CI auto-fix, keeping PRs current.
 7. Later: lift it into a shared `agent-pipeline` repo.
