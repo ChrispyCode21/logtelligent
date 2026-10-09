@@ -210,17 +210,11 @@ jobs:
           milestone=$(gh api "repos/$repo/issues/$ISSUE" --jq '.milestone.title // empty')
           ms=(); [ -z "$milestone" ] || ms=(--milestone "$milestone")
 
-          # A Claude App token, got as Publish gets one: issues it creates and labels start runs, and
-          # ones made with this job's own token wouldn't.
-          oidc=$(curl -sSf -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=claude-code-github-action" | jq -r '.value // empty') || true
-          [ -n "$oidc" ] || stop "couldn't get a GitHub identity token. Re-add \`agent-ready\` to try again."
-          echo "::add-mask::$oidc"
-          token=$(curl -sS -X POST https://api.anthropic.com/api/github/github-app-token-exchange \
-            -H "Authorization: Bearer $oidc" -H 'Content-Type: application/json' \
-            -d '{"permissions":{"issues":"write"}}' | jq -r '.token // .app_token // empty') || true
-          [ -n "$token" ] || stop "couldn't get a Claude App token. Re-add \`agent-ready\` to try again."
-          echo "::add-mask::$token"
+          # A Claude App token: issues it creates and labels start runs, and ones made with this job's
+          # own token wouldn't.
+          source .github/agent/app-token.sh
+          get_app_token '{"issues":"write"}' \
+            || stop "couldn't get a Claude App token (the run's log has the reason). Re-add \`agent-ready\` to try again."
 
           # If anything fails part way, say what exists so far.
           nums=(); ids=(); finished=0
@@ -575,6 +569,11 @@ jobs:
       issues: write # closing a parent, and comments
       id-token: write # the Claude App token below, limited to issues
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/agent
+
       - name: Unblock, close the parent, open the release issue
         env:
           GH_TOKEN: ${{ github.token }}
@@ -586,23 +585,12 @@ jobs:
           repo=$GITHUB_REPOSITORY
           footer="<sub>After #$ISSUE closed · [run]($RUN_URL)</sub>"
 
-          # A Claude App token, got as Publish gets one, only when needed: labels and issues it adds
-          # start runs, and ones made with this job's own token wouldn't. Call it outside $( ), so the
-          # token is kept and revoked at the end.
+          # A Claude App token, only when needed: labels and issues it adds start runs, and ones made
+          # with this job's own token wouldn't. Call it outside $( ), so the token is kept and revoked
+          # at the end.
+          source .github/agent/app-token.sh
           token=""
-          app_token() {
-            [ -z "$token" ] || return 0
-            local oidc
-            oidc=$(curl -sSf -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=claude-code-github-action" | jq -r '.value // empty') || true
-            [ -n "$oidc" ] || { echo "::warning::Couldn't get a GitHub identity token."; return 1; }
-            echo "::add-mask::$oidc"
-            token=$(curl -sS -X POST https://api.anthropic.com/api/github/github-app-token-exchange \
-              -H "Authorization: Bearer $oidc" -H 'Content-Type: application/json' \
-              -d '{"permissions":{"issues":"write"}}' | jq -r '.token // .app_token // empty') || true
-            [ -n "$token" ] || { echo "::warning::Couldn't get a Claude App token."; return 1; }
-            echo "::add-mask::$token"
-          }
+          app_token() { [ -n "$token" ] || get_app_token '{"issues":"write"}'; }
           trap '[ -z "$token" ] || curl -sS -X DELETE https://api.github.com/installation/token -H "Authorization: Bearer $token" >/dev/null || true' EXIT
           as_app() { GH_TOKEN="$token" "$@"; }
 
