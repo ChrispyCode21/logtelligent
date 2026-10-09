@@ -262,9 +262,7 @@ Smaller findings from the v1.2.0 `architecture-reviewer` passes, deferred becaus
 - **`HistoryView`:**
   - Move a row into a `HistoryRow` component, and drop the dead `history-row` class.
   - Build the chart series in `history/timeline.ts` (`e1rmSeries`) rather than inline.
-- **`E1rmChart`:**
-  - The aria-label formats by hand; use `formatE1rm`.
-  - The middle gridline can land on x.5.
+- **`E1rmChart`:** the middle gridline can land on x.5.
 - **`SuggestionCard`:** the `heading` prop always equals `config.name`.
 - **`App.tsx`:** the three tab buttons are written out; map over a list.
 - **`program/`:**

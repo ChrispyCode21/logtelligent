@@ -19,6 +19,7 @@ test('restores a backup and shows its history', async ({ page }) => {
   await tab(page, 'History').click()
   await expect(historyRows(page)).toHaveCount(backup.sessions.length)
   await expect(page.locator('figure.chart')).toBeVisible()
+  await expect(page.getByRole('img', { name: /^Estimated 1RM from \d+\.\d lb to \d+\.\d lb$/ })).toBeVisible()
 })
 
 test('exports the data it restored', async ({ page }) => {
