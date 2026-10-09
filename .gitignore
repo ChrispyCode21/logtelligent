@@ -35,3 +35,6 @@ CLAUDE.local.md
 # Playwright output (npm run test:e2e)
 test-results
 playwright-report
+
+# Agent pipeline inputs, written by .github/workflows/agent.yml
+.agent-input/

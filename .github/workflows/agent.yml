@@ -161,7 +161,7 @@ jobs:
       issues: read
       id-token: write # only for the Anthropic token exchange; GitHub access is this job's read-only token
     outputs:
-      status: ${{ steps.branch.outputs.status || steps.result.outputs.status }}
+      status: ${{ steps.branch.outputs.status || steps.bundle.outputs.status || steps.result.outputs.status }}
       result: ${{ steps.claude.outputs.structured_output }}
       comment: ${{ steps.result.outputs.comment }}
       branch: ${{ steps.branch.outputs.branch }}
@@ -239,7 +239,7 @@ jobs:
           claude_args: |
             --model ${{ env.MODEL }}
             --max-turns 300
-            --allowedTools "Read" "Grep" "Glob" "Edit" "Write" "TodoWrite" "Task" "Agent" "Bash(npm run:*)" "Bash(npm test:*)" "Bash(npx prettier:*)" "Bash(npx vitest:*)" "Bash(npx playwright test:*)" "Bash(npx tsc:*)" "Bash(npx oxlint:*)" "Bash(git status:*)" "Bash(git diff:*)" "Bash(git log:*)" "Bash(git show:*)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git restore:*)" "Bash(git rm:*)" "Bash(git mv:*)" "Bash(ls:*)"
+            --allowedTools "Read" "Grep" "Glob" "Edit" "Write" "TodoWrite" "Task" "Agent" "Bash(npm run:*)" "Bash(npm test:*)" "Bash(npx prettier:*)" "Bash(npx vitest:*)" "Bash(npx playwright test:*)" "Bash(npx tsc:*)" "Bash(npx oxlint:*)" "Bash(git status:*)" "Bash(git diff:*)" "Bash(git log:*)" "Bash(git show:*)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git restore:*)" "Bash(git rm:*)" "Bash(git mv:*)" "Bash(git grep:*)" "Bash(ls:*)" "Bash(wc:*)"
             --disallowedTools "WebFetch" "WebSearch" "NotebookEdit" "Bash(git push:*)" "Bash(npm install:*)" "Bash(npm i:*)" "Bash(curl:*)" "Bash(wget:*)"
             --json-schema '{"type":"object","properties":{"status":{"type":"string","enum":["done","questions"]},"pr_title":{"type":"string","maxLength":100},"pr_body":{"type":"string","maxLength":6000},"touches_data":{"type":"boolean"},"comment":{"type":"string","minLength":1,"maxLength":6000}},"required":["status","comment"],"additionalProperties":false}'
 
@@ -269,16 +269,24 @@ jobs:
 
       # The commits leave this job as a bundle. The publish job, on a fresh machine, checks them.
       - name: Bundle the commits
+        id: bundle
         if: steps.result.outputs.status == 'done'
         env:
           BRANCH: ${{ steps.branch.outputs.branch }}
-        run: git -c core.hooksPath=/dev/null -c core.fsmonitor=false bundle create "$RUNNER_TEMP/agent.bundle" "origin/main..$BRANCH"
+        run: |
+          git() { command git -c core.hooksPath=/dev/null -c core.fsmonitor=false "$@"; }
+          if [ "$(git rev-list --count "origin/main..$BRANCH")" -eq 0 ]; then
+            echo "status=empty" >> "$GITHUB_OUTPUT"
+          else
+            git bundle create "$RUNNER_TEMP/agent.bundle" "origin/main..$BRANCH"
+          fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: steps.result.outputs.status == 'done'
+        if: steps.result.outputs.status == 'done' && steps.bundle.outputs.status != 'empty'
         with:
           name: agent-commits
           path: ${{ runner.temp }}/agent.bundle
           retention-days: 1
+          overwrite: true
 
   # Runs on a fresh machine, so nothing left over from Claude's job can reach the write token. Trusts
   # nothing from the code job but its commits and text, and checks the commits before pushing.
@@ -319,15 +327,20 @@ jobs:
           git fetch --quiet "$RUNNER_TEMP/agent/agent.bundle" "+refs/heads/$BRANCH:refs/heads/$BRANCH" \
             || refuse "There were no commits to publish, or they couldn't be read back."
           [ "$(git rev-list --count "origin/main..$BRANCH")" -gt 0 ] || refuse "There were no commits to publish."
-          changed=$(git diff --name-only "origin/main...$BRANCH")
-          guarded=$(grep -E '^(\.github/(workflows|rulesets|agent)/|\.claude/)' <<<"$changed" | tr '\n' ' ' || true)
+          # --no-renames, so a file moved out of a guarded folder shows up under its old path too.
+          changed=$(git diff --no-renames --name-only "origin/main...$BRANCH")
+          guarded=$(grep -E '^(\.github/(workflows|rulesets|agent)/|\.claude/|\.npmrc$)' <<<"$changed" | tr '\n' ' ' || true)
           [ -z "$guarded" ] || refuse "The commits change paths the agent may not edit: $guarded"
-          deps() { git show "$1:package.json" | jq -S '{dependencies, devDependencies}'; }
-          [ "$(deps origin/main)" = "$(deps "$BRANCH")" ] || refuse "The commits change package.json's dependencies, which the agent may not do."
+          # Only the version may change in package.json and package-lock.json (as a release does): no
+          # dependencies, overrides, scripts or resolved packages.
+          pkg() { git show "$1:package.json" | jq -S 'del(.version)'; }
+          lock() { git show "$1:package-lock.json" | jq -S 'del(.version, .packages[""].version)'; }
+          [ "$(pkg origin/main)" = "$(pkg "$BRANCH")" ] && [ "$(lock origin/main)" = "$(lock "$BRANCH")" ] \
+            || refuse "The commits change package.json or package-lock.json beyond the version, which the agent may not do."
 
-          labels=()
+          touches_data=false
           if grep -q '^src/storage/' <<<"$changed" || [ "$(jq -r '.touches_data // false' <<<"$RESULT")" = true ]; then
-            labels=(--label touches-data)
+            touches_data=true
           fi
           title=$(jq -r '.pr_title // empty' <<<"$RESULT")
           [ -n "$title" ] || title="Issue #$ISSUE"
@@ -353,10 +366,20 @@ jobs:
           auth=$(printf 'x-access-token:%s' "$token" | base64 -w0)
           echo "::add-mask::$auth"
 
+          # Checked again here: an edited title gives a different branch name, so the Code job's check
+          # alone could let one issue get two branches.
+          if git ls-remote --heads origin | awk '{print $2}' | grep -qE "^refs/heads/agent/issue-$ISSUE(-|$)"; then
+            echo "status=exists" >> "$GITHUB_OUTPUT"; exit 0
+          fi
           git -c "http.extraheader=AUTHORIZATION: basic $auth" push --quiet origin "refs/heads/$BRANCH:refs/heads/$BRANCH"
-          GH_TOKEN="$token" gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" \
-            --title "$title" --body-file "$RUNNER_TEMP/pr-body.md" "${labels[@]}"
+          echo "reason=The branch \`$BRANCH\` was pushed but the PR wasn't opened. Open it by hand, or delete the branch and re-add \`agent-ready\`." >> "$GITHUB_OUTPUT"
+          pr_url=$(GH_TOKEN="$token" gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" \
+            --title "$title" --body-file "$RUNNER_TEMP/pr-body.md")
           echo "status=published" >> "$GITHUB_OUTPUT"
+          if [ "$touches_data" = true ]; then
+            GH_TOKEN="$token" gh pr edit "$pr_url" --add-label touches-data \
+              || echo "::warning::Couldn't add the touches-data label to $pr_url; add it by hand."
+          fi
 
   # When there's a PR, it's the report: it closes the issue and carries the run and cost. This job
   # comments only when there isn't one, so a run never ends silently.
@@ -376,7 +399,7 @@ jobs:
           CODE: ${{ needs.code.result }}
           STATUS: ${{ needs.code.outputs.status }}
           COMMENT: ${{ needs.code.outputs.comment }}
-          PUBLISH: ${{ needs.publish.result }}
+          PUBLISHED: ${{ needs.publish.outputs.status }}
           REASON: ${{ needs.publish.outputs.reason }}
           COST: ${{ needs.code.outputs.cost }}
           MODEL: ${{ needs.code.outputs.model }}
@@ -385,8 +408,10 @@ jobs:
           set -euo pipefail
           retry="Re-add \`agent-ready\` to try again."
           if [ "$CODE" != success ]; then STATUS=failed; fi
+          # After the Code job, Publish's outcome decides: refused, an existing branch, or a failure
+          # (with a reason when it got as far as pushing).
           if [ "$STATUS" = done ]; then
-            if [ -n "$REASON" ]; then STATUS=refused; else STATUS=failed; fi
+            case "$PUBLISHED" in refused | exists) STATUS=$PUBLISHED ;; *) STATUS=${REASON:+pushed}; STATUS=${STATUS:-failed} ;; esac
           fi
           case "$STATUS" in
             questions)
@@ -396,6 +421,10 @@ jobs:
               body="An agent branch for this issue already exists (\`agent/issue-$ISSUE-…\`). Close its PR or delete the branch, then re-add \`agent-ready\` to build it again." ;;
             refused)
               body="Nothing was published. $REASON $retry" ;;
+            pushed)
+              body="$REASON" ;;
+            empty)
+              body="Claude finished without committing anything, so there was nothing to publish. The run's log has the details. $retry" ;;
             *)
               body="The coding run didn't finish, so nothing was published. The run's log has the details. $retry" ;;
           esac
