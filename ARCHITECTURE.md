@@ -150,7 +150,8 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 - **In this repo first.** The workflows and prompts are written so they can be lifted into a shared `agent-pipeline` repo later (as a reusable workflow that each project calls), once it has run on real issues here. Nothing in them is specific to Logtelligent: the rules come from the repo's own CLAUDE.md, SPEC.md and this document.
 - **Actions:** `anthropics/claude-code-action`, pinned to a commit SHA like every other action. It runs Claude Code headless on a fresh runner, which reads CLAUDE.md and `.claude/agents/` as a desktop session does.
 - **Identity:** the Claude GitHub App (`claude[bot]`). Its token is needed because pushes and PRs made with the default `GITHUB_TOKEN` don't trigger other workflows, so CI would never run on the agent's PRs.
-- **Secret:** `ANTHROPIC_API_KEY` (pay per token), with a monthly spending cap set in the Anthropic Console. When the cap is reached runs fail until the month resets or the cap is raised; re-adding `agent-ready` retries.
+- **No stored key: Workload Identity Federation** (Decided 2026-10-09, replacing an `ANTHROPIC_API_KEY` secret). Each run, GitHub gives the workflow a short-lived signed token saying which repo, branch and workflow it is; Anthropic exchanges it for an API token that expires within minutes (the Action refreshes it during long runs). The Claude Console holds the trust setup: GitHub Actions registered as an issuer, a service account, and a federation rule that accepts only this repo's agent workflow on `main`. The IDs the workflow needs are identifiers, not credentials, and live in repo variables.
+- **Spending:** usage is billed per token to a dedicated Console workspace ("github-actions") with its own monthly limit. When the limit is reached, runs fail until the month resets or the limit is raised; re-adding `agent-ready` retries. Revoking access is deleting the federation rule.
 - **Repo stays public:** Actions minutes are free, and only the owner can add labels.
 
 ### Triggers and who can start a run
@@ -226,7 +227,7 @@ A PR that changes what's stored gets `touches-data`. Code review stays optional;
 1. These decisions (this section, and CLAUDE.md's note on headless runs).
 2. Playwright check in CI, and the upgrade-test setup (`fake-indexeddb`). The owner adds the new check to the ruleset. **Built.**
 3. Issue template and labels. **Built.**
-4. Triage workflow. Before it: the owner installs the Claude GitHub App and adds the API key.
+4. Triage workflow. Before it: the owner installs the Claude GitHub App, sets up federation in the Claude Console, and adds the repo variables (README.md).
 5. Coding run: branch, slice, PR, sub-issues and release issues.
 6. PR follow-through: fresh review, follow-up issues, CI auto-fix, keeping PRs current.
 7. Later: lift it into a shared `agent-pipeline` repo.
