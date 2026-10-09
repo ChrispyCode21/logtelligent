@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2. **v1.2.1 — released** (2026-10-06): the fixes in §9.3. **v1.3.0 — scoped** (2026-10-08): slices 0–3 in §9.4.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2. **v1.2.1 — released** (2026-10-06): the fixes in §9.3. **v1.3.0 — in progress** (scoped 2026-10-08): slice 0 of §9.4 built.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -477,7 +477,7 @@ From the owner's v1.2.0 on-device checks (TESTING.md). A patch release; no store
 
 Theme: **change programs without losing history**. A lift's history can follow it into a new program, and each old session is judged by what was prescribed at the time, so carried-over history stays accurate. Built in this order, each slice a small PR or two, then a release PR. Each slice's details are settled with the owner before it's built (CLAUDE.md, "Building a slice").
 
-**Slice 0: Groundwork (Decided; resolves §10 #8, #10, #11).** No stored-data change.
+**Slice 0: Groundwork (Decided; resolves §10 #8, #10, #11; built).** No stored-data change.
 - **History while a session is open (#8):** removing an exercise or day from the program counts only **finished** sessions as history, plus the open session if it has sets for that exercise or day. With no such history, the exercise or day is deleted outright rather than archived.
 - **Removing the open session's day (#8):** if the open session is on that day and has no sets, it's discarded along with the day, and the confirm says so. **Applying a template (Decided 2026-10-08)** follows the same rule for the days it removes, and its "Replace your program…?" confirm says so too.
 - **History's picker (Decided 2026-10-08):** counts only finished sessions, so an exercise archived mid-session appears there once a finished session has it, never with "No sessions logged yet."

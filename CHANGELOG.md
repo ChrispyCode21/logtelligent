@@ -6,6 +6,15 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ## [Unreleased]
 
+### Changed
+
+- **Removing a day mid-session:** if today's open session is on that day and nothing is logged in it yet, the session is discarded along with the day (the confirm says so), and the day is deleted rather than archived. The same goes for the days a template replaces.
+- **History's exercise list** shows a removed exercise once a finished session has it, not while its only sets are in a session still open.
+
+### Fixed
+
+- **Bigger tap targets:** the warm-up banner's ✕ and the Program tab's move and remove buttons are now 44 px, like every other button.
+
 ## [1.2.1] - 2026-10-06
 
 Fixes from the first on-device pass of v1.2.0.

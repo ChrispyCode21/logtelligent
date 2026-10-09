@@ -29,7 +29,7 @@ src/
                 program/, session/ and history/ are pure too: no React, Dexie, storage or UI imports (enforced by lint).
   storage/      Everything that touches IndexedDB: Dexie schema, reads, writes, backup/restore
   components/   React UI (see "UI" below)
-  ui/           UI primitives (Button, Card, Field), and shared formatters and display labels (format.ts)
+  ui/           UI primitives (Button, Card, Field, SegmentedControl), and shared formatters and display labels (format.ts)
   styles/       tokens.css: color, spacing, radius, tap-target and type-scale tokens
   App.tsx       Tabs (Today / History / Program) and the single live query
 public/
@@ -70,7 +70,7 @@ Dexie wraps IndexedDB. Database `logtelligent`, schema in `storage/db.ts`; the s
 | 4 | (no index change) | v1.2.0 slice 2. Logged sets may carry `extra: true`; no upgrade, since an unmarked set is a counted one. |
 | 5 | (no index change) | v1.2.0 slice 3. Sessions may carry a `note` (1–200 characters); no upgrade. |
 
-- **`programs`**: the whole program as one document (`days[] → exercises[]`, each exercise an `ExerciseConfig` plus `archived?`; and `effortScale`, the scale effort is entered and shown in: `rpe`, `repsLeft` or `perceived`). Effort is always stored as RPE, whatever the scale (`program/effort.ts` maps labels ↔ RPE). Edits go through `updateProgram(edit)`, which reads and writes inside one transaction so quick successive edits can't overwrite each other.
+- **`programs`**: the whole program as one document (`days[] → exercises[]`, each exercise an `ExerciseConfig` plus `archived?`; and `effortScale`, the scale effort is entered and shown in: `rpe`, `repsLeft` or `perceived`). Effort is always stored as RPE, whatever the scale (`program/effort.ts` maps labels ↔ RPE). Edits go through `updateProgram(edit, discardSessions?)`, which reads and writes inside one transaction so quick successive edits can't overwrite each other. Removing a day discards, in that same transaction, an open session on it with nothing logged (SPEC §9.4 slice 0; `history/sessions.ts` decides which days and exercises count as having history).
 - **`sessions`**: one row per training session: `dayId`, `startedAt`, `finishedAt?` (unfinished = in progress, editable), `warmupDismissed?`, `note?` (the note for next time), and `exercises[]` of `ExerciseLog` (`exerciseId`, `sets[]`, `substitute? { name, sets }`, `skipped?`). A set is `{ weight, reps, rpe?, extra? }`; extra sets come after the prescribed ones in `sets[]`.
 - Archived exercises and days stay in the program so their history still resolves.
 
@@ -94,7 +94,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 - **Adding an exercise:** `ExercisePicker` browses `program/bank.ts` by body area or search; picking one opens `ExerciseForm` with `preset` (the bank defaults are copied in, nothing links back), and "Custom exercise…" opens it blank.
 - **Session:** `SessionView` (warm-up banner, "Last time" note, `NoteField`, finish/discard) → `ExerciseLogger` per exercise (⋯ menu, substitute, validation message) → `SetEditor` (set list + form, shared by originals and substitutes) → `EffortPicker` (the program's effort scale; shown only on a primary's first set, SPEC §6.3). A finished session uses the same components in a finished mode (no warm-up, menu or new-set form; Done and Delete session), opened from History. Edits save through the same `storage/sessions.ts` writes as a live session. Once the prescribed sets are in, a live session offers "+ Add set" for extra sets: own weight, no effort, and left out of validation and e1RM by the engine (`countedSets`), so callers pass all sets.
 - **Styling:** design tokens (colors with light/dark values, spacing, radius, tap target, type scale) in `src/styles/tokens.css`; use a token rather than a raw value, except 1px hairlines and one-off optical tweaks. All component styles are in `src/App.css` as shared classes (`.card`, `.field`, `.actions`, `.note`, `.tag`, `.muted`, `.list-button`, `button.primary` / `.danger`), sectioned by slice. Any `aria-pressed` button gets the pressed style from one rule, so a new toggle group needs no CSS of its own.
-- **Primitives (`src/ui/`):** `Button` (`variant` primary / secondary / danger, `block`; defaults to `type="button"`), `Card` (`as` section / li / form) and `Field` (label or fieldset, optional `hint`). New UI uses them instead of raw elements with class names. Display formatting goes through `src/ui/format.ts`, including an exercise's summary line (`formatPrescription`) and the equipment and tier labels. Single-column grids use `minmax(0, 1fr)` so content can't widen the page on small phones (see TESTING.md).
+- **Primitives (`src/ui/`):** `Button` (`variant` primary / secondary / danger, `block`; defaults to `type="button"`), `Card` (`as` section / li / form), `Field` (label or fieldset, optional `hint`) and `SegmentedControl` (a row of `aria-pressed` toggles, one pressed; `className` sets the layout). New UI uses them instead of raw elements with class names. Display formatting goes through `src/ui/format.ts`, including an exercise's summary line (`formatPrescription`) and the equipment and tier labels. Single-column grids use `minmax(0, 1fr)` so content can't widen the page on small phones (see TESTING.md).
 - **Dialogs:** native `confirm()` for destructive or unusual actions.
 
 ## PWA and offline
@@ -136,17 +136,9 @@ Smaller findings from the v1.2.0 `architecture-reviewer` passes, deferred becaus
   - The middle gridline can land on x.5.
 - **`SuggestionCard`:** the `heading` prop always equals `config.name`.
 - **`App.tsx`:** the three tab buttons are written out; map over a list.
-- **`ProgramView`:**
-  - The move/remove button group is repeated for days and exercises (a local `RowActions`).
-  - `saveExercise` scans the program to tell add from edit, though callers know which it is.
 - **`program/`:**
-  - `SeedWalkthrough` reimplements `activeExercises`.
   - `EffortOption` and `RPE_SCALE` are exported but used only in `effort.ts`.
   - The new-exercise target RPE (8) is written in both `bank.ts` and `exerciseForm.ts`.
-- **`history/sessions.ts`:**
-  - The "has anything logged" check is written twice.
-  - `exerciseHasHistory` and `dayHasHistory` have no tests.
-  - `exerciseHistory`'s two branches could build one object.
 - **`storage/sessions.ts`:** `saveNote` could use `db.sessions.update`.
 - **`App.css`:**
   - `minmax(0, 1fr)` columns are set in two ways (in each rule, and in a list at the end).
@@ -155,7 +147,7 @@ Smaller findings from the v1.2.0 `architecture-reviewer` passes, deferred becaus
 
 ## Proposed: UI component layer and design tokens
 
-*Status: **Built (trimmed) in v1.1.0** (SPEC §9.1, slice 0): steps 1, 4, and step 2 limited to `Button`, `Field` and `Card`. The token scale as built is `--space-1…6` (4, 6, 8, 12, 16, 24px), `--radius-sm/md/lg/pill`, `--tap-target` / `--tap-target-lg` (44, 52px) and `--text-xs…display`, matching the existing values one-to-one. The other primitives, and moving every component to CSS Modules (step 3), stay **Proposed** and come as they're needed. **`SegmentedControl` is Decided for v1.3.0** (SPEC §9.4, slice 0), for the four `aria-pressed` toggle groups, not the tabs.*
+*Status: **Built (trimmed) in v1.1.0** (SPEC §9.1, slice 0): steps 1, 4, and step 2 limited to `Button`, `Field` and `Card`. The token scale as built is `--space-1…6` (4, 6, 8, 12, 16, 24px), `--radius-sm/md/lg/pill`, `--tap-target` / `--tap-target-lg` (44, 52px) and `--text-xs…display`, matching the existing values one-to-one. The other primitives, and moving every component to CSS Modules (step 3), stay **Proposed** and come as they're needed. **`SegmentedControl` was built in v1.3.0** (SPEC §9.4, slice 0), for the four `aria-pressed` toggle groups, not the tabs.*
 
 An audit of v1.0.0 found:
 
