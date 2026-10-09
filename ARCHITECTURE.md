@@ -78,7 +78,7 @@ Dexie wraps IndexedDB. Database `logtelligent`, schema in `storage/db.ts`; the s
 | 5 | (no index change) | v1.2.0 slice 3. Sessions may carry a `note` (1–200 characters); no upgrade. |
 | 6 | (no index change) | v1.3.0 slice 1. A finished session's exercises may carry a `prescription` (rep range, set count); no upgrade, since one without it is judged by today's settings. |
 
-- **`programs`**: the whole program as one document (`days[] → exercises[]`, each exercise an `ExerciseConfig` plus `archived?`; and `effortScale`, the scale effort is entered and shown in: `rpe`, `repsLeft` or `perceived`). Effort is always stored as RPE, whatever the scale (`program/effort.ts` maps labels ↔ RPE). Edits go through `updateProgram(edit, discardSessions?)`, which reads and writes inside one transaction so quick successive edits can't overwrite each other. Removing a day discards in that same transaction any open session on it with nothing logged, whether the day is deleted or archived; changing programs discards every open session (SPEC §9.4 slice 3) (SPEC §9.4 slice 0; `history/sessions.ts` decides which days and exercises count as having history).
+- **`programs`**: the whole program as one document (`days[] → exercises[]`, each exercise an `ExerciseConfig` plus `archived?`; and `effortScale`, the scale effort is entered and shown in: `rpe`, `repsLeft` or `perceived`). Effort is always stored as RPE, whatever the scale (`program/effort.ts` maps labels ↔ RPE). Edits go through `updateProgram(edit, discardSessions?)`, which reads and writes inside one transaction so quick successive edits can't overwrite each other. Removing a day discards in that same transaction any open session on it with nothing logged, whether the day is deleted or archived (SPEC §9.4 slice 0; `history/sessions.ts` decides which days and exercises count as having history); changing programs discards every open session (slice 3).
 - **`sessions`**: one row per training session: `dayId`, `startedAt`, `finishedAt?` (unfinished = in progress, editable), `warmupDismissed?`, `note?` (the note for next time), and `exercises[]` of `ExerciseLog` (`exerciseId`, `sets[]`, `substitute? { name, sets }`, `skipped?`, `prescription? { repRange, sets }`, saved on Finish from the stored program in the same transaction). A set is `{ weight, reps, rpe?, extra? }`; extra sets come after the prescribed ones in `sets[]`.
 - Archived exercises and days stay in the program so their history still resolves.
 
@@ -121,23 +121,21 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 ## Quality gates and releases
 
 - **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the purity rules for the engine and for program/, session/ and history/), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
-- **Architecture and quality review:** the `architecture-reviewer` subagent (`.claude/agents/architecture-reviewer.md`) reviews a branch or a module against this document and CLAUDE.md and reports ranked findings; it is read-only. Run it before opening a PR (CLAUDE.md, "Building a slice").
+- **Architecture and quality review:** the read-only `architecture-reviewer` subagent (`.claude/agents/architecture-reviewer.md`) reports ranked findings on a branch or module against this document and CLAUDE.md. Run it before opening a PR (CLAUDE.md, "Building a slice").
 - **Playwright** (`ci.yml`, check "Playwright"): `e2e/` in WebKit and Chromium at 375px and 320px: every screen for sideways scrolling and clipped button labels, and smoke tests of the main flows. On failure the traces are kept as a run artifact (open with `npx playwright show-trace`).
 - **Security** (`security.yml`): CodeQL on the app and the workflows; dependency review on PRs.
-  - **"Code scanning results / CodeQL" neutral, "1 configuration not found":** GitHub didn't finish processing one of the scan uploads (the job logs "Timed out waiting for analysis to finish processing"), so it can't compare the PR with `main`. It isn't a required check and isn't caused by the code; re-run the Security workflow to get it green.
+  - **"Code scanning results / CodeQL" neutral, "1 configuration not found":** GitHub timed out processing a scan upload, so it can't compare the PR with `main`. Not required and not the code's fault; re-run the Security workflow.
 - **Dependabot:** weekly npm and GitHub Actions update PRs. Actions are pinned to commit SHAs.
 - **`main` is protected** (`.github/rulesets/main.json`): changes arrive by PR, all checks must pass, and there are no force-pushes or deletions.
-- **Releases** (`release.yml`), semantic versioning:
-  1. In a PR, bump `version` in `package.json`, move `CHANGELOG.md`'s "Unreleased" notes under the new version, and replace TESTING.md's "Current release" phone checklist with checks drawn from those notes.
-  2. When it merges, the workflow sees a version with no release yet, creates the `vX.Y.Z` tag and publishes a GitHub Release with that CHANGELOG section.
-- **Production is every merge to `main`**, not the release tag: Workers Builds deploys `main` as it lands (see Hosting). The tag and GitHub Release only record the version.
+- **Releases** (`release.yml`), semantic versioning: a release PR (CLAUDE.md, "How to work") bumps `package.json`; when it merges, the workflow sees a version with no release yet, creates the `vX.Y.Z` tag and publishes a GitHub Release with that CHANGELOG section.
+- **Production is every merge to `main`**, not the release tag (see Hosting). The tag and GitHub Release only record the version.
 - **Agent pipeline:** issues labeled `agent-ready` are built by Claude in GitHub Actions and arrive as PRs through the same gates (see "Agent pipeline" below).
 
 ## Agent pipeline
 
-*Status: **Decided 2026-10-09.** Built in the PRs listed under "Build order" below; each PR marks its part built there. Built so far: steps 2, 3, 4 and 5.*
+*Status: **Decided 2026-10-09.** Built through step 5 of "Build order" below; each PR marks its part built there.*
 
-Work can start from a GitHub issue instead of a desktop session: an issue labeled `agent-ready` triggers Claude in GitHub Actions, which checks the issue, asks questions if it's underspecified, or builds it on a branch following CLAUDE.md's "Building a slice" and opens a PR. The PR passes the same gates as any other, and the owner merges it.
+An issue labeled `agent-ready` triggers Claude in GitHub Actions, which asks questions if the issue is underspecified, or builds it on a branch following CLAUDE.md's "Building a slice" and opens a PR. The PR passes the same gates as any other, and the owner merges it.
 
 ```
 issue + agent-ready ─► triage ─┬─► questions on the issue, label agent-needs-info, stop
@@ -147,7 +145,7 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 
 ### Where it lives
 
-- **In this repo first.** The workflows and prompts are written so they can be lifted into a shared `agent-pipeline` repo later (as a reusable workflow that each project calls), once it has run on real issues here. Nothing in them is specific to Logtelligent: the rules come from the repo's own CLAUDE.md, SPEC.md and this document.
+- **In this repo first.** The workflows and prompts can be lifted into a shared `agent-pipeline` repo later (a reusable workflow each project calls), once proven on real issues here. Nothing in them is specific to Logtelligent: the rules come from the repo's own CLAUDE.md, SPEC.md and this document.
 - **Actions:** `anthropics/claude-code-action`, pinned to a commit SHA like every other action. It runs Claude Code headless on a fresh runner, which reads CLAUDE.md and `.claude/agents/` as a desktop session does.
 - **Identity:** the Claude GitHub App (`claude[bot]`). Its token is needed because pushes and PRs made with the default `GITHUB_TOKEN` don't trigger other workflows, so CI would never run on the agent's PRs.
 - **No stored key: Workload Identity Federation** (Decided 2026-10-09, replacing an `ANTHROPIC_API_KEY` secret). Each run, GitHub gives the workflow a short-lived signed token saying which repo, branch and workflow it is; Anthropic exchanges it for an API token that expires within minutes (the Action refreshes it during long runs). The Claude Console holds the trust setup: GitHub Actions registered as an issuer, a service account, and a federation rule that accepts only this repo's agent workflow on `main`. The IDs the workflow needs are identifiers, not credentials, and live in repo variables.
@@ -245,29 +243,19 @@ When the last open issue in a version's milestone closes, the agent creates a "R
 
 ### Merge safety
 
-The owner may merge an agent PR once it's green. That rests on the required checks:
-
-- the existing ones (CI "Checks", CodeQL, dependency review);
-- a **Playwright check**: every screen at 375px and 320px for sideways scrolling and clipped labels, with seeded data, plus smoke tests of the main flows (TESTING.md's preview checks, automated; `e2e/`);
-- for stored-data changes, **upgrade tests** (see "Changing the data model", step 5).
+The owner may merge an agent PR once it's green. That rests on the required checks ("Quality gates and releases": CI "Checks", Playwright, CodeQL, dependency review), with seeded data in Playwright standing in for TESTING.md's preview checks, and, for stored-data changes, the **upgrade tests** ("Changing the data model", step 5).
 
 A PR that changes what's stored gets `touches-data`, and one that changes the checks themselves gets `touches-gates` (read those before merging: green means less if the checks changed). Code review stays optional; the one thing it asks of the owner is to **export a backup on the phone before merging**, because reverting the PR can't undo an upgrade already applied to real data.
 
 ### Build order
 
-1. These decisions (this section, and CLAUDE.md's note on headless runs).
-2. Playwright check in CI, and the upgrade-test setup (`fake-indexeddb`). The owner adds the new check to the ruleset. **Built.**
-3. Issue template and labels. **Built.**
-4. Triage workflow. Before it: the owner installs the Claude GitHub App, sets up federation in the Claude Console, and adds the repo variables (README.md). **Built.**
-5. Coding run, in two PRs:
-   - 5a: branch, slice, PR. **Built.**
-   - 5b: sub-issues for an approved split (and labeling unblocked ones), release issues, milestones, and `claude[bot]` as a label sender. **Built.**
+1–5. **Built:** these decisions; the Playwright check and upgrade tests; issue forms and labels; triage (setup in README.md); the coding run (5a: branch, slice, PR; 5b: approved splits, release issues, milestones, `claude[bot]` as a label sender).
 6. PR follow-through: fresh review, follow-up issues, CI auto-fix, keeping PRs current.
 7. Later: lift it into a shared `agent-pipeline` repo.
 
 ## Cleanup backlog
 
-Smaller findings from the v1.2.0 `architecture-reviewer` passes, deferred because they didn't belong in a feature PR. None is a bug. Fold them into whichever slice next touches the file, or batch a few into a small no-visual-change PR (verify with a style snapshot, TESTING.md).
+Small `architecture-reviewer` findings that didn't belong in a feature PR; none is a bug. Fold them into whichever slice next touches the file, or batch a few into a small no-visual-change PR (verify with a style snapshot, TESTING.md).
 
 - **`HistoryView`:**
   - Move a row into a `HistoryRow` component, and drop the dead `history-row` class.
@@ -286,19 +274,8 @@ Smaller findings from the v1.2.0 `architecture-reviewer` passes, deferred becaus
 
 ## Proposed: UI component layer and design tokens
 
-*Status: **Built (trimmed) in v1.1.0** (SPEC §9.1, slice 0): steps 1, 4, and step 2 limited to `Button`, `Field` and `Card`. The token scale as built is `--space-1…6` (4, 6, 8, 12, 16, 24px), `--radius-sm/md/lg/pill`, `--tap-target` / `--tap-target-lg` (44, 52px) and `--text-xs…display`, matching the existing values one-to-one. The other primitives, and moving every component to CSS Modules (step 3), stay **Proposed** and come as they're needed. **`SegmentedControl` was built in v1.3.0** (SPEC §9.4, slice 0), for the four `aria-pressed` toggle groups, not the tabs.*
+*Status: **partly built.** Built: the tokens (`--space-1…6` = 4, 6, 8, 12, 16, 24px; `--radius-sm/md/lg/pill`; `--tap-target` / `--tap-target-lg` = 44, 52px; `--text-xs…display`), the primitives `Button`, `Field`, `Card` (SPEC §9.1 slice 0) and `SegmentedControl` (SPEC §9.4 slice 0), and the shared formatters (see "UI"). The rest stays **Proposed**, to come as it's needed:*
 
-An audit of v1.0.0 found:
-
-- **Colors are already tokenized** (`--accent`, `--surface`, `--muted`…, light and dark). No hard-coded colors.
-- **Spacing, radii and sizes are not.** Raw values repeat: `8px` ×23, `12px` ×14, the 44px minimum tap target ×5, radii of 8/10/12px.
-- **There is no component layer.** Buttons, fields, cards, notes and steppers are raw elements plus shared class names, re-assembled in each component (e.g. the weight and reps steppers in `SetEditor` repeat the same markup).
-- **Some logic is duplicated:** the set formatter (`225 × 4 @ 8`) exists 3 times (`SetEditor`, `HistoryView`, `ExerciseLogger`), the RPE scale twice (`RpePicker`, `ExerciseForm`), and there are two date formatters.
-
-Proposed strategy:
-
-1. **Design tokens** in `src/styles/tokens.css`: add spacing (`--space-1…5`), radius (`--radius-sm/md/lg`), size (`--tap-target: 44px`) and type-scale tokens alongside the existing colors, and replace the raw values.
-2. **A small primitives layer**, `src/ui/`: `Button` (variants: primary, secondary, danger), `Card`, `Field` (label + control + hint/error), `Stepper`, `Note` (info/warning), `Tag`, `SegmentedControl`. Feature components compose these instead of raw elements and class names.
-3. **Co-located styles** via CSS Modules (`Button.module.css`; built into Vite, no new dependency), so each primitive owns its CSS. `App.css` shrinks to layout only.
-4. **Shared formatters** in `src/ui/format.ts` (`formatSet`, `formatDate`, `formatWeight`) and the RPE scale as one exported constant.
-5. **Do it incrementally:** tokens first (mechanical), then one primitive at a time, each a small PR verified at 375px and 320px.
+1. **More primitives** in `src/ui/`: `Stepper`, `Note` (info/warning) and `Tag`, composed by feature components instead of raw elements and class names.
+2. **Co-located styles** via CSS Modules (`Button.module.css`; built into Vite, no new dependency), so each primitive owns its CSS. `App.css` shrinks to layout only.
+3. **Incrementally:** one primitive at a time, each a small PR verified at 375px and 320px.
