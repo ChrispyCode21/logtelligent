@@ -21,7 +21,7 @@ src/
     sets.ts         countedSets: extra sets are recorded but never judged (SPEC §9.2 slice 2)
   program/      Program model (days → exercises), pure editing functions (add, move, archive, clear…) effort scales (effort.ts), the built-in exercise bank with search (bank.ts), program templates (templates.ts), entering starting numbers: validation, pre-fill, placeholders and stack presets (seeding.ts), the exercise form's fields and validation (exerciseForm.ts), and lifts: same-named exercises (lifts.ts)
   session/      Session types (types.ts) and pure session rules: set editing (one working weight), each exercise's set target,
-                the "Only X of Y" tally, the first-set effort check and canFinish (sets.ts); set pre-fill and the set form's
+                the "Only X of Y" tally, the first-set effort check, canFinish and a substitute's weight step (sets.ts); set pre-fill and the set form's
                 validation (setForm.ts); each exercise's history and suggestion for a live or finished session (context.ts); note text and the Finish confirm (notes.ts); saving and applying a finished session's prescription (prescription.ts);
                 warm-up ramp (warmup.ts)
   history/      Pure history helpers: stored sessions → engine history, optionally before a given session (sessions.ts);
@@ -267,10 +267,7 @@ A PR that changes what's stored gets `touches-data`, and one that changes the ch
 
 Smaller findings from the v1.2.0 `architecture-reviewer` passes, deferred because they didn't belong in a feature PR. None is a bug. Fold them into whichever slice next touches the file, or batch a few into a small no-visual-change PR (verify with a style snapshot, TESTING.md).
 
-- **`ExerciseLogger`:**
-  - Extract the ⋯ menu and replace form into an `ExerciseMenu` component (about 90 of its lines).
-  - Move the substitute's weight step (5 lb, never below 0) into `session/sets.ts` with a test.
-  - Compute `canAdd`/`canAddExtra` once.
+- **`ExerciseLogger`:** extract the ⋯ menu and replace form into an `ExerciseMenu` component (about 90 of its lines).
 - **`HistoryView`:**
   - Move a row into a `HistoryRow` component, and drop the dead `history-row` class.
   - Build the chart series in `history/timeline.ts` (`e1rmSeries`) rather than inline.

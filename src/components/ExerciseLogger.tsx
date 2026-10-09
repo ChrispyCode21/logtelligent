@@ -9,7 +9,14 @@ import {
   type Suggestion,
 } from '../engine'
 import type { EffortScale } from '../program/effort'
-import { allSetsLogged, rpeRequired, shownTarget, showsOutcome, targetSets } from '../session/sets'
+import {
+  allSetsLogged,
+  rpeRequired,
+  shownTarget,
+  showsOutcome,
+  substituteStep,
+  targetSets,
+} from '../session/sets'
 import type { ExerciseLog } from '../session/types'
 import {
   replaceExercise,
@@ -26,7 +33,6 @@ import { formatSetCount, formatSetsWithExtras } from '../ui/format'
 import { SetEditor } from './SetEditor'
 
 const VOLUME_ONLY_NOTICE = 'This will be tracked as volume only and not used for estimates.'
-const SUBSTITUTE_STEP = 5
 
 interface Props {
   sessionId: number
@@ -59,6 +65,10 @@ export function ExerciseLogger({
   const target = targetSets(log, config.sets, suggestion)
   const substitute = log.substitute
   const sets = log.sets
+  // The sets the editor logs to: the substitute's once replaced. A new set until today's are in, then extras.
+  const allLogged = allSetsLogged(substitute ? substitute.sets : sets, target)
+  const canAdd = !finished && !allLogged
+  const canAddExtra = !finished && allLogged
 
   function closeMenu() {
     setMenuOpen(false)
@@ -184,11 +194,11 @@ export function ExerciseLogger({
         <SetEditor
           key="substitute"
           sets={substitute.sets}
-          canAdd={!finished && !allSetsLogged(substitute.sets, target)}
-          canAddExtra={!finished && allSetsLogged(substitute.sets, target)}
+          canAdd={canAdd}
+          canAddExtra={canAddExtra}
           effortScale={effortScale}
           rpeRequiredAt={() => false}
-          step={(w, dir) => Math.max(0, (Number.isFinite(w) ? w : 0) + dir * SUBSTITUTE_STEP)}
+          step={substituteStep}
           allowZeroWeight
           weightLabel="Weight (lb)"
           repsLabel={<>Reps{config.unilateral && <span className="muted"> · per side</span>}</>}
@@ -212,8 +222,8 @@ export function ExerciseLogger({
       <SetEditor
         key="original"
         sets={sets}
-        canAdd={!finished && !allSetsLogged(sets, target)}
-        canAddExtra={!finished && allSetsLogged(sets, target)}
+        canAdd={canAdd}
+        canAddExtra={canAddExtra}
         first={suggestion.kind === 'suggestion' ? suggestion : undefined}
         effortScale={effortScale}
         rpeRequiredAt={(i) => rpeRequired(config.tier, i)}
