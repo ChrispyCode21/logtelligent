@@ -1,5 +1,5 @@
 # A feature, change or cleanup. Fill it in, then add `agent-ready` when it's ready to build
-# (ARCHITECTURE.md, "Agent pipeline"). Triage reads every field; anything left open becomes a question.
+# (.github/agent/PIPELINE.md). Triage reads every field; anything left open becomes a question.
 name: Task
 description: A feature, change or cleanup to build.
 labels: [enhancement]

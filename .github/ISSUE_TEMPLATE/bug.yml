@@ -1,5 +1,5 @@
 # Something that doesn't work as SPEC.md says. Add `agent-ready` when it's ready to fix
-# (ARCHITECTURE.md, "Agent pipeline").
+# (.github/agent/PIPELINE.md).
 name: Bug
 description: Something that doesn't work as it should.
 labels: [bug]

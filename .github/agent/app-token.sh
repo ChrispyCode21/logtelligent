@@ -1,4 +1,4 @@
-# Sourced by agent.yml's jobs that need a Claude App token (ARCHITECTURE.md, "Agent pipeline").
+# Sourced by agent.yml's jobs that need a Claude App token (.github/agent/PIPELINE.md).
 # get_app_token '<permissions JSON>' sets $token to one, got the way claude-code-action gets one and
 # retried as the Action does. Call it directly, not inside $( ), so $token is kept for the caller to
 # use and revoke. On failure it logs the exchange's status and error message (never a token) and

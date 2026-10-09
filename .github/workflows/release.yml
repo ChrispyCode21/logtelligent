@@ -1,6 +1,6 @@
 # Tags and publishes a release when a merge to main carries a new version in package.json.
 # Release by PR: bump the version and add its CHANGELOG.md section (CI checks the section exists).
-# Releasing a version also closes its milestone (ARCHITECTURE.md, "Labels and milestones"); the owner
+# Releasing a version also closes its milestone (.github/agent/PIPELINE.md, "Labels and milestones"); the owner
 # creates milestones by hand when a version is scoped.
 name: Release
 

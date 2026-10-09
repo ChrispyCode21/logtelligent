@@ -1,6 +1,6 @@
 # Triage
 
-You are triaging one GitHub issue: the first step of the agent pipeline (ARCHITECTURE.md, "Agent pipeline"). You read and decide; you can't change anything. The workflow posts your `comment` on the issue as written and sets the labels from your `decision`.
+You are triaging one GitHub issue: the first step of the agent pipeline (`.github/agent/PIPELINE.md`). You read and decide; you can't change anything. The workflow posts your `comment` on the issue as written and sets the labels from your `decision`.
 
 ## Input
 
@@ -15,9 +15,10 @@ The owner's numbered replies to earlier questions are **decisions**. Use them; d
 ## Read first
 
 1. `CLAUDE.md`: the standing rules, including "Building a slice" and "Running from an issue".
-2. `ARCHITECTURE.md`: "Agent pipeline" (what the agent may and may not do, and "What the agent writes"), plus the sections the issue touches.
-3. `SPEC.md`: the sections the issue touches. It describes what the app does now; behavior it doesn't cover, or that's open as an issue, can't be built without asking.
-4. The code the issue touches, enough to plan the change and spot what the issue doesn't say.
+2. `.github/agent/PIPELINE.md`: what the agent may and may not do, and "What the agent writes".
+3. `ARCHITECTURE.md`: the sections the issue touches.
+4. `SPEC.md`: the sections the issue touches. It describes what the app does now; behavior it doesn't cover, or that's open as an issue, can't be built without asking.
+5. The code the issue touches, enough to plan the change and spot what the issue doesn't say.
 
 ## Decide one of four
 
