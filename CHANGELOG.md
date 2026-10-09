@@ -8,6 +8,8 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ### Added
 
+- **Change your program:** a card at the bottom of the Program tab lets you leave your program for a ready-made one or one you build yourself. Days with logged sessions are archived with their history; lifts you keep doing pick their history up in the next program. It comes with a reminder that consistency beats novelty, and any session in progress is discarded after a warning.
+
 - **One history per lift:** exercises with the same name are one lift, wherever they are in your program. Bench Press on a heavy day and on a light day now share one history (History lists it once, with each session tagged by its day) and one estimated 1RM, built from your lower-rep sessions first, since high-rep sets estimate a max less reliably. Each day still progresses on its own: a failed heavy day doesn't lower the light day.
 - **Adding a lift you already do:** a new primary needs no starting numbers when the lift already has an estimated 1RM, and picking it from the exercise list copies your equipment and weight stack from the lift. A ready-made program does the same, and its confirm names the lifts that keep their history.
 
@@ -15,6 +17,7 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ### Changed
 
+- **Switching to a ready-made program** now goes through Change your program; the "Replace with …" buttons are gone.
 - **Removing a day mid-session:** if today's open session is on that day and nothing is logged in it yet, the session is discarded along with the day (the confirm says so), and that empty session no longer stops a day without other history from being deleted outright. The same goes for the days a template replaces.
 - **History's exercise list** shows a removed exercise once a finished session has it, not while its only sets are in a session still open.
 

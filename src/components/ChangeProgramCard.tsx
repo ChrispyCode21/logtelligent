@@ -31,7 +31,7 @@ function confirmMessage(kept: string[], open: Session | undefined): string {
       : sets === 0
         ? ' Your open session has nothing logged yet, so it will be discarded.'
         : ` Today's session (${sets} ${sets === 1 ? 'set' : 'sets'} logged) will be discarded.`
-  return `Change your program? Your training days are archived and their history kept.${lifts}${session}`
+  return `Change your program? Days with logged sessions are archived and their history kept; the rest are deleted.${lifts}${session}`
 }
 
 /**
