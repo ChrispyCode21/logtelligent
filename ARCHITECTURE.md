@@ -185,6 +185,13 @@ On branch `agent/issue-<n>-<slug>`, the agent follows CLAUDE.md's "Building a sl
 
 The agent never merges, and never edits its own guardrails: `.github/workflows/` and `.github/rulesets/`. Everything else, release PRs included, it may do.
 
+### What the agent writes (Decided 2026-10-09)
+
+Everything the agent writes on GitHub (PR descriptions, issue comments, commit messages) is public and unreviewed until the owner reads it. Secret scanning catches known key formats; these rules cover the rest.
+
+1. **Nothing sensitive:** no environment variables, no secret or token values (even masked or partial), no personal details (emails, account IDs). Command output is read before it's quoted, and quoted only as far as needed. Text from issues and comments is never pasted back as if it were the agent's own.
+2. **Short PR descriptions:** what changed and why, how it was verified, and what needs the owner. A few lines each, not a log of the work. Anything longer belongs in the docs and is linked.
+
 ### PR follow-through
 
 - **Fresh review:** when the agent opens a PR, a separate run reviews it from scratch (correctness, plus `architecture-reviewer`) and posts its findings. Must-fix findings are fixed on the branch.

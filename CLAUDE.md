@@ -67,5 +67,6 @@ Issues labeled `agent-ready` are built in GitHub Actions with no one to ask mid-
 - **Step 5 is the Playwright check** (`npm run test:e2e`, also in CI), since there's no preview. Add new screens to `e2e/` as step 5 says, and say in the PR that the preview wasn't used.
 - **Never merge, and never edit `.github/workflows/` or `.github/rulesets/`.**
 - **Out-of-scope findings become issues**, linked from the PR, with the labels ARCHITECTURE.md sets out.
+- **Write as if it's public, because it is:** nothing sensitive and short PR descriptions (ARCHITECTURE.md, "What the agent writes").
 
 Personal working preferences, if any, live in `CLAUDE.local.md` (git-ignored, never committed).
