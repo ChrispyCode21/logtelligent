@@ -113,8 +113,31 @@ export function step(
   }
 }
 
+/** The settings a session is judged by: its stored rep range, or the current one (SPEC §9.4 slice 1). */
+function judgedBy(config: ExerciseConfig, session: ExerciseSession): ExerciseConfig {
+  return session.repRange ? { ...config, repRange: session.repRange } : config
+}
+
+function sameRange(a: RepRange, b: RepRange): boolean {
+  return a.min === b.min && a.max === b.max
+}
+
 /**
- * Replay an exercise history, oldest first, to get its current state.
+ * A rep-range change is a fresh start (SPEC §9.4 slice 1): stacks, the last successful numbers and
+ * any pending revert, retry or deload are cleared. Primary lifts go back to the e1RM rule;
+ * accessories restart at the bottom of the new range, at the weight they'd have been suggested.
+ */
+export function freshStart(config: ExerciseConfig, state: ProgressionState): ProgressionState {
+  const weight = state.next.numbers?.weight
+  const numbers =
+    config.tier === 'accessory' && weight !== undefined ? startingNumbers(config, weight) : undefined
+  return { stacks: 0, next: { kind: 'normal', numbers } }
+}
+
+/**
+ * Replay an exercise history, oldest first, to get its current state under `config`.
+ * Each session is judged by its own stored rep range, if it has one, and a change of range between
+ * sessions, or from the last session to `config`, is a fresh start (SPEC §9.4 slice 1).
  * Also returns the history annotated with which sessions were deloads.
  * Replaced sessions (a substitute was logged) are skipped (SPEC §5.2).
  * Any extra fields on the sessions are passed through untouched.
@@ -122,7 +145,9 @@ export function step(
 export function deriveState<S extends ExerciseSession>(config: ExerciseConfig, history: S[]) {
   const loads = availableLoads(config)
   const sorted = [...history].sort((a, b) => Date.parse(a.date) - Date.parse(b.date))
-  let state = initialState(config)
+  // Starts from the first judged session's range, so its seed numbers are in that range's terms.
+  let state: ProgressionState | undefined
+  let range: RepRange | undefined
   const sessions: S[] = []
 
   for (const session of sorted) {
@@ -132,11 +157,17 @@ export function deriveState<S extends ExerciseSession>(config: ExerciseConfig, h
       sessions.push(session)
       continue
     }
+    const judged = judgedBy(config, session)
+    state ??= initialState(judged)
+    if (range && !sameRange(range, judged.repRange)) state = freshStart(judged, state)
+    range = judged.repRange
     const isDeload = state.next.kind === 'deload'
-    state = step(config, loads, state, counted).state
+    state = step(judged, loads, state, counted).state
     sessions.push({ ...session, isDeload })
   }
 
+  if (!state) return { state: initialState(config), sessions }
+  if (range && !sameRange(range, config.repRange)) state = freshStart(config, state)
   return { state, sessions }
 }
 

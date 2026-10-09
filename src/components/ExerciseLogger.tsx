@@ -102,8 +102,11 @@ export function ExerciseLogger({
         ) : log.skipped ? (
           <span className="muted">{finished ? ' · skipped' : ' · skipped today'}</span>
         ) : (
-          // A past session shows only what was logged: what was prescribed then isn't stored (SPEC §9.2, slice 1).
-          <span className="muted"> · {formatSetCount(sets, finished ? undefined : target)}</span>
+          // A past session shows its prescribed count if it was saved; before v1.3.0 only what was logged (SPEC §9.4 slice 1).
+          <span className="muted">
+            {' '}
+            · {formatSetCount(sets, finished && !log.prescription ? undefined : target)}
+          </span>
         )}
         {!substitute && !log.skipped && suggestion.kind === 'suggestion' && suggestion.plan === 'deload' && (
           <span className="tag">Deload</span>

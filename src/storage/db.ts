@@ -42,3 +42,10 @@ db.version(5).stores({
   sessions: '++id, startedAt',
   programs: 'id',
 })
+// v6: a finished session's exercises may carry a `prescription` (rep range and set count), saved on
+// Finish (SPEC §9.4 slice 1). No index change and no upgrade: one without it is judged by the
+// exercise's current settings, as every session was before.
+db.version(6).stores({
+  sessions: '++id, startedAt',
+  programs: 'id',
+})

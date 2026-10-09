@@ -1,5 +1,7 @@
 import type { LoggedSet } from '../engine'
 import type { ExerciseLog } from '../session/types'
+import { EMPTY_PROGRAM, findExercise } from '../program/program'
+import { withPrescriptions } from '../session/prescription'
 import { db } from './db'
 
 export async function startSession(dayId: string, exerciseIds: string[]) {
@@ -77,8 +79,21 @@ export async function saveNote(sessionId: number, note: string | undefined) {
     })
 }
 
+/**
+ * Finish a session, saving each exercise's prescription from the program as stored right now
+ * (SPEC §9.4 slice 1). One transaction, so a program edit can't land in between.
+ */
 export async function finishSession(sessionId: number) {
-  await db.sessions.update(sessionId, { finishedAt: new Date().toISOString() })
+  await db.transaction('rw', db.sessions, db.programs, async () => {
+    const program = (await db.programs.get('main')) ?? EMPTY_PROGRAM
+    await db.sessions
+      .where('id')
+      .equals(sessionId)
+      .modify((session) => {
+        session.finishedAt = new Date().toISOString()
+        session.exercises = withPrescriptions(session.exercises, (id) => findExercise(program, id))
+      })
+  })
 }
 
 export async function discardSession(sessionId: number) {

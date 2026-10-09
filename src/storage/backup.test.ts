@@ -90,6 +90,28 @@ describe('JSON backup (SPEC §2)', () => {
     expect(parsed[1]).not.toHaveProperty('note')
   })
 
+  it('round-trips a prescription (SPEC §9.4 slice 1)', () => {
+    const prescribed: Session = {
+      ...sessions[0],
+      exercises: [{ ...sessions[0].exercises[0], prescription: { repRange: { min: 3, max: 5 }, sets: 3 } }],
+    }
+    const backup = buildBackup(program, [prescribed], new Date('2026-10-04T12:00:00Z'))
+    expect(parseBackup(JSON.stringify(backup))).toEqual(backup)
+  })
+
+  it('rejects a prescription with a range upside down or a set count out of bounds', () => {
+    const bad = [
+      { repRange: { min: 5, max: 3 }, sets: 3 },
+      { repRange: { min: 3, max: 5 }, sets: 0 },
+      { repRange: { min: 3 }, sets: 3 },
+    ]
+    for (const prescription of bad) {
+      const json = JSON.parse(JSON.stringify(buildBackup(program, sessions, new Date())))
+      json.sessions[0].exercises[0].prescription = prescription
+      expect(() => parseBackup(JSON.stringify(json))).toThrow('sessions[0].exercises[0].prescription')
+    }
+  })
+
   it('rejects a note that is empty or over 200 characters', () => {
     for (const note of ['', 'x'.repeat(201)]) {
       const json = JSON.parse(JSON.stringify(buildBackup(program, sessions, new Date())))

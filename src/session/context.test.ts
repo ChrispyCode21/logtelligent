@@ -69,6 +69,36 @@ describe('the exercises of a session and what they are judged against (SPEC §9.
     )
   })
 
+  it('judges a finished session by its saved prescription, not today’s settings (SPEC §9.4 slice 1)', () => {
+    const changed: Program = {
+      ...program,
+      days: [
+        {
+          ...program.days[0],
+          exercises: [{ ...program.days[0].exercises[0], repRange: { min: 8, max: 12 }, sets: 4 }],
+        },
+      ],
+    }
+    const prescribed: Session = {
+      ...middle,
+      exercises: [{ ...middle.exercises[0], prescription: { repRange: { min: 3, max: 5 }, sets: 3 } }],
+    }
+    const [bench] = sessionExercises(prescribed, changed, [first, prescribed, last], now)
+    expect(bench.config.repRange).toEqual({ min: 3, max: 5 })
+    expect(bench.config.sets).toBe(3)
+    expect(bench.suggestion).toMatchObject({ sets: 3 })
+    // Without one, today's settings, as before v1.3.0.
+    expect(sessionExercises(middle, changed, [first, middle, last], now)[0].config.sets).toBe(4)
+  })
+
+  it('judges a live session by today’s settings, even if it carries a prescription', () => {
+    const live: Session = {
+      ...session(4, 22, [], false),
+      exercises: [{ exerciseId: 'bench', sets: [], prescription: { repRange: { min: 5, max: 7 }, sets: 2 } }],
+    }
+    expect(sessionExercises(live, program, [first, live], now)[0].config.repRange).toEqual({ min: 3, max: 5 })
+  })
+
   it('leaves out exercises no longer in the program', () => {
     const gone = { ...middle, exercises: [...middle.exercises, { exerciseId: 'deleted', sets: [] }] }
     expect(sessionExercises(gone, program, [first, gone], now).map((e) => e.config.id)).toEqual(['bench'])

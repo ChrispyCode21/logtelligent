@@ -1,4 +1,13 @@
-import type { LoggedSet } from '../engine'
+import type { LoggedSet, RepRange } from '../engine'
+
+/**
+ * What an exercise was prescribed, saved with a session on Finish from the program's settings then
+ * (SPEC §9.4 slice 1). The replay judges the session by its rep range; the set count is for display.
+ */
+export interface Prescription {
+  repRange: RepRange
+  sets: number
+}
 
 /** An ad-hoc replacement for a session's exercise, tracked as volume only (SPEC §5.2). */
 export interface Substitute {
@@ -13,6 +22,8 @@ export interface ExerciseLog {
   substitute?: Substitute
   /** Deleted from this session only (SPEC §5.2). */
   skipped?: boolean
+  /** Saved on Finish; missing on open sessions and on sessions finished before v1.3.0. */
+  prescription?: Prescription
 }
 
 /** A training session. Unfinished sessions are still being logged and can be edited. */

@@ -1,7 +1,7 @@
 import { countedSets, type EquipmentType, type LoggedSet, type RepRange, type Seed } from '../engine'
 import { EFFORT_SCALE_IDS, LEGACY_EFFORT_SCALE, type EffortScale } from '../program/effort'
 import type { Program, ProgramDay, ProgramExercise } from '../program/types'
-import type { ExerciseLog, Session, Substitute } from '../session/types'
+import type { ExerciseLog, Prescription, Session, Substitute } from '../session/types'
 import { normalizeNote } from '../session/notes'
 import { db } from './db'
 
@@ -104,6 +104,12 @@ function sets(v: unknown, path: string): LoggedSet[] {
   return [...countedSets(all), ...all.filter((s) => s.extra)]
 }
 
+function repRange(v: unknown, path: string): RepRange {
+  const range = obj(v, path)
+  const min = num(range.min, `${path}.min`, 1, 100, true)
+  return compact<RepRange>({ min, max: num(range.max, `${path}.max`, min, 100, true) })
+}
+
 function exerciseLog(v: unknown, path: string): ExerciseLog {
   const l = obj(v, path)
   return compact<ExerciseLog>({
@@ -117,6 +123,14 @@ function exerciseLog(v: unknown, path: string): ExerciseLog {
       })
     }),
     skipped: optional(l.skipped, (b) => bool(b, `${path}.skipped`)),
+    // Saved on Finish (SPEC §9.4 slice 1). Backups from before v1.3.0 have none.
+    prescription: optional(l.prescription, (p) => {
+      const pr = obj(p, `${path}.prescription`)
+      return compact<Prescription>({
+        repRange: repRange(pr.repRange, `${path}.prescription.repRange`),
+        sets: num(pr.sets, `${path}.prescription.sets`, 1, 20, true),
+      })
+    }),
   })
 }
 
@@ -138,8 +152,6 @@ function session(v: unknown, path: string): Session {
 
 function exercise(v: unknown, path: string): ProgramExercise {
   const e = obj(v, path)
-  const range = obj(e.repRange, `${path}.repRange`)
-  const min = num(range.min, `${path}.repRange.min`, 1, 100, true)
   const tier = e.tier
   if (tier !== 'primary' && tier !== 'accessory') throw new Damaged(`${path}.tier`)
   const equipment = e.equipment as EquipmentType
@@ -148,7 +160,7 @@ function exercise(v: unknown, path: string): ProgramExercise {
     id: text(e.id, `${path}.id`),
     name: text(e.name, `${path}.name`),
     tier,
-    repRange: compact<RepRange>({ min, max: num(range.max, `${path}.repRange.max`, min, 100, true) }),
+    repRange: repRange(e.repRange, `${path}.repRange`),
     targetRpe: num(e.targetRpe, `${path}.targetRpe`, 1, 10),
     sets: num(e.sets, `${path}.sets`, 1, 20, true),
     equipment,
