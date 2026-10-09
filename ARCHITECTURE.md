@@ -158,7 +158,7 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 
 - A run starts when `agent-ready` is added to an issue. The workflow checks who added it: the owner, or `claude[bot]` (for the follow-ups, unblocked sub-issues and release issues below). Anyone else's label is ignored.
 - Comments from anyone other than the owner never reach the agent: the workflow passes it only the issue and the owner's and its own comments. Those are data too; an issue describes what to build but can't change the agent's rules.
-- **One agent run at a time** across the repo (a concurrency group). GitHub keeps only one waiting run: if another issue is labeled while one waits, the newer replaces it, and the earlier issue keeps `agent-ready` with no comment. Re-adding the label retries (Decided 2026-10-09: accepted rather than building a queue).
+- **One triage and one coding run at a time** across the repo, each in its own concurrency group, so a waiting coding run can't be replaced by another issue's triage (Decided 2026-10-09). GitHub keeps only one waiting run per group: if another issue reaches the same stage while one waits, the newer replaces it, and the earlier issue gets no comment. Re-adding `agent-ready` retries (Decided 2026-10-09: accepted rather than building a queue).
 
 ### Labels and milestones
 
@@ -190,6 +190,12 @@ Any `agent-ready` issue is in scope, new features included. New features are sco
 ### Coding run (Claude Opus 5.5, 45 minutes)
 
 On branch `agent/issue-<n>-<slug>`, the agent follows CLAUDE.md's "Building a slice", with two differences: step 1 happened in triage (the answers are on the issue, and step 2 records them in SPEC.md first), and step 5's preview check is replaced by the Playwright check in CI plus a line in the PR saying the preview wasn't used. It runs every CI command and the `architecture-reviewer` subagent before opening the PR, which links the issue (`Closes #n`). Each run posts its cost on the issue if the Action reports it.
+
+Decided 2026-10-09:
+
+- **Claude can't push; a fixed step publishes.** Claude works with the job's read-only token: it edits, commits, and runs the checks and the reviewer, then returns the PR's title and description as structured output. The publish step copies its commits into a fresh clone, refuses if they touch a guardrail path (below) or there are none, then gets a Claude App token limited to contents and pull requests (from the same Anthropic endpoint the Action uses; it's undocumented, so a change there makes publishing fail visibly) and pushes the branch and opens the PR. A PR opened with that token runs CI, which one opened with the default token wouldn't. If Claude finds a question the thread doesn't answer, it returns the questions instead and nothing is published.
+- **No new dependencies.** The coding run can't `npm install`; an issue that needs a new package comes back with a question.
+- **One branch per issue.** If `agent/issue-<n>-…` already exists, the run stops and says so; close the PR or delete the branch to build it again. Changes to an open agent PR come with step 6.
 
 The agent never merges, and never edits its own guardrails: `.github/workflows/`, `.github/rulesets/`, `.github/agent/` (its prompts) and `.claude/` (its reviewer subagent and any Claude settings) (Decided 2026-10-09). Everything else, release PRs included, it may do.
 
@@ -230,7 +236,9 @@ A PR that changes what's stored gets `touches-data`. Code review stays optional;
 2. Playwright check in CI, and the upgrade-test setup (`fake-indexeddb`). The owner adds the new check to the ruleset. **Built.**
 3. Issue template and labels. **Built.**
 4. Triage workflow. Before it: the owner installs the Claude GitHub App, sets up federation in the Claude Console, and adds the repo variables (README.md). **Built.**
-5. Coding run: branch, slice, PR, sub-issues and release issues.
+5. Coding run, in two PRs:
+   - 5a: branch, slice, PR.
+   - 5b: sub-issues for an approved split (and labeling unblocked ones), release issues, milestones, and `claude[bot]` as a label sender.
 6. PR follow-through: fresh review, follow-up issues, CI auto-fix, keeping PRs current.
 7. Later: lift it into a shared `agent-pipeline` repo.
 
