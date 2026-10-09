@@ -92,8 +92,8 @@ export function allSetsLogged(sets: LoggedSet[], target: number): boolean {
 }
 
 /**
- * A substitute's weight step: 5 lb either way, never below 0. A substitute has no equipment or
- * loads to step through (SPEC §5.2), and a weight that isn't a number steps from 0.
+ * A substitute's weight step: 5 lb either way, never below 0. A substitute is typed in by name,
+ * so it has no equipment or loads to step through. A weight that isn't a number steps from 0.
  */
 export function substituteStep(weight: number, direction: 1 | -1): number {
   return Math.max(0, (Number.isFinite(weight) ? weight : 0) + direction * 5)
