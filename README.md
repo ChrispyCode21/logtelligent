@@ -60,6 +60,19 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
    ```powershell
    gh api -X PUT 'repos/{owner}/logtelligent/rulesets/<id>' --input .github/rulesets/main.json
    ```
+5. Labels for the agent pipeline (ARCHITECTURE.md, "Agent pipeline"). `--force` updates a label that already exists, so these are safe to re-run:
+   ```powershell
+   gh label create agent-ready --color 0E8A16 --description 'Ready for Claude to build' --force
+   ```
+   ```powershell
+   gh label create agent-needs-info --color FBCA04 --description 'Claude asked questions; answer, then re-add agent-ready' --force
+   ```
+   ```powershell
+   gh label create agent-followup --color 5319E7 --description 'Found by Claude; needs a decision before it can be built' --force
+   ```
+   ```powershell
+   gh label create touches-data --color B60205 --description 'Changes what is stored; export a backup on the phone before merging' --force
+   ```
 
 ## Install on iPhone
 

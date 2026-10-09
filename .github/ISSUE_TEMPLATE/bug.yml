@@ -1,0 +1,39 @@
+# Something that doesn't work as SPEC.md says. Add `agent-ready` when it's ready to fix
+# (ARCHITECTURE.md, "Agent pipeline").
+name: Bug
+description: Something that doesn't work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Add the **`agent-ready`** label when this is ready to fix. Claude comments numbered questions if it can't tell what's expected.
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: From opening the app. Say if it needs particular data (a program, past sessions).
+      placeholder: |
+        1. Start Upper A
+        2. Log a set on Bench Press
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: Phone and browser, or the preview URL, and the app version if you know it.
+      placeholder: e.g. iPhone 15, home-screen app, v1.3.0

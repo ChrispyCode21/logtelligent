@@ -1,0 +1,40 @@
+# A feature, change or cleanup. Fill it in, then add `agent-ready` when it's ready to build
+# (ARCHITECTURE.md, "Agent pipeline"). Triage reads every field; anything left open becomes a question.
+name: Task
+description: A feature, change or cleanup to build.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Add the **`agent-ready`** label when this is ready to build. Claude checks it against SPEC.md first and comments numbered questions if anything is open; answer with numbered replies and re-add the label.
+  - type: textarea
+    id: what
+    attributes:
+      label: What should change
+      description: The behavior you want, in your words. Screens, labels and wording you already have in mind help.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: The problem it solves, or where the idea came from (a phone check, SPEC §11…).
+  - type: input
+    id: spec
+    attributes:
+      label: Where it's specified
+      description: A SPEC.md section or slice, an ARCHITECTURE.md "Cleanup backlog" item, or "new" if the spec doesn't cover it yet.
+      placeholder: e.g. SPEC §9.4 slice 2, Cleanup backlog (ExerciseLogger), new
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: How you'd check it's right, e.g. what you'd do on the phone and what you'd see.
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: Anything this shouldn't touch or change.
