@@ -73,6 +73,23 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
    ```powershell
    gh label create touches-data --color B60205 --description 'Changes what is stored; export a backup on the phone before merging' --force
    ```
+6. Claude for the agent pipeline, with no stored key (Workload Identity Federation; ARCHITECTURE.md, "Agent pipeline"):
+   1. Install the [Claude GitHub App](https://github.com/apps/claude) on this repository only.
+   2. In the [Claude Console](https://platform.claude.com) (the developer API, billed separately from a Claude plan): add credits under **Billing**, and create a workspace `github-actions` with a monthly spend limit.
+   3. **Settings → Workload identity → Connect workload → GitHub Actions.** Issuer `https://token.actions.githubusercontent.com`. Match: subject `repo:{owner}/logtelligent:ref:refs/heads/main`, and the claims `repository_owner`, `repository`, `ref` (`refs/heads/main`), `repository_owner_id`, `event_name` (`issues`) and `workflow_ref` (`{owner}/logtelligent/.github/workflows/agent.yml@refs/heads/main`). Enable it in the `github-actions` workspace only; scope `workspace:developer`; token lifetime 600 seconds. Don't create API keys for the service account.
+   4. Store the IDs it shows as repo variables (identifiers, not secrets):
+      ```powershell
+      gh variable set ANTHROPIC_ORGANIZATION_ID --body '<org id>'
+      ```
+      ```powershell
+      gh variable set ANTHROPIC_WORKSPACE_ID --body '<wrkspc_…>'
+      ```
+      ```powershell
+      gh variable set ANTHROPIC_SERVICE_ACCOUNT_ID --body '<svac_…>'
+      ```
+      ```powershell
+      gh variable set ANTHROPIC_FEDERATION_RULE_ID --body '<fdrl_…>'
+      ```
 
 ## Install on iPhone
 
