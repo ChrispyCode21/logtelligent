@@ -172,7 +172,7 @@ README.md ("Setting up a new deployment") has the commands that create them.
 
 **Issue forms** (`.github/ISSUE_TEMPLATE/`): **Task** (what should change, why, where it's specified, done when, out of scope) and **Bug** (what happened, what was expected, steps, where). They ask for what triage needs, so fewer issues come back with questions; blank issues still work.
 
-Each version has a **milestone** (v1.3.0, v2.0.0…). The agent puts every issue it creates in the right milestone.
+Each version has a **milestone** (v1.3.0, v2.0.0…). The agent creates it when the version is scoped in SPEC.md (§9.x), unless it already exists (Decided 2026-10-09), and puts every issue it creates in the right milestone.
 
 ### Triage (Claude Sonnet 5.5, 10 minutes)
 
