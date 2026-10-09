@@ -15,6 +15,7 @@ import {
   setTally,
   shownTarget,
   showsOutcome,
+  substituteStep,
   targetSets,
   updateSet,
 } from './sets'
@@ -286,6 +287,23 @@ describe('shownTarget (SPEC §9.4 slice 1)', () => {
     expect(shownTarget(log, false, 3)).toBe(3)
     expect(shownTarget(prescribed, true, 3)).toBe(3)
     expect(shownTarget(log, true, 3)).toBeUndefined()
+  })
+})
+
+describe('substituteStep', () => {
+  it('steps 5 lb up or down', () => {
+    expect(substituteStep(100, 1)).toBe(105)
+    expect(substituteStep(100, -1)).toBe(95)
+  })
+
+  it('never goes below 0', () => {
+    expect(substituteStep(2.5, -1)).toBe(0)
+    expect(substituteStep(0, -1)).toBe(0)
+  })
+
+  it('steps a weight that isn’t a number from 0', () => {
+    expect(substituteStep(NaN, 1)).toBe(5)
+    expect(substituteStep(NaN, -1)).toBe(0)
   })
 })
 
