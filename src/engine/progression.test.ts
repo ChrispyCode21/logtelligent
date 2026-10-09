@@ -407,6 +407,54 @@ describe('7.H Stored prescriptions (SPEC §9.4 slice 1)', () => {
     })
   })
 
+  it('starts from the first judged session’s range, so seed numbers are in its terms', () => {
+    // At 15-20, 100 x 15, 15, 15 doesn't fill the range: stay at 100. Judged from a seed at today's
+    // 8-12 instead, it would fill 12 and step up to 105 before the fresh start.
+    const cable = accessory({
+      equipment: 'cable',
+      loads: [95, 100, 105, 110],
+      seed: { weight: 100, reps: 8 },
+    })
+    const history = stored({ min: 15, max: 20 }, weekly(reps(100, 15, 15, 15)))
+    expect(suggestion(cable, history)).toMatchObject({ weight: 100, reps: 8, effectiveTop: 12 })
+  })
+
+  it('a fresh start clears a pending retry', () => {
+    const history = stored(
+      { min: 3, max: 5 },
+      weekly(sets(225, [5, 4, 3]), sets(235, [4, 3, 2]), sets(225, [5, 4, 3])),
+    )
+    expect(suggestion(bench, history)).toMatchObject({ plan: 'retry', weight: 235, stacks: 1 })
+    const state = deriveState({ ...bench, repRange: { min: 5, max: 7 } }, history).state
+    expect(state).toEqual({ stacks: 0, next: { kind: 'normal' } })
+  })
+
+  it('an accessory’s fresh start from a pending revert uses the reverted weight', () => {
+    // 70 x 8, 8, 8 fills 6-8: 75 x 6. Then 75 x 5, 5, 5 fails: revert to 70. The range becomes 8-10.
+    const press = { ...inclinePress, seed: { weight: 70, reps: 6 } }
+    const history = stored({ min: 6, max: 8 }, weekly(reps(70, 8, 8, 8), reps(75, 5, 5, 5)))
+    expect(suggestion(press, history)).toMatchObject({ plan: 'revert', weight: 70 })
+    expect(suggestion({ ...press, repRange: { min: 8, max: 10 } }, history)).toMatchObject({
+      plan: 'normal',
+      weight: 70,
+      reps: 8,
+      effectiveTop: 10,
+      stacks: 0,
+    })
+  })
+
+  it('older unstored sessions followed by stored ones at the same range replay as if none were stored', () => {
+    const history = weekly(
+      sets(225, [5, 4, 3]),
+      sets(235, [4, 3, 2]),
+      sets(225, [5, 4, 3]),
+      sets(235, [4, 4, 3]),
+    )
+    const mixed = [...history.slice(0, 2), ...stored(bench.repRange, history.slice(2))]
+    expect(deriveState(bench, mixed).state).toEqual(deriveState(bench, history).state)
+    expect(suggestion(bench, mixed)).toEqual(suggestion(bench, history))
+  })
+
   it('a live session is judged by the current range after a fresh start', () => {
     const history = stored({ min: 15, max: 20 }, weekly(sets(15, [20, 20, 18])))
     // 15 x 10, 10, 10 clears the floor of 10: a success under 10-12 (it would fail at 15-20).

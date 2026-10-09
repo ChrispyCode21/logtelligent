@@ -8,7 +8,7 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ### Added
 
-- **Sessions remember what they were prescribed:** finishing a session saves each exercise's rep range and set count. Changing an exercise's range later no longer re-judges your past sessions (which could turn old successes into fails and even trigger a deload); instead, its progression starts fresh under the new range. Editing a past session shows "2 of 3 sets" again. Sessions finished before this update work as before.
+- **Sessions remember what they were prescribed:** finishing a session saves each exercise's rep range and set count. Changing an exercise's range later no longer re-judges sessions finished from now on (which could turn old successes into fails and even trigger a deload); instead, its progression starts fresh under the new range. Editing a past session shows "2 of 3 sets" again. Sessions finished before this update work as before.
 
 ### Changed
 

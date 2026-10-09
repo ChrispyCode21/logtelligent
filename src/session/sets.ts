@@ -123,3 +123,12 @@ export function canFinish(logs: ExerciseLog[], tierOf: (exerciseId: string) => T
     progression.every((l) => hasRequiredEffort(tierOf(l.exerciseId) ?? 'accessory', l.sets))
   )
 }
+
+/**
+ * The set count a header shows against what's logged: today's target in a live session, and in a
+ * finished one only if its prescription was saved (SPEC §9.4 slice 1). Before v1.3.0 it wasn't, so
+ * those show what was logged alone.
+ */
+export function shownTarget(log: ExerciseLog, finished: boolean, target: number): number | undefined {
+  return finished && !log.prescription ? undefined : target
+}

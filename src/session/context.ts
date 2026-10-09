@@ -33,7 +33,11 @@ export function sessionExercises(
     const current = findExercise(program, log.exerciseId)
     if (!current) return []
     const config = finished ? prescribedConfig(current, log) : current
-    const history = exerciseHistory(sessions, config.id, finished ? session : undefined)
+    // Earlier sessions with no saved range are judged by today's range, as everywhere else, not
+    // by the one this session saved (the engine falls back to the config it's given).
+    const history = exerciseHistory(sessions, config.id, finished ? session : undefined).map((h) =>
+      h.repRange ? h : { ...h, repRange: current.repRange },
+    )
     return [{ log, config, history, suggestion: suggestNext(config, history, asOf) }]
   })
 }

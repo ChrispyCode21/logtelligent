@@ -12,6 +12,7 @@ import {
   removeFirstSet,
   removeSet,
   setTally,
+  shownTarget,
   showsOutcome,
   targetSets,
   updateSet,
@@ -274,5 +275,15 @@ describe('extra sets (SPEC §9.2, slice 2)', () => {
 
   it('show a finished exercise’s outcome only when it has prescribed sets', () => {
     expect(showsOutcome(true, [x(185, 8)], 3)).toBe(false)
+  })
+})
+
+describe('shownTarget (SPEC §9.4 slice 1)', () => {
+  it('shows the target live, and in a finished session only with a saved prescription', () => {
+    const log = { exerciseId: 'bench', sets: [] }
+    const prescribed = { ...log, prescription: { repRange: { min: 3, max: 5 }, sets: 3 } }
+    expect(shownTarget(log, false, 3)).toBe(3)
+    expect(shownTarget(prescribed, true, 3)).toBe(3)
+    expect(shownTarget(log, true, 3)).toBeUndefined()
   })
 })
