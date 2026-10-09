@@ -135,7 +135,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Agent pipeline
 
-*Status: **Decided 2026-10-09.** Built in the PRs listed under "Build order" below; each PR marks its part built there. Built so far: steps 2, 3 and 4.*
+*Status: **Decided 2026-10-09.** Built in the PRs listed under "Build order" below; each PR marks its part built there. Built so far: steps 2, 3, 4 and 5a.*
 
 Work can start from a GitHub issue instead of a desktop session: an issue labeled `agent-ready` triggers Claude in GitHub Actions, which checks the issue, asks questions if it's underspecified, or builds it on a branch following CLAUDE.md's "Building a slice" and opens a PR. The PR passes the same gates as any other, and the owner merges it.
 
@@ -151,6 +151,7 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 - **Actions:** `anthropics/claude-code-action`, pinned to a commit SHA like every other action. It runs Claude Code headless on a fresh runner, which reads CLAUDE.md and `.claude/agents/` as a desktop session does.
 - **Identity:** the Claude GitHub App (`claude[bot]`). Its token is needed because pushes and PRs made with the default `GITHUB_TOKEN` don't trigger other workflows, so CI would never run on the agent's PRs.
 - **No stored key: Workload Identity Federation** (Decided 2026-10-09, replacing an `ANTHROPIC_API_KEY` secret). Each run, GitHub gives the workflow a short-lived signed token saying which repo, branch and workflow it is; Anthropic exchanges it for an API token that expires within minutes (the Action refreshes it during long runs). The Claude Console holds the trust setup: GitHub Actions registered as an issuer, a service account, and a federation rule that accepts only this repo's agent workflow on `main`. The IDs the workflow needs are identifiers, not credentials, and live in repo variables.
+- **Accepted risk: federation in the Code job** (Decided 2026-10-09, over a stored API key for that job). Federation needs a job that may request GitHub identity tokens, and with that permission code running in the job could also get a Claude App write token and act outside the Publish checks (push to other branches, open unchecked PRs). The Code job runs Claude with a shell, so this would take an issue that tricks Claude (prompt injection). It's accepted because only the owner labels issues, and only issues the owner wrote or has read get labeled; Claude's shell commands also run sandboxed. If the agent ever builds text the owner didn't write (e.g. its own follow-up issues, step 6), those wait for the owner's look before they're labeled.
 - **Spending:** usage is billed per token to a dedicated Console workspace ("github-actions") with its own monthly limit. When the limit is reached, runs fail until the month resets or the limit is raised; re-adding `agent-ready` retries. Revoking access is deleting the federation rule.
 - **Repo stays public:** Actions minutes are free, and only the owner can add labels.
 
@@ -158,7 +159,7 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 
 - A run starts when `agent-ready` is added to an issue. The workflow checks who added it: the owner, or `claude[bot]` (for the follow-ups, unblocked sub-issues and release issues below). Anyone else's label is ignored.
 - Comments from anyone other than the owner never reach the agent: the workflow passes it only the issue and the owner's and its own comments. Those are data too; an issue describes what to build but can't change the agent's rules.
-- **One agent run at a time** across the repo (a concurrency group). GitHub keeps only one waiting run: if another issue is labeled while one waits, the newer replaces it, and the earlier issue keeps `agent-ready` with no comment. Re-adding the label retries (Decided 2026-10-09: accepted rather than building a queue).
+- **One triage and one coding run at a time** across the repo, each in its own concurrency group, so a waiting coding run can't be replaced by another issue's triage (Decided 2026-10-09). GitHub keeps only one waiting run per group: if another issue reaches the same stage while one waits, the newer replaces it. A replaced triage leaves no comment; a replaced coding run says it didn't finish. Re-adding `agent-ready` retries (Decided 2026-10-09: accepted rather than building a queue).
 
 ### Labels and milestones
 
@@ -168,6 +169,7 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 | `agent-needs-info` | yellow | The agent asked questions and stopped. The owner answers in a comment and re-adds `agent-ready`. |
 | `agent-followup` | purple | Found by the agent but needs the owner's input (a style or product decision) before it can be built. |
 | `touches-data` | red | The PR changes what's stored (see "Merge safety"). |
+| `touches-gates` | orange | The PR changes what decides "green": the check scripts, lint, format, type or test config, the security headers or hosting (see "Merge safety"). |
 
 README.md ("Setting up a new deployment") has the commands that create them.
 
@@ -183,13 +185,26 @@ Triage reads the issue, SPEC.md, this document and CLAUDE.md, then does one of t
 2. **Split.** If the issue has natural seams (e.g. several new components and the work that wires them in), it comments a proposed split and stops. On the owner's approval it creates the sub-issues, linked with GitHub's "blocked by" where one depends on another, in the issue's milestone. Sub-issues with no blockers get `agent-ready` straight away; a blocked one gets it when its last blocker closes. Independent ones can be open as PRs at the same time.
 3. **Ready.** Otherwise it comments a short plan and the coding run starts.
 
-**How it runs** (`.github/workflows/agent.yml`, built): the **Triage** job checks out `main`, writes the issue (as it was when labeled, from the event) and its filtered thread to `.agent-input/`, and runs Claude with the prompt in `.github/agent/triage.md`. The job holds only read permissions, and the Action is given that job's token rather than a Claude App token. Claude has read-only tools (Read, Grep, Glob; no shell, no web, no edits) and returns its answer as structured output, `{ decision, comment }`, checked against a schema. The **Respond** job, which holds the only write permission (`issues: write`), posts the comment with a footer (the run and its cost) and sets the labels: `agent-ready` always comes off, so re-adding it starts the next run, and `agent-needs-info` goes on for questions and splits. If triage fails or returns nothing usable, Respond says so on the issue instead. Until step 5, a ready issue stops at the plan, and nothing acts on an approved split (creating sub-issues comes with step 5), so splits wait until then.
+**How it runs** (`.github/workflows/agent.yml`, built): the **Triage** job checks out `main`, writes the issue (as it was when labeled, from the event) and its filtered thread to `.agent-input/`, and runs Claude with the prompt in `.github/agent/triage.md`. The job holds only read permissions, and the Action is given that job's token rather than a Claude App token. Claude has read-only tools (Read, Grep, Glob; no shell, no web, no edits) and returns its answer as structured output, `{ decision, comment }`, checked against a schema. The **Respond** job, which holds the only write permission (`issues: write`), posts the comment with a footer (the run and its cost) and sets the labels: `agent-ready` always comes off, so re-adding it starts the next run, and `agent-needs-info` goes on for questions and splits. If triage fails or returns nothing usable, Respond says so on the issue instead. A ready issue goes on to the coding run. Until step 5b, nothing acts on an approved split (creating sub-issues comes with it), so splits wait until then.
 
 Any `agent-ready` issue is in scope, new features included. New features are scoped in SPEC.md from the owner's answers, as a desktop session would.
 
 ### Coding run (Claude Opus 5.5, 45 minutes)
 
-On branch `agent/issue-<n>-<slug>`, the agent follows CLAUDE.md's "Building a slice", with two differences: step 1 happened in triage (the answers are on the issue, and step 2 records them in SPEC.md first), and step 5's preview check is replaced by the Playwright check in CI plus a line in the PR saying the preview wasn't used. It runs every CI command and the `architecture-reviewer` subagent before opening the PR, which links the issue (`Closes #n`). Each run posts its cost on the issue if the Action reports it.
+On branch `agent/issue-<n>-<slug>`, the agent follows CLAUDE.md's "Building a slice", with two differences: step 1 happened in triage (the answers are on the issue, and step 2 records them in SPEC.md first), and step 5's preview check is replaced by the Playwright check in CI plus a line in the PR saying the preview wasn't used. It runs every CI command and the `architecture-reviewer` subagent before opening the PR, which links the issue (`Closes #n`). The PR's footer carries the run and its cost; a run that ends without a PR says why on the issue, with the same footer.
+
+Decided 2026-10-09:
+
+- **Claude can't push; a fixed step publishes.** Claude works with the job's read-only token: it edits, commits, and runs the checks and the reviewer, then returns the PR's title and description as structured output. The publish step copies its commits into a fresh clone, refuses if they touch a guardrail path (below) or there are none, then gets a Claude App token limited to contents and pull requests (from the same Anthropic endpoint the Action uses; it's undocumented, so a change there makes publishing fail visibly) and pushes the branch and opens the PR. A PR opened with that token runs CI, which one opened with the default token wouldn't. If Claude finds a question the thread doesn't answer, it returns the questions instead and nothing is published.
+- **No new dependencies or scripts.** The coding run can't `npm install`, and Publish refuses any change to `package.json` or `package-lock.json` beyond the version (so releases still work) and any `.npmrc`. An issue that needs a new package comes back with a question.
+- **Changes to the gates are labeled, not refused.** A PR that touches `scripts/`, the lint, format, type or Playwright config, `public/_headers` or `wrangler.jsonc` gets `touches-gates`, so the owner looks before merging.
+- **One branch per issue.** If `agent/issue-<n>-…` already exists, the run stops and says so; close the PR or delete the branch to build it again. Changes to an open agent PR come with step 6.
+
+**How it runs** (`.github/workflows/agent.yml`, built): a `ready` triage starts three more jobs.
+
+- **Code** checks out `main` on a new branch, installs dependencies and the Playwright browsers, and runs Claude (Opus 5.5) with the prompt in `.github/agent/code.md`, the issue, the thread and triage's plan. Claude can edit, commit and run the repo's npm scripts, tests and read-only git commands; push, `npm install`, `curl`, `wget` and the web tools are denied. Its shell commands run sandboxed, which reduces the accepted risk above. It returns `{ status, pr_title, pr_body, touches_data, comment }`, and its commits leave the job as a git bundle.
+- **Publish**, on a fresh machine, reads the bundle into a clean clone and refuses commits that touch a guardrail path or change `package.json` or `package-lock.json` beyond the version. It then pushes the branch and opens the PR (`Closes #n`, a footer with the run and cost) with the limited Claude App token, and labels it `touches-data` (when `src/storage/` changed or Claude said so) or `touches-gates`.
+- **Report** comments on the issue only when there's no PR: Claude's questions (with `agent-needs-info`), an existing branch, a refusal, or a run that didn't finish. When there's a PR, the PR is the report.
 
 The agent never merges, and never edits its own guardrails: `.github/workflows/`, `.github/rulesets/`, `.github/agent/` (its prompts) and `.claude/` (its reviewer subagent and any Claude settings) (Decided 2026-10-09). Everything else, release PRs included, it may do.
 
@@ -222,7 +237,7 @@ The owner may merge an agent PR once it's green. That rests on the required chec
 - a **Playwright check**: every screen at 375px and 320px for sideways scrolling and clipped labels, with seeded data, plus smoke tests of the main flows (TESTING.md's preview checks, automated; `e2e/`);
 - for stored-data changes, **upgrade tests** (see "Changing the data model", step 5).
 
-A PR that changes what's stored gets `touches-data`. Code review stays optional; the one thing it asks of the owner is to **export a backup on the phone before merging**, because reverting the PR can't undo an upgrade already applied to real data.
+A PR that changes what's stored gets `touches-data`, and one that changes the checks themselves gets `touches-gates` (read those before merging: green means less if the checks changed). Code review stays optional; the one thing it asks of the owner is to **export a backup on the phone before merging**, because reverting the PR can't undo an upgrade already applied to real data.
 
 ### Build order
 
@@ -230,7 +245,9 @@ A PR that changes what's stored gets `touches-data`. Code review stays optional;
 2. Playwright check in CI, and the upgrade-test setup (`fake-indexeddb`). The owner adds the new check to the ruleset. **Built.**
 3. Issue template and labels. **Built.**
 4. Triage workflow. Before it: the owner installs the Claude GitHub App, sets up federation in the Claude Console, and adds the repo variables (README.md). **Built.**
-5. Coding run: branch, slice, PR, sub-issues and release issues.
+5. Coding run, in two PRs:
+   - 5a: branch, slice, PR. **Built.**
+   - 5b: sub-issues for an approved split (and labeling unblocked ones), release issues, milestones, and `claude[bot]` as a label sender.
 6. PR follow-through: fresh review, follow-up issues, CI auto-fix, keeping PRs current.
 7. Later: lift it into a shared `agent-pipeline` repo.
 

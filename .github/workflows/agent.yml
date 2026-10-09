@@ -1,7 +1,7 @@
 # The agent pipeline (ARCHITECTURE.md, "Agent pipeline"): an issue labeled agent-ready by the owner is
-# triaged by Claude. Claude only reads and returns a decision as structured output; the respond job
-# posts the comment and changes the labels. Keep this file's name: the Anthropic federation rule
-# accepts only .github/workflows/agent.yml on main, so no other workflow can get a token.
+# triaged by Claude, and a ready one is built and opened as a PR. Claude never holds a write token:
+# it returns its results as structured output, and fixed steps post comments, set labels, check its
+# commits and publish them. Keep this file's name: the Anthropic federation rule accepts only .github/workflows/agent.yml on main, so no other workflow can get a token.
 name: Agent
 
 on:
@@ -16,10 +16,10 @@ jobs:
     if: github.event.label.name == 'agent-ready' && github.event.sender.login == github.repository_owner
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # One agent run at a time across the repo. GitHub keeps one waiting run per group, and a newer
-    # one replaces it (ARCHITECTURE.md, "Triggers and who can start a run").
+    # One triage at a time. GitHub keeps one waiting run per group, and a newer one replaces it
+    # (ARCHITECTURE.md, "Triggers and who can start a run").
     concurrency:
-      group: agent
+      group: agent-triage
       cancel-in-progress: false
     env:
       MODEL: claude-sonnet-5-5
@@ -29,6 +29,7 @@ jobs:
       id-token: write # only for the Anthropic token exchange; GitHub access is this job's read-only token
     outputs:
       result: ${{ steps.claude.outputs.structured_output }}
+      decision: ${{ steps.decision.outputs.decision }}
       cost: ${{ steps.cost.outputs.usd }}
       model: ${{ env.MODEL }}
     steps:
@@ -71,6 +72,16 @@ jobs:
             --disallowedTools Bash,Edit,Write,NotebookEdit,WebFetch,WebSearch
             --json-schema '{"type":"object","properties":{"decision":{"type":"string","enum":["questions","split","ready"]},"comment":{"type":"string","minLength":1,"maxLength":6000}},"required":["decision","comment"],"additionalProperties":false}'
 
+      - name: Read the decision
+        id: decision
+        if: always()
+        env:
+          RESULT: ${{ steps.claude.outputs.structured_output }}
+        run: |
+          decision=$(jq -r '.decision // empty' <<<"${RESULT:-null}" 2>/dev/null || true)
+          case "$decision" in questions | split | ready) ;; *) decision="" ;; esac
+          echo "decision=$decision" >> "$GITHUB_OUTPUT"
+
       - name: Read the run's cost
         id: cost
         if: always() && steps.claude.outputs.execution_file != ''
@@ -94,6 +105,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE: ${{ github.event.issue.number }}
           TRIAGE: ${{ needs.triage.result }}
+          DECISION: ${{ needs.triage.outputs.decision }}
           RESULT: ${{ needs.triage.outputs.result }}
           COST: ${{ needs.triage.outputs.cost }}
           MODEL: ${{ needs.triage.outputs.model }}
@@ -102,12 +114,9 @@ jobs:
           set -euo pipefail
           remove_label() { gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$ISSUE/labels/$1" >/dev/null 2>&1 || true; }
 
-          result=${RESULT:-}
-          [ -n "$result" ] || result='{}'
-          decision=$(jq -r '.decision // empty' <<<"$result" 2>/dev/null || true)
-          comment=$(jq -r '.comment // empty' <<<"$result" 2>/dev/null || true)
-          case "$decision" in questions | split | ready) ;; *) comment="" ;; esac
-          if [ "$TRIAGE" != "success" ] || [ -z "$comment" ]; then
+          decision=$DECISION
+          comment=$(jq -r '.comment // empty' <<<"${RESULT:-null}" 2>/dev/null || true)
+          if [ "$TRIAGE" != "success" ] || [ -z "$decision" ] || [ -z "$comment" ]; then
             decision=failed
             comment="Triage didn't finish. The run's log has the details; re-add \`agent-ready\` to try again."
           fi
@@ -117,7 +126,7 @@ jobs:
           case "$decision" in
             questions) next="Answer with numbered replies, then re-add \`agent-ready\`." ;;
             split) next="Reply \"approved\" (or with changes), then re-add \`agent-ready\`." ;;
-            ready) next="The coding run isn't built yet (pipeline step 5), so this stops here for now." ;;
+            ready) next="Building it now. A PR, or questions, will follow here." ;;
             *) next="" ;;
           esac
 
@@ -130,3 +139,301 @@ jobs:
           case "$decision" in
             questions | split) gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label agent-needs-info ;;
           esac
+
+  code:
+    name: Code
+    needs: triage
+    if: needs.triage.outputs.decision == 'ready'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    # One coding run at a time, in its own group so another issue's triage can't replace it.
+    concurrency:
+      group: agent-code
+      cancel-in-progress: false
+    env:
+      MODEL: claude-opus-5-5
+      # Claude's shell commands run sandboxed, with secrets removed from their environment. The
+      # accepted risk this reduces is in ARCHITECTURE.md ("Where it lives").
+      CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: '1'
+    permissions:
+      contents: read
+      issues: read
+      id-token: write # only for the Anthropic token exchange; GitHub access is this job's read-only token
+    outputs:
+      status: ${{ steps.branch.outputs.status || steps.bundle.outputs.status || steps.result.outputs.status }}
+      result: ${{ steps.claude.outputs.structured_output }}
+      comment: ${{ steps.result.outputs.comment }}
+      branch: ${{ steps.branch.outputs.branch }}
+      cost: ${{ steps.cost.outputs.usd }}
+      model: ${{ env.MODEL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # One branch per issue (ARCHITECTURE.md, "Coding run").
+      - name: Choose the branch
+        id: branch
+        env:
+          ISSUE: ${{ github.event.issue.number }}
+          TITLE: ${{ github.event.issue.title }}
+        run: |
+          slug=$(printf '%s' "$TITLE" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-*//' | cut -c1-40 | sed 's/-*$//')
+          branch="agent/issue-$ISSUE-${slug:-change}"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          if git ls-remote --heads origin | awk '{print $2}' | grep -qE "^refs/heads/agent/issue-$ISSUE(-|$)"; then
+            echo "status=exists" >> "$GITHUB_OUTPUT"
+          else
+            git switch --quiet -c "$branch"
+          fi
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.branch.outputs.status != 'exists'
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies, browsers and the sandbox
+        if: steps.branch.outputs.status != 'exists'
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium webkit
+          sudo apt-get install -y --no-install-recommends bubblewrap socat
+          # Ubuntu 24.04 restricts unprivileged user namespaces, which the sandbox needs.
+          if [ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+
+      - name: Collect the issue, its thread and the plan
+        if: steps.branch.outputs.status != 'exists'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          ISSUE_JSON: ${{ toJSON(github.event.issue) }}
+          OWNER: ${{ github.repository_owner }}
+          TRIAGE_RESULT: ${{ needs.triage.outputs.result }}
+        run: |
+          mkdir -p .agent-input
+          jq --arg owner "$OWNER" \
+            '{number, title, author: .user.login, owner: $owner, labels: [.labels[].name], milestone: .milestone.title, body}' \
+            <<<"$ISSUE_JSON" > .agent-input/issue.json
+          gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" \
+            --jq ".[] | select(.user.login == \"$OWNER\" or .user.login == \"github-actions[bot]\") | {author: .user.login, created_at, body}" \
+            | jq -s . > .agent-input/comments.json
+          jq -r '.comment' <<<"$TRIAGE_RESULT" > .agent-input/plan.md
+
+      - name: Build it
+        id: claude
+        if: steps.branch.outputs.status != 'exists'
+        timeout-minutes: 45
+        uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b # v1.0.247
+        with:
+          anthropic_federation_rule_id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
+          anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+          anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+          anthropic_workspace_id: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
+          # Read-only: Claude commits locally and can't push. The publish job does that.
+          github_token: ${{ github.token }}
+          prompt: Build the issue in .agent-input/ by following .github/agent/code.md. You're on branch ${{ steps.branch.outputs.branch }}.
+          claude_args: |
+            --model ${{ env.MODEL }}
+            --max-turns 300
+            --allowedTools "Read" "Grep" "Glob" "Edit" "Write" "TodoWrite" "Task" "Agent" "Bash(npm run:*)" "Bash(npm test:*)" "Bash(npx prettier:*)" "Bash(npx vitest:*)" "Bash(npx playwright test:*)" "Bash(npx tsc:*)" "Bash(npx oxlint:*)" "Bash(git status:*)" "Bash(git diff:*)" "Bash(git log:*)" "Bash(git show:*)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git restore:*)" "Bash(git rm:*)" "Bash(git mv:*)" "Bash(git grep:*)" "Bash(ls:*)" "Bash(wc:*)"
+            --disallowedTools "WebFetch" "WebSearch" "NotebookEdit" "Bash(git push:*)" "Bash(npm install:*)" "Bash(npm i:*)" "Bash(curl:*)" "Bash(wget:*)"
+            --json-schema '{"type":"object","properties":{"status":{"type":"string","enum":["done","questions"]},"pr_title":{"type":"string","maxLength":100},"pr_body":{"type":"string","maxLength":6000},"touches_data":{"type":"boolean"},"comment":{"type":"string","minLength":1,"maxLength":6000}},"required":["status","comment"],"additionalProperties":false}'
+
+      - name: Read the run's cost
+        id: cost
+        if: always() && steps.claude.outputs.execution_file != ''
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          usd=$(jq -r '[.[] | select(.type == "result")] | last | .total_cost_usd // empty' "$EXECUTION_FILE" 2>/dev/null || true)
+          echo "usd=$usd" >> "$GITHUB_OUTPUT"
+
+      - name: Read the result
+        id: result
+        if: always() && steps.claude.outcome != 'skipped'
+        env:
+          RESULT: ${{ steps.claude.outputs.structured_output }}
+        run: |
+          status=$(jq -r '.status // empty' <<<"${RESULT:-null}" 2>/dev/null || true)
+          case "$status" in done | questions) ;; *) status=failed ;; esac
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          {
+            echo 'comment<<AGENT_EOF'
+            jq -r '.comment // empty' <<<"${RESULT:-null}" 2>/dev/null | grep -v '^AGENT_EOF$' || true
+            echo 'AGENT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      # The commits leave this job as a bundle. The publish job, on a fresh machine, checks them.
+      - name: Bundle the commits
+        id: bundle
+        if: steps.result.outputs.status == 'done'
+        env:
+          BRANCH: ${{ steps.branch.outputs.branch }}
+        run: |
+          git() { command git -c core.hooksPath=/dev/null -c core.fsmonitor=false "$@"; }
+          if [ "$(git rev-list --count "origin/main..$BRANCH")" -eq 0 ]; then
+            echo "status=empty" >> "$GITHUB_OUTPUT"
+          else
+            git bundle create "$RUNNER_TEMP/agent.bundle" "origin/main..$BRANCH"
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: steps.result.outputs.status == 'done' && steps.bundle.outputs.status != 'empty'
+        with:
+          name: agent-commits
+          path: ${{ runner.temp }}/agent.bundle
+          retention-days: 1
+          overwrite: true
+
+  # Runs on a fresh machine, so nothing left over from Claude's job can reach the write token. Trusts
+  # nothing from the code job but its commits and text, and checks the commits before pushing.
+  publish:
+    name: Publish
+    needs: code
+    if: needs.code.outputs.status == 'done'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # the Claude App token below, limited to contents and pull requests
+    outputs:
+      status: ${{ steps.publish.outputs.status }}
+      reason: ${{ steps.publish.outputs.reason }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: agent-commits
+          path: ${{ runner.temp }}/agent
+
+      - name: Check and publish
+        id: publish
+        env:
+          BRANCH: ${{ needs.code.outputs.branch }}
+          ISSUE: ${{ github.event.issue.number }}
+          RESULT: ${{ needs.code.outputs.result }}
+          COST: ${{ needs.code.outputs.cost }}
+          MODEL: ${{ needs.code.outputs.model }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          refuse() { echo "status=refused" >> "$GITHUB_OUTPUT"; echo "reason=$1" >> "$GITHUB_OUTPUT"; echo "::warning::$1"; exit 0; }
+          case "$BRANCH" in agent/issue-"$ISSUE"-*) ;; *) refuse "The branch name wasn't an agent branch for this issue." ;; esac
+
+          git clone --quiet --no-checkout "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" publish
+          cd publish
+          git fetch --quiet "$RUNNER_TEMP/agent/agent.bundle" "+refs/heads/$BRANCH:refs/heads/$BRANCH" \
+            || refuse "There were no commits to publish, or they couldn't be read back."
+          [ "$(git rev-list --count "origin/main..$BRANCH")" -gt 0 ] || refuse "There were no commits to publish."
+          # --no-renames, so a file moved out of a guarded folder shows up under its old path too.
+          changed=$(git diff --no-renames --name-only "origin/main...$BRANCH")
+          guarded=$(grep -E '^(\.github/(workflows|rulesets|agent)/|\.claude/|\.npmrc$)' <<<"$changed" | tr '\n' ' ' || true)
+          [ -z "$guarded" ] || refuse "The commits change paths the agent may not edit: $guarded"
+          # Only the version may change in package.json and package-lock.json (as a release does): no
+          # dependencies, overrides, scripts or resolved packages.
+          pkg() { git show "$1:package.json" | jq -S 'del(.version)'; }
+          lock() { git show "$1:package-lock.json" | jq -S 'del(.version, .packages[""].version)'; }
+          [ "$(pkg origin/main)" = "$(pkg "$BRANCH")" ] && [ "$(lock origin/main)" = "$(lock "$BRANCH")" ] \
+            || refuse "The commits change package.json or package-lock.json beyond the version, which the agent may not do."
+
+          # Labels that ask the owner to look before merging (ARCHITECTURE.md, "Merge safety").
+          labels=()
+          if grep -q '^src/storage/' <<<"$changed" || [ "$(jq -r '.touches_data // false' <<<"$RESULT")" = true ]; then
+            labels+=(touches-data)
+          fi
+          # Files that decide what "green" means: the check scripts, lint, format, type and test config,
+          # and the security headers and hosting.
+          if grep -qE '^(scripts/|\.oxlintrc\.json$|\.prettier|playwright\.config\.ts$|vite\.config\.ts$|tsconfig[^/]*\.json$|public/_headers$|wrangler\.jsonc$)' <<<"$changed"; then
+            labels+=(touches-gates)
+          fi
+          title=$(jq -r '.pr_title // empty' <<<"$RESULT")
+          [ -n "$title" ] || title="Issue #$ISSUE"
+          footer="Built by Claude (${MODEL:-unknown model}) from #$ISSUE · [run]($RUN_URL)"
+          if [ -n "${COST:-}" ]; then footer="$footer · \$$(printf '%.2f' "$COST")"; fi
+          {
+            jq -r '.pr_body // empty' <<<"$RESULT"
+            printf '\nCloses #%s\n\n<sub>%s</sub>\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n' "$ISSUE" "$footer"
+          } > "$RUNNER_TEMP/pr-body.md"
+
+          # A Claude App token, got the way the Action gets one, limited to pushing and opening the PR.
+          # A PR opened with it runs CI; one opened with the default token wouldn't.
+          oidc=$(curl -sSf -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=claude-code-github-action" | jq -r '.value // empty') || true
+          [ -n "$oidc" ] || refuse "Couldn't get a GitHub identity token to publish with."
+          echo "::add-mask::$oidc"
+          token=$(curl -sS -X POST https://api.anthropic.com/api/github/github-app-token-exchange \
+            -H "Authorization: Bearer $oidc" -H 'Content-Type: application/json' \
+            -d '{"permissions":{"contents":"write","pull_requests":"write"}}' | jq -r '.token // .app_token // empty') || true
+          [ -n "$token" ] || refuse "Couldn't get a Claude App token to publish with."
+          echo "::add-mask::$token"
+          trap 'curl -sS -X DELETE https://api.github.com/installation/token -H "Authorization: Bearer $token" >/dev/null || true' EXIT
+          auth=$(printf 'x-access-token:%s' "$token" | base64 -w0)
+          echo "::add-mask::$auth"
+
+          # Checked again here: an edited title gives a different branch name, so the Code job's check
+          # alone could let one issue get two branches.
+          if git ls-remote --heads origin | awk '{print $2}' | grep -qE "^refs/heads/agent/issue-$ISSUE(-|$)"; then
+            echo "status=exists" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          git -c "http.extraheader=AUTHORIZATION: basic $auth" push --quiet origin "refs/heads/$BRANCH:refs/heads/$BRANCH"
+          echo "reason=The branch \`$BRANCH\` was pushed but the PR wasn't opened. Open it by hand, or delete the branch and re-add \`agent-ready\`." >> "$GITHUB_OUTPUT"
+          pr_url=$(GH_TOKEN="$token" gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" \
+            --title "$title" --body-file "$RUNNER_TEMP/pr-body.md")
+          echo "status=published" >> "$GITHUB_OUTPUT"
+          for label in "${labels[@]}"; do
+            GH_TOKEN="$token" gh pr edit "$pr_url" --add-label "$label" \
+              || echo "::warning::Couldn't add the $label label to $pr_url; add it by hand."
+          done
+
+  # When there's a PR, it's the report: it closes the issue and carries the run and cost. This job
+  # comments only when there isn't one, so a run never ends silently.
+  report:
+    name: Report a run without a PR
+    needs: [code, publish]
+    if: always() && needs.code.result != 'skipped' && needs.publish.outputs.status != 'published'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          CODE: ${{ needs.code.result }}
+          STATUS: ${{ needs.code.outputs.status }}
+          COMMENT: ${{ needs.code.outputs.comment }}
+          PUBLISHED: ${{ needs.publish.outputs.status }}
+          REASON: ${{ needs.publish.outputs.reason }}
+          COST: ${{ needs.code.outputs.cost }}
+          MODEL: ${{ needs.code.outputs.model }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          retry="Re-add \`agent-ready\` to try again."
+          if [ "$CODE" != success ]; then STATUS=failed; fi
+          # After the Code job, Publish's outcome decides: refused, an existing branch, or a failure
+          # (with a reason when it got as far as pushing).
+          if [ "$STATUS" = done ]; then
+            case "$PUBLISHED" in refused | exists) STATUS=$PUBLISHED ;; *) STATUS=${REASON:+pushed}; STATUS=${STATUS:-failed} ;; esac
+          fi
+          case "$STATUS" in
+            questions)
+              body=$(printf '%s\n\nAnswer with numbered replies, then re-add `agent-ready`.' "$COMMENT")
+              gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label agent-needs-info ;;
+            exists)
+              body="An agent branch for this issue already exists (\`agent/issue-$ISSUE-…\`). Close its PR or delete the branch, then re-add \`agent-ready\` to build it again." ;;
+            refused)
+              body="Nothing was published. $REASON $retry" ;;
+            pushed)
+              body="$REASON" ;;
+            empty)
+              body="Claude finished without committing anything, so there was nothing to publish. The run's log has the details. $retry" ;;
+            *)
+              body="The coding run didn't finish, so nothing was published. The run's log has the details. $retry" ;;
+          esac
+
+          footer="Coding run by Claude (${MODEL:-unknown model}) · [run]($RUN_URL)"
+          if [ -n "${COST:-}" ]; then footer="$footer · \$$(printf '%.2f' "$COST")"; fi
+          printf '%s\n\n<sub>%s</sub>\n' "$body" "$footer" | gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body-file -
