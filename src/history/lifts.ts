@@ -35,35 +35,39 @@ const countsForE1rm = (s: ExerciseSession) => !s.isDeload && !s.replaced && sess
  * §5.1). A primary whose lift already has an e1RM from a real session needs none (§9.4 slice 2).
  */
 export function needsStartingNumbers(program: Program, sessions: Session[]): ProgramExercise[] {
-  return missingSeeds(program).filter(
-    (e) =>
-      e.tier !== 'primary' ||
-      !liftExercises(program, e.name).some((x) => replayed(sessions, x).some(countsForE1rm)),
-  )
+  return missingSeeds(program).filter((e) => e.tier !== 'primary' || !liftHasE1rm(program, sessions, e.name))
 }
 
 /**
- * The lift's most recently logged exercise and the weight of its last session's first counted set:
- * where a new exercise in the lift copies its equipment and loads from, and the starting weight an
- * accessory is pre-filled with (SPEC §9.4 slice 2). Replaced sessions don't count.
+ * The lift's most recently logged exercise, where a new exercise in the lift copies its equipment
+ * and loads from, and the starting weight an accessory is pre-filled with: the first counted set of
+ * the latest session that wasn't a deload week (SPEC §9.4 slice 2). Replaced sessions don't count.
  */
 export function latestInLift(
   program: Program,
   sessions: Session[],
   name: string,
-): { exercise: ProgramExercise; weight: number } | undefined {
-  let latest: { exercise: ProgramExercise; weight: number; time: number; id: number } | undefined
+): { exercise: ProgramExercise; weight?: number } | undefined {
+  type Found = { exercise: ProgramExercise; weight: number; time: number; id: number }
+  const later = (a: Found | undefined, b: Found) =>
+    !a || b.time > a.time || (b.time === a.time && b.id > a.id)
+  let latest: Found | undefined
+  let latestWeight: Found | undefined
   for (const exercise of liftExercises(program, name)) {
-    for (const s of exerciseHistory(sessions, exercise.id)) {
+    for (const s of replayed(sessions, exercise)) {
       const first = countedSets(s.sets)[0]
       if (s.replaced || !first) continue
-      const time = Date.parse(s.date)
-      if (!latest || time > latest.time || (time === latest.time && s.sessionId > latest.id)) {
-        latest = { exercise, weight: first.weight, time, id: s.sessionId }
-      }
+      const found = { exercise, weight: first.weight, time: Date.parse(s.date), id: s.sessionId }
+      if (later(latest, found)) latest = found
+      if (!s.isDeload && later(latestWeight, found)) latestWeight = found
     }
   }
-  return latest && { exercise: latest.exercise, weight: latest.weight }
+  return latest && { exercise: latest.exercise, weight: latestWeight?.weight }
+}
+
+/** Whether the lift has an e1RM from a real session: a primary joining it needs no starting numbers. */
+export function liftHasE1rm(program: Program, sessions: Session[], name: string): boolean {
+  return liftExercises(program, name).some((x) => replayed(sessions, x).some(countsForE1rm))
 }
 
 /**

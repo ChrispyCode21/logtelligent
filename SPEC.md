@@ -172,7 +172,7 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
   - Lombardi `w × r^0.1`
   - Note: these are three curve-fits applied to the same set, not three independent measurements. Their agreement is a sanity check, not added confidence.
 - **Lifts share the e1RM (Decided 2026-10-08, §9.4 slice 2):** exercises with the **same name** (ignoring case and punctuation) are one **lift**, wherever they are in the program. The running e1RM below is the lift's, from the first sets of all its sessions on every day. Progression (the prescription, floor rule, stacks, deloads, rep extension, §6.2–6.7) stays per exercise.
-- **Lower-rep sessions first (Decided 2026-10-08):** a session counts toward the running e1RM only if its first set's effective reps are **10 or fewer**, unless none in the window are; then the higher-rep ones are used. The same preference picks the session for "returning from a break". Rep-max formulas are least reliable at high reps, and people differ in how many reps they manage at a given load.
+- **Lower-rep sessions first (Decided 2026-10-08):** a session counts toward the running e1RM only if it was prescribed for **10 or fewer effective reps** (the top of its rep range plus the reps in reserve its target effort leaves, `max + (10 − target RPE)`), unless none in the window were; then the higher-rep ones are used. The same preference picks the session for "returning from a break". Rep-max formulas are least reliable at high reps, and people differ in how many reps they manage at a given load. **Judged by the prescription, not the reps done (Decided 2026-10-08, from review):** so a great day on a 6–8 range (9 reps @ 8) never drops out (I9). The range is the session's saved one (§9.4 slice 1), else today's; the target RPE is today's (it isn't saved).
 - **Running e1RM (Decided):** the average of the e1RMs from **up to the last 3 sessions within the last 4 weeks**.
   - Average over **however many sessions exist** (1, 2, or 3). Never pad missing sessions with 0 or any placeholder; divide by the actual count.
   - **Returning from a break** (no session in the 4-week window): use **90% of the most recent session's e1RM** and show a "returning from a break" note. The next real session then replaces it.
@@ -354,13 +354,14 @@ Bench Press on two days: Upper A at 3–5 @ RPE 8 and Upper B at 10–12 @ RPE 8
 
 | ID | Input | Expected |
 |---|---|---|
-| I1 | Upper A: 225×5 @8 (effective 7, e1RM 273.6). Upper B: 185×12 @8 (effective 14, e1RM 267.3) | Lift e1RM **273.6** (the 14-rep session is skipped: a lower one exists). Upper A suggests **230 × 4** (predicted 4.1); Upper B (target 11) suggests **190 × 11** (predicted 11.9) |
-| I2 | Only Upper B's 185×12 @8 in the window | No lower-rep session, so it counts: lift e1RM **267.3**. Upper A suggests **225 × 4** (predicted 4.1) |
+| I1 | Upper A: 225×5 @8 (e1RM 273.6). Upper B: 185×12 @8 (e1RM 267.3) | Upper B's 10–12 @ 8 is high-rep (12 + 2 > 10), so with a lower-rep session in the window it's skipped: lift e1RM **273.6**. Upper A suggests **230 × 4** (predicted 4.1); Upper B (target 11) suggests **190 × 11** (predicted 11.9) |
+| I2 | Only Upper B's 185×12 @8 in the window | No lower-rep session, so the high-rep one counts: lift e1RM **267.3**. Upper A suggests **225 × 4** (predicted 4.1) |
 | I3 | Upper A: 225×5, 225×4, 225×3 ✓, then 235×4, 235×3, 235×2 ✗. Upper B: one success | Upper A: stacks **1**, revert to 225. Upper B: stacks **0**, plan normal. Stacks never cross exercises, even within a lift |
 | I4 | A new primary Bench Press, no starting numbers, joins the lift from I1 (range 3–5) | **Not blocked** by the seed gate (A12 doesn't apply): suggests **230 × 4** from the lift's 273.6 |
 | I5 | Upper A has a seed 225×5 and no sessions; Upper B has one real session 225×4 @8 | Upper A's running e1RM is **266.8**: the lift has a real session, so the seed is dropped (A10 across days) |
 | I6 | Upper B's deload week (its own replay says deload) logs 205×5 @6 | **Ignored** in the lift's e1RM, as A5 |
 | I7 | Names "Bench Press", "bench-press" and "BENCH  PRESS"; and "Paused Bench" | The first three are **one lift**; "Paused Bench" is another |
+| I9 | A 6–8 @ RPE 8 primary: 225×7 @8, then a great day 225×9 @8 (9 + 2 = 11 effective reps) | 6–8 @ 8 isn't high-rep (8 + 2 = 10), so **both count**: (287.4 + 301.7) / 2 = **294.5** |
 | I8 | No session in 4 weeks; Upper A's 225×5 @8 six weeks ago, Upper B's 185×12 @8 five weeks ago | Returning from a break from the most recent **lower-rep** session: 273.6 × 0.9 = **246.2**; Upper A suggests **205 × 4** (predicted 4.5) |
 
 ## 8. Contracts (Decided as a starting point — signatures are finalized in code, `src/engine/`)
@@ -528,10 +529,11 @@ Theme: **change programs without losing history**. A lift's history can follow i
 Raised by the owner: bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a light one. Before this, each exercise had its own history and e1RM, so a template couldn't know which of two Bench Presses to take over.
 - **A lift is a name:** exercises with the same name, ignoring case and punctuation (as the bank search compares names), are one lift. Nothing new is stored: sessions still belong to the exercise, so renaming one ("Bench" → "Bench Press") brings its sessions into that lift, and renaming one to something new ("Paused Bench") makes it a lift of its own, with its sessions.
 - **Shared:** history and the running e1RM, with lower-rep sessions first (§6.4). Each exercise's deload weeks, worked out by its own replay, stay out of the e1RM (§6.7). **Per exercise, as before:** the prescription, floor rule, stacks, reverts, retries, deloads and rep extension. A failed heavy day never reverts or deloads the light day.
-- **A new exercise joining a lift with history** (added, or from a template): a **primary** needs no starting numbers, since the lift's e1RM picks its weight; an **accessory** is still asked, pre-filled with the lift's latest weight, since its range may differ. A bank exercise or a template exercise copies **equipment, loads and one-sided** from the lift's most recently logged exercise (your gym), and keeps the bank's rep range, sets and target RPE (the programming). A custom exercise is entered by hand, as now.
+- **A new exercise joining a lift with history** (added, or from a template): a **primary** needs no starting numbers, since the lift's e1RM picks its weight; an **accessory** is still asked, pre-filled with the lift's latest weight (skipping deload weeks, Decided 2026-10-08), since its range may differ. The exercise form shows a primary's starting numbers as optional then: "Optional: Bench Press already has an estimated 1RM from your history." (Decided 2026-10-08). A bank exercise or a template exercise copies **equipment, loads and one-sided** from the lift's most recently logged exercise (your gym), and keeps the bank's rep range, sets and target RPE (the programming). A custom exercise is entered by hand, as now.
 - **Templates:** replacing the program needs no matching: a template exercise joins the lift of the same name, so its history is simply there. The "Replace your program…?" confirm names the lifts that keep their history ("Bench Press, Back Squat and Deadlift keep their history.", up to 3, then "and 4 more").
 - **History:** one entry per lift (§5.3). Each session row is tagged with its day. On the chart, sessions over 10 effective reps are marked, since they count only when there's nothing lower.
-- No stored-data change. Examples I1–I8 (§7.I).
+- **A lift is a name, whatever the equipment (Decided 2026-10-08, from review):** a custom dumbbell "Bench Press" shares its e1RM with a barbell one. To keep them apart, name them differently ("DB Bench Press"). Bank and template additions copy the lift's equipment, so they match.
+- No stored-data change. Examples I1–I9 (§7.I).
 
 **Slice 3: Change your program (Decided in outline).**
 - A way to abandon the current program entirely and pick a template or build your own. Labelled along the lines of **"Change your program"** or "Try something else", not "Start over". Days with history are archived and their history kept, as with any delete (§6.1); same-named lifts carry over (slice 2). The rotation starts at the new program's first day (§5.1, archived last day).
@@ -552,6 +554,7 @@ Ask the project owner before building anything each one affects:
 
 Flagged to revisit after real use (not blocking):
 - Primary-lift deload: resuming at the last successful numbers (§6.7).
+- "Returning from a break" (§6.4) uses the most recent lower-rep session however old it is, even over a higher-rep one from five weeks ago. Kept as specified (raised in the §9.4 slice 2 review).
 
 **Raised during v1.2.0; settled 2026-10-08 while scoping v1.3.0 (§9.4).**
 

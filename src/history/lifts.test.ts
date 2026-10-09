@@ -98,6 +98,8 @@ describe('I6 and editing, through the replay (SPEC §9.4 slice 2)', () => {
     const withFlags = suggestNext(benchA0, [], asOf, other)
     const withoutDeload = suggestNext(benchA0, [], asOf, other.slice(0, 3))
     expect(withFlags).toEqual(withoutDeload)
+    // A new exercise in the lift copies the latest exercise's setup, but not the deload week's weight.
+    expect(latestInLift(program(), b, 'Bench Press')).toEqual({ exercise: benchB, weight: 185 })
   })
 
   it("editing a finished session ignores the other exercise's later sessions", () => {

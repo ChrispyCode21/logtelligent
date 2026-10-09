@@ -1,4 +1,5 @@
 import { progressAccessory, startingNumbers } from './accessory'
+import { isHighRepRange } from './e1rm'
 import { availableLoads, stepDown } from './loads'
 import { countedSets } from './sets'
 import type {
@@ -138,7 +139,8 @@ export function freshStart(config: ExerciseConfig, state: ProgressionState): Pro
  * Replay an exercise history, oldest first, to get its current state under `config`.
  * Each session is judged by its own stored rep range, if it has one, and a change of range between
  * sessions, or from the last session to `config`, is a fresh start (SPEC §9.4 slice 1).
- * Also returns the history annotated with which sessions were deloads.
+ * Also returns the history annotated with which sessions were deloads, and which were prescribed
+ * high-rep (SPEC §6.4).
  * Replaced sessions (a substitute was logged) are skipped (SPEC §5.2).
  * Any extra fields on the sessions are passed through untouched.
  */
@@ -162,8 +164,9 @@ export function deriveState<S extends ExerciseSession>(config: ExerciseConfig, h
     if (range && !sameRange(range, judged.repRange)) state = freshStart(judged, state)
     range = judged.repRange
     const isDeload = state.next.kind === 'deload'
+    const highReps = isHighRepRange(judged.repRange, config.targetRpe)
     state = step(judged, loads, state, counted).state
-    sessions.push({ ...session, isDeload })
+    sessions.push({ ...session, isDeload, highReps })
   }
 
   if (!state) return { state: initialState(config), sessions }

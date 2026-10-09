@@ -13,7 +13,7 @@ import {
 import type { BankExercise } from '../program/bank'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
-import { latestInLift, needsStartingNumbers } from '../history/lifts'
+import { latestInLift, liftHasE1rm, needsStartingNumbers } from '../history/lifts'
 import { dayHasHistory, emptyOpenSessions, exerciseHasHistory } from '../history/sessions'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
@@ -152,6 +152,7 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
                   <ExerciseForm
                     initial={exercise}
                     effortScale={program.effortScale}
+                    liftHasE1rm={(name) => liftHasE1rm(program, sessions, name)}
                     onSave={(e) => saveExercise((p) => updateExercise(p, e))}
                     onCancel={() => setEditing(null)}
                   />
@@ -197,6 +198,7 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
                     : latestInLift(program, sessions, editing.preset.name)
                 }
                 effortScale={program.effortScale}
+                liftHasE1rm={(name) => liftHasE1rm(program, sessions, name)}
                 onSave={(e) => saveExercise((p) => addExercise(p, day.id, e))}
                 // Back to the picker, in case the wrong exercise was picked.
                 onCancel={() => setEditing({ dayId: day.id })}

@@ -1,5 +1,5 @@
 import { countedSets } from './sets'
-import type { ExerciseSession, RunningE1rm, Seed } from './types'
+import type { ExerciseSession, RepRange, RunningE1rm, Seed } from './types'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const WINDOW_DAYS = 28
@@ -55,13 +55,16 @@ export function sessionE1rm(session: ExerciseSession): number | undefined {
   return first && setE1rm(first)
 }
 
-/** A session's first set at or under this many effective reps counts before higher-rep ones (SPEC §6.4). */
+/** Sessions prescribed for at most this many effective reps count before higher-rep ones (SPEC §6.4). */
 const LOW_REP_MAX = 10
 
-/** Over 10 effective reps on the first set: counted only when nothing lower is (SPEC §6.4). */
-export function isHighRepSession(session: ExerciseSession): boolean {
-  const first = ratedFirstSet(session)
-  return first !== undefined && effectiveReps(first.reps, first.rpe) > LOW_REP_MAX
+/**
+ * Whether a prescription is high-rep: the top of its range plus the reps in reserve its target
+ * effort leaves (10 - target RPE) is over 10 (SPEC §6.4). Judged by the prescription, not the reps
+ * done, so a great day on a 6-8 range never drops out of the e1RM.
+ */
+export function isHighRepRange(range: RepRange, targetRpe: number): boolean {
+  return effectiveReps(range.max, targetRpe) > LOW_REP_MAX
 }
 
 /** Sessions of 10 or fewer effective reps when there are any, else all of them (SPEC §6.4). */
@@ -87,7 +90,7 @@ export function runningE1rm(
     .map((s) => ({
       time: Date.parse(s.date),
       e1rm: sessionE1rm(s),
-      lowReps: !isHighRepSession(s),
+      lowReps: !s.highReps,
     }))
     .filter((s): s is { time: number; e1rm: number; lowReps: boolean } => s.e1rm !== undefined)
     .sort((a, b) => b.time - a.time)

@@ -4,6 +4,7 @@ import {
   deriveState,
   evaluateSession,
   FAIL_MESSAGE,
+  isHighRepRange,
   pickWeight,
   progressAccessory,
   repCeiling,
@@ -515,5 +516,21 @@ describe('7.I Lifts (SPEC §9.4 slice 2)', () => {
     expect(a.e1rm!.value).toBeCloseTo(246.2, 1)
     expect(a).toMatchObject({ weight: 205, reps: 4 })
     expect(a.predictedReps).toBeCloseTo(4.5, 1)
+  })
+})
+
+describe('high-rep sessions are judged by the prescription (SPEC §6.4)', () => {
+  it('I9: on 6-8 @ RPE 8 a great 225x9 @8 still counts with an ordinary 225x7 @8: e1RM 294.5', () => {
+    const sixToEight = { ...bench, repRange: { min: 6, max: 8 } }
+    const history = weekly(sets(225, [7, 7, 6]), sets(225, [9, 8, 7]))
+    expect(suggestion(sixToEight, history).e1rm!.value).toBeCloseTo(294.5, 1)
+  })
+
+  it('a range is high-rep when its top plus the reps in reserve is over 10', () => {
+    expect(isHighRepRange({ min: 10, max: 12 }, 8)).toBe(true)
+    expect(isHighRepRange({ min: 8, max: 10 }, 8)).toBe(true)
+    expect(isHighRepRange({ min: 6, max: 8 }, 8)).toBe(false)
+    expect(isHighRepRange({ min: 3, max: 5 }, 8)).toBe(false)
+    expect(isHighRepRange({ min: 8, max: 10 }, 10)).toBe(false)
   })
 })

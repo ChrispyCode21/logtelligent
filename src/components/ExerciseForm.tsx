@@ -30,13 +30,15 @@ interface Props {
   /** A new exercise from the bank: its defaults prefill the form. */
   preset?: BankExercise
   /** A bank exercise joining a lift with history: where its gym setup and starting weight come from (SPEC §9.4 slice 2). */
-  lift?: { exercise: ProgramExercise; weight: number }
+  lift?: { exercise: ProgramExercise; weight?: number }
+  /** Whether a lift of this name already has an e1RM: a primary's starting numbers are then optional (SPEC §9.4 slice 2). */
+  liftHasE1rm?: (name: string) => boolean
   effortScale: EffortScale
   onSave: (exercise: ProgramExercise) => void
   onCancel: () => void
 }
 
-export function ExerciseForm({ initial, preset, lift, effortScale, onSave, onCancel }: Props) {
+export function ExerciseForm({ initial, preset, lift, liftHasE1rm, effortScale, onSave, onCancel }: Props) {
   // A bank exercise's defaults are copied in; nothing links back to the bank (SPEC §9.1, slice 2).
   // Joining a lift with history, it takes your gym's setup from it (SPEC §9.4 slice 2).
   const [form, setForm] = useState(() =>
@@ -152,6 +154,9 @@ export function ExerciseForm({ initial, preset, lift, effortScale, onSave, onCan
         <span>One side at a time (reps are per side)</span>
       </label>
 
+      {primary && form.name.trim() && liftHasE1rm?.(form.name) && (
+        <p className="muted">Optional: {form.name.trim()} already has an estimated 1RM from your history.</p>
+      )}
       <SeedFields
         tier={form.tier}
         name={form.name}

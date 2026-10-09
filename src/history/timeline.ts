@@ -1,4 +1,4 @@
-import { deriveState, sessionE1rm, isHighRepSession, type ExerciseConfig, type LoggedSet } from '../engine'
+import { deriveState, sessionE1rm, type ExerciseConfig, type LoggedSet } from '../engine'
 import { liftExercises } from '../program/lifts'
 import type { Program } from '../program/types'
 import type { Session, Substitute } from '../session/types'
@@ -38,7 +38,7 @@ export function exerciseTimeline(config: ExerciseConfig, history: LoggedExercise
         substitute: s.substitute,
         note: s.note,
         e1rm,
-        highReps: e1rm !== undefined && isHighRepSession(s),
+        highReps: e1rm !== undefined && !!s.highReps,
         unilateral: config.unilateral,
       }
     })
