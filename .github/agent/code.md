@@ -31,7 +31,7 @@ Plans can be wrong. If the code shows a better way that stays within what the is
 ## Before you finish
 
 1. Run what CI runs, and fix anything that fails: `npm run format:check`, `npm run lint`, `npm run check:conventions`, `npm run check:spec`, `npm run check:changelog`, `npm test`, `npm run build`, `npm run test:e2e`.
-2. Run the `architecture-reviewer` subagent on `git diff origin/main...HEAD`. Fix its must-fix findings; fix worth-fixing ones or say in the PR why not. Its questions for the owner go in the PR.
+2. Run the `architecture-reviewer` subagent on `git diff origin/main...HEAD`, in the foreground (`run_in_background: false`), and wait for its report: the run ends when you return, so a review still running is lost. Fix its must-fix findings; fix worth-fixing ones or say in the PR why not. Its questions for the owner go in the PR. Don't return `done` without its report.
 3. Commit everything. Work left uncommitted isn't published.
 
 ## Never
