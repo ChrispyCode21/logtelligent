@@ -102,6 +102,7 @@ See §11 for ideas parked until after the MVP.
 - Each e1RM point is **that session's e1RM** (from its first set alone, §6.4), not the running average. Deload sessions are listed and tagged but get no e1RM point.
 - Shown as a **small line chart** (inline SVG, no chart library) above the session list, with the e1RM also on each session row.
 - The exercise picker includes **active exercises** (grouped by day) and **archived exercises that have history** (in an "Archived" group).
+- **Lifts (Decided 2026-10-08, §9.4 slice 2):** the picker lists each **lift** once (exercises with the same name, §6.4), under the first day it's on, and picking it shows every session of that lift from every day, newest first, each tagged with its day. Archived lifts are those with no active exercise.
 
 ## 6. Domain rules
 
@@ -170,11 +171,13 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
   - Brzycki `w × 36 / (37 − r)`
   - Lombardi `w × r^0.1`
   - Note: these are three curve-fits applied to the same set, not three independent measurements. Their agreement is a sanity check, not added confidence.
+- **Lifts share the e1RM (Decided 2026-10-08, §9.4 slice 2):** exercises with the **same name** (ignoring case and punctuation) are one **lift**, wherever they are in the program. The running e1RM below is the lift's, from the first sets of all its sessions on every day. Progression (the prescription, floor rule, stacks, deloads, rep extension, §6.2–6.7) stays per exercise.
+- **Lower-rep sessions first (Decided 2026-10-08):** a session counts toward the running e1RM only if its first set's effective reps are **10 or fewer**, unless none in the window are; then the higher-rep ones are used. The same preference picks the session for "returning from a break". Rep-max formulas are least reliable at high reps, and people differ in how many reps they manage at a given load.
 - **Running e1RM (Decided):** the average of the e1RMs from **up to the last 3 sessions within the last 4 weeks**.
   - Average over **however many sessions exist** (1, 2, or 3). Never pad missing sessions with 0 or any placeholder; divide by the actual count.
   - **Returning from a break** (no session in the 4-week window): use **90% of the most recent session's e1RM** and show a "returning from a break" note. The next real session then replaces it.
   - Layoff overshoot beyond that is caught by the fail/deload logic in §6.6.
-- **No history yet (Decided):** a primary lift's first e1RM comes from its **setup seed** (§5.1): weight × reps treated as RPE 7. The seed is used **only until the first real session** — it is **not** averaged into the running e1RM afterward, so an optimistic or pessimistic guess can't linger for three sessions.
+- **No history yet (Decided):** a primary lift's first e1RM comes from its **setup seed** (§5.1): weight × reps treated as RPE 7. The seed is used **only until the lift's first real session** (on any day) — it is **not** averaged into the running e1RM afterward, so an optimistic or pessimistic guess can't linger for three sessions.
 - **Data-driven targets (Decided as a goal; mechanism Proposed):** given the running e1RM and a weight, the engine predicts expected reps by inverting the formula (e.g. Epley inverted: reps to failure ≈ `30 × (e1RM / w − 1)`), minus the target reps in reserve. The program stores **intent** (e.g. "3 sets, first set ~RPE 8, 3–5 reps") and the engine chooses the weight.
 - **Weight-selection rule (Decided):**
   1. Target reps = **midpoint of the rep range, rounded up** (3–5 → 4; 5–7 → 6). The midpoint leaves room on both sides: a good day lands above it, a bad day can still clear the floor.
@@ -345,6 +348,21 @@ Bench: primary, 3 sets. Lateral raise: accessory, 3 sets, dumbbell rack as above
 | H4 | Bench at 3–5, stored: 225×5 @8, 225×5, 225×4 ✓, then 235×4 @8, 235×3, 235×2 ✗ (stacks 1, revert to 225). The range is now 5–7 | Fresh start → stacks **0**, **no revert**: next from the e1RM rule |
 | H5 | H3, then a session stored at 10–12: 15×9, 15×8, 15×8 | Below 10 → **fail**, stacks 1. No success since the fresh start → **revert to 12.5 × 10** (one step below) |
 
+### 7.I Lifts (§9.4 slice 2)
+
+Bench Press on two days: Upper A at 3–5 @ RPE 8 and Upper B at 10–12 @ RPE 8, both primary, barbell. Sessions within 4 weeks unless stated.
+
+| ID | Input | Expected |
+|---|---|---|
+| I1 | Upper A: 225×5 @8 (effective 7, e1RM 273.6). Upper B: 185×12 @8 (effective 14, e1RM 267.3) | Lift e1RM **273.6** (the 14-rep session is skipped: a lower one exists). Upper A suggests **230 × 4** (predicted 4.1); Upper B (target 11) suggests **190 × 11** (predicted 11.9) |
+| I2 | Only Upper B's 185×12 @8 in the window | No lower-rep session, so it counts: lift e1RM **267.3**. Upper A suggests **225 × 4** (predicted 4.1) |
+| I3 | Upper A: 225×5, 225×4, 225×3 ✓, then 235×4, 235×3, 235×2 ✗. Upper B: one success | Upper A: stacks **1**, revert to 225. Upper B: stacks **0**, plan normal. Stacks never cross exercises, even within a lift |
+| I4 | A new primary Bench Press, no starting numbers, joins the lift from I1 (range 3–5) | **Not blocked** by the seed gate (A12 doesn't apply): suggests **230 × 4** from the lift's 273.6 |
+| I5 | Upper A has a seed 225×5 and no sessions; Upper B has one real session 225×4 @8 | Upper A's running e1RM is **266.8**: the lift has a real session, so the seed is dropped (A10 across days) |
+| I6 | Upper B's deload week (its own replay says deload) logs 205×5 @6 | **Ignored** in the lift's e1RM, as A5 |
+| I7 | Names "Bench Press", "bench-press" and "BENCH  PRESS"; and "Paused Bench" | The first three are **one lift**; "Paused Bench" is another |
+| I8 | No session in 4 weeks; Upper A's 225×5 @8 six weeks ago, Upper B's 185×12 @8 five weeks ago | Returning from a break from the most recent **lower-rep** session: 273.6 × 0.9 = **246.2**; Upper A suggests **205 × 4** (predicted 4.5) |
+
 ## 8. Contracts (Decided as a starting point — signatures are finalized in code, `src/engine/`)
 
 The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]`), since the 4-week window, deload exclusion (A5) and substitute exclusion (A6) all need per-session data.
@@ -506,14 +524,20 @@ Theme: **change programs without losing history**. A lift's history can follow i
 - Storage change: an optional prescription on each exercise in a finished session. Needs the ARCHITECTURE.md checklist (Dexie version, backup validator, round-trip test). `FORMAT` stays 1, since a missing prescription means the current settings.
 - **Built with extra care (owner's note):** it changes what the replay reads, which every suggestion depends on. Tests cover a session judged by its stored prescription after the program's settings change, and old sessions behaving exactly as before.
 
-**Slice 2: Keep history for same-named lifts (Decided in outline).**
-- When a template replaces the program, a template exercise with the same name as one in the current program takes over its history and starting numbers, so it needs no new seed (§11, "Keep history for same-named lifts"). The matching rules are settled before building.
+**Slice 2: Lifts share history and e1RM (Decided 2026-10-08; replaces "Keep history for same-named lifts").**
+Raised by the owner: bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a light one. Before this, each exercise had its own history and e1RM, so a template couldn't know which of two Bench Presses to take over.
+- **A lift is a name:** exercises with the same name, ignoring case and punctuation (as the bank search compares names), are one lift. Nothing new is stored: sessions still belong to the exercise, so renaming one ("Bench" → "Bench Press") brings its sessions into that lift, and renaming one to something new ("Paused Bench") makes it a lift of its own, with its sessions.
+- **Shared:** history and the running e1RM, with lower-rep sessions first (§6.4). Each exercise's deload weeks, worked out by its own replay, stay out of the e1RM (§6.7). **Per exercise, as before:** the prescription, floor rule, stacks, reverts, retries, deloads and rep extension. A failed heavy day never reverts or deloads the light day.
+- **A new exercise joining a lift with history** (added, or from a template): a **primary** needs no starting numbers, since the lift's e1RM picks its weight; an **accessory** is still asked, pre-filled with the lift's latest weight, since its range may differ. A bank exercise or a template exercise copies **equipment, loads and one-sided** from the lift's most recently logged exercise (your gym), and keeps the bank's rep range, sets and target RPE (the programming). A custom exercise is entered by hand, as now.
+- **Templates:** replacing the program needs no matching: a template exercise joins the lift of the same name, so its history is simply there. The "Replace your program…?" confirm names the lifts that keep their history ("Bench Press, Back Squat and Deadlift keep their history.", up to 3, then "and 4 more").
+- **History:** one entry per lift (§5.3). Each session row is tagged with its day. On the chart, sessions over 10 effective reps are marked, since they count only when there's nothing lower.
+- No stored-data change. Examples I1–I8 (§7.I).
 
 **Slice 3: Change your program (Decided in outline).**
 - A way to abandon the current program entirely and pick a template or build your own. Labelled along the lines of **"Change your program"** or "Try something else", not "Start over". Days with history are archived and their history kept, as with any delete (§6.1); same-named lifts carry over (slice 2). The rotation starts at the new program's first day (§5.1, archived last day).
 - **A nudge against program-hopping:** the option carries a short note along the lines of *"A so-so program run consistently beats a great one you keep switching. Bored? Give it a few more weeks."* The label and wording are settled before building.
 
-**Not in v1.3.0:** weight per set (§10 #7, §11), other progression schemes such as 5/3/1, the e1RM confidence measure, and the rest of §11.
+**Not in v1.3.0:** a personal strength–endurance curve (§11), weight per set (§10 #7, §11), other progression schemes such as 5/3/1, the e1RM confidence measure, and the rest of §11.
 
 ## 10. Open questions (summary)
 
@@ -550,9 +574,10 @@ Waiting on the owner's phone: TESTING.md's unticked on-device checks for v1.1.0 
 - **Muscle-group-aware substitutes** (v2/v3): when replacing an exercise, offer exercises tagged with the same primary muscle and tier (e.g. replacing Bench suggests other pec-primary lifts). Needs a muscle-group store: exercise ↔ muscle group is **many-to-many** (a join table with a primary/secondary role).
 - ~~**Add a set on the fly**~~ — **scoped for v1.2.0** (§9.2 slice 2).
 - ~~**Session notes**~~ — **scoped for v1.2.0** (§9.2 slice 3). Still parked: sending notes to an LLM for evaluation (v2/v3; needs a CSP change and breaks "data never leaves the device").
-- **Scoped for v1.3.0 (§9.4 slice 2): keep history for same-named lifts when a template replaces a program:** today a template creates new exercises, so an existing Bench Press starts fresh and its history stays under "Archived" (§9.1 slice 3). Matching by name could carry history and starting numbers over.
+- ~~**Keep history for same-named lifts when a template replaces a program**~~ — **superseded** by lifts sharing history and e1RM (§9.4 slice 2). Was: today a template creates new exercises, so an existing Bench Press starts fresh and its history stays under "Archived" (§9.1 slice 3). Matching by name could carry history and starting numbers over.
 - **Scoped for v1.3.0 (§9.4 slice 1): store each session's prescription:** a session stores only the sets logged, so History can't show "3 of 3" for a week when 3 were prescribed, and the progression replay judges old sessions with today's settings (rep range, set count). Saving each exercise's prescription with the session would fix both (a stored-data change; built on Finish, §9.4 slice 1). Raised while building §9.2 slice 1.
 - **Progression schemes beyond double progression (e.g. 5/3/1):** today every exercise uses one scheme: straight sets at one working weight, double progression, the floor rule and an e1RM from the first set. Programs like 5/3/1 prescribe a different weight and reps per set (percentages of a training max, an AMRAP last set, 3-week waves). Supporting them would add a per-exercise scheme that decides each set's prescription and how a session is judged; the current scheme stays as it is. Logged sets already store a weight each, so storage needn't change shape. Raised while scoping §9.2 slice 2.
 - **Scoped for v1.3.0 (§9.4 slice 3): change programs mid-cycle:** a way to drop the current program (e.g. two weeks into an Upper/Lower template, switching to 5/3/1) and start or build another, **keeping the history** of the lifts already logged. Today a template replaces the program after a confirm (days with history are archived, §9.1 slice 3), but there's no "start over" or "delete program" for building your own from scratch. Raised by the owner in the v1.2.0 on-device pass.
 - **A fixed action footer:** the walkthrough's Next (and, during a session, Log set and Finish) move as cards above them grow and shrink. A footer pinned to the bottom of the screen could hold each screen's main buttons. Owner's note: probably not needed, since the walkthrough is meant to be read, not tapped through quickly. Raised in the v1.2.0 on-device pass.
 - **Weight per set:** let each set's weight be changed the way its reps are, dropping the one-working-weight rule (§6.3). The owner prefers this to a full scheme engine (above) as the first step. The engine needs decisions first: e1RM already uses the first set alone (§6.4), but the floor rule and "range filled" (§6.5–6.6) would be judging sets at different weights, and the stack logic classifies a session by the weight lifted (§6.6, "Off-plan weight"). Raised while scoping v1.3.0 (§10 #7).
+- **A personal strength–endurance curve:** the e1RM formulas assume everyone manages the same reps at a given percentage of their max; people differ (a lifter with good endurance does more reps at 70% than the formulas expect). With a lift's sessions across rep ranges (§9.4 slice 2), the app could fit its own curve per lift instead of the averaged formulas. Related: after a rep-range change (§9.4 slice 1) the running e1RM still bridges from the old range's sessions for up to three sessions. Raised while scoping §9.4 slice 2.
