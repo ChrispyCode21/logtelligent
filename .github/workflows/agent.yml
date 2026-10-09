@@ -171,7 +171,7 @@ jobs:
     permissions:
       contents: read
       issues: write # comments on the parent
-      id-token: write # the Claude App token below, limited to issues
+      id-token: write # the Claude App token below: issues, and contents read (the exchange requires it)
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -567,7 +567,7 @@ jobs:
     permissions:
       contents: read # whether a version is released
       issues: write # closing a parent, and comments
-      id-token: write # the Claude App token below, limited to issues
+      id-token: write # the Claude App token below: issues, and contents read (the exchange requires it)
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
