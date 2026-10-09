@@ -124,6 +124,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 - **Architecture and quality review:** the `architecture-reviewer` subagent (`.claude/agents/architecture-reviewer.md`) reviews a branch or a module against this document and CLAUDE.md and reports ranked findings; it is read-only. Run it before opening a PR (CLAUDE.md, "Building a slice").
 - **Playwright** (`ci.yml`, check "Playwright"): `e2e/` in WebKit and Chromium at 375px and 320px: every screen for sideways scrolling and clipped button labels, and smoke tests of the main flows. On failure the traces are kept as a run artifact (open with `npx playwright show-trace`).
 - **Security** (`security.yml`): CodeQL on the app and the workflows; dependency review on PRs.
+  - **"Code scanning results / CodeQL" neutral, "1 configuration not found":** GitHub didn't finish processing one of the scan uploads (the job logs "Timed out waiting for analysis to finish processing"), so it can't compare the PR with `main`. It isn't a required check and isn't caused by the code; re-run the Security workflow to get it green.
 - **Dependabot:** weekly npm and GitHub Actions update PRs. Actions are pinned to commit SHAs.
 - **`main` is protected** (`.github/rulesets/main.json`): changes arrive by PR, all checks must pass, and there are no force-pushes or deletions.
 - **Releases** (`release.yml`), semantic versioning:
