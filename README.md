@@ -29,7 +29,7 @@ Every PR (and every push to `main`) runs:
 - **Security** (`.github/workflows/security.yml`): CodeQL on the app code and on the workflows, plus dependency review that blocks PRs adding packages with known vulnerabilities.
 - **Dependabot** opens weekly update PRs for npm packages and the SHA-pinned GitHub Actions.
 
-The PR template carries the checklist for what can't be automated (building to Decided items, keeping SPEC.md current).
+The PR template carries the checklist for what can't be automated (building only to what SPEC.md says, keeping it current).
 
 ## Releases
 

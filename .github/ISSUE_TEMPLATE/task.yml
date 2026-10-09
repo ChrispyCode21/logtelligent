@@ -19,13 +19,13 @@ body:
     id: why
     attributes:
       label: Why
-      description: The problem it solves, or where the idea came from (a phone check, SPEC §11…).
+      description: The problem it solves, or where the idea came from (a phone check, an earlier issue…).
   - type: input
     id: spec
     attributes:
       label: Where it's specified
-      description: A SPEC.md section or slice, an ARCHITECTURE.md "Cleanup backlog" item, or "new" if the spec doesn't cover it yet.
-      placeholder: e.g. SPEC §9.4 slice 2, Cleanup backlog (ExerciseLogger), new
+      description: A SPEC.md section, an item of the cleanup backlog (#74), or "new" if the spec doesn't cover it yet.
+      placeholder: e.g. SPEC §6.9, #74 (HistoryView), new
   - type: textarea
     id: done
     attributes:

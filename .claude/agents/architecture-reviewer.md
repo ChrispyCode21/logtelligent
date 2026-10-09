@@ -29,7 +29,7 @@ You will be given one of:
 - **Purity and layering:** logic that could be pure (no React, no Dexie) belongs in `src/engine/` (progression rules), `src/program/`, `src/session/` or `src/history/`, with tests, not inside a component. UI and storage call those modules; never the reverse.
 - **Derived, not stored:** progression state (stacks, deloads, rep extensions, last successful numbers) is derived by replaying history. Flag anything that stores or caches it.
 - **Storage changes:** a change to what's stored follows the ARCHITECTURE.md checklist: a new Dexie version, the backup validator updated (or new fields are silently dropped on restore), a round-trip test, and SPEC updated.
-- **Spec traceability:** behavior traces to a **Decided** SPEC item. Flag behavior the spec doesn't cover, or that contradicts it, as a question for the owner, not as a fix. Never propose changing a SPEC §7 expected value.
+- **Spec traceability:** behavior traces to what SPEC.md says. Flag behavior the spec doesn't cover, or that contradicts it, as a question for the owner, not as a fix. Never propose changing a SPEC §7 expected value.
 - **UI building blocks:** new UI composes `Button`, `Card` and `Field` from `src/ui/`, uses tokens from `src/styles/tokens.css`, and formats through `src/ui/format.ts`. Shared behavior (e.g. entering starting numbers) lives in one place.
 - **Docs in step:** ARCHITECTURE.md, CHANGELOG.md "Unreleased" and SPEC.md reflect the change.
 

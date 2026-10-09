@@ -59,7 +59,7 @@ Carried over from earlier releases:
 ### Keeping these lists
 
 - **At each release,** the release PR replaces "Current release" with checks drawn from the CHANGELOG notes it moves under the new version: one check per Added, Changed or Fixed entry that the phone can show, skipping what "Every release" or the unit tests already cover. A stored-data change adds Restore from file…; a manifest or icon change adds Add to Home Screen.
-- **Results:** tick items here as they pass. A bug or idea found goes into SPEC (a fix in the next version, or §11); the release's results otherwise live in git history, not as a running log in this file.
+- **Results:** tick items here as they pass. A bug or idea found becomes a GitHub issue; the release's results otherwise live in git history, not as a running log in this file.
 - **"Every release"** changes only when something new can break on every release (e.g. a new tab).
 
 ## In the preview

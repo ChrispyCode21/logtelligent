@@ -17,7 +17,7 @@ Follow CLAUDE.md: "Building a slice" and "Running from an issue". In short:
 
 1. **Decisions first:** if the thread settled anything, commit the SPEC.md (or ARCHITECTURE.md) update that records it before any code.
 2. **Pure logic with tests**, outside React and Dexie, then the UI on top. Stored-data changes follow ARCHITECTURE.md's checklist, including the upgrade tests.
-3. **Docs in the same branch:** ARCHITECTURE.md, CHANGELOG.md "Unreleased" for user-facing changes, SPEC.md, and remove a Cleanup backlog item you've done.
+3. **Docs in the same branch:** ARCHITECTURE.md, CHANGELOG.md "Unreleased" for user-facing changes, and SPEC.md. If it does any item of the cleanup backlog (#74), say which in the PR.
 4. **Small commits**, one per meaningful step, with messages like the repo's (`git log`).
 
 Plans can be wrong. If the code shows a better way that stays within what the issue and SPEC.md say, take it and say so in the PR.
