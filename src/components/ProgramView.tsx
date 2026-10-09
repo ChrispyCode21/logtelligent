@@ -21,10 +21,10 @@ import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
 import { formatPrescription } from '../ui/format'
 import { BackupCard } from './BackupCard'
+import { ChangeProgramCard } from './ChangeProgramCard'
 import { EffortScaleCard } from './EffortScaleCard'
 import { ExerciseForm } from './ExerciseForm'
 import { ExercisePicker } from './ExercisePicker'
-import { ChangeProgramCard } from './ChangeProgramCard'
 import { TemplateCard } from './TemplateCard'
 
 interface Editing {

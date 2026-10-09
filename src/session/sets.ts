@@ -47,9 +47,11 @@ export function removeFirstSet(sets: LoggedSet[], newFirst: LoggedSet): LoggedSe
   return updateSet(removeSet(sets, 0), 0, newFirst)
 }
 
+/** Sets logged in a log: the original exercise's and any substitute's, extras included. */
+export const loggedSetCount = (log: ExerciseLog) => log.sets.length + (log.substitute?.sets.length ?? 0)
+
 /** Some set is logged in these logs, for the original exercise or a substitute. */
-export const hasAnySets = (logs: ExerciseLog[]) =>
-  logs.some((l) => l.sets.length > 0 || (l.substitute?.sets.length ?? 0) > 0)
+export const hasAnySets = (logs: ExerciseLog[]) => logs.some((l) => loggedSetCount(l) > 0)
 
 /**
  * When an exercise's validation message shows. Live: once all of today's sets are in (SPEC §5.2,

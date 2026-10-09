@@ -7,8 +7,8 @@ import { db } from './db'
  * means quick successive edits each see the previous one, instead of all starting
  * from whatever copy the UI last rendered.
  *
- * `discardSessions` are deleted in the same transaction: open sessions with nothing logged, on days
- * the edit removes (SPEC §9.4 slice 0).
+ * `discardSessions` are deleted in the same transaction: open sessions the edit leaves without a
+ * day, or every open session when changing programs (SPEC §9.4 slices 0 and 3).
  */
 export async function updateProgram(edit: (program: Program) => Program, discardSessions: number[] = []) {
   await db.transaction('rw', db.programs, db.sessions, async () => {

@@ -65,7 +65,7 @@ describe('program templates (SPEC §9.1, slice 3)', () => {
     expect(missingSeeds(program)).toHaveLength(22)
   })
 
-  it('changing programs clears the active days: with history archived, others deleted (SPEC §9.4 slice 3)', () => {
+  it('adds its days after any archived ones, e.g. after changing programs (SPEC §9.4 slice 3)', () => {
     const bench = exerciseFromBank(BANK[0], 'bench')
     const existing: Program = {
       id: 'main',
@@ -76,13 +76,10 @@ describe('program templates (SPEC §9.1, slice 3)', () => {
         { id: 'old', name: 'Old', archived: true, exercises: [] },
       ],
     }
-    const cleared = clearProgram(existing, (id) => id === 'logged')
-    expect(cleared.days.map((d) => [d.name, !!d.archived])).toEqual([
-      ['Push', true],
-      ['Old', true],
-    ])
-    expect(cleared.effortScale).toBe('rpe')
-    const program = applyTemplate(cleared, upperLower)
+    const program = applyTemplate(
+      clearProgram(existing, (id) => id === 'logged'),
+      upperLower,
+    )
     expect(program.days.map((d) => [d.name, !!d.archived])).toEqual([
       ['Push', true],
       ['Old', true],

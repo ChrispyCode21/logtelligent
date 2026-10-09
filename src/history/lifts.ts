@@ -1,9 +1,10 @@
 import { countedSets, deriveState, sessionE1rm, type ExerciseSession } from '../engine'
 import { liftExercises, liftKey } from '../program/lifts'
-import { missingSeeds } from '../program/program'
+import { activeExercises, missingSeeds } from '../program/program'
 import type { Program, ProgramExercise } from '../program/types'
+import { loggedSetCount } from '../session/sets'
 import type { Session } from '../session/types'
-import { exerciseHistory, type LoggedExerciseSession } from './sessions'
+import { dayHasHistory, exerciseHistory, type LoggedExerciseSession } from './sessions'
 
 // A lift's sessions across the program (SPEC §9.4 slice 2): they share the e1RM and History, while
 // each exercise keeps its own progression.
@@ -78,6 +79,34 @@ export function withLiftGym(exercise: ProgramExercise, from: ProgramExercise | u
   // Bodyweight is accessory-only (SPEC §6.1), so a primary keeps its own equipment then.
   if (!from || (exercise.tier === 'primary' && from.equipment === 'bodyweight')) return exercise
   return { ...exercise, equipment: from.equipment, loads: from.loads, unilateral: from.unilateral }
+}
+
+/** What "Change your program" does (SPEC §9.4 slice 3), for its confirm and the change itself. */
+export interface ProgramChange {
+  /** Lifts among the active exercises with finished history: they keep it for the next program. */
+  keptLifts: string[]
+  /** The open session, discarded with the change, and how many sets it has logged. */
+  open?: { session: Session; sets: number }
+  /** Every open session: all are discarded. */
+  discardIds: number[]
+  /** Whether a day is archived rather than deleted: finished sessions only, since open ones go. */
+  dayHasHistory: (dayId: string) => boolean
+}
+
+export function programChange(program: Program, sessions: Session[]): ProgramChange {
+  const open = sessions.filter((s) => !s.finishedAt)
+  const finished = sessions.filter((s) => s.finishedAt)
+  const first = open[0]
+  return {
+    keptLifts: liftsWithHistory(
+      program,
+      sessions,
+      activeExercises(program).map((e) => e.name),
+    ),
+    open: first && { session: first, sets: first.exercises.reduce((n, l) => n + loggedSetCount(l), 0) },
+    discardIds: open.map((s) => s.id),
+    dayHasHistory: (dayId) => dayHasHistory(finished, dayId),
+  }
 }
 
 /** Of these names, the ones whose lift has finished history, each once, in the order given. */

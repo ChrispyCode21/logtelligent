@@ -47,8 +47,8 @@ Results for **v1.1.0 and v1.2.0** (iPhone, 2026-10-06, on v1.2.0): the items bel
 - [ ] **v1.2.1:** effort is asked only on a primary's first set (not on later sets, accessories or substitutes); logged-set rows have their text centred; the Effort scale card keeps its height when switching scales.
 - [ ] **v1.3.0 slice 0:** the warm-up ✕ and the Program tab's ↑ ↓ ✕ buttons are easy to hit one-handed, and long exercise names still read well beside them at phone width; the real "Delete Upper A? Its open session has nothing logged yet…" `confirm()`.
 - [ ] **v1.3.0 slice 1:** after the update, existing history and today's suggestions are unchanged (the database upgrades to v6). Finish a session, then edit it from History: its header reads "3 of 3 sets". Change an exercise's rep range on the Program tab and check Today's suggestion starts fresh in the new range.
-- [ ] **v1.3.0 slice 2:** with the same lift on two days, History lists it once with both days' sessions (each tagged with its day) and a hollow chart point for a high-rep session; the template's real "Replace your program…? … keep their history." `confirm()`.
-- [ ] **v1.3.0 slice 3:** the real "Change your program? …" `confirm()`, including "Today's session (4 sets logged) will be discarded." with a session open; afterwards the template options show and Today starts at the new program's first day.
+- [ ] **v1.3.0 slice 2:** with the same lift on two days, History lists it once with both days' sessions (each tagged with its day) and a hollow chart point for a high-rep session.
+- [ ] **v1.3.0 slice 3:** the real "Change your program? …" `confirm()`, including "Your open session (4 sets logged) will be discarded." with a session open; afterwards the template options show and Today starts at the new program's first day.
 - [x] An update (push a change) appears after reopening the app. (Close it fully, open, close, and open again; the update downloads on one open and applies on the next.)
 
 ## Preview techniques

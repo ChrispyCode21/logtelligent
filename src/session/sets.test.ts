@@ -7,6 +7,7 @@ import {
   canFinish,
   hasAnySets,
   hasRequiredEffort,
+  loggedSetCount,
   loggedSets,
   removalNeedsEffort,
   removeFirstSet,
@@ -285,5 +286,21 @@ describe('shownTarget (SPEC §9.4 slice 1)', () => {
     expect(shownTarget(log, false, 3)).toBe(3)
     expect(shownTarget(prescribed, true, 3)).toBe(3)
     expect(shownTarget(log, true, 3)).toBeUndefined()
+  })
+})
+
+describe('loggedSetCount', () => {
+  it('counts the original exercise’s sets, extras included, and a substitute’s', () => {
+    expect(loggedSetCount({ exerciseId: 'b', sets: [] })).toBe(0)
+    expect(
+      loggedSetCount({
+        exerciseId: 'b',
+        sets: [
+          { weight: 225, reps: 5 },
+          { weight: 185, reps: 8, extra: true },
+        ],
+        substitute: { name: 'Machine press', sets: [{ weight: 150, reps: 10 }] },
+      }),
+    ).toBe(3)
   })
 })
