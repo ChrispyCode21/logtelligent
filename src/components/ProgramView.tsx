@@ -24,6 +24,7 @@ import { BackupCard } from './BackupCard'
 import { EffortScaleCard } from './EffortScaleCard'
 import { ExerciseForm } from './ExerciseForm'
 import { ExercisePicker } from './ExercisePicker'
+import { ChangeProgramCard } from './ChangeProgramCard'
 import { TemplateCard } from './TemplateCard'
 
 interface Editing {
@@ -223,9 +224,7 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
         </Button>
       </Card>
 
-      {days.length > 0 && (
-        <TemplateCard program={program} sessions={sessions} onApplied={onTemplateApplied} />
-      )}
+      {days.length > 0 && <ChangeProgramCard program={program} sessions={sessions} />}
       <BackupCard />
     </>
   )

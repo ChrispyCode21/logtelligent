@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { BANK, exerciseFromBank } from './bank'
-import { EMPTY_PROGRAM, activeDays, missingSeeds } from './program'
-import { applyTemplate, TEMPLATES, templateDays, templateExerciseNames } from './templates'
+import { activeDays, clearProgram, EMPTY_PROGRAM, missingSeeds } from './program'
+import { applyTemplate, TEMPLATES, templateDays } from './templates'
 import type { Program } from './types'
 
 const upperLower = TEMPLATES[0]
@@ -59,13 +59,13 @@ describe('program templates (SPEC §9.1, slice 3)', () => {
   })
 
   it('fills an empty program, keeping its effort scale', () => {
-    const program = applyTemplate(EMPTY_PROGRAM, upperLower, () => false)
+    const program = applyTemplate(EMPTY_PROGRAM, upperLower)
     expect(activeDays(program).map((d) => d.name)).toEqual(['Upper A', 'Lower A', 'Upper B', 'Lower B'])
     expect(program.effortScale).toBe(EMPTY_PROGRAM.effortScale)
     expect(missingSeeds(program)).toHaveLength(22)
   })
 
-  it('replaces a program: days with history are archived, others deleted', () => {
+  it('changing programs clears the active days: with history archived, others deleted (SPEC §9.4 slice 3)', () => {
     const bench = exerciseFromBank(BANK[0], 'bench')
     const existing: Program = {
       id: 'main',
@@ -76,7 +76,13 @@ describe('program templates (SPEC §9.1, slice 3)', () => {
         { id: 'old', name: 'Old', archived: true, exercises: [] },
       ],
     }
-    const program = applyTemplate(existing, upperLower, (id) => id === 'logged')
+    const cleared = clearProgram(existing, (id) => id === 'logged')
+    expect(cleared.days.map((d) => [d.name, !!d.archived])).toEqual([
+      ['Push', true],
+      ['Old', true],
+    ])
+    expect(cleared.effortScale).toBe('rpe')
+    const program = applyTemplate(cleared, upperLower)
     expect(program.days.map((d) => [d.name, !!d.archived])).toEqual([
       ['Push', true],
       ['Old', true],
@@ -89,22 +95,11 @@ describe('program templates (SPEC §9.1, slice 3)', () => {
   })
 
   it("passes each template exercise through adapt, e.g. to take your gym's setup (SPEC §9.4 slice 2)", () => {
-    const program = applyTemplate(
-      EMPTY_PROGRAM,
-      upperLower,
-      () => false,
-      (e) => ({ ...e, unilateral: true }),
-    )
+    const program = applyTemplate(EMPTY_PROGRAM, upperLower, (e) => ({ ...e, unilateral: true }))
     expect(
       activeDays(program)
         .flatMap((d) => d.exercises)
         .every((e) => e.unilateral),
     ).toBe(true)
-  })
-
-  it('lists every exercise name in the template', () => {
-    const names = templateExerciseNames(upperLower)
-    expect(names).toHaveLength(22)
-    expect(names[0]).toBe('Bench Press')
   })
 })
