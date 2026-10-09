@@ -4,7 +4,7 @@ Standing instructions for any Claude session working in this repo.
 
 ## Read first
 
-- **SPEC.md**: what the app does and why (the source of truth). §9.1, §9.2 and §9.3 hold v1.1.0, v1.2.0 and the v1.2.1 fixes (all released); §10 holds open questions; §11 holds ideas for later versions. §9.4 holds the scope of v1.3.0 (Decided, not yet built).
+- **SPEC.md**: what the app does and why (the source of truth). §9.1–§9.4 hold v1.1.0, v1.2.0, the v1.2.1 fixes and v1.3.0 (all released); §10 holds open questions; §11 holds ideas for later versions. No version after v1.3.0 is scoped yet.
 - **ARCHITECTURE.md**: how it's built: folder map, data flow, storage, hosting, gates, releases, and Proposed strategies.
 - **TESTING.md**: how to verify changes in the preview, its known quirks, and the on-device checklist.
 - **CHANGELOG.md**: what shipped in each version.
@@ -44,7 +44,7 @@ Standing instructions for any Claude session working in this repo.
 - **`main` is protected.** Never push to it. Work on a branch, keep changes small with a commit per meaningful step, push the branch, and open a PR (the template has the checklist). The owner reviews and merges.
 - Before pushing, run what CI runs: `npm run format:check`, `npm run lint`, `npm run check:conventions`, `npm run check:spec`, `npm run check:changelog`, `npm test`, `npm run build`.
 - Add user-facing changes to the "Unreleased" section of CHANGELOG.md. A release is a PR that bumps `package.json`'s version and moves those notes under it; merging it tags the release automatically (semantic versioning).
-- New work is scoped as versions from SPEC §11, recorded the way v1.2.0 is in §9.2 (the next one, v1.3.0, as §9.4; §9.3 holds the v1.2.1 fixes). Settle the scope and any Open/Proposed items (§10) with the owner before building. ARCHITECTURE.md's "Cleanup backlog" holds small refactors to fold into whichever slice next touches those files.
+- New work is scoped as versions from SPEC §11, recorded the way v1.2.0 is in §9.2 (the next one as §9.5). Settle the scope and any Open/Proposed items (§10) with the owner before building. ARCHITECTURE.md's "Cleanup backlog" holds small refactors to fold into whichever slice next touches those files.
 
 ### Building a slice
 

@@ -6,6 +6,10 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-09
+
+Change programs without losing history: lifts share one history and estimated 1RM across days, sessions remember what they were prescribed, and you can switch programs when you need to.
+
 ### Added
 
 - **Change your program:** a card at the bottom of the Program tab lets you leave your program for a ready-made one or one you build yourself. Days with logged sessions are archived with their history; lifts you keep doing pick their history up in the next program. It comes with a reminder that consistency beats novelty, and any session in progress is discarded after a warning.
