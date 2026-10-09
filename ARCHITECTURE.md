@@ -155,7 +155,7 @@ Smaller findings from the v1.2.0 `architecture-reviewer` passes, deferred becaus
 
 ## Proposed: UI component layer and design tokens
 
-*Status: **Built (trimmed) in v1.1.0** (SPEC §9.1, slice 0): steps 1, 4, and step 2 limited to `Button`, `Field` and `Card`. The token scale as built is `--space-1…6` (4, 6, 8, 12, 16, 24px), `--radius-sm/md/lg/pill`, `--tap-target` / `--tap-target-lg` (44, 52px) and `--text-xs…display`, matching the existing values one-to-one. The other primitives, and moving every component to CSS Modules (step 3), stay **Proposed** and come as they're needed.*
+*Status: **Built (trimmed) in v1.1.0** (SPEC §9.1, slice 0): steps 1, 4, and step 2 limited to `Button`, `Field` and `Card`. The token scale as built is `--space-1…6` (4, 6, 8, 12, 16, 24px), `--radius-sm/md/lg/pill`, `--tap-target` / `--tap-target-lg` (44, 52px) and `--text-xs…display`, matching the existing values one-to-one. The other primitives, and moving every component to CSS Modules (step 3), stay **Proposed** and come as they're needed. **`SegmentedControl` is Decided for v1.3.0** (SPEC §9.4, slice 0), for the four `aria-pressed` toggle groups, not the tabs.*
 
 An audit of v1.0.0 found:
 

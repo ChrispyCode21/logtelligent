@@ -4,7 +4,7 @@ Standing instructions for any Claude session working in this repo.
 
 ## Read first
 
-- **SPEC.md**: what the app does and why (the source of truth). §9.1, §9.2 and §9.3 hold v1.1.0, v1.2.0 and the v1.2.1 fixes (all released); §10 holds open questions; §11 holds ideas for later versions. No version after v1.2.1 is scoped yet.
+- **SPEC.md**: what the app does and why (the source of truth). §9.1, §9.2 and §9.3 hold v1.1.0, v1.2.0 and the v1.2.1 fixes (all released); §10 holds open questions; §11 holds ideas for later versions. §9.4 holds the scope of v1.3.0 (Decided, not yet built).
 - **ARCHITECTURE.md**: how it's built: folder map, data flow, storage, hosting, gates, releases, and Proposed strategies.
 - **TESTING.md**: how to verify changes in the preview, its known quirks, and the on-device checklist.
 - **CHANGELOG.md**: what shipped in each version.
