@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { LoggedSet } from '../engine'
 import type { Program } from '../program/types'
 import { sessionExercises } from './context'
+import { shownTarget, targetSets } from './sets'
 import type { Session } from './types'
 
 const program: Program = {
@@ -67,6 +68,85 @@ describe('the exercises of a session and what they are judged against (SPEC §9.
     expect(then.suggestion).toEqual(
       sessionExercises(session(5, 8, [], false), program, [first], new Date(middle.startedAt))[0].suggestion,
     )
+  })
+
+  it('judges a finished session by its saved prescription, not today’s settings (SPEC §9.4 slice 1)', () => {
+    const changed: Program = {
+      ...program,
+      days: [
+        {
+          ...program.days[0],
+          exercises: [{ ...program.days[0].exercises[0], repRange: { min: 8, max: 12 }, sets: 4 }],
+        },
+      ],
+    }
+    const prescribed: Session = {
+      ...middle,
+      exercises: [{ ...middle.exercises[0], prescription: { repRange: { min: 3, max: 5 }, sets: 3 } }],
+    }
+    const [bench] = sessionExercises(prescribed, changed, [first, prescribed, last], now)
+    expect(bench.config.repRange).toEqual({ min: 3, max: 5 })
+    expect(bench.config.sets).toBe(3)
+    expect(bench.suggestion).toMatchObject({ sets: 3 })
+    // Without one, today's settings, as before v1.3.0.
+    expect(sessionExercises(middle, changed, [first, middle, last], now)[0].config.sets).toBe(4)
+  })
+
+  it('judges a live session by today’s settings, even if it carries a prescription', () => {
+    const live: Session = {
+      ...session(4, 22, [], false),
+      exercises: [{ exerciseId: 'bench', sets: [], prescription: { repRange: { min: 5, max: 7 }, sets: 2 } }],
+    }
+    expect(sessionExercises(live, program, [first, live], now)[0].config.repRange).toEqual({ min: 3, max: 5 })
+  })
+
+  it('counts a finished deload week against its halved prescription: 2 of 2 from 3 prescribed', () => {
+    const failed = (id: number, day: number) => ({
+      ...session(id, day, sets(235, [4, 3, 2])),
+      exercises: [
+        {
+          exerciseId: 'bench',
+          sets: sets(235, [4, 3, 2]),
+          prescription: { repRange: { min: 3, max: 5 }, sets: 3 },
+        },
+      ],
+    })
+    const deload: Session = {
+      ...session(4, 22, sets(205, [4, 4])),
+      exercises: [
+        {
+          exerciseId: 'bench',
+          sets: sets(205, [4, 4]),
+          prescription: { repRange: { min: 3, max: 5 }, sets: 3 },
+        },
+      ],
+    }
+    const all = [first, failed(2, 8), failed(3, 15), deload]
+    const [bench] = sessionExercises(deload, program, all, now)
+    expect(bench.suggestion).toMatchObject({ plan: 'deload', sets: 2 })
+    expect(targetSets(bench.log, bench.config.sets, bench.suggestion)).toBe(2)
+    expect(shownTarget(bench.log, true, 2)).toBe(2)
+  })
+
+  it('judges earlier unsaved sessions by today’s range, as History does, not the edited session’s', () => {
+    const changed: Program = {
+      ...program,
+      days: [
+        {
+          ...program.days[0],
+          exercises: [{ ...program.days[0].exercises[0], repRange: { min: 8, max: 12 } }],
+        },
+      ],
+    }
+    const prescribed: Session = {
+      ...last,
+      exercises: [{ ...last.exercises[0], prescription: { repRange: { min: 3, max: 5 }, sets: 3 } }],
+    }
+    const [bench] = sessionExercises(prescribed, changed, [first, middle, prescribed], now)
+    expect(bench.history.map((h) => h.repRange)).toEqual([
+      { min: 8, max: 12 },
+      { min: 8, max: 12 },
+    ])
   })
 
   it('leaves out exercises no longer in the program', () => {

@@ -64,6 +64,26 @@ describe('exerciseHistory', () => {
   })
 })
 
+describe('exerciseHistory with a saved prescription (SPEC §9.4 slice 1)', () => {
+  it('passes the saved rep range to the engine, and nothing for a session without one', () => {
+    const base = { startedAt: '2026-10-01T10:00:00Z', finishedAt: '2026-10-01T11:00:00Z' }
+    const sets = [{ weight: 225, reps: 4, rpe: 8 }]
+    const history = exerciseHistory(
+      [
+        {
+          id: 1,
+          ...base,
+          exercises: [{ exerciseId: 'bench', sets, prescription: { repRange: { min: 3, max: 5 }, sets: 3 } }],
+        },
+        { id: 2, ...base, exercises: [{ exerciseId: 'bench', sets }] },
+      ],
+      'bench',
+    )
+    expect(history[0].repRange).toEqual({ min: 3, max: 5 })
+    expect(history[1]).not.toHaveProperty('repRange')
+  })
+})
+
 describe('lastLoggedDayId', () => {
   const session = (id: number, dayId: string | undefined, startedAt: string, finished = true): Session => ({
     id,

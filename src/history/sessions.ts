@@ -35,6 +35,8 @@ export function exerciseHistory(
           date: s.startedAt,
           sets: e.sets,
           ...(e.substitute && { replaced: true, substitute: e.substitute }),
+          // Judged by the range it was prescribed, if saved (SPEC §9.4 slice 1).
+          ...(e.prescription && { repRange: e.prescription.repRange }),
           note: s.note,
         })),
     )

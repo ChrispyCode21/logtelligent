@@ -9,7 +9,7 @@ import {
   type Suggestion,
 } from '../engine'
 import type { EffortScale } from '../program/effort'
-import { allSetsLogged, rpeRequired, showsOutcome, targetSets } from '../session/sets'
+import { allSetsLogged, rpeRequired, shownTarget, showsOutcome, targetSets } from '../session/sets'
 import type { ExerciseLog } from '../session/types'
 import {
   replaceExercise,
@@ -102,8 +102,7 @@ export function ExerciseLogger({
         ) : log.skipped ? (
           <span className="muted">{finished ? ' · skipped' : ' · skipped today'}</span>
         ) : (
-          // A past session shows only what was logged: what was prescribed then isn't stored (SPEC §9.2, slice 1).
-          <span className="muted"> · {formatSetCount(sets, finished ? undefined : target)}</span>
+          <span className="muted"> · {formatSetCount(sets, shownTarget(log, finished, target))}</span>
         )}
         {!substitute && !log.skipped && suggestion.kind === 'suggestion' && suggestion.plan === 'deload' && (
           <span className="tag">Deload</span>
