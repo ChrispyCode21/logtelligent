@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2. **v1.2.1 — released** (2026-10-06): the fixes in §9.3. **v1.3.0 — in progress** (scoped 2026-10-08): slice 0 of §9.4 built.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2. **v1.2.1 — released** (2026-10-06): the fixes in §9.3. **v1.3.0 — in progress** (scoped 2026-10-08): slices 0–1 of §9.4 built.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -496,7 +496,7 @@ Theme: **change programs without losing history**. A lift's history can follow i
 - **Tap targets (#10):** the warm-up banner's ✕ goes up to `--tap-target` (44 px), and the Program tab's move and remove buttons to 44 px wide. Check that exercise and day names still wrap cleanly at 320 px. Folds in the cleanup backlog's shared `RowActions` for days and exercises.
 - **`SegmentedControl` (#11):** one primitive for the four `aria-pressed` toggle groups (tier, effort scale, stack presets, effort picker). The tabs stay as they are, since they're navigation, not a toggle. `Note` waits until it needs variants. No visible change.
 
-**Slice 1: Store each session's prescription (Decided 2026-10-08; resolves §10 #9).**
+**Slice 1: Store each session's prescription (Decided 2026-10-08; resolves §10 #9; built).**
 - **What's saved (Decided 2026-10-08):** each exercise's **rep range and set count**. Not target RPE (the e1RM uses the effort logged, not the target), tier, or loads (the gym's equipment, not a prescription).
 - **When (Decided 2026-10-08):** on **Finish**, from the program's settings at that moment. An open session uses the current settings, as now, so a range fixed mid-session applies to it. Editing a finished session doesn't change its prescription.
 - **Judging:** the progression replay and the finished-session editor judge each session by its own rep range (floor rule, "range filled", rep ceiling and extension, §6.2–6.6). Sessions logged before v1.3.0 have none and use the exercise's current settings, as now. The rep range is the only stored setting the replay reads; the set count is for display.

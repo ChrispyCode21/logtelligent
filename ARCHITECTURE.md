@@ -22,7 +22,7 @@ src/
   program/      Program model (days → exercises), pure editing functions (add, move, archive…) effort scales (effort.ts), the built-in exercise bank with search (bank.ts), program templates (templates.ts), entering starting numbers: validation, pre-fill, placeholders and stack presets (seeding.ts), and the exercise form's fields and validation (exerciseForm.ts)
   session/      Session types (types.ts) and pure session rules: set editing (one working weight), each exercise's set target,
                 the "Only X of Y" tally, the first-set effort check and canFinish (sets.ts); set pre-fill and the set form's
-                validation (setForm.ts); each exercise's history and suggestion for a live or finished session (context.ts); note text and the Finish confirm (notes.ts);
+                validation (setForm.ts); each exercise's history and suggestion for a live or finished session (context.ts); note text and the Finish confirm (notes.ts); saving and applying a finished session's prescription (prescription.ts);
                 warm-up ramp (warmup.ts)
   history/      Pure history helpers: stored sessions → engine history, optionally before a given session (sessions.ts);
                 the History tab's view-model: a timeline of sessions with e1RM (timeline.ts) and the exercise picker's groups (picker.ts)
@@ -56,6 +56,7 @@ Fatigue stacks, the last successful numbers, deload status and accessory rep ext
 - One source of truth (the logged sets); state can't drift from history.
 - Editing or importing history automatically recomputes everything after it. Editing a finished session (SPEC §9.2, slice 1) relies on this: `session/context.ts` judges it against only the sessions before it, as of when it started.
 - Deload and replaced sessions are identified during the replay, which is how they're excluded from e1RM (A5, A6).
+- Each session is judged by the rep range it was prescribed (`ExerciseSession.repRange`, from the saved prescription; SPEC §9.4 slice 1), or the current range for sessions finished before v1.3.0. A range change between sessions, or from the last session to today's settings, is a fresh start (`freshStart`): stacks and pending plans are cleared. A finished session's editor uses `prescribedConfig`, so it's judged and counted as it was when finished.
 - Cost is negligible at this scale (a few hundred sessions per exercise at most).
 
 ## Storage
@@ -69,9 +70,10 @@ Dexie wraps IndexedDB. Database `logtelligent`, schema in `storage/db.ts`; the s
 | 3 | (no index change) | v1.1.0 slice 1. Upgrade sets `effortScale: 'rpe'` on an existing program. |
 | 4 | (no index change) | v1.2.0 slice 2. Logged sets may carry `extra: true`; no upgrade, since an unmarked set is a counted one. |
 | 5 | (no index change) | v1.2.0 slice 3. Sessions may carry a `note` (1–200 characters); no upgrade. |
+| 6 | (no index change) | v1.3.0 slice 1. A finished session's exercises may carry a `prescription` (rep range, set count); no upgrade, since one without it is judged by today's settings. |
 
 - **`programs`**: the whole program as one document (`days[] → exercises[]`, each exercise an `ExerciseConfig` plus `archived?`; and `effortScale`, the scale effort is entered and shown in: `rpe`, `repsLeft` or `perceived`). Effort is always stored as RPE, whatever the scale (`program/effort.ts` maps labels ↔ RPE). Edits go through `updateProgram(edit, discardSessions?)`, which reads and writes inside one transaction so quick successive edits can't overwrite each other. Removing a day, or applying a template, discards in that same transaction any open session on a removed day with nothing logged, whether the day is deleted or archived (SPEC §9.4 slice 0; `history/sessions.ts` decides which days and exercises count as having history).
-- **`sessions`**: one row per training session: `dayId`, `startedAt`, `finishedAt?` (unfinished = in progress, editable), `warmupDismissed?`, `note?` (the note for next time), and `exercises[]` of `ExerciseLog` (`exerciseId`, `sets[]`, `substitute? { name, sets }`, `skipped?`). A set is `{ weight, reps, rpe?, extra? }`; extra sets come after the prescribed ones in `sets[]`.
+- **`sessions`**: one row per training session: `dayId`, `startedAt`, `finishedAt?` (unfinished = in progress, editable), `warmupDismissed?`, `note?` (the note for next time), and `exercises[]` of `ExerciseLog` (`exerciseId`, `sets[]`, `substitute? { name, sets }`, `skipped?`, `prescription? { repRange, sets }`, saved on Finish from the stored program in the same transaction). A set is `{ weight, reps, rpe?, extra? }`; extra sets come after the prescribed ones in `sets[]`.
 - Archived exercises and days stay in the program so their history still resolves.
 
 ### Changing the data model: checklist

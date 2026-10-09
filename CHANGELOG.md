@@ -6,6 +6,10 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ## [Unreleased]
 
+### Added
+
+- **Sessions remember what they were prescribed:** finishing a session saves each exercise's rep range and set count. Changing an exercise's range later no longer re-judges your past sessions (which could turn old successes into fails and even trigger a deload); instead, its progression starts fresh under the new range. Editing a past session shows "2 of 3 sets" again. Sessions finished before this update work as before.
+
 ### Changed
 
 - **Removing a day mid-session:** if today's open session is on that day and nothing is logged in it yet, the session is discarded along with the day (the confirm says so), and that empty session no longer stops a day without other history from being deleted outright. The same goes for the days a template replaces.
