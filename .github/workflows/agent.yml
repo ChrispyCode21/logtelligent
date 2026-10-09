@@ -37,6 +37,7 @@ jobs:
     outputs:
       result: ${{ steps.claude.outputs.structured_output }}
       decision: ${{ steps.decision.outputs.decision }}
+      complexity: ${{ steps.decision.outputs.complexity }}
       cost: ${{ steps.cost.outputs.usd }}
       model: ${{ env.MODEL }}
     steps:
@@ -71,7 +72,7 @@ jobs:
             --max-turns 40
             --allowedTools Read,Grep,Glob
             --disallowedTools Bash,Edit,Write,NotebookEdit,WebFetch,WebSearch
-            --json-schema '{"type":"object","properties":{"decision":{"type":"string","enum":["questions","split","approved_split","ready"]},"comment":{"type":"string","minLength":1,"maxLength":6000},"subissues":{"type":"array","minItems":2,"maxItems":8,"items":{"type":"object","properties":{"title":{"type":"string","minLength":1,"maxLength":100},"body":{"type":"string","minLength":1,"maxLength":2000},"blocked_by":{"type":"array","items":{"type":"integer","minimum":1}}},"required":["title","body","blocked_by"],"additionalProperties":false}}},"required":["decision","comment"],"additionalProperties":false}'
+            --json-schema '{"type":"object","properties":{"decision":{"type":"string","enum":["questions","split","approved_split","ready"]},"complexity":{"type":"string","enum":["routine","complex"]},"comment":{"type":"string","minLength":1,"maxLength":6000},"subissues":{"type":"array","minItems":2,"maxItems":8,"items":{"type":"object","properties":{"title":{"type":"string","minLength":1,"maxLength":100},"body":{"type":"string","minLength":1,"maxLength":2000},"blocked_by":{"type":"array","items":{"type":"integer","minimum":1}}},"required":["title","body","blocked_by"],"additionalProperties":false}}},"required":["decision","comment"],"additionalProperties":false}'
 
       - name: Read the decision
         id: decision
@@ -87,6 +88,11 @@ jobs:
             decision=""
           fi
           echo "decision=$decision" >> "$GITHUB_OUTPUT"
+          # Which model builds a ready issue (ARCHITECTURE.md, "Coding run"): only "routine" gets the
+          # cheaper one; anything else, including no answer, gets the default.
+          complexity=$(jq -r '.complexity // empty' <<<"${RESULT:-null}" 2>/dev/null || true)
+          [ "$complexity" = routine ] || complexity=complex
+          echo "complexity=$complexity" >> "$GITHUB_OUTPUT"
 
       - name: Read the run's cost
         id: cost
@@ -115,6 +121,7 @@ jobs:
           RESULT: ${{ needs.triage.outputs.result }}
           COST: ${{ needs.triage.outputs.cost }}
           MODEL: ${{ needs.triage.outputs.model }}
+          COMPLEXITY: ${{ needs.triage.outputs.complexity }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
@@ -133,7 +140,9 @@ jobs:
             questions) next="Answer with numbered replies, then re-add \`agent-ready\`." ;;
             split) next="Reply starting \"approved\" (or with changes), then re-add \`agent-ready\`. The sub-issues are created from this comment as written." ;;
             approved_split) next="Creating the sub-issues now." ;;
-            ready) next="Building it now. A PR, or questions, will follow here." ;;
+            ready)
+              builder=$([ "$COMPLEXITY" = routine ] && echo "Sonnet, as routine work" || echo "Opus")
+              next="Building it now with $builder. A PR, or questions, will follow here." ;;
             *) next="" ;;
           esac
 
@@ -272,7 +281,8 @@ jobs:
       cancel-in-progress: false
       queue: max
     env:
-      MODEL: claude-opus-5-5
+      # Sonnet for what triage judged routine (mechanical, fully planned), Opus otherwise.
+      MODEL: ${{ needs.triage.outputs.complexity == 'routine' && 'claude-sonnet-5-5' || 'claude-opus-5-5' }}
       # Claude's shell commands run sandboxed, with secrets removed from their environment. The
       # accepted risk this reduces is in ARCHITECTURE.md ("Where it lives").
       CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: '1'
