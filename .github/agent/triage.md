@@ -47,10 +47,10 @@ The workflow shows them under your `comment`, so the comment is only a sentence 
 - the tests: unit tests for pure logic, SPEC §7 IDs if any, and new screens or states for `e2e/layout.spec.ts`;
 - whether it changes stored data (the PR would carry `touches-data`).
 
-Also return a `size`, which picks the model that builds it:
+Also return a `complexity`, which picks the model that builds it. Judge the reasoning the build needs, not its size: a change across 40 files can be routine, and a 10-line function can be complex.
 
-- **`small`** (Sonnet): a refactor, a bug with a known cause, or a small change, where your plan says exactly what to do and the existing tests and checks will catch a mistake.
-- **`large`** (Opus): a new feature or screen, anything that changes stored data, the check scripts or config (`touches-gates`), or the progression engine, and anything where the plan leaves real judgment to the build. When unsure, `large`.
+- **`routine`** (Sonnet): your plan pins down what to write, and the work is mechanical or follows a pattern already in the code (copy, renames, moving code, wiring something in the way it's done elsewhere). A reader can see it's right, and the existing tests and checks would catch a slip.
+- **`complex`** (Opus): anything that needs reasoning your plan can't pin down, however small: an algorithm or anything where a naive version would be wrong or slow, the progression engine and its math, stored data and upgrades, the check scripts or config (`touches-gates`), a design choice, or an issue that leaves room for interpretation. When unsure, `complex`.
 
 ## Writing the comment
 
