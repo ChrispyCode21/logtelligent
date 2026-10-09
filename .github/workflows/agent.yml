@@ -62,6 +62,9 @@ jobs:
           anthropic_workspace_id: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
           # The job's own read-only token. Without it the Action fetches a write-scoped Claude App token.
           github_token: ${{ github.token }}
+          # The Action refuses runs a bot started unless it is listed. The job's own if: already limits
+          # claude[bot] to issues it created.
+          allowed_bots: claude[bot]
           prompt: Triage the issue in .agent-input/ by following .github/agent/triage.md.
           claude_args: |
             --model ${{ env.MODEL }}
@@ -346,6 +349,9 @@ jobs:
           anthropic_workspace_id: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
           # Read-only: Claude commits locally and can't push. The publish job does that.
           github_token: ${{ github.token }}
+          # The Action refuses runs a bot started unless it is listed. The job's own if: already limits
+          # claude[bot] to issues it created.
+          allowed_bots: claude[bot]
           prompt: Build the issue in .agent-input/ by following .github/agent/code.md. You're on branch ${{ steps.branch.outputs.branch }}.
           claude_args: |
             --model ${{ env.MODEL }}
