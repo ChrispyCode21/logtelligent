@@ -535,9 +535,12 @@ Raised by the owner: bench is bench, whether it's 3 × 3–5 on a heavy day or 3
 - **A lift is a name, whatever the equipment (Decided 2026-10-08, from review):** a custom dumbbell "Bench Press" shares its e1RM with a barbell one. To keep them apart, name them differently ("DB Bench Press"). Bank and template additions copy the lift's equipment, so they match.
 - No stored-data change. Examples I1–I9 (§7.I).
 
-**Slice 3: Change your program (Decided in outline).**
-- A way to abandon the current program entirely and pick a template or build your own. Labelled along the lines of **"Change your program"** or "Try something else", not "Start over". Days with history are archived and their history kept, as with any delete (§6.1); same-named lifts carry over (slice 2). The rotation starts at the new program's first day (§5.1, archived last day).
-- **A nudge against program-hopping:** the option carries a short note along the lines of *"A so-so program run consistently beats a great one you keep switching. Bored? Give it a few more weeks."* The label and wording are settled before building.
+**Slice 3: Change your program (Decided 2026-10-09).**
+- A way to abandon the current program entirely, then pick a template or build your own. Days with history are archived and their history kept, as with any delete (§6.1); same-named lifts pick their history up in the next program (slice 2). The rotation starts at the new program's first day (§5.1, archived last day). The effort scale is kept.
+- **One card that follows the program (Decided 2026-10-09):** at the bottom of the Program tab, with active days, a **"Change your program"** card: the note *"Consistency beats novelty: most programs work if you stick with them."* and a **Change your program…** button. With no active days, the template options as before (§9.1 slice 3), at the top of the tab. The "Replace with …" buttons go: switching to a template is Change your program, then the template.
+- **The confirm:** *"Change your program? Your training days are archived and their history kept. Bench Press, Back Squat and 4 more keep their history for your next program."* (the lifts with history among the active exercises, up to 3 names, slice 2), then the open session, if any.
+- **An open session is discarded (Decided 2026-10-09):** with sets, the confirm adds *"Today's session (4 sets logged) will be discarded."*, like losing unsaved progress; with none, *"Your open session has nothing logged yet, so it will be discarded."* (slice 0). OK discards it and changes the program. The dialog is the native `confirm()` (ARCHITECTURE.md), so its buttons are OK and Cancel; a dialog with its own button labels ("Discard today's session") is left for later. Its sets aren't history, so they don't decide whether a day is archived.
+- Applying a template to an empty program needs no confirm, as before; so slice 2's "Replace your program…?" confirm naming the lifts is now this confirm.
 
 **Not in v1.3.0:** a personal strength–endurance curve (§11), weight per set (§10 #7, §11), other progression schemes such as 5/3/1, the e1RM confidence measure, and the rest of §11.
 
