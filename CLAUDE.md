@@ -37,7 +37,7 @@ Standing instructions for any Claude session working in this repo.
 - Every worked example in SPEC.md §7 becomes a unit test, named with its ID, e.g. `it('B3: 225x7 @ RPE 7 on a 5-7 range suggests 235 x 6', ...)`. CI fails if an ID has no test.
 - Numeric e1RM assertions allow ±0.1 lb (SPEC §7).
 - If a test and the spec disagree, the spec wins. If the spec looks wrong, stop and ask rather than changing the expected value.
-- Verify UI changes in the preview per TESTING.md, including sideways-scroll checks at 375px and 320px.
+- Sideways scrolling and clipped labels at 375px and 320px are checked by `npm run test:e2e` (TESTING.md); add new screens to `e2e/layout.spec.ts`. Check anything it can't reach in the preview.
 
 ## How to work
 

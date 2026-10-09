@@ -43,7 +43,7 @@ jobs:
         run: npm run build
 
   # TESTING.md's phone-width checks and smoke tests of the main flows, in WebKit (the iPhone's engine)
-  # and Chromium. Make "Playwright" a required status check on main too.
+  # and Chromium. Required on main: listed in .github/rulesets/main.json (apply it per README.md).
   playwright:
     name: Playwright
     runs-on: ubuntu-latest

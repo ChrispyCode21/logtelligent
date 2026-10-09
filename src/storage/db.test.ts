@@ -62,7 +62,7 @@ describe('database upgrades', () => {
     expect((await db.programs.get('main'))?.effortScale).toBe('perceived')
   })
 
-  it('opens a v5 database (extra sets, notes) unchanged', async () => {
+  it('opens a v5 database, the version before this one, unchanged (extra sets, notes)', async () => {
     const v5Session: Session = {
       ...session,
       note: 'Felt strong',

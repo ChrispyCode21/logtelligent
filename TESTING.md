@@ -4,10 +4,12 @@
 
 `npm run test:e2e` runs `e2e/` against the production build (`vite preview`, under the production headers) in WebKit, the iPhone's engine, and Chromium, each at 375×812 and 320×640. CI runs it as the "Playwright" check.
 
-- **`layout.spec.ts`** walks every screen and state: the empty tabs, each step of the starting-numbers walkthrough, Today, a live session and its exercise menu, History (with a chart), a finished session being edited, the Program tab, the exercise form and picker, and Change your program. On each it runs the two checks below: sideways scrolling (naming the elements that stick out) and clipped button labels.
+- **`layout.spec.ts`** walks every screen and state: the empty tabs; each step of the starting-numbers walkthrough, and "Starting numbers needed"; Today, with a note from last time and with a day out of rotation; a live session on each effort scale, with all sets logged, a set being edited, the extra-set form, the exercise menu, the Replace form, and a replaced and a skipped exercise; History (a chart, a substitute, an extra set, a note) and a finished session being edited; the Program tab, the exercise form (editing, from the bank, custom) and picker (browsing, searching), and the Program tab after changing programs. Each check first waits for something only that screen shows. On each it runs the two checks below: sideways scrolling (naming the elements that stick out) and clipped button labels.
 - **`smoke.spec.ts`** runs the main flows: template → starting numbers → log a session → the next day comes up and History shows it; restoring a backup; exporting what was restored.
+- **Dialogs:** `confirm()` is accepted, but a test must expect each one (`expectConfirm`); one it didn't expect fails the test.
+- **No retries:** a test that fails once fails the run, so timing races show up instead of passing as "flaky".
 - **Adding a screen:** add the state to `layout.spec.ts` (the helpers in `support.ts` set up a program, log a session, or restore the fixture backup).
-- **Running it locally:** `npx playwright install chromium webkit` once, then `npm run test:e2e`. A failure keeps a trace in `test-results/`; open it with `npx playwright show-trace <path>/trace.zip`.
+- **Running it locally:** `npx playwright install chromium webkit` once, then `npm run test:e2e` (it builds the app first, on port 4173). A failure keeps a trace in `test-results/`; open it with `npx playwright show-trace <path>/trace.zip`.
 
 It doesn't replace the phone: real touch, the home-screen install, offline, and native `confirm()` dialogs stay on the on-device checklist below. The in-app preview is still useful for poking at a change by hand, with the quirks that follow.
 
@@ -24,9 +26,9 @@ When the pane emulates a phone viewport (the `mobile` preset, 375×812), the pan
 
 **Workaround:** test at the pane's own (desktop) size. The layout is capped at 480 px, so it renders the same. Check results through the DOM (`javascript_tool` reading `main.innerText` or IndexedDB), not by trusting the click report or a page-text read, which can lag a render behind.
 
-**Checking phone-width layout without clicks:** set a custom viewport (e.g. 375×812 and 320×640), drive the UI with DOM `.click()` calls, and compare `document.documentElement.scrollWidth` to `clientWidth` on each screen. Any difference is sideways scrolling; list the elements whose `getBoundingClientRect().right` exceeds the viewport to find the culprit. This is how the "forms widen the page" bug (an input's default width forcing a grid column wider) was found and verified.
+**Checking phone-width layout without clicks:** (this is what `expectFitsScreen` in `e2e/support.ts` automates; use it by hand for a quick look) set a custom viewport (e.g. 375×812 and 320×640), drive the UI with DOM `.click()` calls, and compare `document.documentElement.scrollWidth` to `clientWidth` on each screen. Any difference is sideways scrolling; list the elements whose `getBoundingClientRect().right` exceeds the viewport to find the culprit. This is how the "forms widen the page" bug (an input's default width forcing a grid column wider) was found and verified.
 
-**Phone layout on a real device:** done for v1.0.0 (see the checklist below). The preview still can't be trusted at phone size, so new screens get the DOM checks above in the preview and a pass on the phone.
+**Phone layout on a real device:** done for v1.0.0 (see the checklist below). The preview still can't be trusted at phone size, so new screens go in `e2e/layout.spec.ts` and get a pass on the phone.
 
 **Clipped labels:** besides page overflow, check that no button's text overflows its own box (`button.scrollWidth > button.clientWidth`). Long labels in narrow grids (three across, or five effort buttons) show up this way before they show up as sideways scrolling.
 

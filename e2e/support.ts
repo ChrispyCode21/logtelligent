@@ -1,21 +1,52 @@
-import { expect, type Page } from '@playwright/test'
+import { test as base, expect, type Locator, type Page } from '@playwright/test'
 import type { Backup } from '../src/storage/backup'
 
-/** Open the app with an empty database. Native confirm() dialogs are accepted. */
-export async function openApp(page: Page) {
-  page.on('dialog', (dialog) => void dialog.accept())
-  await page.goto('/')
+// Native confirm() dialogs are accepted and recorded. A test must expect each one (expectConfirm);
+// any left over fail it, so a confirm a flow didn't plan for (e.g. "Only 1 of 3 sets logged") shows.
+const dialogs = new WeakMap<Page, string[]>()
+
+/** Every test opens the app on an empty database. */
+export const test = base.extend<{ app: void }>({
+  app: [
+    async ({ page }, use) => {
+      const seen: string[] = []
+      dialogs.set(page, seen)
+      page.on('dialog', (dialog) => {
+        seen.push(dialog.message())
+        void dialog.accept()
+      })
+      await page.goto('/')
+      await use()
+      expect(seen, 'confirm() dialogs no step expected').toEqual([])
+    },
+    { auto: true },
+  ],
+})
+export { expect }
+
+/** The next confirm() shown matches `message`; it was accepted. */
+export async function expectConfirm(page: Page, message: RegExp) {
+  const seen = dialogs.get(page)!
+  await expect.poll(() => seen.length, `a confirm() matching ${message}`).toBeGreaterThan(0)
+  expect(seen.shift()).toMatch(message)
 }
 
 export function tab(page: Page, name: 'Today' | 'History' | 'Program') {
   return page.getByRole('navigation').getByRole('button', { name, exact: true })
 }
 
+/** The session card for one exercise (its heading starts with the exercise's name). */
+export function exerciseCard(page: Page, name: string) {
+  return page.locator('.card').filter({ has: page.getByRole('heading', { name: new RegExp(`^${name}`) }) })
+}
+
 /**
- * TESTING.md's phone-width checks, run on whatever is on screen: the page doesn't scroll sideways
- * (and if it does, which elements stick out), and no button's label overflows the button.
+ * TESTING.md's phone-width checks, run once `ready` (something only that screen shows) is visible:
+ * the page doesn't scroll sideways (and if it does, which elements stick out), and no button's label
+ * overflows the button.
  */
-export async function expectFitsScreen(page: Page, screen: string) {
+export async function expectFitsScreen(page: Page, screen: string, ready: Locator) {
+  await expect(ready, `${screen} is showing`).toBeVisible()
   const problems = await page.evaluate(() => {
     const name = (el: Element) => {
       const text = (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40)
@@ -39,35 +70,64 @@ export async function expectFitsScreen(page: Page, screen: string) {
   expect(problems, `${screen} at ${page.viewportSize()?.width}px`).toEqual([])
 }
 
-/**
- * Apply the 4-day template and step through its starting numbers, keeping each pre-fill. `onStep`
- * runs on every step of the walkthrough.
- */
-export async function setUpFromTemplate(page: Page, onStep?: (progress: string) => Promise<void>) {
+/** Apply the 4-day template and step through its starting numbers (see finishWalkthrough). */
+export async function setUpFromTemplate(page: Page, onStep?: (exercise: Locator) => Promise<void>) {
   await tab(page, 'Program').click()
   await page.getByRole('button', { name: 'Use 4-day Upper/Lower' }).click()
-  const step = page.locator('form.walkthrough')
-  await expect(step).toBeVisible()
-  while ((await step.count()) > 0) {
-    const progress = await step.locator('p').first().innerText()
-    await onStep?.(progress)
-    await step.getByRole('button', { name: /^(Next|Done)$/ }).click()
-    await expect(page.getByText(progress, { exact: true })).toHaveCount(0)
-  }
+  await finishWalkthrough(page, onStep)
   await expect(page.getByRole('button', { name: 'Start Upper A' })).toBeVisible()
 }
 
-/** Start Upper A, log Bench Press's prescribed sets at the pre-filled numbers, and finish. */
+/**
+ * Step through the open starting-numbers walkthrough to the end, keeping each pre-fill. `onStep`
+ * runs on every step, with the step's heading (the exercise).
+ */
+export async function finishWalkthrough(page: Page, onStep?: (exercise: Locator) => Promise<void>) {
+  const progress = page.getByText(/^Starting numbers · \d+ of \d+/)
+  await expect(progress).toBeVisible()
+  while ((await progress.count()) > 0) {
+    const at = await progress.innerText()
+    await onStep?.(page.getByRole('heading', { level: 2 }))
+    await page.getByRole('button', { name: /^(Next|Done)$/ }).click()
+    await expect(page.getByText(at, { exact: true })).toHaveCount(0)
+  }
+}
+
+/** Answer the effort question shown (any scale), picking its first option. */
+export async function pickEffort(page: Page) {
+  await page
+    .getByRole('group', { name: /\(required\)$/ })
+    .first()
+    .getByRole('button')
+    .first()
+    .click()
+}
+
+/** Log an exercise's prescribed sets at the pre-filled numbers, waiting for each to save. */
+export async function logSets(page: Page, exercise: string, count: number) {
+  const card = exerciseCard(page, exercise)
+  for (let set = 1; set <= count; set++) {
+    await card.getByRole('button', { name: 'Log set' }).click()
+    await expect(card.locator('.set-list li')).toHaveCount(set)
+  }
+}
+
+/** Start Upper A, log Bench Press's 3 sets, and finish (confirming that the rest weren't logged). */
 export async function logASession(page: Page) {
   await page.getByRole('button', { name: 'Start Upper A' }).click()
-  const effort = page.getByRole('group', { name: /How many more reps could you have done/ }).first()
-  await effort.getByRole('button', { name: '2', exact: true }).click()
-  for (let set = 1; set <= 3; set++) await page.getByRole('button', { name: 'Log set' }).first().click()
+  await pickEffort(page)
+  await logSets(page, 'Bench Press', 3)
   await page.getByRole('button', { name: 'Finish session' }).click()
+  await expectConfirm(page, /^Only 3 of \d+ sets logged\. Finish anyway\?/)
   await expect(page.getByRole('button', { name: 'Start Lower A' })).toBeVisible()
 }
 
-/** A small backup: one day with a primary and a cable accessory, and two finished sessions. */
+const prescribed = (min: number, max: number) => ({ repRange: { min, max }, sets: 3 })
+
+/**
+ * A small backup on the RPE scale: one day with a primary and a cable accessory, and two finished
+ * sessions between them showing a substitute, an extra set and a note.
+ */
 export const backup = {
   app: 'logtelligent',
   format: 1,
@@ -109,24 +169,49 @@ export const backup = {
       },
     ],
   },
-  sessions: [1, 2].map((n) => ({
-    id: n,
-    dayId: 'upper-a',
-    startedAt: `2026-10-0${n * 2}T10:00:00.000Z`,
-    finishedAt: `2026-10-0${n * 2}T11:00:00.000Z`,
-    exercises: [
-      {
-        exerciseId: 'bench',
-        sets: [1, 2, 3].map(() => ({ weight: 225 + n * 5, reps: 4, rpe: 8 })),
-        prescription: { repRange: { min: 3, max: 5 }, sets: 3 },
-      },
-      {
-        exerciseId: 'raise',
-        sets: [1, 2, 3].map(() => ({ weight: 15, reps: 12 + n })),
-        prescription: { repRange: { min: 12, max: 15 }, sets: 3 },
-      },
-    ],
-  })),
+  sessions: [
+    {
+      id: 1,
+      dayId: 'upper-a',
+      startedAt: '2026-10-02T10:00:00.000Z',
+      finishedAt: '2026-10-02T11:00:00.000Z',
+      exercises: [
+        {
+          exerciseId: 'bench',
+          sets: [1, 2, 3].map(() => ({ weight: 230, reps: 4, rpe: 8 })),
+          prescription: prescribed(3, 5),
+        },
+        {
+          exerciseId: 'raise',
+          sets: [],
+          substitute: { name: 'Dumbbell Lateral Raise', sets: [{ weight: 20, reps: 12 }] },
+          prescription: prescribed(12, 15),
+        },
+      ],
+    },
+    {
+      id: 2,
+      dayId: 'upper-a',
+      startedAt: '2026-10-04T10:00:00.000Z',
+      finishedAt: '2026-10-04T11:00:00.000Z',
+      note: 'Bench felt strong; try a longer rest before the last set',
+      exercises: [
+        {
+          exerciseId: 'bench',
+          sets: [
+            ...[1, 2, 3].map(() => ({ weight: 235, reps: 4, rpe: 8 })),
+            { weight: 185, reps: 8, extra: true as const },
+          ],
+          prescription: prescribed(3, 5),
+        },
+        {
+          exerciseId: 'raise',
+          sets: [1, 2, 3].map(() => ({ weight: 15, reps: 13 })),
+          prescription: prescribed(12, 15),
+        },
+      ],
+    },
+  ],
 } satisfies Backup
 
 /** Restore a backup through the Program tab's "Restore from file…". */
@@ -137,5 +222,11 @@ export async function restore(page: Page, data: Backup = backup) {
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(data)),
   })
+  await expectConfirm(page, /^Replace ALL current data with this backup/)
   await expect(page.getByRole('status')).toContainText('Restored the backup')
+}
+
+/** History's rows, one per session (each has an Edit button). */
+export function historyRows(page: Page) {
+  return page.getByRole('button', { name: /^Edit the session on/ })
 }

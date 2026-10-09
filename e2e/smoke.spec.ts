@@ -1,17 +1,14 @@
-import { expect, test } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
-import { backup, logASession, openApp, restore, setUpFromTemplate, tab } from './support'
+import { backup, expect, historyRows, logASession, restore, setUpFromTemplate, tab, test } from './support'
 
 // The main flows end to end, in the production build (SPEC §5).
-
-test.beforeEach(async ({ page }) => openApp(page))
 
 test('sets up from a template, logs a session, and moves on to the next day', async ({ page }) => {
   await setUpFromTemplate(page)
   await logASession(page)
 
   await tab(page, 'History').click()
-  await expect(page.locator('main')).toContainText('Bench Press')
+  await expect(historyRows(page)).toHaveCount(1)
 })
 
 test('restores a backup and shows its history', async ({ page }) => {
@@ -20,7 +17,8 @@ test('restores a backup and shows its history', async ({ page }) => {
   await tab(page, 'Today').click()
   await expect(page.getByRole('button', { name: 'Start Upper A' })).toBeVisible()
   await tab(page, 'History').click()
-  await expect(page.locator('main')).toContainText('Bench Press')
+  await expect(historyRows(page)).toHaveCount(backup.sessions.length)
+  await expect(page.locator('figure.chart')).toBeVisible()
 })
 
 test('exports the data it restored', async ({ page }) => {

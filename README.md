@@ -56,6 +56,10 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
    ```powershell
    gh api -X POST 'repos/{owner}/logtelligent/rulesets' --input .github/rulesets/main.json
    ```
+   After changing `.github/rulesets/main.json`, update the live ruleset to match (find its id with `gh api 'repos/{owner}/logtelligent/rulesets'`):
+   ```powershell
+   gh api -X PUT 'repos/{owner}/logtelligent/rulesets/<id>' --input .github/rulesets/main.json
+   ```
 
 ## Install on iPhone
 
