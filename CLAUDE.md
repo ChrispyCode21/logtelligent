@@ -55,7 +55,7 @@ One slice per PR, in this order:
 3. **Pure logic with tests,** outside React and Dexie (`src/program/`, `src/session/`, or `src/engine/` for progression rules), then the UI on top. Data the owner hasn't seen yet (e.g. an exercise list) goes in as written and is listed in the PR for review.
 4. **Stored-data changes** follow the ARCHITECTURE.md checklist (Dexie version, backup validator, round-trip test).
 5. **Verify in the preview** per TESTING.md: the flows by DOM. Add any new screen or state to `e2e/layout.spec.ts` (see "Tests"), and a new main flow to `e2e/smoke.spec.ts`. Leave the preview's data as it was.
-6. **Update the docs in the same PR:** ARCHITECTURE.md (folder map, UI, storage), CHANGELOG.md "Unreleased" for user-facing changes, and, for anything the preview can't check, a note in the PR for the release's phone checklist (TESTING.md).
+6. **Update the docs in the same PR:** ARCHITECTURE.md (folder map, UI, storage), CHANGELOG.md "Unreleased" for user-facing changes, SPEC.md wherever behavior changed or was clarified, and, for anything the preview can't check, a note in the PR for the release's phone checklist (TESTING.md).
 7. **Review:** run the `architecture-reviewer` subagent (`.claude/agents/`) on the branch's diff. Fix the must-fix findings; fix worth-fixing ones or say in the PR why not; raise its questions with the owner.
 8. **Open the PR** with what changed, how it was verified, anything worth the owner's attention, and any data to review, after running the CI checks.
 
