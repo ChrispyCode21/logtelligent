@@ -61,7 +61,7 @@ v1.1.0 was built one slice per PR, in this order (step 7 was added for v1.2.0):
 
 ### Running from an issue (GitHub Actions)
 
-Issues labeled `agent-ready` are built in GitHub Actions with no one to ask mid-run (ARCHITECTURE.md, "Agent pipeline"; triage is built, the coding run is not yet). The steps above still apply, except:
+Issues labeled `agent-ready` are built in GitHub Actions with no one to ask mid-run (ARCHITECTURE.md, "Agent pipeline"; the prompts are `.github/agent/triage.md` and `code.md`). The steps above still apply, except:
 
 - **Step 1 becomes a comment.** Post numbered questions on the issue, each with a recommended default, and stop (the workflow swaps `agent-ready` for `agent-needs-info`). Never guess and carry on. The owner's numbered answers in the thread are the decisions; record them in SPEC.md (step 2) before any code.
 - **Step 5 is the Playwright check** (`npm run test:e2e`, also in CI), since there's no preview. Add new screens to `e2e/` as step 5 says, and say in the PR that the preview wasn't used.
