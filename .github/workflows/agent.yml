@@ -1,0 +1,125 @@
+# The agent pipeline (ARCHITECTURE.md, "Agent pipeline"): an issue labeled agent-ready by the owner is
+# triaged by Claude. Claude only reads and returns a decision as structured output; the respond job
+# posts the comment and changes the labels. Keep this file's name: the Anthropic federation rule
+# accepts only .github/workflows/agent.yml on main, so no other workflow can get a token.
+name: Agent
+
+on:
+  issues:
+    types: [labeled]
+
+permissions: {}
+
+# One agent run at a time across the repo; others queue.
+concurrency:
+  group: agent
+  cancel-in-progress: false
+
+jobs:
+  triage:
+    name: Triage
+    if: github.event.label.name == 'agent-ready' && github.event.sender.login == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: read
+      id-token: write # the GitHub token that Anthropic exchanges for a short-lived API token
+    outputs:
+      result: ${{ steps.claude.outputs.structured_output }}
+      cost: ${{ steps.cost.outputs.usd }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The thread Claude sees: the issue, and only the owner's and the agent's own comments, so
+      # anyone else's comment never reaches it.
+      - name: Collect the issue and its thread
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          mkdir -p .agent-input
+          gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE" \
+            --jq '{number, title, author: .user.login, labels: [.labels[].name], milestone: .milestone.title, body}' \
+            > .agent-input/issue.json
+          gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" \
+            --jq ".[] | select(.user.login == \"$OWNER\" or .user.login == \"github-actions[bot]\") | {author: .user.login, created_at, body}" \
+            | jq -s . > .agent-input/comments.json
+
+      - name: Triage
+        id: claude
+        uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b # v1.0.247
+        with:
+          anthropic_federation_rule_id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
+          anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+          anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+          anthropic_workspace_id: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
+          prompt: Triage the issue in .agent-input/ by following .github/agent/triage.md.
+          claude_args: |
+            --model claude-sonnet-5-5
+            --max-turns 40
+            --allowedTools Read,Grep,Glob
+            --disallowedTools Bash,Edit,Write,NotebookEdit,WebFetch,WebSearch
+            --json-schema '{"type":"object","properties":{"decision":{"type":"string","enum":["questions","split","ready"]},"comment":{"type":"string","minLength":1}},"required":["decision","comment"],"additionalProperties":false}'
+
+      - name: Read the run's cost
+        id: cost
+        if: always() && steps.claude.outputs.execution_file != ''
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          usd=$(jq -r '[.[] | select(.type == "result")] | last | .total_cost_usd // empty' "$EXECUTION_FILE" 2>/dev/null || true)
+          echo "usd=$usd" >> "$GITHUB_OUTPUT"
+
+  respond:
+    name: Post the triage result
+    needs: triage
+    if: always() && needs.triage.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Comment and set labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          TRIAGE: ${{ needs.triage.result }}
+          RESULT: ${{ needs.triage.outputs.result }}
+          COST: ${{ needs.triage.outputs.cost }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          remove_label() { gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$ISSUE/labels/$1" >/dev/null 2>&1 || true; }
+
+          result=${RESULT:-}
+          [ -n "$result" ] || result='{}'
+          decision=$(jq -r '.decision // empty' <<<"$result" 2>/dev/null || true)
+          comment=$(jq -r '.comment // empty' <<<"$result" 2>/dev/null || true)
+          case "$decision" in questions | split | ready) ;; *) comment="" ;; esac
+          if [ "$TRIAGE" != "success" ] || [ -z "$comment" ]; then
+            decision=failed
+            comment="Triage didn't finish. The run's log has the details; re-add \`agent-ready\` to try again."
+          fi
+
+          footer="Triage by Claude (Sonnet 5.5) · [run]($RUN_URL)"
+          if [ -n "$COST" ]; then footer="$footer · \$$(printf '%.2f' "$COST")"; fi
+          case "$decision" in
+            questions) next="Answer with numbered replies, then re-add \`agent-ready\`." ;;
+            split) next="Reply \"approved\" (or with changes), then re-add \`agent-ready\`." ;;
+            ready) next="The coding run isn't built yet (pipeline step 5), so this stops here for now." ;;
+            *) next="" ;;
+          esac
+
+          { printf '%s\n\n' "$comment"; [ -z "$next" ] || printf '%s\n\n' "$next"; printf '<sub>%s</sub>\n' "$footer"; } \
+            | gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body-file -
+
+          # agent-ready comes off after every run, so re-adding it is what starts the next one.
+          remove_label agent-ready
+          remove_label agent-needs-info
+          case "$decision" in
+            questions | split) gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label agent-needs-info ;;
+          esac
