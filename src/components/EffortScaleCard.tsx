@@ -4,7 +4,7 @@ import { Card } from '../ui/Card'
 import { SegmentedControl } from '../ui/SegmentedControl'
 
 /**
- * The program's effort scale (SPEC §9.1, slice 1). Switching is safe at any time, even mid-session:
+ * The program's effort scale (SPEC §5.6). Switching is safe at any time, even mid-session:
  * effort is stored as RPE whatever the scale, so only the labels change.
  */
 export function EffortScaleCard({ value }: { value: EffortScale }) {

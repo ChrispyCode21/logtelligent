@@ -1,4 +1,4 @@
-# The agent pipeline (ARCHITECTURE.md, "Agent pipeline"): an issue labeled agent-ready by the owner
+# The agent pipeline (.github/agent/PIPELINE.md): an issue labeled agent-ready by the owner
 # (or by the agent, for sub-issues and release issues) is triaged by Claude, and a ready one is built
 # and opened as a PR. An approved split becomes sub-issues, and a closed issue can unblock them or
 # start a release. Claude never holds a write token: it returns its results as structured output, and
@@ -23,7 +23,7 @@ jobs:
       (github.event.sender.login == 'claude[bot]' && github.event.issue.user.login == 'claude[bot]'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # One triage at a time; the rest wait in order (ARCHITECTURE.md, "Triggers and who can start a run").
+    # One triage at a time; the rest wait in order (.github/agent/PIPELINE.md, "Triggers and who can start a run").
     concurrency:
       group: agent-triage
       cancel-in-progress: false
@@ -88,7 +88,7 @@ jobs:
             decision=""
           fi
           echo "decision=$decision" >> "$GITHUB_OUTPUT"
-          # Which model builds a ready issue (ARCHITECTURE.md, "Coding run"): only "routine" gets the
+          # Which model builds a ready issue (.github/agent/PIPELINE.md, "Coding run"): only "routine" gets the
           # cheaper one; anything else, including no answer, gets the default.
           complexity=$(jq -r '.complexity // empty' <<<"${RESULT:-null}" 2>/dev/null || true)
           [ "$complexity" = routine ] || complexity=complex
@@ -168,7 +168,7 @@ jobs:
             questions | split) gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label agent-needs-info ;;
           esac
 
-  # An approved split (ARCHITECTURE.md, "Triage"): creates the sub-issues from the proposal the owner
+  # An approved split (.github/agent/PIPELINE.md, "Triage"): creates the sub-issues from the proposal the owner
   # approved, word for word, in the parent's milestone, links them, and starts the unblocked ones.
   # Claude only judged that the owner approved; the text comes from the posted proposal.
   split:
@@ -284,7 +284,7 @@ jobs:
       # Sonnet for what triage judged routine (mechanical, fully planned), Opus otherwise.
       MODEL: ${{ needs.triage.outputs.complexity == 'routine' && 'claude-sonnet-5-5' || 'claude-opus-5-5' }}
       # Claude's shell commands run sandboxed, with secrets removed from their environment. The
-      # accepted risk this reduces is in ARCHITECTURE.md ("Where it lives").
+      # accepted risk this reduces is in .github/agent/PIPELINE.md ("Where it lives").
       CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: '1'
     permissions:
       contents: read
@@ -303,7 +303,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      # One branch per issue (ARCHITECTURE.md, "Coding run").
+      # One branch per issue (.github/agent/PIPELINE.md, "Coding run").
       - name: Choose the branch
         id: branch
         env:
@@ -465,7 +465,7 @@ jobs:
           [ "$(pkg origin/main)" = "$(pkg "$BRANCH")" ] && [ "$(lock origin/main)" = "$(lock "$BRANCH")" ] \
             || refuse "The commits change package.json or package-lock.json beyond the version, which the agent may not do."
 
-          # Labels that ask the owner to look before merging (ARCHITECTURE.md, "Merge safety").
+          # Labels that ask the owner to look before merging (ARCHITECTURE.md, "Agent pipeline"; .github/agent/PIPELINE.md, "Merge safety").
           labels=()
           if grep -q '^src/storage/' <<<"$changed" || [ "$(jq -r '.touches_data // false' <<<"$RESULT")" = true ]; then
             labels+=(touches-data)
@@ -567,7 +567,7 @@ jobs:
           if [ -n "${COST:-}" ]; then footer="$footer · \$$(printf '%.2f' "$COST")"; fi
           printf '%s\n\n<sub>%s</sub>\n' "$body" "$footer" | gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body-file -
 
-  # When an issue closes (ARCHITECTURE.md, "Triage" and "Releases"): start the agent's sub-issues it
+  # When an issue closes (.github/agent/PIPELINE.md, "Triage" and "Releases"): start the agent's sub-issues it
   # was blocking, close a parent whose sub-issues are all closed, and open the release issue once a
   # version's milestone has nothing left open. All text here is fixed; none comes from Claude.
   closed:
@@ -637,7 +637,7 @@ jobs:
               cat > body.md <<BODY
           Everything else in the $ms_title milestone is closed, so it's ready to release.
 
-          Following CLAUDE.md ("How to work"): bump \`package.json\`'s version to $version, move CHANGELOG.md's "Unreleased" notes under it, mark its SPEC.md §9 section released, and replace TESTING.md's "Current release" checklist with checks drawn from those notes. Merging the PR tags the release.
+          Following CLAUDE.md ("How to work"): bump \`package.json\`'s version to $version, move CHANGELOG.md's "Unreleased" notes under it and replace TESTING.md's "Current release" checklist with checks drawn from those notes. Merging the PR tags the release.
 
           $footer
           BODY

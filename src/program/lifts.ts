@@ -1,6 +1,6 @@
 import type { Program, ProgramExercise } from './types'
 
-// Lifts (SPEC §9.4 slice 2): exercises with the same name are one lift, wherever they are in the
+// Lifts (SPEC §6.9): exercises with the same name are one lift, wherever they are in the
 // program. Nothing is stored for it: sessions belong to exercises, so a rename moves them with it.
 
 /** A name as a lift: lower case, punctuation and spacing ignored ("bench-press" = "Bench  Press"). */

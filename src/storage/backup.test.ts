@@ -40,7 +40,7 @@ describe('JSON backup (SPEC §2)', () => {
     expect(() => parseBackup(JSON.stringify(damaged))).toThrow('incomplete or damaged')
   })
 
-  it('round-trips extra sets (SPEC §9.2, slice 2)', () => {
+  it('round-trips extra sets (SPEC §5.2)', () => {
     const withExtras: Session = {
       id: 3,
       dayId: 'upper-a',
@@ -75,7 +75,7 @@ describe('JSON backup (SPEC §2)', () => {
     expect(parsed.filter((s) => !s.extra)).toEqual(sessions[0].exercises[0].sets)
   })
 
-  it('round-trips a session note (SPEC §9.2, slice 3)', () => {
+  it('round-trips a session note (SPEC §5.2)', () => {
     const noted: Session = { ...sessions[0], note: 'Shoulder felt tight; go lighter.' }
     const backup = buildBackup(program, [noted], new Date('2026-10-04T12:00:00Z'))
     expect(parseBackup(JSON.stringify(backup))).toEqual(backup)
@@ -90,7 +90,7 @@ describe('JSON backup (SPEC §2)', () => {
     expect(parsed[1]).not.toHaveProperty('note')
   })
 
-  it('round-trips a prescription (SPEC §9.4 slice 1)', () => {
+  it('round-trips a prescription (SPEC §6.8)', () => {
     const prescribed: Session = {
       ...sessions[0],
       exercises: [{ ...sessions[0].exercises[0], prescription: { repRange: { min: 3, max: 5 }, sets: 3 } }],
@@ -183,7 +183,7 @@ describe('JSON backup (SPEC §2)', () => {
     expect(() => parseBackup(JSON.stringify(json))).toThrow('sessions[0].exercises[0].sets[0].reps')
   })
 
-  it('keeps the program’s effort scale (SPEC §9.1, slice 1)', () => {
+  it('keeps the program’s effort scale (SPEC §5.6)', () => {
     for (const effortScale of ['rpe', 'repsLeft', 'perceived'] as const) {
       const backup = buildBackup({ ...program, effortScale }, sessions, new Date())
       expect(parseBackup(JSON.stringify(backup)).program?.effortScale).toBe(effortScale)

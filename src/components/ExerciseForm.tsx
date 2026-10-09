@@ -29,9 +29,9 @@ interface Props {
   initial?: ProgramExercise
   /** A new exercise from the bank: its defaults prefill the form. */
   preset?: BankExercise
-  /** A bank exercise joining a lift with history: where its gym setup and starting weight come from (SPEC §9.4 slice 2). */
+  /** A bank exercise joining a lift with history: where its gym setup and starting weight come from (SPEC §6.9). */
   lift?: { exercise: ProgramExercise; weight?: number }
-  /** Whether a lift of this name already has an e1RM: a primary's starting numbers are then optional (SPEC §9.4 slice 2). */
+  /** Whether a lift of this name already has an e1RM: a primary's starting numbers are then optional (SPEC §6.9). */
   liftHasE1rm?: (name: string) => boolean
   effortScale: EffortScale
   onSave: (exercise: ProgramExercise) => void
@@ -39,8 +39,8 @@ interface Props {
 }
 
 export function ExerciseForm({ initial, preset, lift, liftHasE1rm, effortScale, onSave, onCancel }: Props) {
-  // A bank exercise's defaults are copied in; nothing links back to the bank (SPEC §9.1, slice 2).
-  // Joining a lift with history, it takes your gym's setup from it (SPEC §9.4 slice 2).
+  // A bank exercise's defaults are copied in; nothing links back to the bank (SPEC §5.1).
+  // Joining a lift with history, it takes your gym's setup from it (SPEC §6.9).
   const [form, setForm] = useState(() =>
     toForm(initial ?? (preset && withLiftGym(exerciseFromBank(preset), lift?.exercise))),
   )
@@ -62,7 +62,7 @@ export function ExerciseForm({ initial, preset, lift, liftHasE1rm, effortScale, 
   const loadsPlaceholder = defaults.length
     ? `Default: ${defaults.slice(0, 6).join(', ')}…`
     : 'e.g. 88, 99, 110, 121, 132'
-  // The lift's latest weight while its equipment still applies (SPEC §9.4 slice 2), else the bank's.
+  // The lift's latest weight while its equipment still applies (SPEC §6.9), else the bank's.
   const startingWeight =
     lift && form.equipment === lift.exercise.equipment
       ? lift.weight

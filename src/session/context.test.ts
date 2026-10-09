@@ -49,7 +49,7 @@ const middle = session(2, 8, sets(230, [5, 4, 3]))
 const last = session(3, 15, sets(235, [4, 4, 3]))
 const now = new Date('2026-10-05T10:00:00.000Z')
 
-describe('the exercises of a session and what they are judged against (SPEC §9.2, slice 1)', () => {
+describe('the exercises of a session and what they are judged against (SPEC §5.4)', () => {
   it('judges a live session against every finished session', () => {
     const live = session(4, 22, [], false)
     const [bench] = sessionExercises(live, program, [first, middle, last, live], now)
@@ -70,7 +70,7 @@ describe('the exercises of a session and what they are judged against (SPEC §9.
     )
   })
 
-  it('judges a finished session by its saved prescription, not today’s settings (SPEC §9.4 slice 1)', () => {
+  it('judges a finished session by its saved prescription, not today’s settings (SPEC §6.8)', () => {
     const changed: Program = {
       ...program,
       days: [

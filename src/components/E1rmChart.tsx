@@ -4,7 +4,7 @@ import { formatDate, formatE1rm } from '../ui/format'
 export interface ChartPoint {
   date: string
   value: number
-  /** Over 10 effective reps: drawn hollow, since it counts only when nothing lower does (SPEC §9.4 slice 2). */
+  /** Over 10 effective reps: drawn hollow, since it counts only when nothing lower does (SPEC §6.9). */
   highReps?: boolean
 }
 
@@ -30,7 +30,7 @@ export function E1rmChart({ points }: Props) {
   // Round the y-domain out to 5 lb so gridlines land on readable numbers.
   const yMin = Math.floor(Math.min(...values) / Y_STEP) * Y_STEP - Y_STEP
   const yMax = Math.ceil(Math.max(...values) / Y_STEP) * Y_STEP + Y_STEP
-  // Every point on one date (two exercises of a lift in one session, SPEC §9.4 slice 2): the middle.
+  // Every point on one date (two exercises of a lift in one session, SPEC §6.9): the middle.
   const x = (t: number) =>
     PAD.left + (t1 === t0 ? 0.5 : (t - t0) / (t1 - t0)) * (WIDTH - PAD.left - PAD.right)
   const y = (v: number) => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * (HEIGHT - PAD.top - PAD.bottom)

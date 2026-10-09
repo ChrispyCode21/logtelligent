@@ -12,7 +12,7 @@ interface Props {
   sets: LoggedSet[]
   /** A new prescribed set can be logged; the caller decides when the exercise's sets are all in. */
   canAdd: boolean
-  /** "+ Add set" for an extra set is offered (SPEC §9.2, slice 2). */
+  /** "+ Add set" for an extra set is offered (SPEC §5.2). */
   canAddExtra: boolean
   /** Pre-fill for the first set, usually the suggestion. */
   first?: { weight: number; reps: number }
@@ -32,9 +32,9 @@ interface Props {
 type Mode =
   | { kind: 'new' }
   | { kind: 'edit'; index: number }
-  // Logging an extra set (SPEC §9.2, slice 2).
+  // Logging an extra set (SPEC §5.2).
   | { kind: 'extra' }
-  // Deleting set 1 when set 2 has no effort: the form shows set 2, which needs one (SPEC §9.2, slice 1).
+  // Deleting set 1 when set 2 has no effort: the form shows set 2, which needs one (SPEC §5.4).
   | { kind: 'replaceFirst' }
 
 const NEW: Mode = { kind: 'new' }
@@ -211,7 +211,7 @@ export function SetEditor({
             </div>
           </Field>
 
-          {/* Effort is asked only where it's used: a primary lift's first set (SPEC §6.3, §9.3). */}
+          {/* Effort is asked only where it's used: a primary lift's first set (SPEC §6.3). */}
           {required && (
             <EffortPicker
               scale={effortScale}

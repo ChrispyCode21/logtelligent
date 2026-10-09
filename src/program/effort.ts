@@ -1,4 +1,4 @@
-// How effort is entered and shown (SPEC §9.1, slice 1). Every scale is stored as an RPE number,
+// How effort is entered and shown (SPEC §5.6). Every scale is stored as an RPE number,
 // so the engine and the logged sets are the same whichever scale the program uses.
 
 export type EffortScale = 'rpe' | 'repsLeft' | 'perceived'

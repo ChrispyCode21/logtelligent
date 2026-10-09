@@ -65,7 +65,7 @@ const finished = (dayId: string, day: number, exerciseId: string, sets: LoggedSe
 const heavy = finished('upper-a', 1, 'bench-a', firstRpe(225, [5, 5, 5]))
 const light = finished('upper-b', 3, 'bench-b', firstRpe(185, [12, 12, 12]))
 
-describe('7.I Lifts (SPEC §9.4 slice 2)', () => {
+describe('7.I Lifts (SPEC §6.9)', () => {
   it('I4: a new primary with no starting numbers joining a lift with history is not blocked, and suggests 230 x 4', () => {
     const newBench = exercise('bench-c', 'Bench Press')
     const p = program(newBench)
@@ -87,7 +87,7 @@ describe('7.I Lifts (SPEC §9.4 slice 2)', () => {
   })
 })
 
-describe('I6 and editing, through the replay (SPEC §9.4 slice 2)', () => {
+describe('I6 and editing, through the replay (SPEC §6.9)', () => {
   it("I6: the other exercise's deload week comes back marked by its own replay, and stays out of the e1RM", () => {
     // Upper B: a success, two fails (deload due), then the deload week at RPE 6.
     const b = [
@@ -116,7 +116,7 @@ describe('I6 and editing, through the replay (SPEC §9.4 slice 2)', () => {
   })
 })
 
-describe('lift helpers (SPEC §9.4 slice 2)', () => {
+describe('lift helpers (SPEC §6.9)', () => {
   it("passes the other exercises' sessions, not this one's", () => {
     const other = otherLiftSessions(program(), [heavy, light], benchA)
     expect(other.map((s) => s.sessionId)).toEqual([light.id])
@@ -163,7 +163,7 @@ describe('lift helpers (SPEC §9.4 slice 2)', () => {
   })
 })
 
-describe('History by lift (SPEC §5.3, §9.4 slice 2)', () => {
+describe('History by lift (SPEC §5.3, §6.9)', () => {
   it('lists a lift once, under the first day it is on', () => {
     const groups = historyGroups(program(), [heavy, light])
     expect(groups.map((g) => [g.label, g.exercises.map((e) => e.id)])).toEqual([
@@ -191,7 +191,7 @@ describe('History by lift (SPEC §5.3, §9.4 slice 2)', () => {
   })
 })
 
-describe('changing programs (SPEC §9.4 slice 3)', () => {
+describe('changing programs (SPEC §5.5)', () => {
   it('keeps lifts with finished history, discards every open session, and counts its sets', () => {
     const open: Session = {
       id: 900,

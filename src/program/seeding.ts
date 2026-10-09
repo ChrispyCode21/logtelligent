@@ -1,4 +1,4 @@
-// Entering starting numbers (SPEC §5.1): the exercise form and the guided walkthrough (SPEC §9.1, slice 3).
+// Entering starting numbers (SPEC §5.1): the exercise form and the guided walkthrough.
 import { snapDown, type EquipmentType, type RepRange, type Seed, type Tier } from '../engine'
 import { findBankExercise } from './bank'
 import type { ProgramExercise } from './types'
@@ -88,8 +88,8 @@ function snapStartingWeight(weight: number, loads: readonly number[] | undefined
 }
 
 /**
- * The exercise form's placeholder starting weight (SPEC §9.1, slice 2): the bank's weight, snapped
- * down onto the exercise's typed loads (SPEC §9.2, slice 0). Without one, accessories get a general
+ * The exercise form's placeholder starting weight (SPEC §5.1): the bank's weight, snapped
+ * down onto the exercise's typed loads. Without one, accessories get a general
  * suggestion, or the lightest typed load.
  */
 export function formSeedPlaceholder(
@@ -104,7 +104,7 @@ export function formSeedPlaceholder(
 }
 
 /**
- * Starting numbers to pre-fill: the lift's latest weight when it has history (SPEC §9.4 slice 2),
+ * Starting numbers to pre-fill: the lift's latest weight when it has history (SPEC §6.9),
  * else a bank exercise's placeholder weight, snapped down onto the stack if one is given; and, for
  * primaries, the top of the rep range. Others start blank.
  */
@@ -122,7 +122,7 @@ export function seedPrefill(
 }
 
 /**
- * What's wrong with a walkthrough step: the stack, when it asks for one (SPEC §9.1, slice 3),
+ * What's wrong with a walkthrough step: the stack, when it asks for one (SPEC §5.1),
  * then the starting numbers.
  */
 export function validateSeedStep(

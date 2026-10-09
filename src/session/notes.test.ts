@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { finishConfirmMessage, NOTE_MAX, normalizeNote } from './notes'
 
-describe('session notes (SPEC §9.2, slice 3)', () => {
+describe('session notes (SPEC §5.2)', () => {
   it('stores a note trimmed, and whitespace as no note', () => {
     expect(normalizeNote('  shoulder felt tight \n')).toBe('shoulder felt tight')
     expect(normalizeNote('   ')).toBeUndefined()

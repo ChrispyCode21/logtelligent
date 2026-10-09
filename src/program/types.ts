@@ -18,6 +18,6 @@ export interface ProgramDay {
 export interface Program {
   id: 'main'
   days: ProgramDay[]
-  /** How effort is entered and shown; always stored as RPE (SPEC §9.1, slice 1). */
+  /** How effort is entered and shown; always stored as RPE (SPEC §5.6). */
   effortScale: EffortScale
 }

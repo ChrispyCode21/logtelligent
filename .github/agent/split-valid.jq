@@ -1,4 +1,4 @@
-# Checks a split proposal (ARCHITECTURE.md, "Triage"): 2-8 sub-issues, each blocked only by ones
+# Checks a split proposal (PIPELINE.md, "Triage"): 2-8 sub-issues, each blocked only by ones
 # listed before it (1-based, no repeats, so no cycles), and no HTML comments anywhere, since those
 # wouldn't show in the proposal the owner approves. Used on triage's result and again on the data
 # read back from the posted proposal.

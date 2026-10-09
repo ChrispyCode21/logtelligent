@@ -114,7 +114,7 @@ export function step(
   }
 }
 
-/** The settings a session is judged by: its stored rep range, or the current one (SPEC §9.4 slice 1). */
+/** The settings a session is judged by: its stored rep range, or the current one (SPEC §6.8). */
 function judgedBy(config: ExerciseConfig, session: ExerciseSession): ExerciseConfig {
   return session.repRange ? { ...config, repRange: session.repRange } : config
 }
@@ -124,7 +124,7 @@ function sameRange(a: RepRange, b: RepRange): boolean {
 }
 
 /**
- * A rep-range change is a fresh start (SPEC §9.4 slice 1): stacks, the last successful numbers and
+ * A rep-range change is a fresh start (SPEC §6.8): stacks, the last successful numbers and
  * any pending revert, retry or deload are cleared. Primary lifts go back to the e1RM rule;
  * accessories restart at the bottom of the new range, at the weight they'd have been suggested.
  */
@@ -138,7 +138,7 @@ export function freshStart(config: ExerciseConfig, state: ProgressionState): Pro
 /**
  * Replay an exercise history, oldest first, to get its current state under `config`.
  * Each session is judged by its own stored rep range, if it has one, and a change of range between
- * sessions, or from the last session to `config`, is a fresh start (SPEC §9.4 slice 1).
+ * sessions, or from the last session to `config`, is a fresh start (SPEC §6.8).
  * Also returns the history annotated with which sessions were deloads, and which were prescribed
  * high-rep (SPEC §6.4).
  * Replaced sessions (a substitute was logged) are skipped (SPEC §5.2).
@@ -176,7 +176,7 @@ export function deriveState<S extends ExerciseSession>(config: ExerciseConfig, h
 
 /**
  * Validate a session's sets against the finished history of its exercise. Only the prescribed
- * sets are judged (SPEC §9.2, slice 2); at least one must be logged.
+ * sets are judged (SPEC §5.2); at least one must be logged.
  */
 export function evaluateSession(
   config: ExerciseConfig,

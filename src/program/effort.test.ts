@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { EFFORT_SCALES, effortSuffix, effortTarget, nearestOption } from './effort'
 
-describe('effort scales (SPEC §9.1, slice 1)', () => {
+describe('effort scales (SPEC §5.6)', () => {
   it('maps every option onto the 6–10 RPE scale', () => {
     expect(EFFORT_SCALES.repsLeft.options.map((o) => [o.label, o.rpe])).toEqual([
       ['4+', 6],

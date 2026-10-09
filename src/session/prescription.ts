@@ -1,7 +1,7 @@
 import type { ExerciseConfig } from '../engine'
 import type { ExerciseLog } from './types'
 
-// A finished session's prescription (SPEC §9.4 slice 1): each exercise's rep range and set count,
+// A finished session's prescription (SPEC §6.8): each exercise's rep range and set count,
 // saved on Finish so later changes to the program don't change how the session is judged.
 
 /** The session's logs with each exercise's prescription saved from its current settings. */

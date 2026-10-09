@@ -286,7 +286,7 @@ describe('7.E Deload', () => {
   })
 })
 
-describe('Slice 2 decisions (SPEC §5.2, §6.6)', () => {
+describe('short sessions and validation (SPEC §5.2, §6.6)', () => {
   it('a short session (2 of 3 sets) is validated on the logged sets only', () => {
     expect(evaluateSession(bench, [], sets(225, [4, 3])).result).toBe('success')
   })
@@ -329,7 +329,7 @@ describe('Bodyweight accessories (SPEC §6.1)', () => {
   })
 })
 
-describe('7.H Stored prescriptions (SPEC §9.4 slice 1)', () => {
+describe('7.H Stored prescriptions (SPEC §6.8)', () => {
   /** Sessions saved with a rep range on Finish. */
   const stored = (repRange: { min: number; max: number }, sessions: ExerciseSession[]) =>
     sessions.map((s) => ({ ...s, repRange }))
@@ -463,7 +463,7 @@ describe('7.H Stored prescriptions (SPEC §9.4 slice 1)', () => {
   })
 })
 
-describe('7.I Lifts (SPEC §9.4 slice 2)', () => {
+describe('7.I Lifts (SPEC §6.9)', () => {
   const upperA = bench // 3-5 @ RPE 8
   const upperB: ExerciseConfig = { ...bench, id: 'bench-b', repRange: { min: 10, max: 12 }, seed: undefined }
   const heavy = weekly(sets(225, [5, 5, 5]))

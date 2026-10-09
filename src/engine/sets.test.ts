@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { countedSets, deriveState, evaluateSession, sessionE1rm, suggestNext } from '.'
 import type { ExerciseConfig, ExerciseSession, LoggedSet } from '.'
 
-// Extra sets are recorded, not counted (SPEC §9.2, slice 2).
+// Extra sets are recorded, not counted (SPEC §5.2).
 
 const bench: ExerciseConfig = {
   id: 'bench',
@@ -36,7 +36,7 @@ const on = (day: number, sets: LoggedSet[]): ExerciseSession => ({
 })
 const asOf = new Date('2026-09-30T10:00:00Z')
 
-describe('extra sets (SPEC §9.2, slice 2)', () => {
+describe('extra sets (SPEC §5.2)', () => {
   it('are left out of the counted sets', () => {
     expect(countedSets([...counted(225, [5, 4]), extra(185, 8)])).toEqual(counted(225, [5, 4]))
   })

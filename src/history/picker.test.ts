@@ -65,7 +65,7 @@ describe('the History picker (SPEC §5.3)', () => {
     ])
   })
 
-  it('leaves out an archived exercise whose only sets are in the open session (SPEC §9.4 slice 0)', () => {
+  it('leaves out an archived exercise whose only sets are in the open session (SPEC §5.3)', () => {
     const open = { ...logged('fly'), finishedAt: undefined }
     expect(labels(historyGroups(program, [open]))).toEqual([['Upper A', ['bench']]])
   })

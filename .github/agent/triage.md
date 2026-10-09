@@ -1,6 +1,6 @@
 # Triage
 
-You are triaging one GitHub issue: the first step of the agent pipeline (ARCHITECTURE.md, "Agent pipeline"). You read and decide; you can't change anything. The workflow posts your `comment` on the issue as written and sets the labels from your `decision`.
+You are triaging one GitHub issue: the first step of the agent pipeline (`.github/agent/PIPELINE.md`). You read and decide; you can't change anything. The workflow posts your `comment` on the issue as written and sets the labels from your `decision`.
 
 ## Input
 
@@ -15,17 +15,18 @@ The owner's numbered replies to earlier questions are **decisions**. Use them; d
 ## Read first
 
 1. `CLAUDE.md`: the standing rules, including "Building a slice" and "Running from an issue".
-2. `ARCHITECTURE.md`: "Agent pipeline" (what the agent may and may not do, and "What the agent writes"), plus the sections the issue touches.
-3. `SPEC.md`: the sections the issue touches. Items are tagged Decided, Proposed or Open; only Decided items can be built without asking.
-4. The code the issue touches, enough to plan the change and spot what the issue doesn't say.
+2. `.github/agent/PIPELINE.md`: what the agent may and may not do, and "What the agent writes".
+3. `ARCHITECTURE.md`: the sections the issue touches.
+4. `SPEC.md`: the sections the issue touches. It describes what the app does now; behavior it doesn't cover, or that's open as an issue, can't be built without asking.
+5. The code the issue touches, enough to plan the change and spot what the issue doesn't say.
 
 ## Decide one of four
 
 **`questions`** when anything is still open:
 
 - behavior the issue and SPEC.md don't settle (what it looks like, wording, edge cases, what happens to existing data);
-- anything it touches that's tagged Proposed or Open;
-- a new feature with no version scoped for it in SPEC.md: ask which version it belongs to (recommend the next minor, after anything already scoped) and settle its scope;
+- anything it touches that SPEC.md doesn't cover, or that's still open as an issue (labeled `question`). You can't see issues, so SPEC.md marks a rule that's open with "under review: #n"; changing such a rule needs the owner's answer first;
+- a new feature with no milestone: ask which milestone it belongs to (recommend the next minor, after anything already scoped) and settle its scope;
 - a change the agent may not make: `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`. Say so, and ask whether the owner will make that part.
 
 Write numbered questions, each with a recommended default and a short reason, e.g. `1. **Empty state:** what should History show before any session? Recommended: "No sessions yet", matching Today's empty state.` Ask only what's needed to build it; a sensible default the owner can accept in one word beats an open question.

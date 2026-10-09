@@ -31,7 +31,7 @@ interface Props {
   history: ExerciseSession[]
   suggestion: Suggestion
   effortScale: EffortScale
-  /** Editing a finished session: logged sets only, no new sets and no menu (SPEC §9.2, slice 1). */
+  /** Editing a finished session: logged sets only, no new sets and no menu (SPEC §5.4). */
   finished?: boolean
   /** After sets are saved, with the log as it now is. */
   onLogSaved?: (log: ExerciseLog) => void
@@ -71,7 +71,7 @@ export function ExerciseLogger({
     </h2>
   )
 
-  // A finished session has no menu (SPEC §9.2, slice 1).
+  // A finished session has no menu (SPEC §5.4).
   const header = finished ? (
     <div className="logger-head">{heading}</div>
   ) : (
@@ -113,7 +113,7 @@ export function ExerciseLogger({
   }
 
   const loads = availableLoads(config)
-  // Validation runs once the last set is entered; a finished session always shows its outcome (SPEC §5.2, §6.6, §9.2).
+  // Validation runs once the last set is entered; a finished session always shows its outcome (SPEC §5.2, §5.4, §6.6).
   const outcome = showsOutcome(finished, sets, target) ? evaluateSession(config, history, sets) : undefined
 
   return (

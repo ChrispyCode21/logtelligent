@@ -45,7 +45,7 @@ export function TodayView({ program, sessions, asOf, seeding, onSeeding, onEditP
   }
 
   // Sessions can't start until every exercise has starting numbers (SPEC §5.1, A12), except a
-  // primary whose lift already has an e1RM (§9.4 slice 2, I4).
+  // primary whose lift already has an e1RM (§6.9, I4).
   const unseeded = needsStartingNumbers(program, sessions)
   if (unseeded.length > 0) {
     if (seeding)
@@ -71,7 +71,7 @@ export function TodayView({ program, sessions, asOf, seeding, onSeeding, onEditP
   const next = nextDay(days, lastLoggedDayId(sessions))!
   const day = days.find((d) => d.id === chosenDayId) ?? next
   const outOfRotation = day.id !== next.id
-  // The note left for this day last time (SPEC §9.2, slice 3).
+  // The note left for this day last time (SPEC §5.2).
   const lastTime = lastNoteFor(sessions, day.id)
 
   // Choosing a different day needs an explicit acknowledgement (SPEC §5.2).

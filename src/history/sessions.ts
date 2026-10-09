@@ -4,10 +4,10 @@ import type { ExerciseLog, Session, Substitute } from '../session/types'
 
 /** An engine session plus what the history view needs: which session it was, and any substitute. */
 export interface LoggedExerciseSession extends ExerciseSession {
-  /** The stored session's id, so History can act on it (SPEC §9.2, slices 1 and 3). */
+  /** The stored session's id, so History can act on it (SPEC §5.3, §5.4). */
   sessionId: number
   substitute?: Substitute
-  /** The session's note for next time, shown on each of its History rows (SPEC §9.2, slice 3). */
+  /** The session's note for next time, shown on each of its History rows (SPEC §5.2). */
   note?: string
 }
 
@@ -18,7 +18,7 @@ export interface LoggedExerciseSession extends ExerciseSession {
  *
  * With `before`, only sessions that came before it are included: the history that session
  * was judged against. Editing a finished session needs this, or it would be validated
- * against itself and every later session (SPEC §9.2, slice 1).
+ * against itself and every later session (SPEC §5.4).
  */
 export function exerciseHistory(
   sessions: Session[],
@@ -36,7 +36,7 @@ export function exerciseHistory(
           date: s.startedAt,
           sets: e.sets,
           ...(e.substitute && { replaced: true, substitute: e.substitute }),
-          // Judged by the range it was prescribed, if saved (SPEC §9.4 slice 1).
+          // Judged by the range it was prescribed, if saved (SPEC §6.8).
           ...(e.prescription && { repRange: e.prescription.repRange }),
           note: s.note,
         })),
@@ -66,7 +66,7 @@ export function lastLoggedDayId(sessions: Session[]): string | undefined {
 }
 
 /**
- * "Last time: …" for a training day (SPEC §9.2, slice 3): the note of that day's most recent
+ * "Last time: …" for a training day (SPEC §5.2): the note of that day's most recent
  * finished session, if it has one. Older sessions aren't searched.
  */
 export function lastNoteFor(sessions: Session[], dayId: string): string | undefined {
@@ -77,7 +77,7 @@ export function lastNoteFor(sessions: Session[], dayId: string): string | undefi
 const hasSets = (log: ExerciseLog) => loggedSetCount(log) > 0
 
 /**
- * Whether removing an exercise archives it rather than deleting it (SPEC §6.1, §9.4 slice 0): a
+ * Whether removing an exercise archives it rather than deleting it (SPEC §6.1): a
  * session, finished or open, has sets for it.
  */
 export function exerciseHasHistory(sessions: Session[], exerciseId: string): boolean {
@@ -85,7 +85,7 @@ export function exerciseHasHistory(sessions: Session[], exerciseId: string): boo
 }
 
 /**
- * Whether removing a day archives it rather than deleting it (SPEC §6.1, §9.4 slice 0): a finished
+ * Whether removing a day archives it rather than deleting it (SPEC §6.1): a finished
  * session on it (even an emptied one, which still counts for the rotation), or an open one with sets.
  */
 export function dayHasHistory(sessions: Session[], dayId: string): boolean {
@@ -95,8 +95,8 @@ export function dayHasHistory(sessions: Session[], dayId: string): boolean {
 /**
  * Open sessions on these days with nothing logged yet. Removing their day by hand discards them
  * too, whether the day is deleted or archived: nothing is lost, and no session is left on a day
- * that's gone from the program (SPEC §9.4 slice 0). Changing programs discards every open session
- * (`programChange`, slice 3).
+ * that's gone from the program (SPEC §6.1). Changing programs discards every open session
+ * (`programChange`, §5.5).
  */
 export function emptyOpenSessions(sessions: Session[], dayIds: string[]): Session[] {
   return sessions.filter(

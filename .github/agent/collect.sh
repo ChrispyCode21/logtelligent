@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Writes what Claude sees to .agent-input/ (ARCHITECTURE.md, "Agent pipeline"): the issue as it was
+# Writes what Claude sees to .agent-input/ (.github/agent/PIPELINE.md): the issue as it was
 # when it was labeled (from the event, so a later edit doesn't count), and only the owner's and the
 # agent's own comments. For a sub-issue, also its parent and the parent's thread, where the decisions
 # are. Needs GH_TOKEN, ISSUE, ISSUE_JSON and OWNER.

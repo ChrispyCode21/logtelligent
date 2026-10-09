@@ -14,9 +14,9 @@ interface Props {
 }
 
 /**
- * Ready-made programs (SPEC §9.1, slice 3), offered while the program has no active days: to start
- * with, or after changing programs (§9.4 slice 3). Each exercise joins the lift of the same name,
- * with your gym's setup (§9.4 slice 2).
+ * Ready-made programs (SPEC §5.1), offered while the program has no active days: to start
+ * with, or after changing programs (§5.5). Each exercise joins the lift of the same name,
+ * with your gym's setup (§6.9).
  */
 export function TemplateCard({ program, sessions, onApplied }: Props) {
   async function use(template: (typeof TEMPLATES)[number]) {

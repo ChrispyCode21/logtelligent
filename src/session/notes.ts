@@ -1,4 +1,4 @@
-// Session notes: a note for next time (SPEC §9.2, slice 3).
+// Session notes: a note for next time (SPEC §5.2).
 
 export const NOTE_MAX = 200
 /** The character counter shows from here on. */
@@ -12,7 +12,7 @@ export function normalizeNote(text: string): string | undefined {
 
 /**
  * The Finish confirm, or undefined when Finish needs none: a short session asks first (SPEC §5.2),
- * and with no note it adds a nudge (SPEC §9.2, slice 3).
+ * and with no note it adds a nudge (SPEC §5.2).
  */
 export function finishConfirmMessage(logged: number, target: number, hasNote: boolean): string | undefined {
   if (logged >= target) return undefined

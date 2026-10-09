@@ -38,7 +38,7 @@ export const formatSet = (set: LoggedSet, scale: EffortScale = 'rpe') =>
 
 /**
  * An exercise's set count: `2 of 3 sets`, `3 of 3 sets + 1 extra`. Without a target (a past session,
- * whose prescription isn't stored): `3 sets`, `1 set + 2 extras` (SPEC §9.2, slices 1 and 2).
+ * whose prescription isn't stored): `3 sets`, `1 set + 2 extras` (SPEC §5.2, §5.4).
  */
 export function formatSetCount(sets: LoggedSet[], target?: number) {
   const counted = countedSets(sets).length
@@ -59,7 +59,7 @@ export function formatNameList(names: string[], max = 3): string {
 export const formatCountedSets = (sets: LoggedSet[], scale: EffortScale = 'rpe') =>
   formatSets(countedSets(sets), scale)
 
-/** Extra sets on their own line, `Extra: 185 × 8 · 185 × 7`, or undefined without any (SPEC §9.2, slice 2). */
+/** Extra sets on their own line, `Extra: 185 × 8 · 185 × 7`, or undefined without any (SPEC §5.2). */
 export function formatExtras(sets: LoggedSet[]): string | undefined {
   const extras = sets.filter((s) => s.extra)
   return extras.length > 0 ? `Extra: ${formatSets(extras)}` : undefined

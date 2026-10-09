@@ -68,7 +68,7 @@ export async function dismissWarmup(sessionId: number) {
   await db.sessions.update(sessionId, { warmupDismissed: true })
 }
 
-/** Save the note for next time, or clear it (SPEC §9.2, slice 3). */
+/** Save the note for next time, or clear it (SPEC §5.2). */
 export async function saveNote(sessionId: number, note: string | undefined) {
   await db.sessions
     .where('id')
@@ -81,7 +81,7 @@ export async function saveNote(sessionId: number, note: string | undefined) {
 
 /**
  * Finish a session, saving each exercise's prescription from the program as stored right now
- * (SPEC §9.4 slice 1). One transaction, so a program edit can't land in between.
+ * (SPEC §6.8). One transaction, so a program edit can't land in between.
  */
 export async function finishSession(sessionId: number) {
   await db.transaction('rw', db.sessions, db.programs, async () => {

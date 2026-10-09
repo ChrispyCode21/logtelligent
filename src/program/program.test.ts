@@ -37,7 +37,7 @@ function program(): Program {
 const dayNames = (p: Program) => activeDays(p).map((d) => d.name)
 
 describe('program editing', () => {
-  it('starts a new program on the Reps left effort scale (SPEC §9.1, slice 1)', () => {
+  it('starts a new program on the Reps left effort scale (SPEC §5.6)', () => {
     expect(EMPTY_PROGRAM.effortScale).toBe('repsLeft')
   })
 
@@ -80,7 +80,7 @@ describe('7.A Seed gate', () => {
   })
 })
 
-describe('changing programs (SPEC §9.4 slice 3)', () => {
+describe('changing programs (SPEC §5.5)', () => {
   it('clears the active days: with history archived, others deleted; archived days and the scale stay', () => {
     const program: Program = {
       id: 'main',

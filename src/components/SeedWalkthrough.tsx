@@ -29,7 +29,7 @@ interface Props {
 }
 
 /**
- * Step through the exercises still missing starting numbers, one per screen (SPEC §9.1, slice 3).
+ * Step through the exercises still missing starting numbers, one per screen (SPEC §5.1).
  * Each Next saves that exercise, so the current step is always the first one still missing; leaving
  * and coming back resumes there.
  */
@@ -71,7 +71,7 @@ interface StepProps {
   progress: string
   last: boolean
   initialStack: StackPick
-  /** The lift's latest weight, pre-filled before the bank's (SPEC §9.4 slice 2). */
+  /** The lift's latest weight, pre-filled before the bank's (SPEC §6.9). */
   liftWeight?: number
   onSave: (exercise: ProgramExercise, stack?: StackPick) => Promise<void>
   onLater: () => void

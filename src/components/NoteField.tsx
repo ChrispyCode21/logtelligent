@@ -8,7 +8,7 @@ interface Props {
   onBlur: () => void
 }
 
-/** The note for next time (SPEC §9.2, slice 3): plain text, up to 200 characters. */
+/** The note for next time (SPEC §5.2): plain text, up to 200 characters. */
 export function NoteField({ value, onChange, onBlur }: Props) {
   return (
     <>

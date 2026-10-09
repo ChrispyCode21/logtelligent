@@ -15,7 +15,7 @@ const bench: ExerciseConfig = {
   unilateral: false,
 }
 
-describe('prescriptions (SPEC §9.4 slice 1)', () => {
+describe('prescriptions (SPEC §6.8)', () => {
   it('saves each exercise’s rep range and set count, leaving exercises gone from the program as they are', () => {
     const logs: ExerciseLog[] = [
       { exerciseId: 'bench', sets: [{ weight: 225, reps: 5, rpe: 8 }] },

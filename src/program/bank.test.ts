@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { defaultLoads } from '../engine'
 import { BANK, BODY_AREAS, findBankExercise, searchBank } from './bank'
 
-describe('exercise bank (SPEC §9.1, slice 2)', () => {
+describe('exercise bank (SPEC §5.1)', () => {
   it('has about 50 exercises in every body area', () => {
     expect(BANK.length).toBeGreaterThanOrEqual(45)
     for (const { id } of BODY_AREAS) expect(BANK.some((e) => e.area === id)).toBe(true)

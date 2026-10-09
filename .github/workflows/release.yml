@@ -1,6 +1,7 @@
 # Tags and publishes a release when a merge to main carries a new version in package.json.
 # Release by PR: bump the version and add its CHANGELOG.md section (CI checks the section exists).
-# Also keeps a milestone for each scoped version (ARCHITECTURE.md, "Labels and milestones").
+# Releasing a version also closes its milestone (.github/agent/PIPELINE.md, "Labels and milestones"); the owner
+# creates milestones by hand when a version is scoped.
 name: Release
 
 on:
@@ -40,29 +41,4 @@ jobs:
           milestone=$(gh api --paginate "repos/$GITHUB_REPOSITORY/milestones?state=open" --jq ".[] | select(.title == \"$tag\") | .number")
           for number in $milestone; do
             gh api -X PATCH "repos/$GITHUB_REPOSITORY/milestones/$number" -f state=closed >/dev/null
-          done
-
-  milestones:
-    name: Milestones for scoped versions
-    needs: release # so a version released by this merge isn't given a milestone
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      issues: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      # A version is scoped when SPEC.md has its "## 9.x vX.Y.Z" section. Each one not yet released
-      # gets a milestone, unless it already has one (open or closed).
-      - name: Create missing milestones
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          existing=$(gh api --paginate "repos/$GITHUB_REPOSITORY/milestones?state=all" --jq '.[].title')
-          { grep -oE '^## 9\.[0-9]+ v[0-9]+\.[0-9]+\.[0-9]+' SPEC.md || true; } | while read -r _ section tag; do
-            if grep -qxF "$tag" <<<"$existing" || gh release view "$tag" >/dev/null 2>&1; then continue; fi
-            gh api -X POST "repos/$GITHUB_REPOSITORY/milestones" -f title="$tag" -f description="Scoped in SPEC.md §$section." >/dev/null
-            echo "Created the $tag milestone."
           done

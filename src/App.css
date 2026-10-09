@@ -98,7 +98,7 @@ button[aria-pressed='true'] {
   width: 100%;
   display: flex;
   justify-content: space-between;
-  /* Flex items otherwise stretch to the 44 px row and sit at its top (SPEC §9.3). */
+  /* Flex items otherwise stretch to the 44 px row and sit at its top (SPEC §4). */
   align-items: center;
 }
 
@@ -166,7 +166,7 @@ button[aria-pressed='true'] {
   border-left: 4px solid var(--danger);
 }
 
-/* Slice 3: navigation, program setup, multi-exercise sessions */
+/* Navigation, program setup, multi-exercise sessions */
 
 .app-header {
   display: flex;
@@ -202,7 +202,7 @@ textarea {
   box-sizing: border-box;
 }
 
-/* After the rule above, which would otherwise win: the logging inputs are larger (SPEC §9.2, slice 0). */
+/* After the rule above, which would otherwise win: the logging inputs are larger (SPEC §4). */
 .stepper input {
   min-width: 0;
   text-align: center;
@@ -250,7 +250,7 @@ fieldset.field legend {
   overflow-wrap: break-word;
 }
 
-/* v1.1.0 slice 3: templates, guided seeding */
+/* Templates, guided seeding */
 
 .templates,
 .template,
@@ -264,7 +264,7 @@ fieldset.field legend {
   margin: 0;
 }
 
-/* v1.1.0 slice 2: exercise bank */
+/* Exercise bank */
 
 .exercise-picker {
   display: grid;
@@ -410,7 +410,7 @@ fieldset.field legend {
   gap: var(--space-3);
 }
 
-/* Slice 4: history */
+/* History */
 
 .app-header {
   flex-wrap: wrap;
@@ -464,7 +464,7 @@ fieldset.field legend {
   stroke-width: 2;
 }
 
-/* Over 10 effective reps: counted only when nothing lower is (SPEC §9.4 slice 2). */
+/* Over 10 effective reps: counted only when nothing lower is (SPEC §6.9). */
 .chart .marker.high-reps {
   fill: var(--surface);
   stroke: var(--accent);
@@ -489,13 +489,13 @@ fieldset.field legend {
   margin-left: 0;
 }
 
-/* Edit opens the whole session (SPEC §9.2, slice 1). */
+/* Edit opens the whole session (SPEC §5.4). */
 .history-edit {
   margin-left: auto;
   padding: 0 var(--space-4);
 }
 
-/* Slice 5: exercise menu */
+/* Exercise menu */
 
 .logger-head {
   display: flex;
@@ -534,7 +534,7 @@ fieldset.field legend {
   opacity: 0.75;
 }
 
-/* Slice 6: warm-up banner, backup */
+/* Warm-up banner, backup */
 
 .note.warmup {
   display: flex;
@@ -584,7 +584,7 @@ fieldset.field legend {
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* v1.2.0 slice 3: session notes */
+/* Session notes */
 
 textarea {
   padding: var(--space-3) var(--space-4);
@@ -605,8 +605,8 @@ textarea {
   display: none;
 }
 
-/* v1.2.1: the effort scale's descriptions share one grid cell, so it's always as tall as the
-   longest one and switching scales doesn't move the rest of the tab (SPEC §9.3). */
+/* The effort scale's descriptions share one grid cell, so it's always as tall as the
+   longest one and switching scales doesn't move the rest of the tab (SPEC §5.6). */
 .scale-descriptions {
   display: grid;
   /* The spacing a lone paragraph had before. */

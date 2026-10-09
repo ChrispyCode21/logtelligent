@@ -12,7 +12,7 @@ export function predictedReps(e1rm: number, weight: number, targetRpe: number): 
 
 /**
  * Heaviest available load whose predicted reps reach the target (SPEC §6.4).
- * Falls back to the lightest load if none do (SPEC §10 #6).
+ * Falls back to the lightest load if none do (SPEC §6.4).
  */
 export function pickWeight(e1rm: number, target: number, targetRpe: number, loads: number[]) {
   let weight = loads[0]
@@ -50,7 +50,7 @@ function fromPlan(
 
 /**
  * Next session's suggestion for an exercise, from its finished history. `lift` holds the finished
- * sessions of the other exercises in its lift (same name, SPEC §9.4 slice 2), each already marked
+ * sessions of the other exercises in its lift (same name, SPEC §6.9), each already marked
  * by its own replay: they share the e1RM, while progression comes from this exercise's history alone.
  */
 export function suggestNext(

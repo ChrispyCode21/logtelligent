@@ -29,7 +29,7 @@ describe('exerciseHistory', () => {
     ])
   })
 
-  describe('before a session (SPEC §9.2, slice 1)', () => {
+  describe('before a session (SPEC §5.4)', () => {
     const finished = (id: number, startedAt: string, weight: number): Session => ({
       id,
       startedAt,
@@ -64,7 +64,7 @@ describe('exerciseHistory', () => {
   })
 })
 
-describe('exerciseHistory with a saved prescription (SPEC §9.4 slice 1)', () => {
+describe('exerciseHistory with a saved prescription (SPEC §6.8)', () => {
   it('passes the saved rep range to the engine, and nothing for a session without one', () => {
     const base = { startedAt: '2026-10-01T10:00:00Z', finishedAt: '2026-10-01T11:00:00Z' }
     const sets = [{ weight: 225, reps: 4, rpe: 8 }]
@@ -131,7 +131,7 @@ describe('exerciseHistory with the exercise menu (SPEC §5.2)', () => {
   })
 })
 
-describe('history when removing from the program (SPEC §6.1, §9.4 slice 0)', () => {
+describe('history when removing from the program (SPEC §6.1)', () => {
   const set = { weight: 225, reps: 5 }
   const session = (
     id: number,
@@ -202,7 +202,7 @@ describe('history when removing from the program (SPEC §6.1, §9.4 slice 0)', (
   })
 })
 
-describe('"Last time: …" (SPEC §9.2, slice 3)', () => {
+describe('"Last time: …" (SPEC §5.2)', () => {
   const session = (id: number, dayId: string, day: number, note?: string, finished = true): Session => {
     const startedAt = `2026-09-${String(day).padStart(2, '0')}T10:00:00Z`
     return { id, dayId, startedAt, finishedAt: finished ? startedAt : undefined, exercises: [], note }

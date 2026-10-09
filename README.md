@@ -2,7 +2,7 @@
 
 A lifting log PWA that suggests next session's weights and reps from your own history.
 
-**Docs:** [SPEC.md](SPEC.md) (what and why) · [ARCHITECTURE.md](ARCHITECTURE.md) (how) · [TESTING.md](TESTING.md) (verifying changes) · [CHANGELOG.md](CHANGELOG.md) (versions) · [CLAUDE.md](CLAUDE.md) (rules for AI sessions)
+**Docs:** [SPEC.md](SPEC.md) (what and why) · [ARCHITECTURE.md](ARCHITECTURE.md) (how) · [TESTING.md](TESTING.md) (verifying changes) · [CHANGELOG.md](CHANGELOG.md) (versions) · [PIPELINE.md](.github/agent/PIPELINE.md) (the agent pipeline) · [CLAUDE.md](CLAUDE.md) (rules for AI sessions)
 
 All data stays on the device (IndexedDB). Use **Program → Backup → Export data** now and then; **Restore from file…** brings a backup back.
 
@@ -29,7 +29,7 @@ Every PR (and every push to `main`) runs:
 - **Security** (`.github/workflows/security.yml`): CodeQL on the app code and on the workflows, plus dependency review that blocks PRs adding packages with known vulnerabilities.
 - **Dependabot** opens weekly update PRs for npm packages and the SHA-pinned GitHub Actions.
 
-The PR template carries the checklist for what can't be automated (building to Decided items, keeping SPEC.md current).
+The PR template carries the checklist for what can't be automated (building only to what SPEC.md says, keeping it current).
 
 ## Releases
 
@@ -60,7 +60,7 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
    ```powershell
    gh api -X PUT 'repos/{owner}/logtelligent/rulesets/<id>' --input .github/rulesets/main.json
    ```
-5. Labels for the agent pipeline (ARCHITECTURE.md, "Agent pipeline"). `--force` updates a label that already exists, so these are safe to re-run:
+5. Labels for the agent pipeline ([PIPELINE.md](.github/agent/PIPELINE.md), "Labels and milestones"). `--force` updates a label that already exists, so these are safe to re-run:
    ```powershell
    gh label create agent-ready --color 0E8A16 --description 'Ready for Claude to build' --force
    ```
@@ -76,7 +76,7 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
    ```powershell
    gh label create touches-gates --color D93F0B --description 'Changes the checks, config, headers or hosting; read before merging' --force
    ```
-6. Claude for the agent pipeline, with no stored key (Workload Identity Federation; ARCHITECTURE.md, "Agent pipeline"):
+6. Claude for the agent pipeline, with no stored key (Workload Identity Federation; [PIPELINE.md](.github/agent/PIPELINE.md), "Where it lives"):
    1. Install the [Claude GitHub App](https://github.com/apps/claude) on this repository only.
    2. In the [Claude Console](https://platform.claude.com) (the developer API, billed separately from a Claude plan): add credits under **Billing**, and create a workspace `github-actions` with a monthly spend limit.
    3. **Settings → Workload identity → Connect workload → GitHub Actions.** Issuer `https://token.actions.githubusercontent.com`. Match: subject `<prefix>:ref:refs/heads/main`, where `<prefix>` is the repo's GitHub OIDC subject prefix from `gh api 'repos/{owner}/logtelligent/actions/oidc/customization/sub' --jq .sub_claim_prefix` (with GitHub's immutable subjects it includes numeric IDs, e.g. `repo:owner@123/logtelligent@456`, not the `repo:owner/logtelligent` the Console's template suggests), and the claims `repository_owner`, `repository`, `ref` (`refs/heads/main`), `repository_owner_id`, `event_name` (`issues`) and `workflow_ref` (`{owner}/logtelligent/.github/workflows/agent.yml@refs/heads/main`). Enable it in the `github-actions` workspace only; scope `workspace:developer`; token lifetime 600 seconds. Don't create API keys for the service account.

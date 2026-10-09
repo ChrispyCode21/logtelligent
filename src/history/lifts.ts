@@ -6,7 +6,7 @@ import { loggedSetCount } from '../session/sets'
 import type { Session } from '../session/types'
 import { dayHasHistory, exerciseHistory, type LoggedExerciseSession } from './sessions'
 
-// A lift's sessions across the program (SPEC §9.4 slice 2): they share the e1RM and History, while
+// A lift's sessions across the program (SPEC §6.9): they share the e1RM and History, while
 // each exercise keeps its own progression.
 
 /** One exercise's finished sessions, marked by its own replay (deloads, SPEC §6.7). */
@@ -16,7 +16,7 @@ function replayed(sessions: Session[], exercise: ProgramExercise, before?: Sessi
 
 /**
  * The finished sessions of the other exercises in this one's lift, each marked by its own replay:
- * what `suggestNext` takes as `lift`. With `before`, only sessions before it (editing, §9.2 slice 1).
+ * what `suggestNext` takes as `lift`. With `before`, only sessions before it (editing, §5.4).
  */
 export function otherLiftSessions(
   program: Program,
@@ -33,7 +33,7 @@ const countsForE1rm = (s: ExerciseSession) => !s.isDeload && !s.replaced && sess
 
 /**
  * Exercises still missing starting numbers, which the seed gate asks for before a session (SPEC
- * §5.1). A primary whose lift already has an e1RM from a real session needs none (§9.4 slice 2).
+ * §5.1). A primary whose lift already has an e1RM from a real session needs none (§6.9).
  */
 export function needsStartingNumbers(program: Program, sessions: Session[]): ProgramExercise[] {
   return missingSeeds(program).filter((e) => e.tier !== 'primary' || !liftHasE1rm(program, sessions, e.name))
@@ -42,7 +42,7 @@ export function needsStartingNumbers(program: Program, sessions: Session[]): Pro
 /**
  * The lift's most recently logged exercise, where a new exercise in the lift copies its equipment
  * and loads from, and the starting weight an accessory is pre-filled with: the first counted set of
- * the latest session that wasn't a deload week (SPEC §9.4 slice 2). Replaced sessions don't count.
+ * the latest session that wasn't a deload week (SPEC §6.9). Replaced sessions don't count.
  */
 export function latestInLift(
   program: Program,
@@ -73,7 +73,7 @@ export function liftHasE1rm(program: Program, sessions: Session[], name: string)
 
 /**
  * A new exercise joining a lift takes your gym's setup from the lift's most recently logged
- * exercise (`latestInLift`): equipment, loads, one-sided (SPEC §9.4 slice 2).
+ * exercise (`latestInLift`): equipment, loads, one-sided (SPEC §6.9).
  */
 export function withLiftGym(exercise: ProgramExercise, from: ProgramExercise | undefined): ProgramExercise {
   // Bodyweight is accessory-only (SPEC §6.1), so a primary keeps its own equipment then.
@@ -81,7 +81,7 @@ export function withLiftGym(exercise: ProgramExercise, from: ProgramExercise | u
   return { ...exercise, equipment: from.equipment, loads: from.loads, unilateral: from.unilateral }
 }
 
-/** What "Change your program" does (SPEC §9.4 slice 3), for its confirm and the change itself. */
+/** What "Change your program" does (SPEC §5.5), for its confirm and the change itself. */
 export interface ProgramChange {
   /** Lifts among the active exercises with finished history: they keep it for the next program. */
   keptLifts: string[]

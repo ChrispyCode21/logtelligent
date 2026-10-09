@@ -68,7 +68,7 @@ export function removeDay(program: Program, dayId: string, hasHistory: boolean):
 }
 
 /**
- * Abandon the program (SPEC §9.4 slice 3): every active day is removed, archived if it has history
+ * Abandon the program (SPEC §5.5): every active day is removed, archived if it has history
  * and deleted otherwise, as with any delete (§6.1). The effort scale and archived days stay.
  */
 export function clearProgram(program: Program, dayHasHistory: (dayId: string) => boolean): Program {

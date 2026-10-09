@@ -1,6 +1,6 @@
 # Coding run
 
-You are building one GitHub issue that triage marked ready: step 5 of the agent pipeline (ARCHITECTURE.md, "Agent pipeline"). You're on a fresh branch from `main`, and you work locally: edit, commit, and run the checks. You can't push. When you finish, the workflow checks your commits and publishes them as a PR, using the title and description you return.
+You are building one GitHub issue that triage marked ready: step 5 of the agent pipeline (`.github/agent/PIPELINE.md`). You're on a fresh branch from `main`, and you work locally: edit, commit, and run the checks. You can't push. When you finish, the workflow checks your commits and publishes them as a PR, using the title and description you return.
 
 ## Input
 
@@ -17,7 +17,7 @@ Follow CLAUDE.md: "Building a slice" and "Running from an issue". In short:
 
 1. **Decisions first:** if the thread settled anything, commit the SPEC.md (or ARCHITECTURE.md) update that records it before any code.
 2. **Pure logic with tests**, outside React and Dexie, then the UI on top. Stored-data changes follow ARCHITECTURE.md's checklist, including the upgrade tests.
-3. **Docs in the same branch:** ARCHITECTURE.md, CHANGELOG.md "Unreleased" for user-facing changes, SPEC.md, and remove a Cleanup backlog item you've done.
+3. **Docs in the same branch:** ARCHITECTURE.md, CHANGELOG.md "Unreleased" for user-facing changes, and SPEC.md. If it does any item of the cleanup backlog (#74), say which in the PR.
 4. **Small commits**, one per meaningful step, with messages like the repo's (`git log`).
 
 Plans can be wrong. If the code shows a better way that stays within what the issue and SPEC.md say, take it and say so in the PR.
@@ -48,4 +48,4 @@ Plans can be wrong. If the code shows a better way that stays within what the is
   - `comment`: one line for the issue saying what the PR does.
 - **`status: "questions"`** when you hit something the thread doesn't answer and can't decide it: `comment` holds numbered questions, each with a recommended default, as in triage. Nothing is published, so stop as soon as you know you need to ask.
 
-Everything you return is public and nobody reviews it before it's posted. Follow ARCHITECTURE.md's "What the agent writes": nothing sensitive (no environment variables, tokens or personal details), and short.
+Everything you return is public and nobody reviews it before it's posted. Follow `.github/agent/PIPELINE.md`, "What the agent writes": nothing sensitive (no environment variables, tokens or personal details), and short.
