@@ -1,10 +1,24 @@
 # Testing
 
-Three layers check the app:
+Four layers check the app:
 
-1. **Unit tests** (`npm test`, run by CI): the progression engine and every pure rule, including each SPEC §7 worked example.
-2. **Preview checks** while building a slice: the flows driven by DOM in the Claude desktop app's Browser pane, plus sideways scrolling and clipped labels at 375 and 320 px. How, and the pane's quirks, are under "In the preview" below.
-3. **Phone checks** after a release deploys: what only a real iPhone can show. Two lists: **every release**, which stays as it is, and **the current release**, which is replaced with each release.
+1. **Unit tests** (`npm test`, run by CI): the progression engine and every pure rule, including each SPEC §7 worked example, and the database upgrade tests.
+2. **Browser tests** (`npm run test:e2e`, run by CI as "Playwright"): every screen at 375 and 320 px for sideways scrolling and clipped labels, and smoke tests of the main flows. See "Playwright" below.
+3. **Preview checks** while building a slice: the flows driven by DOM in the Claude desktop app's Browser pane, for anything the browser tests don't reach. How, and the pane's quirks, are under "In the preview" below.
+4. **Phone checks** after a release deploys: what only a real iPhone can show. Two lists: **every release**, which stays as it is, and **the current release**, which is replaced with each release.
+
+## Playwright
+
+`npm run test:e2e` runs `e2e/` against the production build (`vite preview`, under the production headers) in WebKit, the iPhone's engine, and Chromium, each at 375×812 and 320×640. CI runs it as the "Playwright" check.
+
+- **`layout.spec.ts`** walks every screen and state: the empty tabs; each step of the starting-numbers walkthrough, and "Starting numbers needed"; Today, with a note from last time and with a day out of rotation; a live session on each effort scale, with all sets logged, a set being edited, the extra-set form, the exercise menu, the Replace form, and a replaced and a skipped exercise; History (a chart, a substitute, an extra set, a note) and a finished session being edited; the Program tab, the exercise form (editing, from the bank, custom) and picker (browsing, searching), and the Program tab after changing programs. Each check first waits for something only that screen shows, then fails on sideways scrolling (naming the elements that stick out) or a clipped button label.
+- **`smoke.spec.ts`** runs the main flows: template → starting numbers → log a session → the next day comes up and History shows it; restoring a backup; exporting what was restored.
+- **Dialogs:** `confirm()` is accepted, but a test must expect each one (`expectConfirm`); one it didn't expect fails the test.
+- **No retries:** a test that fails once fails the run, so timing races show up instead of passing as "flaky".
+- **Adding a screen:** add the state to `layout.spec.ts` (the helpers in `support.ts` set up a program, log a session, or restore the fixture backup).
+- **Running it locally:** `npx playwright install chromium webkit` once, then `npm run test:e2e` (it builds the app first, on port 4173). A failure keeps a trace in `test-results/`; open it with `npx playwright show-trace <path>/trace.zip`.
+
+It doesn't replace the phone: real touch, the home-screen install, updates, offline, and native `confirm()` dialogs stay on the phone lists below.
 
 ## On the phone
 
@@ -57,9 +71,9 @@ Known quirks of verifying the app in the Claude desktop app's Browser pane. Not 
 When the pane emulates a phone viewport (the `mobile` preset, 375×812), it reports a different viewport (e.g. 424×919) and clicks by element ref are scaled to the wrong coordinates: a "Log set" click once hit the gap above the button, and a "Move Upper A up" click reordered a different day.
 
 - **Workaround:** test at the pane's own (desktop) size. The layout is capped at 480 px, so it renders the same. Check results through the DOM (`javascript_tool` reading `main.innerText` or IndexedDB), not by trusting the click report or a page-text read, which can lag a render behind.
-- **Phone-width layout without clicks:** set a custom viewport (375×812 and 320×640), drive the UI with DOM `.click()` calls, and compare `document.documentElement.scrollWidth` to `clientWidth` on each screen. Any difference is sideways scrolling; list the elements whose `getBoundingClientRect().right` exceeds the viewport to find the culprit. This is how the "forms widen the page" bug (an input's default width forcing a grid column wider) was found.
+- **Phone-width layout without clicks:** (what `expectFitsScreen` in `e2e/support.ts` automates; use it by hand for a quick look) set a custom viewport (375×812 and 320×640), drive the UI with DOM `.click()` calls, and compare `document.documentElement.scrollWidth` to `clientWidth` on each screen. Any difference is sideways scrolling; list the elements whose `getBoundingClientRect().right` exceeds the viewport to find the culprit. This is how the "forms widen the page" bug (an input's default width forcing a grid column wider) was found.
 - **Clipped labels:** also check that no button's text overflows its own box (`button.scrollWidth > button.clientWidth`). Long labels in narrow grids (three across, or five effort buttons) show up this way before they show up as sideways scrolling.
-- The preview can't stand in for a phone, so new screens get these DOM checks here and a pass on the phone (the lists above).
+- The preview can't stand in for a phone, so new screens go in `e2e/layout.spec.ts` and get a pass on the phone (the lists above).
 
 ### Techniques
 

@@ -6,6 +6,10 @@ To release: in a PR, move the "Unreleased" notes under a new version heading, bu
 
 ## [Unreleased]
 
+### Fixed
+
+- **Effort scale buttons on narrow screens:** with a font wider than the iPhone's, or larger text, "Perceived effort" no longer runs past its button on a 320-pixel-wide screen; the word breaks onto the next line instead.
+
 ## [1.3.0] - 2026-10-09
 
 Change programs without losing history: lifts share one history and estimated 1RM across days, sessions remember what they were prescribed, and you can switch programs when you need to.

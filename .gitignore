@@ -31,3 +31,7 @@ CLAUDE.local.md
 # Local Claude Code settings stay local; shared subagents are committed.
 .claude/*
 !.claude/agents/
+
+# Playwright output (npm run test:e2e)
+test-results
+playwright-report
