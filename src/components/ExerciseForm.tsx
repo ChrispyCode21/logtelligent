@@ -14,6 +14,7 @@ import type { ProgramExercise } from '../program/types'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
+import { SegmentedControl } from '../ui/SegmentedControl'
 import { EQUIPMENT_LABELS, TIER_LABELS } from '../ui/format'
 import { SeedFields } from './SeedFields'
 
@@ -66,17 +67,14 @@ export function ExerciseForm({ initial, preset, effortScale, onSave, onCancel }:
       </Field>
 
       <Field as="fieldset" label="Tier">
-        <div className="segmented">
-          {(['primary', 'accessory'] as const).map((tier) => (
-            <Button
-              key={tier}
-              aria-pressed={form.tier === tier}
-              onClick={() => setForm(withTier(form, tier))}
-            >
-              {TIER_LABELS[tier]}
-            </Button>
-          ))}
-        </div>
+        <SegmentedControl
+          options={(['primary', 'accessory'] as const).map((tier) => ({
+            value: tier,
+            label: TIER_LABELS[tier],
+          }))}
+          value={form.tier}
+          onChange={(tier) => setForm(withTier(form, tier))}
+        />
       </Field>
 
       <div className="row">
