@@ -61,7 +61,7 @@ jobs:
         run: |
           set -euo pipefail
           existing=$(gh api --paginate "repos/$GITHUB_REPOSITORY/milestones?state=all" --jq '.[].title')
-          grep -oE '^## 9\.[0-9]+ v[0-9]+\.[0-9]+\.[0-9]+' SPEC.md | while read -r _ section tag; do
+          { grep -oE '^## 9\.[0-9]+ v[0-9]+\.[0-9]+\.[0-9]+' SPEC.md || true; } | while read -r _ section tag; do
             if grep -qxF "$tag" <<<"$existing" || gh release view "$tag" >/dev/null 2>&1; then continue; fi
             gh api -X POST "repos/$GITHUB_REPOSITORY/milestones" -f title="$tag" -f description="Scoped in SPEC.md §$section." >/dev/null
             echo "Created the $tag milestone."

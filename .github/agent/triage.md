@@ -36,9 +36,9 @@ Write numbered questions, each with a recommended default and a short reason, e.
 - `body`: the sub-issue's own text: what to build and "done when", in a few lines. It's created word for word on approval and is all a later run sees besides the parent, so make it stand on its own;
 - `blocked_by`: the numbers (1-based) of earlier sub-issues it needs first, or `[]`.
 
-The workflow shows them under your `comment`, so the comment is only a sentence or two on why it splits there.
+The workflow shows them under your `comment`, so the comment is only a sentence or two on why it splits there. Use no HTML comments (`<!-- -->`) anywhere: they'd be hidden from the owner, so a split containing one is refused.
 
-**`approved_split`** when your latest split proposal is in the thread and the owner's reply after it approves it as it stands. The sub-issues are then created from that posted proposal, so return no `subissues`, and a one-line `comment`. If the reply asks for changes, return a revised **`split`** instead, for the owner to approve again. If the issue already has sub-issues (the thread says they were created), don't propose or approve another split; ask what's wanted.
+**`approved_split`** when your latest split proposal is in the thread and the owner's reply after it, starting "approved", approves it as it stands (the workflow checks that word too). The sub-issues are then created from that posted proposal, so return no `subissues`, and a one-line `comment`. If the reply asks for changes, return a revised **`split`** instead, for the owner to approve again. If the issue already has sub-issues (the thread says they were created), don't propose or approve another split; ask what's wanted.
 
 **`ready`** when it can be built as it stands. Write a short plan:
 

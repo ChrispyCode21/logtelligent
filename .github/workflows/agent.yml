@@ -16,10 +16,11 @@ permissions: {}
 jobs:
   triage:
     name: Triage
-    # claude[bot] labels the sub-issues and release issues it creates (the jobs below).
+    # claude[bot] labels the sub-issues and release issues it creates (the jobs below), and only those.
     if: >-
       github.event.action == 'labeled' && github.event.label.name == 'agent-ready' &&
-      (github.event.sender.login == github.repository_owner || github.event.sender.login == 'claude[bot]')
+      (github.event.sender.login == github.repository_owner ||
+      (github.event.sender.login == 'claude[bot]' && github.event.issue.user.login == 'claude[bot]'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # One triage at a time; the rest wait in order (ARCHITECTURE.md, "Triggers and who can start a run").
@@ -67,7 +68,7 @@ jobs:
             --max-turns 40
             --allowedTools Read,Grep,Glob
             --disallowedTools Bash,Edit,Write,NotebookEdit,WebFetch,WebSearch
-            --json-schema '{"type":"object","properties":{"decision":{"type":"string","enum":["questions","split","approved_split","ready"]},"comment":{"type":"string","minLength":1,"maxLength":6000},"subissues":{"type":"array","minItems":2,"maxItems":8,"items":{"type":"object","properties":{"title":{"type":"string","minLength":1,"maxLength":100},"body":{"type":"string","minLength":1,"maxLength":3000},"blocked_by":{"type":"array","items":{"type":"integer","minimum":1}}},"required":["title","body","blocked_by"],"additionalProperties":false}}},"required":["decision","comment"],"additionalProperties":false}'
+            --json-schema '{"type":"object","properties":{"decision":{"type":"string","enum":["questions","split","approved_split","ready"]},"comment":{"type":"string","minLength":1,"maxLength":6000},"subissues":{"type":"array","minItems":2,"maxItems":8,"items":{"type":"object","properties":{"title":{"type":"string","minLength":1,"maxLength":100},"body":{"type":"string","minLength":1,"maxLength":2000},"blocked_by":{"type":"array","items":{"type":"integer","minimum":1}}},"required":["title","body","blocked_by"],"additionalProperties":false}}},"required":["decision","comment"],"additionalProperties":false}'
 
       - name: Read the decision
         id: decision
@@ -77,11 +78,9 @@ jobs:
         run: |
           decision=$(jq -r '.decision // empty' <<<"${RESULT:-null}" 2>/dev/null || true)
           case "$decision" in questions | split | approved_split | ready) ;; *) decision="" ;; esac
-          # A split needs 2-8 sub-issues, each blocked only by ones listed before it (so no cycles).
-          if [ "$decision" = split ] && ! jq -e '
-              (.subissues | type == "array" and length >= 2 and length <= 8)
-              and ([.subissues | to_entries[] | .key as $i | .value.blocked_by[] | . >= 1 and . <= $i] | all)' \
-              <<<"$RESULT" >/dev/null 2>&1; then
+          # A split needs 2-8 sub-issues, each blocked only by ones listed before it (so no cycles),
+          # and no HTML comments: those wouldn't show in the proposal the owner approves.
+          if [ "$decision" = split ] && ! jq -e -f .github/agent/split-valid.jq <<<"$RESULT" >/dev/null 2>&1; then
             decision=""
           fi
           echo "decision=$decision" >> "$GITHUB_OUTPUT"
@@ -129,7 +128,7 @@ jobs:
           if [ -n "${COST:-}" ]; then footer="$footer · \$$(printf '%.2f' "$COST")"; fi
           case "$decision" in
             questions) next="Answer with numbered replies, then re-add \`agent-ready\`." ;;
-            split) next="Reply \"approved\" (or with changes), then re-add \`agent-ready\`. The sub-issues are created from this comment as written." ;;
+            split) next="Reply starting \"approved\" (or with changes), then re-add \`agent-ready\`. The sub-issues are created from this comment as written." ;;
             approved_split) next="Creating the sub-issues now." ;;
             ready) next="Building it now. A PR, or questions, will follow here." ;;
             *) next="" ;;
@@ -143,7 +142,7 @@ jobs:
               "#### \(.key + 1). \(.value.title)\n\n\(.value.body)\n" +
               (if (.value.blocked_by | length) > 0 then "\n_Blocked by \(.value.blocked_by | map(tostring) | join(", "))._\n" else "" end)' \
               <<<"$RESULT")
-            proposal=$(printf '%s\n\n<!-- agent-split:%s -->' "$proposal" "$(jq -c .subissues <<<"$RESULT" | base64 -w0)")
+            proposal=$(printf '%s\n\n<!-- agent-split:%s -->' "$proposal" "$(jq -c .subissues <<<"$RESULT" | gzip -9n | base64 -w0)")
           fi
 
           { printf '%s\n\n' "$comment"; [ -z "$proposal" ] || printf '%s\n\n' "$proposal"
@@ -166,10 +165,19 @@ jobs:
     if: always() && needs.triage.outputs.decision == 'approved_split'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: agent-split-${{ github.event.issue.number }}
+      cancel-in-progress: false
     permissions:
+      contents: read
       issues: write # comments on the parent
       id-token: write # the Claude App token below, limited to issues
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/agent
+
       - name: Create, link and label them
         env:
           GH_TOKEN: ${{ github.token }}
@@ -182,14 +190,20 @@ jobs:
           say() { printf '%s\n\n<sub>Sub-issues · [run](%s)</sub>\n' "$1" "$RUN_URL" | gh issue comment "$ISSUE" --repo "$repo" --body-file -; }
           stop() { say "No sub-issues were created: $1"; exit 0; }
 
-          # The newest proposal, and an owner comment after it (the approval Claude read).
+          # The newest proposal, and a reply from the owner after it starting "approved" (Claude judged
+          # the approval too; this doesn't rest on that alone).
           gh api --paginate "repos/$repo/issues/$ISSUE/comments" --jq '.[]' | jq -s . > comments.json
           proposal=$(jq -r '[.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- agent-split:")))] | last // empty' comments.json)
           [ -n "$proposal" ] || stop "there's no split proposal on this issue to create them from."
           proposed_at=$(jq -r .created_at <<<"$proposal")
-          jq -e --arg owner "$OWNER" --arg at "$proposed_at" 'any(.[]; .user.login == $owner and .created_at > $at)' comments.json >/dev/null \
-            || stop "there's no reply from the owner after the latest proposal."
-          subs=$(jq -r '.body | capture("<!-- agent-split:(?<data>[A-Za-z0-9+/=]+) -->").data' <<<"$proposal" | base64 -d)
+          jq -e --arg owner "$OWNER" --arg at "$proposed_at" \
+            'any(.[]; .user.login == $owner and .created_at > $at and (.body | ascii_downcase | test("^\s*approved")))' comments.json >/dev/null \
+            || stop "there's no reply from the owner starting \"approved\" after the latest proposal."
+          # The last marker is the workflow's own (it comes after Claude's text), checked again here.
+          subs=$(jq -r '[.body | match("<!-- agent-split:([A-Za-z0-9+/=]+) -->"; "g")] | last | .captures[0].string' <<<"$proposal" \
+            | base64 -d | gunzip)
+          jq '{subissues: .}' <<<"$subs" | jq -e -f .github/agent/split-valid.jq >/dev/null \
+            || stop "the proposal's data didn't pass the checks."
           n=$(jq length <<<"$subs")
           [ "$(gh api "repos/$repo/issues/$ISSUE/sub_issues" --jq length)" = 0 ] \
             || stop "this issue already has sub-issues. Add any more by hand."
@@ -573,42 +587,27 @@ jobs:
           footer="<sub>After #$ISSUE closed · [run]($RUN_URL)</sub>"
 
           # A Claude App token, got as Publish gets one, only when needed: labels and issues it adds
-          # start runs, and ones made with this job's own token wouldn't.
+          # start runs, and ones made with this job's own token wouldn't. Call it outside $( ), so the
+          # token is kept and revoked at the end.
           token=""
           app_token() {
             [ -z "$token" ] || return 0
             local oidc
             oidc=$(curl -sSf -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=claude-code-github-action" | jq -r '.value // empty')
+              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=claude-code-github-action" | jq -r '.value // empty') || true
+            [ -n "$oidc" ] || { echo "::warning::Couldn't get a GitHub identity token."; return 1; }
             echo "::add-mask::$oidc"
             token=$(curl -sS -X POST https://api.anthropic.com/api/github/github-app-token-exchange \
               -H "Authorization: Bearer $oidc" -H 'Content-Type: application/json' \
-              -d '{"permissions":{"issues":"write"}}' | jq -r '.token // .app_token // empty')
-            [ -n "$token" ] || { echo "::error::Couldn't get a Claude App token."; exit 1; }
+              -d '{"permissions":{"issues":"write"}}' | jq -r '.token // .app_token // empty') || true
+            [ -n "$token" ] || { echo "::warning::Couldn't get a Claude App token."; return 1; }
             echo "::add-mask::$token"
           }
           trap '[ -z "$token" ] || curl -sS -X DELETE https://api.github.com/installation/token -H "Authorization: Bearer $token" >/dev/null || true' EXIT
-          as_app() { app_token; GH_TOKEN="$token" "$@"; }
+          as_app() { GH_TOKEN="$token" "$@"; }
 
-          # 1. Sub-issues it was blocking: the agent's own (created from a split, so they have a
-          # parent) start once every blocker is closed as completed.
-          if [ "$(jq -r .state_reason <<<"$ISSUE_JSON")" = completed ]; then
-            blocked=$(gh api --paginate "repos/$repo/issues/$ISSUE/dependencies/blocking" \
-              --jq '.[] | select(.state == "open" and .user.login == "claude[bot]") | .number')
-            for num in $blocked; do
-              gh api "repos/$repo/issues/$num/parent" >/dev/null 2>&1 || continue
-              waiting=$(gh api --paginate "repos/$repo/issues/$num/dependencies/blocked_by" \
-                --jq '.[] | select(.state != "closed" or .state_reason != "completed") | .number')
-              labels=$(gh api "repos/$repo/issues/$num" --jq '[.labels[].name | select(startswith("agent-"))] | length')
-              if [ -z "$waiting" ] && [ "$labels" = 0 ]; then
-                as_app gh issue edit "$num" --repo "$repo" --add-label agent-ready
-                printf 'Its blockers are all closed, so it starts now.\n\n%s\n' "$footer" \
-                  | gh issue comment "$num" --repo "$repo" --body-file -
-              fi
-            done
-          fi
-
-          # 2. The parent of one of the agent's sub-issues closes when they all have.
+          # 1. The parent of one of the agent's sub-issues closes when they all have. (First, as it
+          # needs no App token.)
           if [ "$(jq -r .user.login <<<"$ISSUE_JSON")" = 'claude[bot]' ] \
             && parent=$(gh api "repos/$repo/issues/$ISSUE/parent" 2>/dev/null) \
             && [ "$(jq -r .state <<<"$parent")" = open ]; then
@@ -620,13 +619,14 @@ jobs:
             fi
           fi
 
-          # 3. The release issue, once a version's milestone has nothing open: not twice, and not
-          # for a version already released.
+          # 2. The release issue, once a version's milestone has nothing open: not twice, and not
+          # for a version already released. Counted from the issue list rather than the milestone's
+          # own count, which can lag just after a close.
           ms_title=$(jq -r '.milestone.title // empty' <<<"$ISSUE_JSON")
           ms_number=$(jq -r '.milestone.number // empty' <<<"$ISSUE_JSON")
           if [[ "$ms_title" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             version=${BASH_REMATCH[1]}
-            open=$(gh api "repos/$repo/milestones/$ms_number" --jq .open_issues)
+            open=$(gh api "repos/$repo/issues?milestone=$ms_number&state=open&per_page=1" --jq length)
             existing=$(gh api --paginate "repos/$repo/issues?milestone=$ms_number&state=all" \
               --jq ".[] | select(.title == \"Release $ms_title\") | .number")
             if [ "$open" = 0 ] && [ -z "$existing" ] && ! gh release view "$ms_title" --repo "$repo" >/dev/null 2>&1; then
@@ -637,9 +637,34 @@ jobs:
 
           $footer
           BODY
-              app_token # here, not inside $( ), so the token is kept and revoked at the end
-              url=$(as_app gh issue create --repo "$repo" --title "Release $ms_title" --body-file body.md --milestone "$ms_title")
-              # Labeled after it's created, so the labeled event starts triage.
-              as_app gh issue edit "${url##*/}" --repo "$repo" --add-label agent-ready
+              if app_token; then
+                url=$(as_app gh issue create --repo "$repo" --title "Release $ms_title" --body-file body.md --milestone "$ms_title")
+                # Labeled after it's created, so the labeled event starts triage.
+                as_app gh issue edit "${url##*/}" --repo "$repo" --add-label agent-ready
+              else
+                printf 'The %s milestone has nothing left open, but the release issue couldn'"'"'t be opened. Open "Release %s" by hand and label it `agent-ready`.\n\n%s\n' \
+                  "$ms_title" "$ms_title" "$footer" | gh issue comment "$ISSUE" --repo "$repo" --body-file -
+              fi
             fi
+          fi
+
+          # 3. Sub-issues it was blocking: the agent's own (created from a split, so they have a
+          # parent) start once every blocker is closed as completed.
+          if [ "$(jq -r .state_reason <<<"$ISSUE_JSON")" = completed ]; then
+            blocked=$(gh api --paginate "repos/$repo/issues/$ISSUE/dependencies/blocking" \
+              --jq '.[] | select(.state == "open" and .user.login == "claude[bot]") | .number')
+            for num in $blocked; do
+              gh api "repos/$repo/issues/$num/parent" >/dev/null 2>&1 || continue
+              waiting=$(gh api --paginate "repos/$repo/issues/$num/dependencies/blocked_by" \
+                --jq '.[] | select(.state != "closed" or .state_reason != "completed") | .number')
+              labels=$(gh api "repos/$repo/issues/$num" --jq '[.labels[].name | select(startswith("agent-"))] | length')
+              if [ -z "$waiting" ] && [ "$labels" = 0 ]; then
+                if app_token && as_app gh issue edit "$num" --repo "$repo" --add-label agent-ready; then
+                  note='Its blockers are all closed, so it starts now.'
+                else
+                  note="Its blockers are all closed, but it couldn't be started. Add \`agent-ready\` by hand."
+                fi
+                printf '%s\n\n%s\n' "$note" "$footer" | gh issue comment "$num" --repo "$repo" --body-file -
+              fi
+            done
           fi
