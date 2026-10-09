@@ -69,8 +69,8 @@ const latPulldown = accessory({
   loads: [88, 99, 110, 121, 132, 143],
 })
 
-function suggestion(config: ExerciseConfig, history: ExerciseSession[]) {
-  const result = suggestNext(config, history, asOf)
+function suggestion(config: ExerciseConfig, history: ExerciseSession[], lift: ExerciseSession[] = []) {
+  const result = suggestNext(config, history, asOf, lift)
   if (result.kind !== 'suggestion') throw new Error('expected a suggestion, got ' + result.kind)
   return result
 }
@@ -459,5 +459,61 @@ describe('7.H Stored prescriptions (SPEC §9.4 slice 1)', () => {
     const history = stored({ min: 15, max: 20 }, weekly(sets(15, [20, 20, 18])))
     // 15 x 10, 10, 10 clears the floor of 10: a success under 10-12 (it would fail at 15-20).
     expect(evaluateSession(raise10to12, history, reps(15, 10, 10, 10)).result).toBe('success')
+  })
+})
+
+describe('7.I Lifts (SPEC §9.4 slice 2)', () => {
+  const upperA = bench // 3-5 @ RPE 8
+  const upperB: ExerciseConfig = { ...bench, id: 'bench-b', repRange: { min: 10, max: 12 }, seed: undefined }
+  const heavy = weekly(sets(225, [5, 5, 5]))
+  const light = weekly(sets(185, [12, 12, 12]))
+
+  it('I1: the 14-rep session is skipped while a lower one exists: e1RM 273.6, 230 x 4 and 190 x 11', () => {
+    const a = suggestion(upperA, heavy, deriveState(upperB, light).sessions)
+    expect(a.e1rm!.value).toBeCloseTo(273.6, 1)
+    expect(a).toMatchObject({ weight: 230, reps: 4 })
+    expect(a.predictedReps).toBeCloseTo(4.1, 1)
+    const b = suggestion(upperB, light, deriveState(upperA, heavy).sessions)
+    expect(b.e1rm!.value).toBeCloseTo(273.6, 1)
+    expect(b).toMatchObject({ weight: 190, reps: 11 })
+    expect(b.predictedReps).toBeCloseTo(11.9, 1)
+  })
+
+  it('I2: with only the 14-rep session in the window it counts: 267.3, Upper A suggests 225 x 4', () => {
+    const a = suggestion({ ...upperA, seed: undefined }, [], deriveState(upperB, light).sessions)
+    expect(a.e1rm!.value).toBeCloseTo(267.3, 1)
+    expect(a).toMatchObject({ weight: 225, reps: 4 })
+    expect(a.predictedReps).toBeCloseTo(4.1, 1)
+  })
+
+  it('I3: a fail on Upper A stacks there only; Upper B stays normal', () => {
+    const aHistory = weekly(sets(225, [5, 4, 3]), sets(235, [4, 3, 2]))
+    const a = suggestion(upperA, aHistory, deriveState(upperB, light).sessions)
+    expect(a).toMatchObject({ plan: 'revert', weight: 225, stacks: 1 })
+    const b = suggestion(upperB, light, deriveState(upperA, aHistory).sessions)
+    expect(b).toMatchObject({ plan: 'normal', stacks: 0 })
+  })
+
+  it('I5: once the lift has a real session the seed is dropped: 266.8', () => {
+    const other = deriveState(upperB, weekly(sets(225, [4, 4, 4])))
+    expect(suggestion(upperA, [], other.sessions).e1rm).toMatchObject({ basis: 'history' })
+    expect(suggestion(upperA, [], other.sessions).e1rm!.value).toBeCloseTo(266.8, 1)
+  })
+
+  it("I6: another exercise's deload week is left out of the lift's e1RM", () => {
+    const deloaded = weekly(sets(205, [5, 5], 6)).map((s) => ({ ...s, isDeload: true }))
+    const withDeload = suggestion(upperA, heavy, deloaded)
+    expect(withDeload.e1rm!.value).toBeCloseTo(suggestion(upperA, heavy).e1rm!.value, 6)
+  })
+
+  it('I8: returning from a break uses the most recent lower-rep session: 246.2, 205 x 4', () => {
+    const daysAgo = (n: number) => new Date(asOf.getTime() - n * DAY_MS).toISOString()
+    const own = [{ date: daysAgo(42), sets: sets(225, [5, 5, 5]) }]
+    const other = deriveState(upperB, [{ date: daysAgo(35), sets: sets(185, [12, 12, 12]) }]).sessions
+    const a = suggestion(upperA, own, other)
+    expect(a.e1rm).toMatchObject({ basis: 'returningFromBreak' })
+    expect(a.e1rm!.value).toBeCloseTo(246.2, 1)
+    expect(a).toMatchObject({ weight: 205, reps: 4 })
+    expect(a.predictedReps).toBeCloseTo(4.5, 1)
   })
 })

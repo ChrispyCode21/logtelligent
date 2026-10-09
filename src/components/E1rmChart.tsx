@@ -4,6 +4,8 @@ import { formatDate, formatE1rm } from '../ui/format'
 export interface ChartPoint {
   date: string
   value: number
+  /** Over 10 effective reps: drawn hollow, since it counts only when nothing lower does (SPEC §9.4 slice 2). */
+  highReps?: boolean
 }
 
 const WIDTH = 440
@@ -51,6 +53,7 @@ export function E1rmChart({ points }: Props) {
       <figcaption>
         <span className="muted">Estimated 1RM · {label}</span>{' '}
         <strong>{formatE1rm(points[shown].value)}</strong>
+        {points[shown].highReps && <span className="muted"> · high reps</span>}
       </figcaption>
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -86,7 +89,13 @@ export function E1rmChart({ points }: Props) {
         )}
         <path className="series" d={path} />
         {points.map((p, i) => (
-          <circle key={p.date} className="marker" cx={x(times[i])} cy={y(p.value)} r={i === shown ? 5 : 4} />
+          <circle
+            key={i}
+            className={p.highReps ? 'marker high-reps' : 'marker'}
+            cx={x(times[i])}
+            cy={y(p.value)}
+            r={i === shown ? 5 : 4}
+          />
         ))}
       </svg>
     </figure>

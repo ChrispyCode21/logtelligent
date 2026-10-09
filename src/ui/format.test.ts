@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatNameList,
   formatCountedSets,
   formatE1rm,
   formatExtras,
@@ -134,5 +135,15 @@ describe('extra sets on a line (SPEC §9.2, slice 2)', () => {
   it('puts them on one line, extras last and tagged', () => {
     expect(formatSetsWithExtras(sets)).toBe('225 × 5 @ 8 · 225 × 4 · Extra: 185 × 8')
     expect(formatSetsWithExtras(sets.slice(0, 2))).toBe('225 × 5 @ 8 · 225 × 4')
+  })
+})
+
+describe('formatNameList', () => {
+  it('joins up to three names, then counts the rest', () => {
+    expect(formatNameList([])).toBe('')
+    expect(formatNameList(['Bench Press'])).toBe('Bench Press')
+    expect(formatNameList(['Bench Press', 'Deadlift'])).toBe('Bench Press and Deadlift')
+    expect(formatNameList(['A', 'B', 'C'])).toBe('A, B and C')
+    expect(formatNameList(['A', 'B', 'C', 'D', 'E'])).toBe('A, B, C and 2 more')
   })
 })

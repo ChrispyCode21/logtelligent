@@ -48,14 +48,23 @@ function fromPlan(
   }
 }
 
-/** Next session's suggestion for an exercise, from its finished history. */
-export function suggestNext(config: ExerciseConfig, history: ExerciseSession[], asOf: Date): Suggestion {
+/**
+ * Next session's suggestion for an exercise, from its finished history. `lift` holds the finished
+ * sessions of the other exercises in its lift (same name, SPEC §9.4 slice 2), each already marked
+ * by its own replay: they share the e1RM, while progression comes from this exercise's history alone.
+ */
+export function suggestNext(
+  config: ExerciseConfig,
+  history: ExerciseSession[],
+  asOf: Date,
+  lift: ExerciseSession[] = [],
+): Suggestion {
   const loads = availableLoads(config)
   const { state, sessions } = deriveState(config, history)
 
   if (config.tier === 'accessory') return fromPlan(config, loads, state, undefined)
 
-  const e1rm = runningE1rm(sessions, config.seed, asOf)
+  const e1rm = runningE1rm([...sessions, ...lift], config.seed, asOf)
   // While stacks > 0 (or around a deload) the stack logic decides, not the e1RM rule.
   if (state.next.kind !== 'normal') return fromPlan(config, loads, state, e1rm)
   if (!e1rm) return { kind: 'needsSeed' }

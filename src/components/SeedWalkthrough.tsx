@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { findBankExercise } from '../program/bank'
-import { activeDays, activeExercises, missingSeeds, updateExercise } from '../program/program'
+import { latestInLift, needsStartingNumbers } from '../history/lifts'
+import { activeDays, activeExercises, updateExercise } from '../program/program'
 import {
   needsStack,
   seedPrefill,
@@ -11,6 +12,7 @@ import {
   type StackPick,
 } from '../program/seeding'
 import type { Program, ProgramExercise } from '../program/types'
+import type { Session } from '../session/types'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
@@ -21,6 +23,7 @@ import { SeedFields } from './SeedFields'
 
 interface Props {
   program: Program
+  sessions: Session[]
   /** Leave the walkthrough: "Finish later", or after the last exercise. */
   onClose: () => void
 }
@@ -30,13 +33,13 @@ interface Props {
  * Each Next saves that exercise, so the current step is always the first one still missing; leaving
  * and coming back resumes there.
  */
-export function SeedWalkthrough({ program, onClose }: Props) {
+export function SeedWalkthrough({ program, sessions, onClose }: Props) {
   // The last stack picked (with its typed list, for 'custom') is offered first on the next
   // cable/machine exercise.
   const [lastStack, setLastStack] = useState<StackPick>({ choice: '5', custom: '' })
   const days = activeDays(program)
   const all = activeExercises(program)
-  const missing = missingSeeds(program)
+  const missing = needsStartingNumbers(program, sessions)
   const exercise = missing[0]
   if (!exercise) return null
   const day = days.find((d) => d.exercises.some((e) => e.id === exercise.id))!
@@ -55,6 +58,7 @@ export function SeedWalkthrough({ program, onClose }: Props) {
       progress={`${all.length - missing.length + 1} of ${all.length}`}
       last={missing.length === 1}
       initialStack={lastStack}
+      liftWeight={latestInLift(program, sessions, exercise.name)?.weight}
       onSave={save}
       onLater={onClose}
     />
@@ -67,11 +71,22 @@ interface StepProps {
   progress: string
   last: boolean
   initialStack: StackPick
+  /** The lift's latest weight, pre-filled before the bank's (SPEC §9.4 slice 2). */
+  liftWeight?: number
   onSave: (exercise: ProgramExercise, stack?: StackPick) => Promise<void>
   onLater: () => void
 }
 
-function SeedStep({ exercise, dayName, progress, last, initialStack, onSave, onLater }: StepProps) {
+function SeedStep({
+  exercise,
+  dayName,
+  progress,
+  last,
+  initialStack,
+  liftWeight,
+  onSave,
+  onLater,
+}: StepProps) {
   const askStack = needsStack(exercise)
   const [stack, setStack] = useState<StackPick>(initialStack)
   // Undefined until typed in, so the pre-fill can follow the chosen stack.
@@ -80,7 +95,7 @@ function SeedStep({ exercise, dayName, progress, last, initialStack, onSave, onL
   const [attempted, setAttempted] = useState(false)
 
   const loads = askStack ? stackLoads(stack) : exercise.loads
-  const prefill = seedPrefill(exercise, askStack ? loads : undefined)
+  const prefill = seedPrefill(exercise, askStack ? loads : undefined, liftWeight)
   const seed = { weight: weight ?? prefill.weight, reps: reps ?? prefill.reps }
   const bank = findBankExercise(exercise.name)
   const { min } = exercise.repRange

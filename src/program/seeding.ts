@@ -104,14 +104,19 @@ export function formSeedPlaceholder(
 }
 
 /**
- * Starting numbers to pre-fill: a bank exercise's placeholder weight (snapped down onto the
- * stack, if one is given) and, for primaries, the top of the rep range. Others start blank.
+ * Starting numbers to pre-fill: the lift's latest weight when it has history (SPEC §9.4 slice 2),
+ * else a bank exercise's placeholder weight, snapped down onto the stack if one is given; and, for
+ * primaries, the top of the rep range. Others start blank.
  */
-export function seedPrefill(e: ProgramExercise, stack?: readonly number[]): { weight: string; reps: string } {
-  const bank = findBankExercise(e.name)
-  if (!bank) return { weight: '', reps: '' }
+export function seedPrefill(
+  e: ProgramExercise,
+  stack?: readonly number[],
+  liftWeight?: number,
+): { weight: string; reps: string } {
+  const weight = liftWeight ?? findBankExercise(e.name)?.seedPlaceholder
+  if (weight === undefined) return { weight: '', reps: '' }
   return {
-    weight: String(snapBankWeight(bank.seedPlaceholder, stack)),
+    weight: String(snapBankWeight(weight, stack)),
     reps: e.tier === 'primary' ? String(e.repRange.max) : '',
   }
 }

@@ -28,14 +28,19 @@ interface Props {
   initial?: ProgramExercise
   /** A new exercise from the bank: its defaults prefill the form. */
   preset?: BankExercise
+  /** A bank exercise joining a lift with history: its gym setup and latest weight (SPEC §9.4 slice 2). */
+  lift?: { withGym: (e: ProgramExercise) => ProgramExercise; weight?: number }
   effortScale: EffortScale
   onSave: (exercise: ProgramExercise) => void
   onCancel: () => void
 }
 
-export function ExerciseForm({ initial, preset, effortScale, onSave, onCancel }: Props) {
+export function ExerciseForm({ initial, preset, lift, effortScale, onSave, onCancel }: Props) {
   // A bank exercise's defaults are copied in; nothing links back to the bank (SPEC §9.1, slice 2).
-  const [form, setForm] = useState(() => toForm(initial ?? (preset && exerciseFromBank(preset))))
+  // Joining a lift with history, it takes your gym's setup from it (SPEC §9.4 slice 2).
+  const [form, setForm] = useState(() =>
+    toForm(initial ?? (preset && (lift?.withGym ?? ((e) => e))(exerciseFromBank(preset)))),
+  )
   const [attempted, setAttempted] = useState(false)
   const set = <K extends keyof ExerciseFormFields>(key: K, value: ExerciseFormFields[K]) =>
     setForm({ ...form, [key]: value })
@@ -54,8 +59,9 @@ export function ExerciseForm({ initial, preset, effortScale, onSave, onCancel }:
   const loadsPlaceholder = defaults.length
     ? `Default: ${defaults.slice(0, 6).join(', ')}…`
     : 'e.g. 88, 99, 110, 121, 132'
-  // The bank's starting weight, while its equipment still applies.
-  const bankWeight = preset && form.equipment === preset.equipment ? preset.seedPlaceholder : undefined
+  // The lift's latest weight (SPEC §9.4 slice 2), else the bank's while its equipment still applies.
+  const bankWeight =
+    lift?.weight ?? (preset && form.equipment === preset.equipment ? preset.seedPlaceholder : undefined)
 
   return (
     <Card as="form" className="exercise-form" onSubmit={submit}>

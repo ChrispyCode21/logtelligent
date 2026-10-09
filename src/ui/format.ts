@@ -48,6 +48,13 @@ export function formatSetCount(sets: LoggedSet[], target?: number) {
   return extras > 0 ? `${base} + ${extras} extra${extras === 1 ? '' : 's'}` : base
 }
 
+/** Names as a short list: "A", "A and B", "A, B and C", or "A, B, C and 4 more". */
+export function formatNameList(names: string[], max = 3): string {
+  if (names.length <= 1) return names.join('')
+  if (names.length <= max) return `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+  return `${names.slice(0, max).join(', ')} and ${names.length - max} more`
+}
+
 /** The prescribed sets on one line, leaving extras out: `225 × 5 @ 8 · 225 × 4`. */
 export const formatCountedSets = (sets: LoggedSet[], scale: EffortScale = 'rpe') =>
   formatSets(countedSets(sets), scale)

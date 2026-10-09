@@ -51,9 +51,26 @@ export function sessionE1rm(session: ExerciseSession): number | undefined {
   return setE1rm({ ...first, rpe: first.rpe })
 }
 
+/** A session's first set at or under this many effective reps counts before higher-rep ones (SPEC §6.4). */
+export const LOW_REP_MAX = 10
+
+/** The effective reps of a session's first counted set, when it has an RPE. */
+export function sessionEffectiveReps(session: ExerciseSession): number | undefined {
+  const first = countedSets(session.sets)[0]
+  return first?.rpe === undefined ? undefined : effectiveReps(first.reps, first.rpe)
+}
+
+/** Sessions of 10 or fewer effective reps when there are any, else all of them (SPEC §6.4). */
+function lowerRepsFirst<T extends { lowReps: boolean }>(sessions: T[]): T[] {
+  const low = sessions.filter((s) => s.lowReps)
+  return low.length > 0 ? low : sessions
+}
+
 /**
  * Running e1RM (SPEC §6.4): the average of up to the last 3 sessions within 4 weeks,
  * else 90% of the most recent session ("returning from a break"), else the seed.
+ * Sessions of 10 or fewer effective reps are used before higher-rep ones, in both cases.
+ * `history` is every session of the lift, on any day (SPEC §9.4 slice 2).
  * Deload and replaced sessions are ignored. Undefined when there is nothing to go on.
  */
 export function runningE1rm(
@@ -63,18 +80,23 @@ export function runningE1rm(
 ): RunningE1rm | undefined {
   const eligible = history
     .filter((s) => !s.isDeload && !s.replaced)
-    .map((s) => ({ time: Date.parse(s.date), e1rm: sessionE1rm(s) }))
-    .filter((s): s is { time: number; e1rm: number } => s.e1rm !== undefined)
+    .map((s) => ({
+      time: Date.parse(s.date),
+      e1rm: sessionE1rm(s),
+      lowReps: (sessionEffectiveReps(s) ?? Infinity) <= LOW_REP_MAX,
+    }))
+    .filter((s): s is { time: number; e1rm: number; lowReps: boolean } => s.e1rm !== undefined)
     .sort((a, b) => b.time - a.time)
 
   if (eligible.length > 0) {
     const windowStart = asOf.getTime() - WINDOW_DAYS * DAY_MS
-    const recent = eligible.filter((s) => s.time >= windowStart).slice(0, MAX_SESSIONS)
-    if (recent.length > 0) {
+    const window = eligible.filter((s) => s.time >= windowStart)
+    if (window.length > 0) {
+      const recent = lowerRepsFirst(window).slice(0, MAX_SESSIONS)
       const value = recent.reduce((sum, s) => sum + s.e1rm, 0) / recent.length
       return { value, basis: 'history' }
     }
-    return { value: eligible[0].e1rm * BREAK_FACTOR, basis: 'returningFromBreak' }
+    return { value: lowerRepsFirst(eligible)[0].e1rm * BREAK_FACTOR, basis: 'returningFromBreak' }
   }
 
   if (seed) return { value: setE1rm({ ...seed, rpe: SEED_RPE }), basis: 'seed' }

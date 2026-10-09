@@ -1,11 +1,13 @@
 import { activeDays } from '../program/program'
-import { applyTemplate, TEMPLATES } from '../program/templates'
+import { applyTemplate, templateExerciseNames, TEMPLATES } from '../program/templates'
 import type { Program } from '../program/types'
 import type { Session } from '../session/types'
+import { liftsWithHistory, withLiftGym } from '../history/lifts'
 import { dayHasHistory, emptyOpenSessions } from '../history/sessions'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
+import { formatNameList } from '../ui/format'
 
 interface Props {
   program: Program
@@ -26,16 +28,27 @@ export function TemplateCard({ program, sessions, onApplied }: Props) {
       sessions,
       activeDays(program).map((d) => d.id),
     )
+    // Template exercises join the lifts of the same name, history and all (SPEC §9.4 slice 2).
+    const kept = liftsWithHistory(program, sessions, templateExerciseNames(template))
     const ok =
       empty ||
       confirm(
         `Replace your program with ${template.name}? Days with logged sessions are archived ` +
           '(their history is kept); the rest are deleted.' +
+          (kept.length > 0
+            ? ` ${formatNameList(kept)} ${kept.length === 1 ? 'keeps its' : 'keep their'} history.`
+            : '') +
           (discard.length > 0 ? ' Your open session has nothing logged yet, so it will be discarded.' : ''),
       )
     if (!ok) return
     await updateProgram(
-      (p) => applyTemplate(p, template, (dayId) => dayHasHistory(sessions, dayId)),
+      (p) =>
+        applyTemplate(
+          p,
+          template,
+          (dayId) => dayHasHistory(sessions, dayId),
+          (e) => withLiftGym(e, program, sessions),
+        ),
       discard.map((s) => s.id),
     )
     onApplied()
