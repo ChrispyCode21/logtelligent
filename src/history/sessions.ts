@@ -1,4 +1,5 @@
 import type { ExerciseSession } from '../engine'
+import { loggedSetCount } from '../session/sets'
 import type { ExerciseLog, Session, Substitute } from '../session/types'
 
 /** An engine session plus what the history view needs: which session it was, and any substitute. */
@@ -73,9 +74,7 @@ export function lastNoteFor(sessions: Session[], dayId: string): string | undefi
 }
 
 /** Anything logged for an exercise: its own sets or a substitute's. */
-function hasSets(log: ExerciseLog): boolean {
-  return log.sets.length > 0 || (log.substitute?.sets.length ?? 0) > 0
-}
+const hasSets = (log: ExerciseLog) => loggedSetCount(log) > 0
 
 /**
  * Whether removing an exercise archives it rather than deleting it (SPEC §6.1, §9.4 slice 0): a
@@ -94,9 +93,10 @@ export function dayHasHistory(sessions: Session[], dayId: string): boolean {
 }
 
 /**
- * Open sessions on these days with nothing logged yet. Removing their day, by hand or by applying
- * a template, discards them too, whether the day is deleted or archived: nothing is lost, and no
- * session is left on a day that's gone from the program (SPEC §9.4 slice 0).
+ * Open sessions on these days with nothing logged yet. Removing their day by hand discards them
+ * too, whether the day is deleted or archived: nothing is lost, and no session is left on a day
+ * that's gone from the program (SPEC §9.4 slice 0). Changing programs discards every open session
+ * (`programChange`, slice 3).
  */
 export function emptyOpenSessions(sessions: Session[], dayIds: string[]): Session[] {
   return sessions.filter(

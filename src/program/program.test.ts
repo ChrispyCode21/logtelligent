@@ -4,6 +4,7 @@ import {
   activeDays,
   addDay,
   addExercise,
+  clearProgram,
   EMPTY_PROGRAM,
   missingSeeds,
   moveDay,
@@ -76,5 +77,26 @@ describe('7.A Seed gate', () => {
     const p = addExercise(program(), 'b', exercise('row', false))
     expect(missingSeeds(p).map((e) => e.id)).toEqual(['row'])
     expect(missingSeeds(removeExercise(p, 'row', false))).toEqual([])
+  })
+})
+
+describe('changing programs (SPEC §9.4 slice 3)', () => {
+  it('clears the active days: with history archived, others deleted; archived days and the scale stay', () => {
+    const program: Program = {
+      id: 'main',
+      effortScale: 'perceived',
+      days: [
+        { id: 'logged', name: 'Push', exercises: [exercise('bench')] },
+        { id: 'never', name: 'Pull', exercises: [] },
+        { id: 'old', name: 'Old', archived: true, exercises: [] },
+      ],
+    }
+    const cleared = clearProgram(program, (id) => id === 'logged')
+    expect(cleared.days.map((d) => [d.id, !!d.archived])).toEqual([
+      ['logged', true],
+      ['old', true],
+    ])
+    expect(activeDays(cleared)).toEqual([])
+    expect(cleared.effortScale).toBe('perceived')
   })
 })

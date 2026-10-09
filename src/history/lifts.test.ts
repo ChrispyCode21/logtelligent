@@ -4,7 +4,14 @@ import { liftKey } from '../program/lifts'
 import { sessionExercises } from '../session/context'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
-import { latestInLift, liftsWithHistory, needsStartingNumbers, otherLiftSessions, withLiftGym } from './lifts'
+import {
+  latestInLift,
+  liftsWithHistory,
+  needsStartingNumbers,
+  otherLiftSessions,
+  programChange,
+  withLiftGym,
+} from './lifts'
 import { historyGroups } from './picker'
 import { exerciseHistory } from './sessions'
 import { liftTimeline } from './timeline'
@@ -181,5 +188,45 @@ describe('History by lift (SPEC §5.3, §9.4 slice 2)', () => {
     expect(historyGroups(archivedB, [heavy, light]).map((g) => g.label)).toEqual(['Upper A'])
     expect(liftTimeline(archivedB, [heavy, light], 'Bench Press')).toHaveLength(2)
     expect(exerciseHistory([heavy, light], 'bench-b')).toHaveLength(1)
+  })
+})
+
+describe('changing programs (SPEC §9.4 slice 3)', () => {
+  it('keeps lifts with finished history, discards every open session, and counts its sets', () => {
+    const open: Session = {
+      id: 900,
+      dayId: 'upper-b',
+      startedAt: '2026-10-08T10:00:00.000Z',
+      exercises: [
+        { exerciseId: 'bench-b', sets: firstRpe(185, [12, 12]) },
+        {
+          exerciseId: 'raise',
+          sets: [],
+          substitute: { name: 'Cable raise', sets: [{ weight: 10, reps: 15 }] },
+        },
+      ],
+    }
+    const change = programChange(program(), [heavy, open])
+    expect(change.keptLifts).toEqual(['Bench Press'])
+    expect(change.open).toEqual({ session: open, sets: 3 })
+    expect(change.discardIds).toEqual([900])
+  })
+
+  it('a day whose only sets are in the open session is deleted, not archived', () => {
+    const open: Session = {
+      id: 901,
+      dayId: 'upper-b',
+      startedAt: '2026-10-08T10:00:00.000Z',
+      exercises: [{ exerciseId: 'bench-b', sets: firstRpe(185, [12]) }],
+    }
+    const change = programChange(program(), [heavy, open])
+    expect(change.dayHasHistory('upper-a')).toBe(true)
+    expect(change.dayHasHistory('upper-b')).toBe(false)
+  })
+
+  it('with no open session, nothing is discarded', () => {
+    const change = programChange(program(), [heavy, light])
+    expect(change.open).toBeUndefined()
+    expect(change.discardIds).toEqual([])
   })
 })

@@ -21,6 +21,7 @@ import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
 import { formatPrescription } from '../ui/format'
 import { BackupCard } from './BackupCard'
+import { ChangeProgramCard } from './ChangeProgramCard'
 import { EffortScaleCard } from './EffortScaleCard'
 import { ExerciseForm } from './ExerciseForm'
 import { ExercisePicker } from './ExercisePicker'
@@ -223,9 +224,7 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
         </Button>
       </Card>
 
-      {days.length > 0 && (
-        <TemplateCard program={program} sessions={sessions} onApplied={onTemplateApplied} />
-      )}
+      {days.length > 0 && <ChangeProgramCard program={program} sessions={sessions} />}
       <BackupCard />
     </>
   )
