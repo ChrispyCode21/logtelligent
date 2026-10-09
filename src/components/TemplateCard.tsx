@@ -2,7 +2,7 @@ import { activeDays } from '../program/program'
 import { applyTemplate, TEMPLATES } from '../program/templates'
 import type { Program } from '../program/types'
 import type { Session } from '../session/types'
-import { dayHasHistory } from '../history/sessions'
+import { dayHasHistory, emptyOpenSessions } from '../history/sessions'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
@@ -22,14 +22,22 @@ export function TemplateCard({ program, sessions, onApplied }: Props) {
   const empty = activeDays(program).length === 0
 
   async function use(template: (typeof TEMPLATES)[number]) {
+    const discard = emptyOpenSessions(
+      sessions,
+      activeDays(program).map((d) => d.id),
+    )
     const ok =
       empty ||
       confirm(
         `Replace your program with ${template.name}? Days with logged sessions are archived ` +
-          '(their history is kept); the rest are deleted.',
+          '(their history is kept); the rest are deleted.' +
+          (discard.length > 0 ? ' Your open session has nothing logged yet, so it will be discarded.' : ''),
       )
     if (!ok) return
-    await updateProgram((p) => applyTemplate(p, template, (dayId) => dayHasHistory(sessions, dayId)))
+    await updateProgram(
+      (p) => applyTemplate(p, template, (dayId) => dayHasHistory(sessions, dayId)),
+      discard.map((s) => s.id),
+    )
     onApplied()
   }
 

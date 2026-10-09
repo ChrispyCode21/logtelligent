@@ -1,5 +1,5 @@
 import type { ExerciseSession } from '../engine'
-import type { Session, Substitute } from '../session/types'
+import type { ExerciseLog, Session, Substitute } from '../session/types'
 
 /** An engine session plus what the history view needs: which session it was, and any substitute. */
 export interface LoggedExerciseSession extends ExerciseSession {
@@ -29,20 +29,14 @@ export function exerciseHistory(
     .filter((s) => !before || cameBefore(s, before))
     .flatMap((s) =>
       s.exercises
-        .filter((e) => e.exerciseId === exerciseId && !e.skipped)
-        .filter((e) => e.sets.length > 0 || (e.substitute?.sets.length ?? 0) > 0)
-        .map((e) =>
-          e.substitute
-            ? {
-                sessionId: s.id,
-                date: s.startedAt,
-                sets: e.sets,
-                replaced: true,
-                substitute: e.substitute,
-                note: s.note,
-              }
-            : { sessionId: s.id, date: s.startedAt, sets: e.sets, note: s.note },
-        ),
+        .filter((e) => e.exerciseId === exerciseId && !e.skipped && hasSets(e))
+        .map((e) => ({
+          sessionId: s.id,
+          date: s.startedAt,
+          sets: e.sets,
+          ...(e.substitute && { replaced: true, substitute: e.substitute }),
+          note: s.note,
+        })),
     )
 }
 
@@ -76,14 +70,34 @@ export function lastNoteFor(sessions: Session[], dayId: string): string | undefi
   return lastFinished(sessions, dayId)?.note
 }
 
-export function exerciseHasHistory(sessions: Session[], exerciseId: string): boolean {
-  return sessions.some((s) =>
-    s.exercises.some(
-      (e) => e.exerciseId === exerciseId && (e.sets.length > 0 || (e.substitute?.sets.length ?? 0) > 0),
-    ),
-  )
+/** Anything logged for an exercise: its own sets or a substitute's. */
+function hasSets(log: ExerciseLog): boolean {
+  return log.sets.length > 0 || (log.substitute?.sets.length ?? 0) > 0
 }
 
+/**
+ * Whether removing an exercise archives it rather than deleting it (SPEC §6.1, §9.4 slice 0): a
+ * session, finished or open, has sets for it.
+ */
+export function exerciseHasHistory(sessions: Session[], exerciseId: string): boolean {
+  return sessions.some((s) => s.exercises.some((e) => e.exerciseId === exerciseId && hasSets(e)))
+}
+
+/**
+ * Whether removing a day archives it rather than deleting it (SPEC §6.1, §9.4 slice 0): a finished
+ * session on it (even an emptied one, which still counts for the rotation), or an open one with sets.
+ */
 export function dayHasHistory(sessions: Session[], dayId: string): boolean {
-  return sessions.some((s) => s.dayId === dayId)
+  return sessions.some((s) => s.dayId === dayId && (s.finishedAt !== undefined || s.exercises.some(hasSets)))
+}
+
+/**
+ * Open sessions on these days with nothing logged yet. Removing their day, by hand or by applying
+ * a template, discards them too, so no session is left on a day that no longer exists (SPEC §9.4
+ * slice 0).
+ */
+export function emptyOpenSessions(sessions: Session[], dayIds: string[]): Session[] {
+  return sessions.filter(
+    (s) => !s.finishedAt && s.dayId !== undefined && dayIds.includes(s.dayId) && !s.exercises.some(hasSets),
+  )
 }
