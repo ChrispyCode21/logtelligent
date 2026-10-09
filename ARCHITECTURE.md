@@ -159,7 +159,8 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 
 - A run starts when `agent-ready` is added to an issue. The workflow checks who added it: the owner, or `claude[bot]` (for the follow-ups, unblocked sub-issues and release issues below). Anyone else's label is ignored.
 - Comments from anyone other than the owner never reach the agent: the workflow passes it only the issue and the owner's and its own comments. Those are data too; an issue describes what to build but can't change the agent's rules.
-- **One triage and one coding run at a time** across the repo, each in its own concurrency group, so a waiting coding run can't be replaced by another issue's triage (Decided 2026-10-09). GitHub keeps only one waiting run per group: if another issue reaches the same stage while one waits, the newer replaces it. A replaced triage leaves no comment; a replaced coding run says it didn't finish. Re-adding `agent-ready` retries (Decided 2026-10-09: accepted rather than building a queue).
+- **One triage and one coding run at a time** across the repo, each in its own concurrency group, so a waiting coding run can't be replaced by another issue's triage (Decided 2026-10-09).
+- **Waiting runs queue** (Decided 2026-10-09, replacing "the newer replaces it"): each group holds up to 100 waiting runs and starts them in order (GitHub's `queue: max`), so the sub-issues of one split all get built. Only past 100 is a waiting run dropped; re-adding `agent-ready` retries.
 
 ### Labels and milestones
 
@@ -175,14 +176,17 @@ README.md ("Setting up a new deployment") has the commands that create them.
 
 **Issue forms** (`.github/ISSUE_TEMPLATE/`): **Task** (what should change, why, where it's specified, done when, out of scope) and **Bug** (what happened, what was expected, steps, where). They ask for what triage needs, so fewer issues come back with questions; blank issues still work.
 
-Each version has a **milestone** (v1.3.0, v2.0.0…). The agent creates it when the version is scoped in SPEC.md (§9.x), unless it already exists (Decided 2026-10-09), and puts every issue it creates in the right milestone.
+Each version has a **milestone** (v1.3.0, v2.0.0…). The agent creates it when the version is scoped in SPEC.md (§9.x), unless it already exists (Decided 2026-10-09), and puts every issue it creates in the right milestone: sub-issues in their parent's, release issues in their version's. In practice a fixed step does it, not Claude: after each merge to `main` it reads SPEC.md's `## 9.x vX.Y.Z` headings and creates a milestone for each version that isn't released and has none. Releasing a version closes its milestone.
 
 ### Triage (Claude Sonnet 5.5, 10 minutes)
 
 Triage reads the issue, SPEC.md, this document and CLAUDE.md, then does one of three things:
 
 1. **Questions.** If the issue leaves behavior open, or touches anything Proposed or Open, it comments numbered questions, each with a recommended default (CLAUDE.md, "Building a slice" step 1), swaps `agent-ready` for `agent-needs-info`, and stops. The owner answers with numbered replies and re-adds the label; the next run reads the whole thread.
-2. **Split.** If the issue has natural seams (e.g. several new components and the work that wires them in), it comments a proposed split and stops. On the owner's approval it creates the sub-issues, linked with GitHub's "blocked by" where one depends on another, in the issue's milestone. Sub-issues with no blockers get `agent-ready` straight away; a blocked one gets it when its last blocker closes. Independent ones can be open as PRs at the same time.
+2. **Split.** If the issue has natural seams (e.g. several new components and the work that wires them in), it comments a proposed split and stops. On the owner's approval it creates the sub-issues, linked with GitHub's "blocked by" where one depends on another, in the issue's milestone. Sub-issues with no blockers get `agent-ready` straight away; a blocked one gets it when its last blocker closes. Independent ones can be open as PRs at the same time. Decided 2026-10-09:
+   - **Sub-issues are the text the owner approved.** The proposal lists each sub-issue's title, text and blockers, and the sub-issues are created from that posted proposal word for word, not rewritten on approval. So every `agent-ready` issue is text the owner has read (see the accepted risk above). A reply asking for changes gets a revised proposal, approved the same way.
+   - **The parent is context.** Triage and coding runs for a sub-issue also read its parent issue and the parent's thread, where the decisions are. The parent closes itself when its last sub-issue closes.
+   - **Unblocking needs completed blockers.** A blocked sub-issue gets `agent-ready` only when every blocker is closed as completed. A blocker closed as not planned leaves it for the owner to decide. Only sub-issues the agent created this way are labeled automatically.
 3. **Ready.** Otherwise it comments a short plan and the coding run starts.
 
 **How it runs** (`.github/workflows/agent.yml`, built): the **Triage** job checks out `main`, writes the issue (as it was when labeled, from the event) and its filtered thread to `.agent-input/`, and runs Claude with the prompt in `.github/agent/triage.md`. The job holds only read permissions, and the Action is given that job's token rather than a Claude App token. Claude has read-only tools (Read, Grep, Glob; no shell, no web, no edits) and returns its answer as structured output, `{ decision, comment }`, checked against a schema. The **Respond** job, which holds the only write permission (`issues: write`), posts the comment with a footer (the run and its cost) and sets the labels: `agent-ready` always comes off, so re-adding it starts the next run, and `agent-needs-info` goes on for questions and splits. If triage fails or returns nothing usable, Respond says so on the issue instead. A ready issue goes on to the coding run. Until step 5b, nothing acts on an approved split (creating sub-issues comes with it), so splits wait until then.
@@ -227,7 +231,7 @@ Everything the agent writes on GitHub (PR descriptions, issue comments, commit m
 
 ### Releases
 
-When the last open issue in a version's milestone closes, the agent creates a "Release vX.Y.Z" issue in it, labeled `agent-ready`. Issues in other milestones don't hold it back. Its PR bumps `package.json` and moves CHANGELOG.md's "Unreleased" notes under the version; merging it tags the release as before.
+When the last open issue in a version's milestone closes, the agent creates a "Release vX.Y.Z" issue in it, labeled `agent-ready`. Issues in other milestones don't hold it back. It isn't created twice, or for a version already released, and its text is fixed in the workflow, not written by Claude. Its PR bumps `package.json` and moves CHANGELOG.md's "Unreleased" notes under the version; merging it tags the release as before.
 
 ### Merge safety
 
