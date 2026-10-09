@@ -60,7 +60,7 @@ export function E1rmChart({ points }: Props) {
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         role="img"
-        aria-label={`Estimated 1RM from ${points[0].value.toFixed(1)} to ${points.at(-1)!.value.toFixed(1)} lb`}
+        aria-label={`Estimated 1RM from ${formatE1rm(points[0].value)} to ${formatE1rm(points.at(-1)!.value)}`}
         onPointerMove={nearest}
         onPointerDown={nearest}
         onPointerLeave={() => setActive(null)}
