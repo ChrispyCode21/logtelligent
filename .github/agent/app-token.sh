@@ -20,7 +20,11 @@ get_app_token() {
       echo "::add-mask::$token"
       return 0
     fi
-    echo "::warning::Claude App token exchange failed (attempt $attempt of 3): HTTP $code, $(jq -r '.error.message // .message // "no message"' <<<"$body" 2>/dev/null | head -c 300)"
+    # Only the fields that explain the failure; never the raw body.
+    echo "::warning::Claude App token exchange failed (attempt $attempt of 3): HTTP $code, $(jq -r '
+      [(.error | objects | .message, .details.error_code), (.error | strings), .message]
+      | map(select(. != null)) | join(" / ") | if . == "" then "no message" else . end' <<<"$body" 2>/dev/null \
+      | head -c 300 || echo 'the response was not JSON')"
     [ "$attempt" = 3 ] || sleep $((attempt * 5))
   done
   return 1
