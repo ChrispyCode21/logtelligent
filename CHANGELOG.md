@@ -8,6 +8,9 @@ To release: in a PR, move the "Unreleased" notes under a new version heading and
 
 ### Added
 
+- **One history per lift:** exercises with the same name are one lift, wherever they are in your program. Bench Press on a heavy day and on a light day now share one history (History lists it once, with each session tagged by its day) and one estimated 1RM, built from your lower-rep sessions first, since high-rep sets estimate a max less reliably. Each day still progresses on its own: a failed heavy day doesn't lower the light day.
+- **Adding a lift you already do:** a new primary needs no starting numbers when the lift already has an estimated 1RM, and picking it from the exercise list copies your equipment and weight stack from the lift. A ready-made program does the same, and its confirm names the lifts that keep their history.
+
 - **Sessions remember what they were prescribed:** finishing a session saves each exercise's rep range and set count. Changing an exercise's range later no longer re-judges sessions finished from now on (which could turn old successes into fails and even trigger a deload); instead, its progression starts fresh under the new range. Editing a past session shows "2 of 3 sets" again. Sessions finished before this update work as before.
 
 ### Changed

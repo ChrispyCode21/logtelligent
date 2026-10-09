@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2. **v1.2.1 — released** (2026-10-06): the fixes in §9.3. **v1.3.0 — in progress** (scoped 2026-10-08): slices 0–1 of §9.4 built.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2. **v1.2.1 — released** (2026-10-06): the fixes in §9.3. **v1.3.0 — in progress** (scoped 2026-10-08): slices 0–2 of §9.4 built.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -524,7 +524,7 @@ Theme: **change programs without losing history**. A lift's history can follow i
 - Storage change: an optional prescription on each exercise in a finished session. Needs the ARCHITECTURE.md checklist (Dexie version, backup validator, round-trip test). `FORMAT` stays 1, since a missing prescription means the current settings.
 - **Built with extra care (owner's note):** it changes what the replay reads, which every suggestion depends on. Tests cover a session judged by its stored prescription after the program's settings change, and old sessions behaving exactly as before.
 
-**Slice 2: Lifts share history and e1RM (Decided 2026-10-08; replaces "Keep history for same-named lifts").**
+**Slice 2: Lifts share history and e1RM (Decided 2026-10-08; replaces "Keep history for same-named lifts"; built).**
 Raised by the owner: bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a light one. Before this, each exercise had its own history and e1RM, so a template couldn't know which of two Bench Presses to take over.
 - **A lift is a name:** exercises with the same name, ignoring case and punctuation (as the bank search compares names), are one lift. Nothing new is stored: sessions still belong to the exercise, so renaming one ("Bench" → "Bench Press") brings its sessions into that lift, and renaming one to something new ("Paused Bench") makes it a lift of its own, with its sessions.
 - **Shared:** history and the running e1RM, with lower-rep sessions first (§6.4). Each exercise's deload weeks, worked out by its own replay, stay out of the e1RM (§6.7). **Per exercise, as before:** the prescription, floor rule, stacks, reverts, retries, deloads and rep extension. A failed heavy day never reverts or deloads the light day.
