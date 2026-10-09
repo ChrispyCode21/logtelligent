@@ -1,6 +1,6 @@
 # Lifting Log — Design Spec
 
-> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2. **v1.2.1 — released** (2026-10-06): the fixes in §9.3.
+> Status: **v1.0.0 — built and live** (2026-10-04). All six slices in §9 are done. **v1.1.0 — released** (2026-10-04): all four slices in §9.1. **v1.2.0 — released** (2026-10-06): slices 0–3 in §9.2. **v1.2.1 — released** (2026-10-06): the fixes in §9.3. **v1.3.0 — scoped** (2026-10-08): slices 0–3 in §9.4.
 > Purpose of this doc: the source of truth for what the app does and why. Anything built should trace back to a section here. The README will eventually be derived from it.
 
 Legend used throughout:
@@ -473,6 +473,32 @@ From the owner's v1.2.0 on-device checks (TESTING.md). A patch release; no store
 - **Logged-set rows:** the "Set 1 · 225 × 5" row's text is centred vertically (it sat at the top of the 44 px row).
 - **Effort scale card:** its description area is always as tall as the longest of the three descriptions, so switching scales doesn't move the rest of the Program tab.
 
+## 9.4 v1.3.0 scope (Decided 2026-10-08)
+
+Theme: **change programs without losing history**. A lift's history can follow it into a new program, and each old session is judged by what was prescribed at the time, so carried-over history stays accurate. Built in this order, each slice a small PR or two, then a release PR. Each slice's details are settled with the owner before it's built (CLAUDE.md, "Building a slice").
+
+**Slice 0: Groundwork (Decided; resolves §10 #8, #10, #11).** No stored-data change.
+- **History while a session is open (#8):** removing an exercise or day from the program counts only **finished** sessions as history, plus the open session if it has sets for that exercise or day. With no such history, the exercise or day is deleted outright rather than archived, so it no longer shows in History's picker with "No sessions logged yet."
+- **Removing the open session's day (#8):** if the open session is on that day and has no sets, it's discarded along with the day, and the confirm says so.
+- **Tap targets (#10):** the warm-up banner's ✕ goes up to `--tap-target` (44 px), and the Program tab's move and remove buttons to 44 px wide. Check that exercise and day names still wrap cleanly at 320 px. Folds in the cleanup backlog's shared `RowActions` for days and exercises.
+- **`SegmentedControl` (#11):** one primitive for the four `aria-pressed` toggle groups (tier, effort scale, stack presets, effort picker). The tabs stay as they are, since they're navigation, not a toggle. `Note` waits until it needs variants. No visible change.
+
+**Slice 1: Store each session's prescription (Decided in outline; resolves §10 #9).**
+- When a session starts, each exercise's prescription (e.g. rep range, set count, target RPE; the exact fields are settled before building) is saved with it.
+- The progression replay and the finished-session editor judge each session by its own prescription. Sessions logged before v1.3.0 have none and fall back to today's settings, as now.
+- A finished session can show "3 of 3 sets" again (§9.2 slice 1, "Set counts in a past session").
+- Storage change: needs the ARCHITECTURE.md checklist (Dexie version, backup validator, round-trip test).
+- **Built with extra care (owner's note):** it changes what the replay reads, which every suggestion depends on. Tests cover a session judged by its stored prescription after the program's settings change, and old sessions behaving exactly as before.
+
+**Slice 2: Keep history for same-named lifts (Decided in outline).**
+- When a template replaces the program, a template exercise with the same name as one in the current program takes over its history and starting numbers, so it needs no new seed (§11, "Keep history for same-named lifts"). The matching rules are settled before building.
+
+**Slice 3: Change your program (Decided in outline).**
+- A way to abandon the current program entirely and pick a template or build your own. Labelled along the lines of **"Change your program"** or "Try something else", not "Start over". Days with history are archived and their history kept, as with any delete (§6.1); same-named lifts carry over (slice 2). The rotation starts at the new program's first day (§5.1, archived last day).
+- **A nudge against program-hopping:** the option carries a short note along the lines of *"A so-so program run consistently beats a great one you keep switching. Bored? Give it a few more weeks."* The label and wording are settled before building.
+
+**Not in v1.3.0:** weight per set (§10 #7, §11), other progression schemes such as 5/3/1, the e1RM confidence measure, and the rest of §11.
+
 ## 10. Open questions (summary)
 
 Ask the project owner before building anything each one affects:
@@ -487,13 +513,13 @@ Ask the project owner before building anything each one affects:
 Flagged to revisit after real use (not blocking):
 - Primary-lift deload: resuming at the last successful numbers (§6.7).
 
-**Open: raised during v1.2.0, not blocking.** Each has a recommended default; settle it with the owner before building anything it affects.
+**Raised during v1.2.0; settled 2026-10-08 while scoping v1.3.0 (§9.4).**
 
-7. **Substitutes and the working weight:** the set editor applies the one-working-weight rule (§6.3) to a substitute's sets too, though §5.2 only says "weight × reps". *Recommended:* keep it; extra sets (§9.2 slice 2) already allow a different weight.
-8. **Deleting while a session is open:** removing an exercise or day archives it, rather than deleting it, if any session has it, including an unfinished one. An exercise archived that way can show in History's picker with "No sessions logged yet." *Recommended:* count only finished sessions, unless the open session has sets for it.
-9. **Old sessions judged with today's settings:** the replay and the finished-session editor use the current rep range and set count, not what was prescribed then (§9.2 slice 1, "Set counts in a past session"). *Recommended:* schedule §11 "Store each session's prescription" in the next version.
-10. **Tap targets under 44 px:** the warm-up banner's ✕ (32 px) and the Program tab's move/remove buttons (40 px wide). *Recommended:* bring ✕ up to `--tap-target`; check the icon buttons at 320 px first.
-11. **More UI primitives (ARCHITECTURE.md, Proposed):** `SegmentedControl`, used by five toggle groups (tabs, effort scale, tier, stack presets, effort picker), and `Note`. *Recommended:* add `SegmentedControl`; leave `Note` until it needs variants.
+7. ~~**Substitutes and the working weight**~~ — **Decided:** no change in v1.3.0; a substitute keeps the one-working-weight rule. The owner's view is that the rule itself (§6.3) is wrong for originals and substitutes alike, and that the simplest fix is to let weight change set to set the way reps do. Parked in §11 ("Weight per set").
+8. ~~**Deleting while a session is open**~~ — **Decided (§9.4 slice 0):** only finished sessions count, plus the open session if it has sets for the exercise or day; an open session with no sets on a removed day is discarded with it.
+9. ~~**Old sessions judged with today's settings**~~ — **Decided (§9.4 slice 1):** each session stores its prescription.
+10. ~~**Tap targets under 44 px**~~ — **Decided (§9.4 slice 0):** the warm-up ✕ and the Program tab's move/remove buttons go to 44 px.
+11. ~~**More UI primitives**~~ — **Decided (§9.4 slice 0):** add `SegmentedControl` for the four toggle groups (not the tabs); leave `Note` until it needs variants.
 
 Waiting on the owner's phone: TESTING.md's unticked on-device checks for v1.1.0 and v1.2.0.
 
@@ -508,8 +534,9 @@ Waiting on the owner's phone: TESTING.md's unticked on-device checks for v1.1.0 
 - **Muscle-group-aware substitutes** (v2/v3): when replacing an exercise, offer exercises tagged with the same primary muscle and tier (e.g. replacing Bench suggests other pec-primary lifts). Needs a muscle-group store: exercise ↔ muscle group is **many-to-many** (a join table with a primary/secondary role).
 - ~~**Add a set on the fly**~~ — **scoped for v1.2.0** (§9.2 slice 2).
 - ~~**Session notes**~~ — **scoped for v1.2.0** (§9.2 slice 3). Still parked: sending notes to an LLM for evaluation (v2/v3; needs a CSP change and breaks "data never leaves the device").
-- **Keep history for same-named lifts when a template replaces a program:** today a template creates new exercises, so an existing Bench Press starts fresh and its history stays under "Archived" (§9.1 slice 3). Matching by name could carry history and starting numbers over.
-- **Store each session's prescription:** a session stores only the sets logged, so History can't show "3 of 3" for a week when 3 were prescribed, and the progression replay judges old sessions with today's settings (rep range, set count). Saving each exercise's prescription when a session starts would fix both (a stored-data change). Raised while building §9.2 slice 1.
+- **Scoped for v1.3.0 (§9.4 slice 2): keep history for same-named lifts when a template replaces a program:** today a template creates new exercises, so an existing Bench Press starts fresh and its history stays under "Archived" (§9.1 slice 3). Matching by name could carry history and starting numbers over.
+- **Scoped for v1.3.0 (§9.4 slice 1): store each session's prescription:** a session stores only the sets logged, so History can't show "3 of 3" for a week when 3 were prescribed, and the progression replay judges old sessions with today's settings (rep range, set count). Saving each exercise's prescription when a session starts would fix both (a stored-data change). Raised while building §9.2 slice 1.
 - **Progression schemes beyond double progression (e.g. 5/3/1):** today every exercise uses one scheme: straight sets at one working weight, double progression, the floor rule and an e1RM from the first set. Programs like 5/3/1 prescribe a different weight and reps per set (percentages of a training max, an AMRAP last set, 3-week waves). Supporting them would add a per-exercise scheme that decides each set's prescription and how a session is judged; the current scheme stays as it is. Logged sets already store a weight each, so storage needn't change shape. Raised while scoping §9.2 slice 2.
-- **Change programs mid-cycle:** a way to drop the current program (e.g. two weeks into an Upper/Lower template, switching to 5/3/1) and start or build another, **keeping the history** of the lifts already logged. Today a template replaces the program after a confirm (days with history are archived, §9.1 slice 3), but there's no "start over" or "delete program" for building your own from scratch. Raised by the owner in the v1.2.0 on-device pass.
+- **Scoped for v1.3.0 (§9.4 slice 3): change programs mid-cycle:** a way to drop the current program (e.g. two weeks into an Upper/Lower template, switching to 5/3/1) and start or build another, **keeping the history** of the lifts already logged. Today a template replaces the program after a confirm (days with history are archived, §9.1 slice 3), but there's no "start over" or "delete program" for building your own from scratch. Raised by the owner in the v1.2.0 on-device pass.
 - **A fixed action footer:** the walkthrough's Next (and, during a session, Log set and Finish) move as cards above them grow and shrink. A footer pinned to the bottom of the screen could hold each screen's main buttons. Owner's note: probably not needed, since the walkthrough is meant to be read, not tapped through quickly. Raised in the v1.2.0 on-device pass.
+- **Weight per set:** let each set's weight be changed the way its reps are, dropping the one-working-weight rule (§6.3). The owner prefers this to a full scheme engine (above) as the first step. The engine needs decisions first: e1RM already uses the first set alone (§6.4), but the floor rule and "range filled" (§6.5–6.6) would be judging sets at different weights, and the stack logic classifies a session by the weight lifted (§6.6, "Off-plan weight"). Raised while scoping v1.3.0 (§10 #7).
