@@ -6,7 +6,7 @@ Standing instructions for any Claude session working in this repo.
 
 - **SPEC.md**: what the app does and why (the source of truth). §9.1–§9.4 hold v1.1.0, v1.2.0, the v1.2.1 fixes and v1.3.0 (all released); §10 holds open questions; §11 holds ideas for later versions. No version after v1.3.0 is scoped yet.
 - **ARCHITECTURE.md**: how it's built: folder map, data flow, storage, hosting, gates, releases, and Proposed strategies.
-- **TESTING.md**: how to verify changes in the preview, its known quirks, and the on-device checklist.
+- **TESTING.md**: the phone checklists (every release, and the current release) and how to verify changes in the preview, with its known quirks.
 - **CHANGELOG.md**: what shipped in each version.
 
 ## Source of truth
@@ -43,7 +43,7 @@ Standing instructions for any Claude session working in this repo.
 
 - **`main` is protected.** Never push to it. Work on a branch, keep changes small with a commit per meaningful step, push the branch, and open a PR (the template has the checklist). The owner reviews and merges.
 - Before pushing, run what CI runs: `npm run format:check`, `npm run lint`, `npm run check:conventions`, `npm run check:spec`, `npm run check:changelog`, `npm test`, `npm run build`.
-- Add user-facing changes to the "Unreleased" section of CHANGELOG.md. A release is a PR that bumps `package.json`'s version and moves those notes under it; merging it tags the release automatically (semantic versioning).
+- Add user-facing changes to the "Unreleased" section of CHANGELOG.md. A release is a PR that bumps `package.json`'s version, moves those notes under it, and replaces TESTING.md's "Current release" checklist with checks drawn from them; merging it tags the release automatically (semantic versioning).
 - New work is scoped as versions from SPEC §11, recorded the way v1.2.0 is in §9.2 (the next one as §9.5). Settle the scope and any Open/Proposed items (§10) with the owner before building. ARCHITECTURE.md's "Cleanup backlog" holds small refactors to fold into whichever slice next touches those files.
 
 ### Building a slice
@@ -55,7 +55,7 @@ v1.1.0 was built one slice per PR, in this order (step 7 was added for v1.2.0):
 3. **Pure logic with tests,** outside React and Dexie (`src/program/`, `src/session/`, or `src/engine/` for progression rules), then the UI on top. Data that's still Proposed (e.g. an exercise list) goes in as written and is listed in the PR for review.
 4. **Stored-data changes** follow the ARCHITECTURE.md checklist (Dexie version, backup validator, round-trip test).
 5. **Verify in the preview** per TESTING.md: the flows by DOM, and sideways scrolling and clipped labels at 375px and 320px. Leave the preview's data as it was.
-6. **Update the docs in the same PR:** ARCHITECTURE.md (folder map, UI, storage), CHANGELOG.md "Unreleased" for user-facing changes, SPEC.md (the slice marked built), and TESTING.md's on-device checklist for anything the preview can't check.
+6. **Update the docs in the same PR:** ARCHITECTURE.md (folder map, UI, storage), CHANGELOG.md "Unreleased" for user-facing changes, SPEC.md (the slice marked built), and, for anything the preview can't check, a note in the PR for the release's phone checklist (TESTING.md).
 7. **Review:** run the `architecture-reviewer` subagent (`.claude/agents/`) on the branch's diff. Fix the must-fix findings; fix worth-fixing ones or say in the PR why not; raise its questions with the owner.
 8. **Open the PR** with what changed, how it was verified, anything worth the owner's attention, and any Proposed data to review. Run the CI checks first.
 

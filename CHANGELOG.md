@@ -2,7 +2,7 @@
 
 All notable changes to Logtelligent. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
 
-To release: in a PR, move the "Unreleased" notes under a new version heading and bump `version` in `package.json` to match. Merging tags the release automatically (see ARCHITECTURE.md, "Quality gates and releases").
+To release: in a PR, move the "Unreleased" notes under a new version heading, bump `version` in `package.json` to match, and replace TESTING.md's "Current release" checklist with checks drawn from those notes. Merging tags the release automatically (see ARCHITECTURE.md, "Quality gates and releases").
 
 ## [Unreleased]
 
