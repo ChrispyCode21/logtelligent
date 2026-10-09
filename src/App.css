@@ -241,9 +241,13 @@ fieldset.field legend {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-/* Three labels across a phone: less padding so "Perceived effort" fits on two lines. */
+/* Three labels across a phone: less padding so "Perceived effort" fits on two lines. With a wider
+   font than the iPhone's (or larger text), a word that still doesn't fit hyphenates instead of
+   overflowing the button. */
 .segmented.three button {
   padding: 0 var(--space-1);
+  hyphens: auto;
+  overflow-wrap: break-word;
 }
 
 /* v1.1.0 slice 3: templates, guided seeding */
