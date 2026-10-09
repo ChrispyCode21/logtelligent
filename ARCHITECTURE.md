@@ -127,7 +127,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 - **Dependabot:** weekly npm and GitHub Actions update PRs. Actions are pinned to commit SHAs.
 - **`main` is protected** (`.github/rulesets/main.json`): changes arrive by PR, all checks must pass, and there are no force-pushes or deletions.
 - **Releases** (`release.yml`), semantic versioning:
-  1. In a PR, bump `version` in `package.json` and move `CHANGELOG.md`'s "Unreleased" notes under the new version.
+  1. In a PR, bump `version` in `package.json`, move `CHANGELOG.md`'s "Unreleased" notes under the new version, and replace TESTING.md's "Current release" phone checklist with checks drawn from those notes.
   2. When it merges, the workflow sees a version with no release yet, creates the `vX.Y.Z` tag and publishes a GitHub Release with that CHANGELOG section.
 - **Production is every merge to `main`**, not the release tag: Workers Builds deploys `main` as it lands (see Hosting). The tag and GitHub Release only record the version.
 - **Agent pipeline:** issues labeled `agent-ready` are built by Claude in GitHub Actions and arrive as PRs through the same gates (see "Agent pipeline" below).
