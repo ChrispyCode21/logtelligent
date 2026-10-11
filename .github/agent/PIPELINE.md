@@ -106,7 +106,7 @@ Not built yet (#75); until then, the coding run lists out-of-scope findings in i
 
 ## Releases
 
-When the last open issue in a version's milestone closes, the agent creates a "Release vX.Y.Z" issue in it, labeled `agent-ready`. Issues in other milestones don't hold it back. It isn't created twice, or for a version already released, and its text is fixed in the workflow, not written by Claude. Its PR bumps `package.json` and moves CHANGELOG.md's "Unreleased" notes under the version; merging it tags the release.
+When the last open issue in a version's milestone closes, the agent creates a "Release vX.Y.Z" issue in it, labeled `agent-ready`. Issues in other milestones don't hold it back. It isn't created twice, or for a version already released, and its text is fixed in the workflow, not written by Claude. Its PR bumps `package.json` and moves CHANGELOG.md's "Unreleased" notes under the version, and tightens SPEC.md and ARCHITECTURE.md (CLAUDE.md, "How to work"); merging it tags the release.
 
 ## Merge safety
 
