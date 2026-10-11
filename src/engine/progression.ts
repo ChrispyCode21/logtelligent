@@ -59,12 +59,14 @@ export function step(
   // deload also clears its last successful numbers, so a fail before the next success reverts
   // one load step below, as with no success yet (SPEC §6.6).
   if (plan.kind === 'deload') {
+    const primary = config.tier === 'primary'
     return {
       result: 'deload',
       state: {
         stacks: 0,
-        lastSuccess: config.tier === 'primary' ? undefined : state.lastSuccess,
-        next: { kind: 'resume', numbers: plan.numbers },
+        lastSuccess: primary ? undefined : state.lastSuccess,
+        unlifted: primary ? undefined : state.unlifted,
+        next: { kind: 'resume', numbers: plan.numbers, unlifted: state.unlifted },
       },
     }
   }
@@ -96,8 +98,9 @@ export function step(
 
   const stacks = state.stacks + 1
   const failed = state.failed && weight < state.failed.weight ? state.failed : done
-  // No success yet, or none since a primary's deload: revert one load step below the failed weight (SPEC §6.6).
-  const steppedDown = !state.lastSuccess
+  // No success yet, or none since a primary's deload: revert one load step below the failed weight,
+  // or to the lightest load if there's none below. These reference numbers were never lifted (SPEC §6.6).
+  const unlifted = !state.lastSuccess || state.unlifted === true
   const lastSuccess = state.lastSuccess ?? {
     weight: stepDown(weight, loads),
     reps: defaultReps(config),
@@ -107,13 +110,21 @@ export function step(
   if (stacks >= 2) {
     return {
       result: 'fail',
-      state: { stacks, lastSuccess, failed, next: { kind: 'deload', numbers: lastSuccess } },
+      state: { stacks, lastSuccess, unlifted, failed, next: { kind: 'deload', numbers: lastSuccess } },
       message: deloadMessage(config.name),
     }
   }
+  const lightest = loads[0]
+  const revert: Plan = {
+    kind: 'revert',
+    numbers: lastSuccess,
+    unlifted,
+    steppedDown: unlifted && lastSuccess.weight < weight,
+    atLightestLoad: unlifted && weight <= lightest && lastSuccess.weight === lightest,
+  }
   return {
     result: 'fail',
-    state: { stacks, lastSuccess, failed, next: { kind: 'revert', numbers: lastSuccess, steppedDown } },
+    state: { stacks, lastSuccess, unlifted, failed, next: revert },
     message: FAIL_MESSAGE,
   }
 }

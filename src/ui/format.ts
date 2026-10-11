@@ -102,17 +102,28 @@ const PLAN_NOTES: Record<PlanKind, string | null> = {
   resume: 'Deload done: back to your last successful numbers.',
 }
 
+const LIGHTEST_LOAD_NOTE =
+  "You're at the lightest load and still missing the minimums. Check this exercise's starting numbers, or add lighter loads."
+
 /**
- * The suggestion card's note on its plan (SPEC §6.6–6.7). A revert one load step below the failed
- * weight wasn't a past success; primary lifts come back from a deload on the e1RM rule, the only
- * rule that predicts reps.
+ * The suggestion card's note on its plan (SPEC §6.6–6.7). Numbers never lifted are never called
+ * successful: a revert to them says the weight dropped, that it couldn't, or nothing when it stays
+ * the weight that failed. Primary lifts come back from a deload on the e1RM rule, the only rule
+ * that predicts reps.
  */
 export function formatPlanNote(
-  suggestion: Pick<Extract<Suggestion, { kind: 'suggestion' }>, 'plan' | 'steppedDown' | 'predictedReps'>,
+  suggestion: Pick<
+    Extract<Suggestion, { kind: 'suggestion' }>,
+    'plan' | 'unlifted' | 'steppedDown' | 'atLightestLoad' | 'predictedReps'
+  >,
 ): string | null {
-  if (suggestion.plan === 'revert' && suggestion.steppedDown) return 'Weight lowered one step.'
+  if (suggestion.plan === 'revert' && suggestion.unlifted) {
+    if (suggestion.atLightestLoad) return LIGHTEST_LOAD_NOTE
+    return suggestion.steppedDown ? 'Weight lowered one step.' : null
+  }
   if (suggestion.plan === 'resume' && suggestion.predictedReps !== undefined)
     return 'Deload done: weight picked from your estimated 1RM.'
+  if (suggestion.plan === 'resume' && suggestion.unlifted) return 'Resuming after the deload.'
   return PLAN_NOTES[suggestion.plan]
 }
 

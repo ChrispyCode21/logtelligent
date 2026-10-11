@@ -1,5 +1,6 @@
 import type { ExerciseConfig, RunningE1rm, Suggestion } from '../engine'
 import { effortTarget, type EffortScale } from '../program/effort'
+import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { formatBreakNote, formatE1rm, formatPlanNote, formatWeight } from '../ui/format'
 
@@ -14,9 +15,11 @@ interface Props {
   suggestion: Suggestion
   heading: string
   effortScale: EffortScale
+  /** Opens this exercise's form on the Program tab. */
+  onEditExercise: () => void
 }
 
-export function SuggestionCard({ config, suggestion, heading, effortScale }: Props) {
+export function SuggestionCard({ config, suggestion, heading, effortScale, onEditExercise }: Props) {
   if (suggestion.kind === 'needsSeed') {
     return (
       <Card>
@@ -53,6 +56,12 @@ export function SuggestionCard({ config, suggestion, heading, effortScale }: Pro
       {suggestion.e1rm && <p className="muted">Estimated 1RM {formatE1rm(suggestion.e1rm.value)}</p>}
       {suggestion.stacks > 0 && <p className="muted">Fatigue stacks: {suggestion.stacks} of 2</p>}
       {planNote && <p className="note">{planNote}</p>}
+      {/* Failing at the lightest load points to the exercise's starting numbers and loads (SPEC §6.6). */}
+      {suggestion.atLightestLoad && (
+        <div className="actions">
+          <Button onClick={onEditExercise}>Edit exercise</Button>
+        </div>
+      )}
       {basisNote && <p className="note">{basisNote}</p>}
     </Card>
   )

@@ -1,4 +1,5 @@
 import {
+  atLightestLoad,
   exerciseCard,
   expectConfirm,
   expectFitsScreen,
@@ -45,6 +46,16 @@ test('Today: starting numbers still needed, and a day out of rotation', async ({
   await page.getByRole('combobox').selectOption({ label: 'Lower A' })
   await expectConfirm(page, /^Lower A isn't next in the rotation/)
   await expectFitsScreen(page, 'a day out of rotation', page.getByRole('button', { name: 'Start Lower A' }))
+})
+
+test('Today: a fail at the lightest load, with Edit exercise', async ({ page }) => {
+  await restore(page, atLightestLoad)
+  await tab(page, 'Today').click()
+  await expectFitsScreen(
+    page,
+    'a fail at the lightest load',
+    page.getByRole('button', { name: 'Edit exercise' }),
+  )
 })
 
 test('a live session on Reps left, and the exercise menu', async ({ page }) => {
