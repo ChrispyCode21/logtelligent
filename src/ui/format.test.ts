@@ -94,7 +94,19 @@ describe('formatPlanNote (SPEC §6.6–6.7)', () => {
   })
 
   it('a revert one load step below the failed weight says the weight was lowered (E4c)', () => {
-    expect(formatPlanNote({ plan: 'revert', steppedDown: true })).toBe('Weight lowered one step.')
+    expect(formatPlanNote({ plan: 'revert', unlifted: true, steppedDown: true })).toBe(
+      'Weight lowered one step.',
+    )
+  })
+
+  it('a revert that couldn’t drop below the lightest load points to the starting numbers (D9, D10)', () => {
+    expect(formatPlanNote({ plan: 'revert', unlifted: true, atLightestLoad: true })).toBe(
+      "You're at the lightest load and still missing the minimums. Check this exercise's starting numbers, or add lighter loads.",
+    )
+  })
+
+  it('a revert to unlifted numbers at the weight that failed has no note (E4g)', () => {
+    expect(formatPlanNote({ plan: 'revert', unlifted: true })).toBeNull()
   })
 
   it('after a deload, primary lifts on the e1RM rule say so; accessories go back to the last success', () => {
@@ -102,6 +114,10 @@ describe('formatPlanNote (SPEC §6.6–6.7)', () => {
       'Deload done: weight picked from your estimated 1RM.',
     )
     expect(formatPlanNote({ plan: 'resume' })).toBe('Deload done: back to your last successful numbers.')
+  })
+
+  it('a resume to numbers never lifted says only that the deload is over (E4f)', () => {
+    expect(formatPlanNote({ plan: 'resume', unlifted: true })).toBe('Resuming after the deload.')
   })
 
   it('a normal suggestion has no note', () => {

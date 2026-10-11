@@ -21,9 +21,19 @@ interface Props {
   seeding: boolean
   onSeeding: (open: boolean) => void
   onEditProgram: () => void
+  /** Opens an exercise's form on the Program tab. */
+  onEditExercise: (exerciseId: string) => void
 }
 
-export function TodayView({ program, sessions, asOf, seeding, onSeeding, onEditProgram }: Props) {
+export function TodayView({
+  program,
+  sessions,
+  asOf,
+  seeding,
+  onSeeding,
+  onEditProgram,
+  onEditExercise,
+}: Props) {
   const [chosenDayId, setChosenDayId] = useState<string>()
 
   const active = sessions.find((s) => !s.finishedAt)
@@ -107,6 +117,7 @@ export function TodayView({ program, sessions, asOf, seeding, onSeeding, onEditP
           )}
           heading={exercise.name}
           effortScale={program.effortScale}
+          onEditExercise={() => onEditExercise(exercise.id)}
         />
       ))}
 
