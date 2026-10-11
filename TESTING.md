@@ -39,22 +39,22 @@ Lean on purpose: the things any release could break that only the phone shows. R
 - Restore from file… reads an export back: when what's stored changes.
 - Any real `confirm()` the release adds or rewords.
 
-### Current release: v1.3.0
+### Current release: v1.4.0
 
 Replaced at each release with checks drawn from that release's CHANGELOG notes (see "Keeping these lists" below). Anything still unticked when the next release comes is carried over once, then dropped or turned into an issue.
 
-- [ ] **Change your program:** the card at the bottom of the Program tab, its note, and the real "Change your program? …" `confirm()`. With a session open it adds "Your open session (N sets logged) will be discarded." Afterwards the template options show, and Today starts at the new program's first day.
-- [ ] **One history per lift:** with the same lift on two days, History lists it once, with both days' sessions tagged by day, and a high-rep session's chart point is hollow.
-- [ ] **Adding a lift you already do:** a primary needs no starting numbers (the form says they're optional); an accessory picked from the exercise list copies your equipment and weight stack and suggests the lift's latest weight.
-- [ ] **Sessions remember their prescription:** finish a session, then edit it from History: its header reads "3 of 3 sets". Change an exercise's rep range and check Today's suggestion starts fresh in the new range.
+- [ ] **Effort scale buttons:** on the Program tab's Effort scale card, "Perceived effort" sits inside its button on two lines, with no word running past the edge or broken mid-word. (The browser tests cover a wider font at 320 px.)
+- [ ] **Notes on Today's suggestion:** a note after a failed session, a deload or a break ("Weight lowered one step.", "Deload done: weight picked from your estimated 1RM.", "Returning from a break: estimate lowered 15%.") wraps cleanly inside the card.
+- [ ] **Failing at the lightest load:** the "You're at the lightest load…" note reads well on the card, and its **Edit exercise** button is easy to tap and opens that exercise's form.
+
+Carried over from v1.3.0:
+
+- [ ] **Change your program:** the real "Change your program? …" `confirm()`, adding "Your open session (N sets logged) will be discarded." when a session is open. Afterwards Today starts at the new program's first day.
+- [ ] **One history per lift:** with the same lift on two days, History lists it once, with sessions tagged by day, and a high-rep session's chart point is hollow.
+- [ ] **Adding a lift you already do:** a primary needs no starting numbers; an accessory picked from the exercise list copies your equipment and weight stack.
+- [ ] **Sessions remember their prescription:** a finished session edited from History reads "3 of 3 sets"; changing a rep range starts Today's suggestion fresh.
 - [ ] **Removing a day mid-session:** the real "Delete Upper A? Its open session has nothing logged yet…" `confirm()`.
-- [ ] **Bigger tap targets:** the warm-up ✕ and the Program tab's ↑ ↓ ✕ buttons are easy to hit one-handed, and long exercise names still read well beside them.
-- [ ] **Database upgrade (v6):** covered by "Your data survives" above.
-
-Carried over from earlier releases:
-
-- [ ] **v1.2.0:** the real "Finish anyway? (No note for next time.)" `confirm()`, and a note is kept when you tap History with the keyboard still up.
-- [ ] **v1.2.1:** logged-set rows have their text centred, and the Effort scale card keeps its height when switching scales.
+- [ ] **Bigger tap targets:** the warm-up ✕ and the Program tab's ↑ ↓ ✕ buttons are easy to hit one-handed.
 
 ### Keeping these lists
 
