@@ -214,6 +214,22 @@ export const backup = {
   ],
 } satisfies Backup
 
+/**
+ * The backup, with Cable Lateral Raise's last session a fail at its lightest load (10) before any
+ * success, so its card points to its starting numbers (SPEC §6.6, D9).
+ */
+export const atLightestLoad = {
+  ...backup,
+  sessions: backup.sessions.map((session) => ({
+    ...session,
+    exercises: session.exercises.map((e) =>
+      e.exerciseId === 'raise' && e.sets.length > 0
+        ? { ...e, sets: [12, 11, 10].map((reps) => ({ weight: 10, reps })) }
+        : e,
+    ),
+  })),
+} satisfies Backup
+
 /** Restore a backup through the Program tab's "Restore from file…". */
 export async function restore(page: Page, data: Backup = backup) {
   await tab(page, 'Program').click()
