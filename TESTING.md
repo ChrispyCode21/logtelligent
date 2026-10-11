@@ -43,8 +43,8 @@ Lean on purpose: the things any release could break that only the phone shows. R
 
 Replaced at each release with checks drawn from that release's CHANGELOG notes (see "Keeping these lists" below). Anything still unticked when the next release comes is carried over once, then dropped or turned into an issue.
 
-- [ ] **Effort scale buttons:** on the Program tab's Effort scale card, "Perceived effort" sits inside its button on two lines, with no word running past the edge or broken mid-word. (The browser tests cover a wider font at 320 px.)
-- [ ] **Notes on Today's suggestion:** a note after a failed session, a deload or a break ("Weight lowered one step.", "Deload done: weight picked from your estimated 1RM.", "Returning from a break: estimate lowered 15%.") wraps cleanly inside the card.
+- [ ] **Effort scale buttons:** on the Program tab's Effort scale card, "Perceived effort" sits inside its button on two lines, whole words only. If a word ever has to break (larger text), it hyphenates onto the next line and never runs past the edge. (The browser tests cover a wider font at 320 px.)
+- [ ] **Notes on Today's suggestion:** a note after a failed session, a deload or a break ("Weight lowered one step.", "Deload done: weight picked from your estimated 1RM.", "Resuming after the deload.", "Returning from a break: estimate lowered 15%.") wraps cleanly inside the card.
 - [ ] **Failing at the lightest load:** the "You're at the lightest load…" note reads well on the card, and its **Edit exercise** button is easy to tap and opens that exercise's form.
 
 Carried over from v1.3.0:
@@ -54,7 +54,7 @@ Carried over from v1.3.0:
 - [ ] **Adding a lift you already do:** a primary needs no starting numbers; an accessory picked from the exercise list copies your equipment and weight stack.
 - [ ] **Sessions remember their prescription:** a finished session edited from History reads "3 of 3 sets"; changing a rep range starts Today's suggestion fresh.
 - [ ] **Removing a day mid-session:** the real "Delete Upper A? Its open session has nothing logged yet…" `confirm()`.
-- [ ] **Bigger tap targets:** the warm-up ✕ and the Program tab's ↑ ↓ ✕ buttons are easy to hit one-handed.
+- [ ] **Bigger tap targets:** the warm-up ✕ and the Program tab's ↑ ↓ ✕ buttons are easy to hit one-handed, and long exercise names still read well beside them.
 
 ### Keeping these lists
 
