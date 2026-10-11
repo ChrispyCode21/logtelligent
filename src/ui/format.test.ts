@@ -5,6 +5,7 @@ import {
   formatCountedSets,
   formatE1rm,
   formatExtras,
+  formatPlanNote,
   formatPrescription,
   formatSet,
   formatSetCount,
@@ -82,6 +83,29 @@ describe('formatBreakNote', () => {
     expect(formatBreakNote(0.9)).toBe('Returning from a break: estimate lowered 10%.')
     expect(formatBreakNote(0.85)).toBe('Returning from a break: estimate lowered 15%.')
     expect(formatBreakNote(0.8)).toBe('Returning from a break: estimate lowered 20%.')
+  })
+})
+
+describe('formatPlanNote (SPEC §6.6–6.7)', () => {
+  it('a revert to a real past success says so (D2)', () => {
+    expect(formatPlanNote({ plan: 'revert' })).toBe(
+      'Last session missed the minimums, so the weight is back to your last successful numbers.',
+    )
+  })
+
+  it('a revert one load step below the failed weight says the weight was lowered (E4c)', () => {
+    expect(formatPlanNote({ plan: 'revert', steppedDown: true })).toBe('Weight lowered one step.')
+  })
+
+  it('after a deload, primary lifts on the e1RM rule say so; accessories go back to the last success', () => {
+    expect(formatPlanNote({ plan: 'resume', predictedReps: 4 })).toBe(
+      'Deload done: weight picked from your estimated 1RM.',
+    )
+    expect(formatPlanNote({ plan: 'resume' })).toBe('Deload done: back to your last successful numbers.')
+  })
+
+  it('a normal suggestion has no note', () => {
+    expect(formatPlanNote({ plan: 'normal' })).toBeNull()
   })
 })
 

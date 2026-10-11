@@ -1,23 +1,13 @@
-import type { ExerciseConfig, PlanKind, RunningE1rm, Suggestion } from '../engine'
+import type { ExerciseConfig, RunningE1rm, Suggestion } from '../engine'
 import { effortTarget, type EffortScale } from '../program/effort'
 import { Card } from '../ui/Card'
-import { formatBreakNote, formatE1rm, formatWeight } from '../ui/format'
+import { formatBreakNote, formatE1rm, formatPlanNote, formatWeight } from '../ui/format'
 
 function e1rmNote(e1rm: RunningE1rm) {
   if (e1rm.basis === 'seed') return 'Based on your starting numbers.'
   if (e1rm.basis === 'returningFromBreak') return formatBreakNote(e1rm.breakFactor)
   return null
 }
-
-const PLAN_NOTES: Record<PlanKind, string | null> = {
-  normal: null,
-  revert: 'Last session missed the minimums, so the weight is back to your last successful numbers.',
-  retry: 'Retrying the numbers that failed. Hitting them clears the fatigue stack.',
-  deload: 'Deload week: fewer sets and less effort. Missing the minimums here does not count.',
-  resume: 'Deload done: back to your last successful numbers.',
-}
-
-const PRIMARY_RESUME_NOTE = 'Deload done: weight picked from your estimated 1RM.'
 
 interface Props {
   config: ExerciseConfig
@@ -39,8 +29,7 @@ export function SuggestionCard({ config, suggestion, heading, effortScale }: Pro
   // Only the e1RM rule predicts reps; primary lifts come back from a deload on it (SPEC §6.7).
   const onE1rmRule = suggestion.predictedReps !== undefined
   const basisNote = suggestion.e1rm && onE1rmRule && e1rmNote(suggestion.e1rm)
-  const planNote =
-    suggestion.plan === 'resume' && onE1rmRule ? PRIMARY_RESUME_NOTE : PLAN_NOTES[suggestion.plan]
+  const planNote = formatPlanNote(suggestion)
   const { min } = config.repRange
   const max = suggestion.effectiveTop ?? config.repRange.max
 
