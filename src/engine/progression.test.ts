@@ -292,6 +292,19 @@ describe('7.E Deload', () => {
     expect(next.predictedReps).toBeCloseTo(4.2, 1)
   })
 
+  it('a primary lift with no e1RM at all resumes at the last successful numbers after a deload', () => {
+    const unrated = (weight: number, reps: number[]) => reps.map((r) => ({ weight, reps: r }))
+    const history = weekly(
+      unrated(225, [5, 4, 3]),
+      unrated(235, [3, 2, 2]),
+      unrated(235, [3, 2, 2]),
+      unrated(200, [4, 4]),
+    )
+    const next = suggestion({ ...bench, seed: undefined }, history)
+    expect(next).toMatchObject({ plan: 'resume', weight: 225, reps: 4, stacks: 0 })
+    expect(next.predictedReps).toBeUndefined()
+  })
+
   it('E4b: after a deload, lateral raise resumes at the last successful numbers (15 x 15), stacks 0', () => {
     const success = sets(15, [15, 15, 15])
     const fail = sets(15, [14, 15, 15])
