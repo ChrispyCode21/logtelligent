@@ -86,15 +86,25 @@ export interface Numbers {
 /**
  * What the next session should be (SPEC §6.6–6.7).
  * - normal: primary lifts use the e1RM rule; accessories use double progression (`numbers`).
- * - revert: last successful numbers after a fail, or one load step below the failed weight when
- *   there are none (`steppedDown`). retry: the heavier numbers that failed.
+ * - revert: last successful numbers after a fail, or, when there are none, reference numbers one
+ *   load step below the failed weight, never lifted (`unlifted`). retry: the heavier numbers that failed.
  * - deload: one lighter week. resume: after a deload; accessories go back to the last successful
- *   numbers, primary lifts use the e1RM rule at the last successful rep target.
+ *   (or reference) numbers, primary lifts use the e1RM rule at the last successful rep target.
  */
 export type Plan =
   | { kind: 'normal'; numbers?: Numbers }
-  | { kind: 'revert'; numbers: Numbers; steppedDown?: boolean }
-  | { kind: 'retry' | 'deload' | 'resume'; numbers: Numbers }
+  | {
+      kind: 'revert'
+      numbers: Numbers
+      /** The numbers were never lifted: no success to go back to (SPEC §6.6). */
+      unlifted?: boolean
+      /** Unlifted, and lighter than the weight that failed. */
+      steppedDown?: boolean
+      /** Unlifted, and the weight that failed was at or below the lightest load, so it couldn't drop. */
+      atLightestLoad?: boolean
+    }
+  | { kind: 'resume'; numbers: Numbers; unlifted?: boolean }
+  | { kind: 'retry' | 'deload'; numbers: Numbers }
 
 export type PlanKind = Plan['kind']
 
@@ -102,6 +112,8 @@ export type PlanKind = Plan['kind']
 export interface ProgressionState {
   stacks: number
   lastSuccess?: Numbers
+  /** `lastSuccess` holds reference numbers that were never lifted, from a fail with no success (SPEC §6.6). */
+  unlifted?: boolean
   /** The heavier numbers that failed, while stacks > 0. */
   failed?: Numbers
   next: Plan
@@ -121,8 +133,12 @@ export type Suggestion =
   | {
       kind: 'suggestion'
       plan: PlanKind
-      /** A revert one load step below the failed weight, not to a real past success (SPEC §6.6). */
+      /** A revert or resume to numbers never lifted, not a real past success (SPEC §6.6–6.7). */
+      unlifted?: boolean
+      /** An unlifted revert lighter than the weight that failed. */
       steppedDown?: boolean
+      /** An unlifted revert that couldn't drop: the failed weight was at or below the lightest load. */
+      atLightestLoad?: boolean
       weight: number
       /** Rep target. */
       reps: number

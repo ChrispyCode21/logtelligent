@@ -196,7 +196,8 @@ describe('7.D Floor rule and fatigue stacks', () => {
     const next = suggestion(bench, weekly(A_SUCCESS, B_FAIL))
     expect(next).toMatchObject({ plan: 'revert', weight: 225, reps: 4, stacks: 1 })
     // A real past success, so the card says "back to your last successful numbers" (§6.6).
-    expect(next.steppedDown).toBeFalsy()
+    expect(next.unlifted).toBe(false)
+    expect(next.steppedDown).toBe(false)
   })
 
   it('D3: success at the reverted 225 keeps stacks at 1 and retries 235', () => {
@@ -238,6 +239,20 @@ describe('7.D Floor rule and fatigue stacks', () => {
     const outcome = evaluateSession(lateralRaise, weekly(sets(15, [15, 15, 15])), sets(15, [20, 16, 14]))
     expect(outcome.result).toBe('fail')
     expect(outcome.state.stacks).toBe(1)
+  })
+
+  it('D9: with no success yet, bench fails at 45, the lightest load: stays at 45 x 4, at the lightest load', () => {
+    const next = suggestion({ ...bench, seed: { weight: 45, reps: 5 } }, weekly(sets(45, [4, 3, 2])))
+    expect(next).toMatchObject({ plan: 'revert', weight: 45, reps: 4, stacks: 1, atLightestLoad: true })
+    expect(next.steppedDown).toBe(false)
+  })
+
+  it('D10: a pulldown seeded at 80, below its lightest load 88, fails: moves up to 88 x 8, at the lightest load', () => {
+    const seeded = { ...latPulldown, seed: { weight: 80, reps: 8 } }
+    expect(suggestion(seeded, [])).toMatchObject({ weight: 80, reps: 8 })
+    const next = suggestion(seeded, weekly(reps(80, 8, 7, 6)))
+    expect(next).toMatchObject({ plan: 'revert', weight: 88, reps: 8, stacks: 1, atLightestLoad: true })
+    expect(next.steppedDown).toBe(false)
   })
 })
 
@@ -342,7 +357,7 @@ describe('7.E Deload', () => {
     const history = weekly(success, fail, fail, sets(15, [15, 15]), sets(15, [15, 14, 15]))
     const next = suggestion(lateralRaise, history)
     expect(next).toMatchObject({ plan: 'revert', weight: 15, reps: 15, stacks: 1 })
-    expect(next.steppedDown).toBeFalsy()
+    expect(next.unlifted).toBe(false)
   })
 
   it('E4e: after a deload, a success at 220 then a fail at 225 reverts to 220 x 4', () => {
@@ -357,6 +372,38 @@ describe('7.E Deload', () => {
     const next = suggestion(bench, history)
     expect(next).toMatchObject({ plan: 'revert', weight: 220, reps: 4, stacks: 1 })
     expect(next.steppedDown).toBeFalsy()
+  })
+
+  // A lateral raise that deloads before any success: 15 fails, the revert to 12.5 fails, then the deload.
+  const NEVER_SUCCEEDED = [
+    sets(15, [15, 14, 15]),
+    sets(12.5, [15, 14, 15]),
+    sets(12.5, [15, 15]),
+  ] satisfies LoggedSet[][]
+
+  it('E4f: a lateral raise that deloaded before any success resumes at the reference 12.5 x 15, unlifted', () => {
+    const [fail] = NEVER_SUCCEEDED
+    expect(suggestion(lateralRaise, weekly(fail))).toMatchObject({
+      plan: 'revert',
+      weight: 12.5,
+      unlifted: true,
+      steppedDown: true,
+    })
+    const next = suggestion(lateralRaise, weekly(...NEVER_SUCCEEDED))
+    expect(next).toMatchObject({ plan: 'resume', weight: 12.5, reps: 15, sets: 3, stacks: 0, unlifted: true })
+  })
+
+  it('E4g: E4f, then a fail at 12.5 reverts to the unlifted 12.5 x 15, neither stepped down nor at the lightest load', () => {
+    const next = suggestion(lateralRaise, weekly(...NEVER_SUCCEEDED, sets(12.5, [15, 14, 15])))
+    expect(next).toMatchObject({
+      plan: 'revert',
+      weight: 12.5,
+      reps: 15,
+      stacks: 1,
+      unlifted: true,
+      steppedDown: false,
+      atLightestLoad: false,
+    })
   })
 
   it('E5: deload-week sets (200x5 @6, e1RM 255.4) leave the running e1RM at 262.2', () => {
