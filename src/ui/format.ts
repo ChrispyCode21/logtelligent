@@ -104,13 +104,17 @@ const PLAN_NOTES: Record<PlanKind, string | null> = {
 
 /**
  * The suggestion card's note on its plan (SPEC §6.6–6.7). A revert one load step below the failed
- * weight wasn't a past success; primary lifts come back from a deload on the e1RM rule, the only
- * rule that predicts reps.
+ * weight wasn't a past success, and one at the lightest load couldn't go lower; primary lifts come
+ * back from a deload on the e1RM rule, the only rule that predicts reps.
  */
 export function formatPlanNote(
-  suggestion: Pick<Extract<Suggestion, { kind: 'suggestion' }>, 'plan' | 'steppedDown' | 'predictedReps'>,
+  suggestion: Pick<
+    Extract<Suggestion, { kind: 'suggestion' }>,
+    'plan' | 'steppedDown' | 'atLightestLoad' | 'predictedReps'
+  >,
 ): string | null {
   if (suggestion.plan === 'revert' && suggestion.steppedDown) return 'Weight lowered one step.'
+  if (suggestion.plan === 'revert' && suggestion.atLightestLoad) return 'Last session missed the minimums.'
   if (suggestion.plan === 'resume' && suggestion.predictedReps !== undefined)
     return 'Deload done: weight picked from your estimated 1RM.'
   return PLAN_NOTES[suggestion.plan]

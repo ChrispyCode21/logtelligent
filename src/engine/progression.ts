@@ -97,12 +97,14 @@ export function step(
   const stacks = state.stacks + 1
   const failed = state.failed && weight < state.failed.weight ? state.failed : done
   // No success yet, or none since a primary's deload: revert one load step below the failed weight (SPEC §6.6).
-  const steppedDown = !state.lastSuccess
   const lastSuccess = state.lastSuccess ?? {
     weight: stepDown(weight, loads),
     reps: defaultReps(config),
     top: config.repRange.max,
   }
+  // At the lightest available load the weight can't drop, so the card claims no lowering (SPEC §6.6).
+  const steppedDown = !state.lastSuccess && lastSuccess.weight < weight
+  const atLightestLoad = !state.lastSuccess && !steppedDown
 
   if (stacks >= 2) {
     return {
@@ -113,7 +115,12 @@ export function step(
   }
   return {
     result: 'fail',
-    state: { stacks, lastSuccess, failed, next: { kind: 'revert', numbers: lastSuccess, steppedDown } },
+    state: {
+      stacks,
+      lastSuccess,
+      failed,
+      next: { kind: 'revert', numbers: lastSuccess, steppedDown, atLightestLoad },
+    },
     message: FAIL_MESSAGE,
   }
 }

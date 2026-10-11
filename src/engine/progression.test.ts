@@ -197,6 +197,7 @@ describe('7.D Floor rule and fatigue stacks', () => {
     expect(next).toMatchObject({ plan: 'revert', weight: 225, reps: 4, stacks: 1 })
     // A real past success, so the card says "back to your last successful numbers" (§6.6).
     expect(next.steppedDown).toBeFalsy()
+    expect(next.atLightestLoad).toBeFalsy()
   })
 
   it('D3: success at the reverted 225 keeps stacks at 1 and retries 235', () => {
@@ -334,6 +335,7 @@ describe('7.E Deload', () => {
     const next = suggestion(bench, weekly(A_SUCCESS, BAD_FAIL, BAD_FAIL, deload, fail))
     // One step below the failed weight, never lifted, so the card says "Weight lowered one step" (§6.6).
     expect(next).toMatchObject({ plan: 'revert', weight: 215, reps: 4, stacks: 1, steppedDown: true })
+    expect(next.atLightestLoad).toBeFalsy()
   })
 
   it('E4d: after a deload, lateral raise fails at 15 x 15: stacks 1, revert to 15 x 15', () => {
@@ -388,6 +390,13 @@ describe('short sessions and validation (SPEC §5.2, §6.6)', () => {
       reps: 15,
       steppedDown: true,
     })
+  })
+
+  it('a fail at the lightest load with no prior success stays at that weight, not marked steppedDown', () => {
+    // 88 is the pulldown's lightest load, so the revert can't drop (§6.6).
+    const next = suggestion(latPulldown, weekly(sets(88, [8, 7, 6])))
+    expect(next).toMatchObject({ plan: 'revert', weight: 88, reps: 8, stacks: 1, atLightestLoad: true })
+    expect(next.steppedDown).toBeFalsy()
   })
 
   it('off-plan weights are classified against the weight that failed', () => {

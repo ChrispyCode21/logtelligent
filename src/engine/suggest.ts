@@ -39,6 +39,7 @@ function fromPlan(
     kind: 'suggestion',
     plan: plan.kind,
     steppedDown: plan.kind === 'revert' ? plan.steppedDown : undefined,
+    atLightestLoad: plan.kind === 'revert' ? plan.atLightestLoad : undefined,
     weight: deload && primary ? snapDown(weight * DELOAD_LOAD_FACTOR, loads) : weight,
     reps,
     effectiveTop: primary ? undefined : top,

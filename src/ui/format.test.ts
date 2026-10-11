@@ -97,6 +97,10 @@ describe('formatPlanNote (SPEC §6.6–6.7)', () => {
     expect(formatPlanNote({ plan: 'revert', steppedDown: true })).toBe('Weight lowered one step.')
   })
 
+  it('a revert at the lightest load, with no past success, claims no lowering', () => {
+    expect(formatPlanNote({ plan: 'revert', atLightestLoad: true })).toBe('Last session missed the minimums.')
+  })
+
   it('after a deload, primary lifts on the e1RM rule say so; accessories go back to the last success', () => {
     expect(formatPlanNote({ plan: 'resume', predictedReps: 4 })).toBe(
       'Deload done: weight picked from your estimated 1RM.',

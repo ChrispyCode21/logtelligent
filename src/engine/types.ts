@@ -87,13 +87,14 @@ export interface Numbers {
  * What the next session should be (SPEC §6.6–6.7).
  * - normal: primary lifts use the e1RM rule; accessories use double progression (`numbers`).
  * - revert: last successful numbers after a fail, or one load step below the failed weight when
- *   there are none (`steppedDown`). retry: the heavier numbers that failed.
+ *   there are none (`steppedDown`), or the lightest load when nothing lighter is available
+ *   (`atLightestLoad`, not lowered). retry: the heavier numbers that failed.
  * - deload: one lighter week. resume: after a deload; accessories go back to the last successful
  *   numbers, primary lifts use the e1RM rule at the last successful rep target.
  */
 export type Plan =
   | { kind: 'normal'; numbers?: Numbers }
-  | { kind: 'revert'; numbers: Numbers; steppedDown?: boolean }
+  | { kind: 'revert'; numbers: Numbers; steppedDown?: boolean; atLightestLoad?: boolean }
   | { kind: 'retry' | 'deload' | 'resume'; numbers: Numbers }
 
 export type PlanKind = Plan['kind']
@@ -123,6 +124,8 @@ export type Suggestion =
       plan: PlanKind
       /** A revert one load step below the failed weight, not to a real past success (SPEC §6.6). */
       steppedDown?: boolean
+      /** A revert with no past success at the lightest load, so not lowered (SPEC §6.6). */
+      atLightestLoad?: boolean
       weight: number
       /** Rep target. */
       reps: number
