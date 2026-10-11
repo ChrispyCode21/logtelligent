@@ -193,12 +193,10 @@ describe('7.D Floor rule and fatigue stacks', () => {
     expect(outcome.result).toBe('fail')
     expect(outcome.message).toBe(FAIL_MESSAGE)
     expect(outcome.state.stacks).toBe(1)
-    expect(suggestion(bench, weekly(A_SUCCESS, B_FAIL))).toMatchObject({
-      plan: 'revert',
-      weight: 225,
-      reps: 4,
-      stacks: 1,
-    })
+    const next = suggestion(bench, weekly(A_SUCCESS, B_FAIL))
+    expect(next).toMatchObject({ plan: 'revert', weight: 225, reps: 4, stacks: 1 })
+    // A real past success, so the card says "back to your last successful numbers" (§6.6).
+    expect(next.steppedDown).toBeFalsy()
   })
 
   it('D3: success at the reverted 225 keeps stacks at 1 and retries 235', () => {
@@ -306,7 +304,13 @@ describe('7.E Deload', () => {
     expect(next.predictedReps).toBeUndefined()
     // A fail there reverts one step below it, not to the pre-deload 225 (§6.6).
     const failed = weekly(...history.map((s) => s.sets), unrated(225, [4, 3, 2]))
-    expect(suggestion(unseeded, failed)).toMatchObject({ plan: 'revert', weight: 220, reps: 4, stacks: 1 })
+    expect(suggestion(unseeded, failed)).toMatchObject({
+      plan: 'revert',
+      weight: 220,
+      reps: 4,
+      stacks: 1,
+      steppedDown: true,
+    })
   })
 
   it('E4b: after a deload, lateral raise resumes at the last successful numbers (15 x 15), stacks 0', () => {
@@ -328,19 +332,17 @@ describe('7.E Deload', () => {
     const outcome = evaluateSession(bench, weekly(A_SUCCESS, BAD_FAIL, BAD_FAIL, deload), fail)
     expect(outcome).toMatchObject({ result: 'fail', message: FAIL_MESSAGE, state: { stacks: 1 } })
     const next = suggestion(bench, weekly(A_SUCCESS, BAD_FAIL, BAD_FAIL, deload, fail))
-    expect(next).toMatchObject({ plan: 'revert', weight: 215, reps: 4, stacks: 1 })
+    // One step below the failed weight, never lifted, so the card says "Weight lowered one step" (§6.6).
+    expect(next).toMatchObject({ plan: 'revert', weight: 215, reps: 4, stacks: 1, steppedDown: true })
   })
 
   it('E4d: after a deload, lateral raise fails at 15 x 15: stacks 1, revert to 15 x 15', () => {
     const success = sets(15, [15, 15, 15])
     const fail = sets(15, [14, 15, 15])
     const history = weekly(success, fail, fail, sets(15, [15, 15]), sets(15, [15, 14, 15]))
-    expect(suggestion(lateralRaise, history)).toMatchObject({
-      plan: 'revert',
-      weight: 15,
-      reps: 15,
-      stacks: 1,
-    })
+    const next = suggestion(lateralRaise, history)
+    expect(next).toMatchObject({ plan: 'revert', weight: 15, reps: 15, stacks: 1 })
+    expect(next.steppedDown).toBeFalsy()
   })
 
   it('E4e: after a deload, a success at 220 then a fail at 225 reverts to 220 x 4', () => {
@@ -352,7 +354,9 @@ describe('7.E Deload', () => {
       sets(220, [4, 4, 3]),
       sets(225, [4, 3, 2]),
     )
-    expect(suggestion(bench, history)).toMatchObject({ plan: 'revert', weight: 220, reps: 4, stacks: 1 })
+    const next = suggestion(bench, history)
+    expect(next).toMatchObject({ plan: 'revert', weight: 220, reps: 4, stacks: 1 })
+    expect(next.steppedDown).toBeFalsy()
   })
 
   it('E5: deload-week sets (200x5 @6, e1RM 255.4) leave the running e1RM at 262.2', () => {
@@ -372,11 +376,17 @@ describe('short sessions and validation (SPEC §5.2, §6.6)', () => {
   })
 
   it('a fail with no prior success reverts one load step below the failed weight', () => {
-    expect(suggestion(bench, weekly(B_FAIL))).toMatchObject({ plan: 'revert', weight: 230, reps: 4 })
+    expect(suggestion(bench, weekly(B_FAIL))).toMatchObject({
+      plan: 'revert',
+      weight: 230,
+      reps: 4,
+      steppedDown: true,
+    })
     expect(suggestion(lateralRaise, weekly(sets(17.5, [15, 14, 12])))).toMatchObject({
       plan: 'revert',
       weight: 15,
       reps: 15,
+      steppedDown: true,
     })
   })
 
@@ -461,6 +471,7 @@ describe('7.H Stored prescriptions (SPEC §6.8)', () => {
       reps: 10,
       effectiveTop: 12,
       stacks: 1,
+      steppedDown: true,
     })
   })
 
