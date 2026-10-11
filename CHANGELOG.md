@@ -14,6 +14,7 @@ To release: in a PR, move the "Unreleased" notes under a new version heading, bu
 ### Fixed
 
 - **Effort scale buttons on narrow screens:** with a font wider than the iPhone's, or larger text, "Perceived effort" no longer runs past its button on a 320-pixel-wide screen; the word breaks onto the next line instead.
+- **A failed session right after a primary lift's deload:** the next session now drops one step below the weight that failed, instead of going back up to the weight from before the deload.
 
 ## [1.3.0] - 2026-10-09
 
