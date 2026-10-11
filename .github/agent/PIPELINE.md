@@ -7,7 +7,7 @@ An issue labeled `agent-ready` triggers Claude in GitHub Actions, which asks que
 ```
 issue + agent-ready ─► triage ─┬─► questions on the issue, label agent-needs-info, stop
                                ├─► split proposal, stop (on approval: sub-issues)
-                               └─► coding run ─► PR ─► fresh review + CI ─► owner merges ─► production
+                               └─► coding run ─► PR ─► fresh review + CI ─► address comments ─► owner merges ─► production
 ```
 
 ## Where it lives
@@ -95,7 +95,10 @@ Everything the agent writes on GitHub (PR descriptions, issue comments, commit m
 
 Not built yet (#75); until then, the coding run lists out-of-scope findings in its PR as suggested follow-ups.
 
-- **Fresh review:** when the agent opens a PR, a separate run reviews it from scratch (correctness, plus `architecture-reviewer`) and posts its findings. Must-fix findings are fixed on the branch.
+- **Fresh review:** when the agent opens a PR, a separate run that didn't write it reviews it from scratch (correctness, plus `architecture-reviewer`) and posts its findings as one GitHub review, with comments on the lines they concern. It doesn't change the code; the findings go to "Addressing comments" like any other review. It runs once per PR.
+- **Addressing comments:** a review on an agent PR, from the fresh review or from the owner, starts one run on the PR's branch. It reads every unresolved comment, fixes the valid ones, replies to each with what it changed or why it didn't, and pushes. A batch of comments (one GitHub review, or the owner's "Submit review") is one run, not one per comment.
+  - **Who can start it:** only the owner and the fresh review. The repo is public, and nobody else's comment may start a paid run that pushes code.
+  - **Cap:** at most 3 runs per PR. After that, a comment says the cap is reached and the rest is the owner's.
 - **Out-of-scope findings** become follow-up issues, linked from the PR ("Seen. Out of scope for this task; tracked in #n"):
   - `agent-ready` when the problem and the fix are both clear (a bug with an obvious cause);
   - `agent-followup` when it needs a decision (e.g. how dates should look).
