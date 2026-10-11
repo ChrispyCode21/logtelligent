@@ -269,7 +269,7 @@ Progression state (stacks, the last successful numbers, deloads, rep extensions)
 **Fatigue stacks:** each exercise carries its own fatigue-stack count.
 - A **failed** session adds **one stack** and **reverts** next session to the last successful numbers.
   Message: *"Failed to hit minimums, next week's weight will be lowered."*
-  The suggestion card's note for a revert: *"Last session missed the minimums, so the weight is back to your last successful numbers."*, or *"Weight lowered one step."* when the revert is one load step below the failed weight (no successful session yet, below).
+  The suggestion card's note for a revert: *"Last session missed the minimums, so the weight is back to your last successful numbers."*, or *"Weight lowered one step."* when the revert is one load step below the failed weight (no successful session yet, below). At the lightest available load the weight can't drop, so the revert stays at the failed weight and the note is only *"Last session missed the minimums."*
 - If the reverted session **succeeds**, the next session retries the heavier numbers that failed.
 - If the reverted session **also fails**, that is a second stack.
 - **A stack clears only on success at the heavier numbers that originally failed.** Success at the reverted weight does *not* clear it — otherwise alternating A-success / B-fail would loop forever without ever triggering a deload.
@@ -277,7 +277,7 @@ Progression state (stacks, the last successful numbers, deloads, rep extensions)
 - Stacks **reset to 0 after a deload**.
 - **While an exercise has stacks > 0, the stack logic decides next session's numbers, not the e1RM rule.** In shorthand: `stacks > 0 ? stackState.nextNumbers : e1rmPick`, where `nextNumbers` is either the **revert** (last successful numbers) or the **retry** (the exact numbers that failed) — not always "the previous weight."
 - "Last successful numbers" = the weight and rep target of the most recent session for that exercise that passed the floor rule (for a primary lift, since its last deload, §6.7).
-- **No successful session yet:** if a session fails before any session has succeeded (e.g. an optimistic seed, or since a primary lift's deload), the stack is added as usual and the revert goes to **one load step below the failed weight** (accessories: at the bottom of the range). Those numbers then act as the last successful numbers.
+- **No successful session yet:** if a session fails before any session has succeeded (e.g. an optimistic seed, or since a primary lift's deload), the stack is added as usual and the revert goes to **one load step below the failed weight** (accessories: at the bottom of the range), or stays at the failed weight if it is already the lightest available load. Those numbers then act as the last successful numbers.
 - **Off-plan weight:** sessions are classified by the weight actually lifted. At or above the weight that failed counts as the **retry** (success clears the stack); below it counts as a revert-level session (success keeps the stack, a fail adds one).
 
 Example:
