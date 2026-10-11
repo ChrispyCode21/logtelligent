@@ -55,13 +55,15 @@ export function step(
   const plan = state.next
 
   // Deloads skip the floor rule; afterward stacks are 0 and we resume from the last successful
-  // numbers (primary lifts: their rep target, at the e1RM rule's weight, SPEC §6.7).
+  // numbers (primary lifts: their rep target, at the e1RM rule's weight, SPEC §6.7). A primary's
+  // deload also clears its last successful numbers, so a fail before the next success reverts
+  // one load step below, as with no success yet (SPEC §6.6).
   if (plan.kind === 'deload') {
     return {
       result: 'deload',
       state: {
         stacks: 0,
-        lastSuccess: state.lastSuccess,
+        lastSuccess: config.tier === 'primary' ? undefined : state.lastSuccess,
         next: { kind: 'resume', numbers: plan.numbers },
       },
     }
@@ -94,7 +96,7 @@ export function step(
 
   const stacks = state.stacks + 1
   const failed = state.failed && weight < state.failed.weight ? state.failed : done
-  // No success yet: revert one load step below the failed weight (SPEC §6.6).
+  // No success yet, or none since a primary's deload: revert one load step below the failed weight (SPEC §6.6).
   const lastSuccess = state.lastSuccess ?? {
     weight: stepDown(weight, loads),
     reps: defaultReps(config),
