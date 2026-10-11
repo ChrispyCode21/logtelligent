@@ -10,6 +10,7 @@ import {
   repCeiling,
   repExtensionStep,
   runningE1rm,
+  sessionE1rm,
   suggestNext,
 } from '.'
 import type { ExerciseConfig, ExerciseSession, LoggedSet } from '.'
@@ -279,10 +280,39 @@ describe('7.E Deload', () => {
     expect(outcome.message).toBeUndefined()
   })
 
-  it('E4: the week after a deload resumes at the last successful numbers (225 x 4), stacks 0', () => {
-    const history = weekly(A_SUCCESS, B_FAIL, A_FAIL, sets(200, [4, 4], 6))
-    expect(suggestion(bench, history)).toMatchObject({ plan: 'resume', weight: 225, reps: 4, stacks: 0 })
+  // Two fails at 235 with a weak first set (235x3 @10, e1RM 256.5), then a deload.
+  const BAD_FAIL = sets(235, [3, 2, 2], 10)
+
+  it('E4: after a deload, bench resumes from the running e1RM 262.2 at 4 reps: 220 x 4, stacks 0', () => {
+    const history = weekly(A_SUCCESS, BAD_FAIL, BAD_FAIL, sets(200, [4, 4], 6))
     expect(deriveState(bench, history).sessions.map((s) => s.isDeload)).toEqual([false, false, false, true])
+    const next = suggestion(bench, history)
+    expect(next).toMatchObject({ plan: 'resume', weight: 220, reps: 4, sets: 3, targetRpe: 8, stacks: 0 })
+    expect(next.e1rm?.value).toBeCloseTo(262.2, 1)
+    expect(next.predictedReps).toBeCloseTo(4.2, 1)
+  })
+
+  it('E4b: after a deload, lateral raise resumes at the last successful numbers (15 x 15), stacks 0', () => {
+    const success = sets(15, [15, 15, 15])
+    const fail = sets(15, [14, 15, 15])
+    const history = weekly(success, fail, fail, sets(15, [15, 15]))
+    expect(suggestion(lateralRaise, history)).toMatchObject({
+      plan: 'resume',
+      weight: 15,
+      reps: 15,
+      sets: 3,
+      stacks: 0,
+    })
+  })
+
+  it('E5: deload-week sets (200x5 @6, e1RM 255.4) leave the running e1RM at 262.2', () => {
+    const before = weekly(A_SUCCESS, BAD_FAIL, BAD_FAIL)
+    const deload = sets(200, [5, 5], 6)
+    const history = weekly(A_SUCCESS, BAD_FAIL, BAD_FAIL, deload)
+    const { sessions } = deriveState(bench, history)
+    expect(sessionE1rm({ date: asOf.toISOString(), sets: deload })).toBeCloseTo(255.4, 1)
+    expect(runningE1rm(sessions, bench.seed, asOf)?.value).toBeCloseTo(262.2, 1)
+    expect(runningE1rm(deriveState(bench, before).sessions, bench.seed, asOf)?.value).toBeCloseTo(262.2, 1)
   })
 })
 

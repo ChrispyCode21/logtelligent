@@ -65,15 +65,18 @@ export function suggestNext(
   if (config.tier === 'accessory') return fromPlan(config, loads, state, undefined)
 
   const e1rm = runningE1rm([...sessions, ...lift], config.seed, asOf)
-  // While stacks > 0 (or around a deload) the stack logic decides, not the e1RM rule.
-  if (state.next.kind !== 'normal') return fromPlan(config, loads, state, e1rm)
+  const plan = state.next
+  // After a deload, the e1RM rule picks the weight at the last successful rep target (SPEC §6.7).
+  const resume = plan.kind === 'resume' && e1rm !== undefined
+  // While stacks > 0 (or during a deload) the stack logic decides, not the e1RM rule.
+  if (plan.kind !== 'normal' && !resume) return fromPlan(config, loads, state, e1rm)
   if (!e1rm) return { kind: 'needsSeed' }
 
-  const reps = targetReps(config.repRange)
+  const reps = resume ? plan.numbers.reps : targetReps(config.repRange)
   const pick = pickWeight(e1rm.value, reps, config.targetRpe, loads)
   return {
     kind: 'suggestion',
-    plan: 'normal',
+    plan: plan.kind,
     weight: pick.weight,
     reps,
     sets: config.sets,
