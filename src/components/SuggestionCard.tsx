@@ -26,7 +26,7 @@ export function SuggestionCard({ config, suggestion, heading, effortScale }: Pro
     )
   }
 
-  // Only the e1RM rule predicts reps; primary lifts come back from a deload on it (SPEC §6.7).
+  // Only the e1RM rule predicts reps (SPEC §6.4).
   const onE1rmRule = suggestion.predictedReps !== undefined
   const basisNote = suggestion.e1rm && onE1rmRule && e1rmNote(suggestion.e1rm)
   const planNote = formatPlanNote(suggestion)
