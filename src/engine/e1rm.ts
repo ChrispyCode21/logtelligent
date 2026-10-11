@@ -4,7 +4,14 @@ import type { ExerciseSession, RepRange, RunningE1rm, Seed } from './types'
 const DAY_MS = 24 * 60 * 60 * 1000
 const WINDOW_DAYS = 28
 const MAX_SESSIONS = 3
-const BREAK_FACTOR = 0.9
+/** Returning from a break: a lower-rep session is picked only if at most this much older than the latest (SPEC §6.4). */
+const BREAK_PICK_DAYS = 28
+/** Returning from a break: the share of the e1RM kept, by the picked session's age, oldest first (SPEC §6.4). */
+const BREAK_TIERS = [
+  { fromDays: 84, factor: 0.8 },
+  { fromDays: 56, factor: 0.85 },
+  { fromDays: 0, factor: 0.9 },
+]
 const SEED_RPE = 7
 // Brzycki divides by (37 - r), so the averaged formula is only defined below 37 reps.
 const MAX_REPS = 36
@@ -73,10 +80,30 @@ function lowerRepsFirst<T extends { lowReps: boolean }>(sessions: T[]): T[] {
   return low.length > 0 ? low : sessions
 }
 
+interface Eligible {
+  time: number
+  e1rm: number
+  lowReps: boolean
+}
+
+/**
+ * Returning from a break (SPEC §6.4): the most recent lower-rep session no more than 28 days older
+ * than the latest, else the latest, discounted by its age as of `asOf`. `eligible` is newest first.
+ */
+function breakReturn(eligible: Eligible[], asOf: Date): RunningE1rm {
+  const latest = eligible[0]
+  const pickStart = latest.time - BREAK_PICK_DAYS * DAY_MS
+  const picked = eligible.find((s) => s.lowReps && s.time >= pickStart) ?? latest
+  const ageDays = (asOf.getTime() - picked.time) / DAY_MS
+  // The `fromDays: 0` tier always matches; the fallback only satisfies the type.
+  const tier = BREAK_TIERS.find((t) => ageDays >= t.fromDays) ?? BREAK_TIERS[BREAK_TIERS.length - 1]
+  return { value: picked.e1rm * tier.factor, basis: 'returningFromBreak', breakFactor: tier.factor }
+}
+
 /**
  * Running e1RM (SPEC §6.4): the average of up to the last 3 sessions within 4 weeks,
- * else 90% of the most recent session ("returning from a break"), else the seed.
- * Sessions of 10 or fewer effective reps are used before higher-rep ones, in both cases.
+ * else a discounted past session ("returning from a break"), else the seed.
+ * In the window, sessions of 10 or fewer effective reps are used before higher-rep ones.
  * `history` is every session of the lift, on any day (SPEC §6.9).
  * Deload and replaced sessions are ignored. Undefined when there is nothing to go on.
  */
@@ -92,7 +119,7 @@ export function runningE1rm(
       e1rm: sessionE1rm(s),
       lowReps: !s.highReps,
     }))
-    .filter((s): s is { time: number; e1rm: number; lowReps: boolean } => s.e1rm !== undefined)
+    .filter((s): s is Eligible => s.e1rm !== undefined)
     .sort((a, b) => b.time - a.time)
 
   if (eligible.length > 0) {
@@ -103,7 +130,7 @@ export function runningE1rm(
       const value = recent.reduce((sum, s) => sum + s.e1rm, 0) / recent.length
       return { value, basis: 'history' }
     }
-    return { value: lowerRepsFirst(eligible)[0].e1rm * BREAK_FACTOR, basis: 'returningFromBreak' }
+    return breakReturn(eligible, asOf)
   }
 
   if (seed) return { value: setE1rm({ ...seed, rpe: SEED_RPE }), basis: 'seed' }

@@ -241,7 +241,9 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
   - **Judged by the prescription, not the reps done,** so a great day on a 6–8 range (9 reps @ 8) never drops out (I9). The range is the session's saved one (§6.8), else today's; the target RPE is today's (it isn't saved).
 - **Running e1RM:** the average of the e1RMs from **up to the last 3 sessions within the last 4 weeks**.
   - Average over **however many sessions exist** (1, 2, or 3). Never pad missing sessions with 0 or any placeholder; divide by the actual count.
-  - **Returning from a break** (no session in the 4-week window; which session it picks is under review: #59): use **90% of the most recent session's e1RM** and show a "returning from a break" note. The next real session then replaces it. The session is picked with the same lower-rep preference, so the most recent lower-rep session is used however old it is, even over a more recent higher-rep one (I8).
+  - **Returning from a break** (no session in the 4-week window): use a **discounted e1RM from one past session** and show a note with the discount: "Returning from a break: estimate lowered 15%." The next real session then replaces it. Deload and replaced sessions are ignored throughout, as above.
+    - **Which session:** take the most recent session (any rep count). If a lower-rep session (10 or fewer effective reps, as above) is **no more than 28 days older** than it, use the most recent such session; otherwise use the most recent session. A lower-rep session estimates better, but not at the cost of a big gap in recency (I8, A13). The 28 days are measured from the most recent session, not from today, so the two candidates are compared with each other.
+    - **The discount** depends on the chosen session's age today: **28 to 55 days → 90%**, **56 to 83 days → 85%**, **84 days or more → 80%** (the floor) (A4, A14). An older pick is discounted more. The tiers are first guesses, to revisit after real use.
   - Layoff overshoot beyond that is caught by the fail/deload logic in §6.6.
 - **No history yet:** a primary lift's first e1RM comes from its **setup seed** (§5.1): weight × reps treated as RPE 7. The seed is used **only until the lift's first real session** (on any day) — it is **not** averaged into the running e1RM afterward, so an optimistic or pessimistic guess can't linger for three sessions.
 - **Data-driven targets** (under review: #60)**:** given the running e1RM and a weight, the engine predicts expected reps by inverting the formula (e.g. Epley inverted: reps to failure ≈ `30 × (e1RM / w − 1)`), minus the target reps in reserve. The program stores **intent** (e.g. "3 sets, first set ~RPE 8, 3–5 reps") and the engine chooses the weight.
@@ -334,7 +336,7 @@ Unless stated: barbell loads in 5 lb steps; dumbbell rack 10, 12.5, 15, 17.5, 20
 | A1 | First set 225×4 @8 | Effective reps 6. Epley 270.0, Brzycki 261.3, Lombardi 269.2 → **e1RM 266.8** |
 | A2 | First set 225×4 @10 | Effective reps 4 (no reps in reserve added) → **e1RM 253.0** |
 | A3 | Last 3 sessions within 4 weeks: 225×4 @8, 225×5 @8, 230×4 @8 | Session e1RMs 266.8, 273.6, 272.7 → **running e1RM 271.1** |
-| A4 | Most recent session 6 weeks ago (225×4 @8), none since | 266.8 × 0.9 → running e1RM **240.1** + **"returning from a break"** note. At 3–5 @8 this suggests **200 × 4** (225 before the break) |
+| A4 | Most recent session 6 weeks ago (225×4 @8), none since | 42 days old → 90%: 266.8 × 0.9 → running e1RM **240.1** + **"returning from a break: estimate lowered 10%"** note. At 3–5 @8 this suggests **200 × 4** (225 before the break) |
 | A5 | Last 3 sessions, the middle one a deload | Deload **ignored**: the average uses the 3 most recent *non-deload* sessions in the window |
 | A6 | A session where the exercise was **replaced** by a substitute | Substitute's sets **ignored** for the original exercise's e1RM (§5.2) |
 | A7 | Only 2 sessions ever, both within 4 weeks: 225×4 @8, 225×5 @8 | (266.8 + 273.6) / **2** → **270.2**. Not divided by 3; no zero padding |
@@ -343,6 +345,8 @@ Unless stated: barbell loads in 5 lb steps; dumbbell rack 10, 12.5, 15, 17.5, 20
 | A10 | Seed 225×5, then one real session 225×4 @8 | Running e1RM **266.8**: the real session alone; the seed is **dropped**, not averaged |
 | A11 | Accessory, no sessions, seed 15 lb × 15 (recorded RPE 8), range 15–20 | **Suggest 15 × 15** (bottom of range) |
 | A12 | Any exercise with no seed | App **blocks** starting a session and routes to setup |
+| A13 | No session in 4 weeks; 225×4 @8 on 3–5 six months ago, 185×12 @8 on 10–12 five weeks ago | The lower-rep session is more than 28 days older than the latest, so the **5-week-old** session is used: 267.3 × 0.9 = **240.5** |
+| A14 | Most recent session 10 weeks ago (225×4 @8), none since | 70 days old → **85%**: 266.8 × 0.85 = **226.8**, note "estimate lowered 15%" |
 
 ### 7.B Primary-lift suggestions (§6.4 weight-selection rule)
 
@@ -449,7 +453,7 @@ Bench Press on two days: Upper A at 3–5 @8 and Upper B at 10–12 @8, both pri
 | I5 | Upper A: seed 225×5, no sessions. Upper B: one real session 225×4 @8 | Upper A's running e1RM is **266.8**: the lift has a real session, so the seed is dropped (A10 across days) |
 | I6 | Upper B's deload week (its own replay says deload) logs 205×5 @6 | **Ignored** in the lift's e1RM, as A5 |
 | I7 | Names "Bench Press", "bench-press" and "BENCH  PRESS"; and "Paused Bench" | The first three are **one lift**; "Paused Bench" is another |
-| I8 | No session in 4 weeks; Upper A's 225×5 @8 six weeks ago, Upper B's 185×12 @8 five weeks ago | Returning from a break from the most recent **lower-rep** session: 273.6 × 0.9 = **246.2**; Upper A suggests **205 × 4** (predicted 4.5) |
+| I8 | No session in 4 weeks; Upper A's 225×5 @8 six weeks ago, Upper B's 185×12 @8 five weeks ago | Returning from a break from the **lower-rep** session, since it's within 28 days of the latest (and 42 days old → 90%): 273.6 × 0.9 = **246.2**; Upper A suggests **205 × 4** (predicted 4.5) |
 | I9 | A 6–8 @8 primary: 225×7 @8, then a great day 225×9 @8 (9 + 2 = 11 effective reps) | 6–8 @8 isn't high-rep (8 + 2 = 10), so **both count**: (287.4 + 301.7) / 2 = **294.5** |
 
 ## 8. Contracts (signatures are in code, `src/engine/`)

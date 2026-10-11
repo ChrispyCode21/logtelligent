@@ -62,7 +62,20 @@ describe('7.A Estimated 1RM', () => {
     const next = suggestion(bench(), history)
     expect(next.weight).toBe(200)
     expect(next.reps).toBe(4)
-    expect(next.e1rm?.basis).toBe('returningFromBreak')
+    expect(next.e1rm).toMatchObject({ basis: 'returningFromBreak', breakFactor: 0.9 })
+  })
+
+  it('A13: a lower-rep session 6 months ago loses to a higher-rep one 5 weeks ago: 267.3 x 0.9 = 240.5', () => {
+    const history = [session(182, set(225, 4, 8)), session(35, set(185, 12, 8), { highReps: true })]
+    const running = runningE1rm(history, undefined, asOf)
+    expectLb(running?.value, 240.5)
+    expect(running).toMatchObject({ basis: 'returningFromBreak', breakFactor: 0.9 })
+  })
+
+  it('A14: most recent session 10 weeks ago gives 85% (226.8)', () => {
+    const running = runningE1rm([session(70, set(225, 4, 8))], undefined, asOf)
+    expectLb(running?.value, 226.8)
+    expect(running).toMatchObject({ basis: 'returningFromBreak', breakFactor: 0.85 })
   })
 
   it('A5: a deload session is ignored; the 3 most recent non-deload sessions are averaged', () => {
@@ -113,6 +126,51 @@ describe('7.A Estimated 1RM', () => {
 
   it('A12: an exercise with no seed and no history needs a seed before a session', () => {
     expect(suggestNext(bench(), [], asOf)).toEqual({ kind: 'needsSeed' })
+  })
+})
+
+describe('returning from a break: which session and how much off (SPEC §6.4)', () => {
+  // 225x4 @8 is 266.8 (lower-rep); 185x12 @8 is 267.3 (higher-rep, flagged by the replay).
+  const low = (days: number) => session(days, set(225, 4, 8))
+  const high = (days: number) => session(days, set(185, 12, 8), { highReps: true })
+
+  it('picks a lower-rep session exactly 28 days older than the latest', () => {
+    const running = runningE1rm([low(63), high(35)], undefined, asOf)
+    expectLb(running?.value, 266.8 * 0.85)
+  })
+
+  it('skips a lower-rep session 29 days older than the latest', () => {
+    const running = runningE1rm([low(64), high(35)], undefined, asOf)
+    expectLb(running?.value, 267.3 * 0.9)
+  })
+
+  it('discounts by the picked session age: 90% to day 55, 85% from 56 to 83, 80% from 84', () => {
+    const factor = (days: number) => {
+      const running = runningE1rm([low(days)], undefined, asOf)
+      return running?.basis === 'returningFromBreak' ? running.breakFactor : undefined
+    }
+    expect(factor(29)).toBe(0.9)
+    expect(factor(55)).toBe(0.9)
+    expect(factor(56)).toBe(0.85)
+    expect(factor(83)).toBe(0.85)
+    expect(factor(84)).toBe(0.8)
+    expect(factor(365)).toBe(0.8)
+  })
+
+  it('ignores deload and replaced sessions when finding the latest', () => {
+    const history = [
+      low(120),
+      high(100),
+      session(50, set(185, 12, 6), { highReps: true, isDeload: true }),
+      session(45, set(135, 12, 8), { highReps: true, replaced: true }),
+    ]
+    const running = runningE1rm(history, undefined, asOf)
+    expectLb(running?.value, 266.8 * 0.8)
+  })
+
+  it('keeps the latest session when it is lower-rep itself, over an older lower-rep one', () => {
+    const history = [session(40, set(230, 4, 8)), low(35)]
+    expectLb(runningE1rm(history, undefined, asOf)?.value, 266.8 * 0.9)
   })
 })
 
