@@ -129,7 +129,6 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 - **`main` is protected** (`.github/rulesets/main.json`): changes arrive by PR, all checks must pass, and there are no force-pushes or deletions.
 - **Releases** (`release.yml`), semantic versioning: a release PR (CLAUDE.md, "How to work") bumps `package.json`; when it merges, the workflow sees a version with no release yet, creates the `vX.Y.Z` tag, publishes a GitHub Release with that CHANGELOG section, and closes the version's milestone.
 - **Production is every merge to `main`**, not the release tag (see Hosting). The tag and GitHub Release only record the version.
-- **Agent pipeline:** issues labeled `agent-ready` are built by Claude in GitHub Actions and arrive as PRs through the same gates (see "Agent pipeline" below).
 
 ## Agent pipeline
 
@@ -137,9 +136,8 @@ Issues labeled `agent-ready` are built by Claude in GitHub Actions and arrive as
 
 - **Labels:** `agent-ready`: build this (the owner adds it; the agent only on issues it created, see PIPELINE.md). `agent-needs-info`: the agent asked questions and stopped; answer, then re-add `agent-ready`. `agent-followup`: found by the agent, needs the owner's decision first. `touches-data`: the PR changes what's stored. `touches-gates`: the PR changes the checks, lint, config, headers or hosting.
 - **Merge safety:** read `touches-data` and `touches-gates` PRs before merging (green means less if the checks changed), and export a backup on the phone before merging a `touches-data` one: reverting can't undo an upgrade already applied to real data.
-- The agent never merges, and never edits `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`.
 
-The design and rules: [`.github/agent/PIPELINE.md`](.github/agent/PIPELINE.md).
+The design and rules, including what the agent may never do (also in CLAUDE.md): [`.github/agent/PIPELINE.md`](.github/agent/PIPELINE.md).
 
 ## Cleanup backlog
 
