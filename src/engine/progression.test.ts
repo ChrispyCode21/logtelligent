@@ -318,6 +318,39 @@ describe('7.E Deload', () => {
     })
   })
 
+  it('E4c: after a deload, bench fails at 220 x 4: stacks 1, revert to 215 x 4 with the lowered-weight message', () => {
+    const deload = sets(200, [4, 4], 6)
+    const fail = sets(220, [4, 3, 2])
+    const outcome = evaluateSession(bench, weekly(A_SUCCESS, BAD_FAIL, BAD_FAIL, deload), fail)
+    expect(outcome).toMatchObject({ result: 'fail', message: FAIL_MESSAGE, state: { stacks: 1 } })
+    const next = suggestion(bench, weekly(A_SUCCESS, BAD_FAIL, BAD_FAIL, deload, fail))
+    expect(next).toMatchObject({ plan: 'revert', weight: 215, reps: 4, stacks: 1 })
+  })
+
+  it('E4d: after a deload, lateral raise fails at 15 x 15: stacks 1, revert to 15 x 15', () => {
+    const success = sets(15, [15, 15, 15])
+    const fail = sets(15, [14, 15, 15])
+    const history = weekly(success, fail, fail, sets(15, [15, 15]), sets(15, [15, 14, 15]))
+    expect(suggestion(lateralRaise, history)).toMatchObject({
+      plan: 'revert',
+      weight: 15,
+      reps: 15,
+      stacks: 1,
+    })
+  })
+
+  it('E4e: after a deload, a success at 220 then a fail at 225 reverts to 220 x 4', () => {
+    const history = weekly(
+      A_SUCCESS,
+      BAD_FAIL,
+      BAD_FAIL,
+      sets(200, [4, 4], 6),
+      sets(220, [4, 4, 3]),
+      sets(225, [4, 3, 2]),
+    )
+    expect(suggestion(bench, history)).toMatchObject({ plan: 'revert', weight: 220, reps: 4, stacks: 1 })
+  })
+
   it('E5: deload-week sets (200x5 @6, e1RM 255.4) leave the running e1RM at 262.2', () => {
     const before = weekly(A_SUCCESS, BAD_FAIL, BAD_FAIL)
     const deload = sets(200, [5, 5], 6)
