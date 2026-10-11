@@ -41,13 +41,13 @@ issue + agent-ready ─► triage ─┬─► questions on the issue, label age
 
 **Issue forms** (`.github/ISSUE_TEMPLATE/`): **Task** (what should change, why, where it's specified, done when, out of scope) and **Bug** (what happened, what was expected, steps, where). They ask for what triage needs, so fewer issues come back with questions; blank issues still work.
 
-Each version has a **milestone** (v1.4.0, v2.0.0…), created by the owner when the version is scoped. The agent puts every issue it creates in the right milestone: sub-issues in their parent's, release issues in their version's. Releasing a version closes its milestone (`release.yml`).
+Each version has a **milestone** (v1.4.0, v2.0.0…), created by the owner when the version is scoped. Triage never asks which milestone an issue belongs to; one without a milestone ships in the next release. The agent puts every issue it creates in the right milestone: sub-issues in their parent's, release issues in their version's. Releasing a version closes its milestone (`release.yml`).
 
 ## Triage (Claude Sonnet 5.5, 10 minutes)
 
 Triage reads the issue, SPEC.md, ARCHITECTURE.md, this document and CLAUDE.md, then does one of three things:
 
-1. **Questions.** If the issue leaves behavior open, touches behavior SPEC.md doesn't cover or that's open as an issue, or is a new feature with no milestone, it comments numbered questions, each with a recommended default (CLAUDE.md, "Building a slice" step 1), swaps `agent-ready` for `agent-needs-info`, and stops. The owner answers with numbered replies and re-adds the label; the next run reads the whole thread.
+1. **Questions.** If the issue leaves behavior open, touches behavior SPEC.md doesn't cover or that's open as an issue, or is a new feature whose scope is open, it comments numbered questions, each with a recommended default (CLAUDE.md, "Building a slice" step 1), swaps `agent-ready` for `agent-needs-info`, and stops. The owner answers with numbered replies and re-adds the label; the next run reads the whole thread.
 2. **Split.** If the issue has natural seams (e.g. several new components and the work that wires them in), it comments a proposed split and stops. On the owner's approval it creates the sub-issues, linked with GitHub's "blocked by" where one depends on another, in the issue's milestone. Sub-issues with no blockers get `agent-ready` straight away; a blocked one gets it when its last blocker closes. Independent ones can be open as PRs at the same time.
    - **Sub-issues are the text the owner approved.** The proposal lists each sub-issue's title, text and blockers, and the sub-issues are created from that posted proposal word for word, not rewritten on approval. So every `agent-ready` issue is text the owner has read (see the accepted risk above). A reply asking for changes gets a revised proposal, approved the same way.
    - **The parent is context.** Triage and coding runs for a sub-issue also read its parent issue and the parent's thread, where the decisions are. The parent closes itself when its last sub-issue closes.
