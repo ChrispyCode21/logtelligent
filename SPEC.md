@@ -16,10 +16,10 @@ Hand-typed workout notes (e.g. in Apple Notes) record what happened but don't te
 - **React + TypeScript**, built with **Vite**.
 - **Local-only data** in the browser's IndexedDB, via **Dexie**. No backend, no accounts. Data never leaves the device except through a backup the user exports.
 - **Offline-capable** (service worker via `vite-plugin-pwa`) — gym signal is unreliable.
-- **Free static hosting:** Cloudflare, deployed from `main` on every push, on the app's own origin (ARCHITECTURE.md, "Hosting and security"). Security headers in `public/_headers`.
+- **Free static hosting** on Cloudflare (ARCHITECTURE.md, "Hosting and security").
 - **Pounds only.**
 - **Backup:** export downloads `logtelligent-YYYY-MM-DD.json` (program + all sessions, with a format version); **import** restores a backup file, replacing all data after a confirm.
-- **Progression engine is pure TypeScript** — no React, no database access — so it can be unit-tested in isolation (Vitest).
+- **Progression engine is pure TypeScript**, unit-tested in isolation (CLAUDE.md, "Architecture rules").
 
 ## 3. Non-goals
 
@@ -37,7 +37,7 @@ Not part of the app; adding one is a scoping decision for the owner:
 ## 4. Screens and UI conventions
 
 - Three tabs: **Today** (the next session, or the one in progress), **History** (§5.3) and **Program** (§5.1, §5.5, §5.6, backup).
-- Built for one hand on a phone: every tap target is at least 44 px (the warm-up banner's ✕ and the Program tab's move and remove buttons included), and no screen scrolls sideways or clips a button label at 375 px or 320 px wide.
+- Built for one hand on a phone: every tap target is at least 44 px, and no screen scrolls sideways or clips a button label at 375 px or 320 px wide.
 - The weight and reps inputs use a large text size. A logged-set row's text ("Set 1 · 225 × 5") is centred vertically in its row.
 - Confirms for destructive or unusual actions are the browser's native `confirm()`, so their buttons are OK and Cancel.
 
@@ -53,7 +53,7 @@ Each day has a fixed set of exercises. Upper A and Upper B use different exercis
 
 **The Program tab**, top to bottom: the effort scale card (§5.6); while there are no active days, the templates (below); the days and their exercises; while there are active days, the "Change your program" card (§5.5); backup. Each exercise shows one summary line, the same format everywhere ("Primary · 3 × 5–7 · Barbell"): equipment by its label, "per side" wherever it applies, and the effort target only on the Program tab.
 
-**Exercise bank:** the 57 exercises in `src/program/bank.ts`, built into the app (no network), text only, no images. Each has a name, tier, equipment, default rep range, sets, unilateral, a one-line description, and a placeholder starting weight.
+**Exercise bank:** the exercises in `src/program/bank.ts`, built into the app (no network), text only, no images. Each has a name, tier, equipment, default rep range, sets, unilateral, a one-line description, and a placeholder starting weight.
 - "Add exercise" opens the bank grouped by body area (Chest, Back, Shoulders, Arms, Legs, Core). Groups start collapsed, with a count. Typing in the search box filters across all groups and opens every group with a match. The body area is a display label only, not a muscle-group model.
 - **Search** matches the name and a few common nicknames per exercise (e.g. "RDL" → Romanian Deadlift, "OHP" → Overhead Press), ignoring case and punctuation; every word typed must match.
 - **Custom…** covers anything not listed.
@@ -202,23 +202,18 @@ A fixed pound increment doesn't work across exercises. +5 lb on a 300 lb squat i
    - Dumbbell: a standard rack list (e.g. 10, 12.5, 15, 17.5, 20, 22.5, 25, 30…).
    - Cable / machine: a stack list I enter (e.g. …99, 110, 121…).
 2. **Per-exercise override** of those loads for my gym's actual equipment (e.g. "this gym has 22.5s").
-3. **Max relative jump** on top: if the next available load is a bigger jump than this, progress by **reps** instead of weight, extending the effective top of the rep range.
+3. **Max relative jump** (≈ 10%) on top: if the next available load is a bigger jump than this, progress by **reps** instead of weight, extending the effective top of the rep range.
 
 **Rep ceiling:** the rep extension in layer 3 is capped at **120% of the top of the configured range, rounded up** — `ceil(top × 1.2)`. Once the ceiling is reached, the engine takes the next load step anyway, even if it exceeds the max relative jump. This prevents getting stuck doing lateral raises for sets of 25+ because the next dumbbell is a big relative jump.
 - Examples: 3–5 → ceiling 6; 8–12 → 15 (14.4 rounded up); 15–20 → 24.
 - A percentage, not a fixed "+5", because it scales with the range: +5 is huge on a 3–5 range and small on a 15–20 range.
 
-**Max relative jump:** ≈ 10%.
-
 **Rep extension step:** when the range is filled but the next load is too big a jump, the effective top of the range rises by **10% of the configured top, rounded up, minimum 1** — `Math.max(Math.ceil(top * 0.1), 1)`. When that new top is filled (same >50% rule), it rises again, capped at the ceiling.
 - Examples: top 5 → step 1; top 7 → 1; top 12 → 2; top 20 → 2 (so 15–20 extends 20 → 22 → 24).
-- Note: it's `Math.max`, not `Math.min` — `Math.min(x, 1)` would cap every step at 1.
 
 When the ceiling is filled, take the load step and reset to the bottom of the configured range.
 
-**Consequence worth knowing:** with standard dumbbells, *every* jump below ~70 lb exceeds 10% (15 → 17.5 is 16.7%; 20 → 22.5 is 12.5%; 25 → 30 is 20%). So light dumbbell accessories will effectively always progress via the rep ceiling. That's intended behavior, not a bug.
-
-**Where this matters in practice:** mostly dumbbell and cable exercises (e.g. lateral raise 20 → 22.5 lb is a 12.5% jump). For barbell primaries, a 5 lb jump is usually well under 10% (225 → 230 ≈ 2%), and a set far above the range (e.g. 12 reps on a 3–5 range) is handled by the e1RM instead: the new estimate raises next session's weight to match (§6.4).
+**Consequence worth knowing:** with standard dumbbells, *every* jump below ~70 lb exceeds 10% (15 → 17.5 is 16.7%; 20 → 22.5 is 12.5%; 25 → 30 is 20%). So light dumbbell accessories (and some cable ones) will effectively always progress via the rep ceiling. That's intended behavior, not a bug. For barbell primaries, a 5 lb jump is usually well under 10% (225 → 230 ≈ 2%), and a set far above the range (e.g. 12 reps on a 3–5 range) is handled by the e1RM instead: the new estimate raises next session's weight to match (§6.4).
 
 **Sets are never added by progression.** The working-set count is fixed in configuration; progression changes only reps and load. (Extra sets are the lifter's, and aren't counted, §5.2.)
 
@@ -469,7 +464,6 @@ Bench Press on two days: Upper A at 3–5 @8 and Upper B at 10–12 @8, both pri
 
 The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]`), since the 4-week window, deload exclusion (A5) and substitute exclusion (A6) all need per-session data.
 
-- **Types** live in code: `engine/types.ts` (`ExerciseConfig`, `LoggedSet`, `ExerciseSession`, `ProgressionState`, `Suggestion`), `program/types.ts` (`Program`, `ProgramDay`, `ProgramExercise`) and `session/types.ts` (`Session`, `ExerciseLog`, `Substitute`, `Prescription`).
 - **Suggestions:** `suggestNext(config, history, asOf, lift = []) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by its own replay; they feed only the e1RM (§6.9).
 - **Validation:** `evaluateSession(config, history, sets) => SessionOutcome`.
 - **State is never passed in or stored:** both replay `history` with `deriveState(config, history)` (ARCHITECTURE.md, "Progression state is derived").
