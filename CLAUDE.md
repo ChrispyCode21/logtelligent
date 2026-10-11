@@ -44,7 +44,7 @@ CHANGELOG.md isn't on this list: only its "Unreleased" section matters to new wo
 ## How to work
 
 - **`main` is protected.** Never push to it. Work on a branch, keep changes small with a commit per meaningful step, push the branch, and open a PR (the template has the checklist). The owner reviews and merges.
-- Before pushing, run what CI runs: `npm run format:check`, `npm run lint`, `npm run check:conventions`, `npm run check:spec`, `npm run check:changelog`, `npm test`, `npm run build`, `npm run test:e2e`.
+- Before pushing, run what CI runs: `npm run check:all` (`scripts/check-all.mjs`) runs `format:check`, `lint`, `check:conventions`, `check:spec`, `check:changelog`, `test`, `build` and `test:e2e`, printing one line per passing check and the full output of each failing one.
 - Add user-facing changes to the "Unreleased" section of CHANGELOG.md. A release is a PR that bumps `package.json`'s version, moves those notes under it, and replaces TESTING.md's "Current release" checklist with checks drawn from them. It also tightens SPEC.md and ARCHITECTURE.md: cut text that repeats another section or just restates the code, without changing any behavior or removing a §7 example. Merging it tags the release automatically (semantic versioning).
 - **New work is scoped as a version:** a GitHub milestone with its issues. Settle the scope, and any open questions it touches, with the owner before building. Small refactors wait in the cleanup backlog (#74), to fold into whichever change next touches those files.
 

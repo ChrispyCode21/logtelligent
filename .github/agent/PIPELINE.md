@@ -104,7 +104,7 @@ Not built yet (#75); until then, the coding run lists out-of-scope findings in i
   - `agent-followup` when it needs a decision (e.g. how dates should look).
   - **One level deep:** a follow-up found while working on an agent-created follow-up is always `agent-followup`, so the agent can't keep queuing work for itself.
 - **CI auto-fix:** if a check fails on an agent PR, the agent tries to fix it, at most 2 times per PR.
-- **Checks before the PR:** the coding run runs every CI command first, since nothing can fix a red PR after its run ends. Whether that changes once CI auto-fix exists is #73.
+- **Checks before the PR:** the coding run runs every CI check (`npm run check:all`) before opening its PR, even once CI auto-fix exists. A failure is cheapest to fix in the run that already has the code and spec loaded; a CI auto-fix run would have to reload them first. `check:all` prints only failures in full, so passing checks cost few tokens. CI auto-fix is the backstop for what still gets through (flaky tests, environment differences).
 - **Keeping PRs current:** the ruleset requires a PR to be up to date with `main`, so after each merge a workflow updates the agent's open PRs, and the agent resolves any conflicts. (GitHub's merge queue does this, but only on organization-owned repos.)
 
 ## Releases
