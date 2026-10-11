@@ -6,6 +6,10 @@ To release: in a PR, move the "Unreleased" notes under a new version heading, bu
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-11
+
+Coming back from setbacks: after a deload or a break, primary lifts resume from your estimated 1RM, and the notes after a failed session say what actually happened.
+
 ### Changed
 
 - **After a deload, primary lifts resume from your estimated 1RM:** the week after a primary lift's deload, its weight is picked from your estimated 1RM at your last rep target, instead of going straight back to your last successful weight. The sessions that triggered the deload count toward that estimate, so the weight steps back by about as much as the lift was missed. Accessories still resume at their last successful numbers.
