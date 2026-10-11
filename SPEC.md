@@ -286,7 +286,7 @@ Example:
 | 4 | Weight B | Success | 0 | Progress normally from B |
 | 3 (alt.) | Weight A | Fail | 2 | **Deload** |
 
-**Scope: the floor rule and fatigue stacks apply to every exercise, primary and accessory.** Stacks are tracked **per exercise**, so fatigue on an accessory can never stall or deload a primary lift (or any other exercise). What differs by tier is the deload itself (§6.7).
+**Scope: the floor rule and fatigue stacks apply to every exercise, primary and accessory.** Stacks are tracked **per exercise** (under review: #87, related exercises deloading together), so fatigue on an accessory can never stall or deload a primary lift (or any other exercise). What differs by tier is the deload itself (§6.7).
 
 ### 6.7 Deload
 Triggered per exercise when that exercise reaches two fatigue stacks. Lasts **one week** (one pass through the rotation). Deload sessions are **excluded from e1RM and progression calculations** and are **not subject to the floor rule**. Afterward, stacks are at 0.
