@@ -26,7 +26,7 @@ The owner's numbered replies to earlier questions are **decisions**. Use them; d
 
 - behavior the issue and SPEC.md don't settle (what it looks like, wording, edge cases, what happens to existing data);
 - anything it touches that SPEC.md doesn't cover, or that's still open as an issue (labeled `question`). You can't see issues, so SPEC.md marks a rule that's open with "under review: #n"; changing such a rule needs the owner's answer first;
-- a new feature with no milestone: ask which milestone it belongs to (recommend the next minor, after anything already scoped) and settle its scope;
+- a new feature whose scope the issue leaves open: settle its scope. Don't ask about milestones: the owner assigns them when scoping a release, and an issue without one ships in the next release;
 - a change the agent may not make: `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`. Say so, and ask whether the owner will make that part.
 
 Write numbered questions, each with a recommended default and a short reason, e.g. `1. **Empty state:** what should History show before any session? Recommended: "No sessions yet", matching Today's empty state.` Ask only what's needed to build it; a sensible default the owner can accept in one word beats an open question.
