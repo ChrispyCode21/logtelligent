@@ -7,7 +7,8 @@ Standing instructions for any Claude session working in this repo.
 - **SPEC.md**: what the app does now, and why.
 - **ARCHITECTURE.md**: how it's built and the rules for changing it: folder map, data flow, storage, hosting, gates, releases and the agent pipeline in brief. The pipeline's design and rules are in `.github/agent/PIPELINE.md`, needed only when working on the pipeline itself.
 - **TESTING.md**: the Playwright browser tests, the phone checklists (every release, and the current release) and how to verify changes in the preview, with its known quirks.
-- **CHANGELOG.md**: what shipped in each version.
+
+CHANGELOG.md isn't on this list: only its "Unreleased" section matters to new work, and only when adding to it.
 
 ## Source of truth
 
@@ -15,6 +16,7 @@ Standing instructions for any Claude session working in this repo.
 - **Ask the project owner before** building any behavior SPEC.md doesn't cover. Do not guess and move on. Say what's undecided, offer a recommended default, and wait for an answer.
 - **Undecided things are GitHub issues** (open questions labeled `question`, ideas `enhancement`), never notes in the docs. When a built rule in SPEC.md is itself open, the rule says "under review: #n", so agent runs (which can't see issues) know to ask; remove the note when the issue is decided.
 - When the owner makes a decision, **change SPEC.md's text** in the same change, so the spec never drifts from the code.
+- **Change the rule in place; don't add notes about it.** SPEC.md says what the app does now, in the present tense, with no history of how it got there (that lives in git and the issues). Every run reads all of it, so its length is a cost on every change.
 
 ## Stack
 
@@ -43,7 +45,7 @@ Standing instructions for any Claude session working in this repo.
 
 - **`main` is protected.** Never push to it. Work on a branch, keep changes small with a commit per meaningful step, push the branch, and open a PR (the template has the checklist). The owner reviews and merges.
 - Before pushing, run what CI runs: `npm run format:check`, `npm run lint`, `npm run check:conventions`, `npm run check:spec`, `npm run check:changelog`, `npm test`, `npm run build`, `npm run test:e2e`.
-- Add user-facing changes to the "Unreleased" section of CHANGELOG.md. A release is a PR that bumps `package.json`'s version, moves those notes under it, and replaces TESTING.md's "Current release" checklist with checks drawn from them; merging it tags the release automatically (semantic versioning).
+- Add user-facing changes to the "Unreleased" section of CHANGELOG.md. A release is a PR that bumps `package.json`'s version, moves those notes under it, and replaces TESTING.md's "Current release" checklist with checks drawn from them. It also tightens SPEC.md and ARCHITECTURE.md: cut text that repeats another section or just restates the code, without changing any behavior or removing a §7 example. Merging it tags the release automatically (semantic versioning).
 - **New work is scoped as a version:** a GitHub milestone with its issues. Settle the scope, and any open questions it touches, with the owner before building. Small refactors wait in the cleanup backlog (#74), to fold into whichever change next touches those files.
 
 ### Building a slice
