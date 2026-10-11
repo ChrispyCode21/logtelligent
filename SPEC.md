@@ -269,7 +269,7 @@ Progression state (stacks, the last successful numbers, deloads, rep extensions)
 **Fatigue stacks:** each exercise carries its own fatigue-stack count.
 - A **failed** session adds **one stack** and **reverts** next session to the last successful numbers.
   Message: *"Failed to hit minimums, next week's weight will be lowered."*
-  The suggestion card's note for a revert: *"Last session missed the minimums, so the weight is back to your last successful numbers."*, or *"Weight lowered one step."* when the revert is one load step below the failed weight (no successful session yet, below).
+  The suggestion card's note for a revert to a real past success: *"Last session missed the minimums, so the weight is back to your last successful numbers."* A revert to numbers never lifted (no successful session yet, below) never says "successful": *"Weight lowered one step."* when the weight dropped, the lightest-load note when it couldn't (below), and no note when it's the weight that failed (E4g).
 - If the reverted session **succeeds**, the next session retries the heavier numbers that failed.
 - If the reverted session **also fails**, that is a second stack.
 - **A stack clears only on success at the heavier numbers that originally failed.** Success at the reverted weight does *not* clear it — otherwise alternating A-success / B-fail would loop forever without ever triggering a deload.
@@ -277,7 +277,8 @@ Progression state (stacks, the last successful numbers, deloads, rep extensions)
 - Stacks **reset to 0 after a deload**.
 - **While an exercise has stacks > 0, the stack logic decides next session's numbers, not the e1RM rule.** In shorthand: `stacks > 0 ? stackState.nextNumbers : e1rmPick`, where `nextNumbers` is either the **revert** (last successful numbers) or the **retry** (the exact numbers that failed) — not always "the previous weight."
 - "Last successful numbers" = the weight and rep target of the most recent session for that exercise that passed the floor rule (for a primary lift, since its last deload, §6.7).
-- **No successful session yet:** if a session fails before any session has succeeded (e.g. an optimistic seed, or since a primary lift's deload), the stack is added as usual and the revert goes to **one load step below the failed weight** (accessories: at the bottom of the range). Those numbers then act as the last successful numbers.
+- **No successful session yet:** if a session fails before any session has succeeded (e.g. an optimistic seed, or since a primary lift's deload), the stack is added as usual and the revert goes to **one load step below the failed weight** (accessories: at the bottom of the range). Those numbers then act as the reference numbers: reverts and deloads use them as they would the last successful numbers, though they were never lifted.
+- **At the lightest load:** when the failed weight is already the exercise's lightest available load, or below it (e.g. a seed of 80 on a pulldown whose lightest load is 88), there's no step below: the next session stays at the lightest load, or moves up to it. The card says *"You're at the lightest load and still missing the minimums. Check this exercise's starting numbers, or add lighter loads."*, with an **Edit exercise** link that opens that exercise's form on the Program tab (D9, D10). Primary lifts and accessories alike.
 - **Off-plan weight:** sessions are classified by the weight actually lifted. At or above the weight that failed counts as the **retry** (success clears the stack); below it counts as a revert-level session (success keeps the stack, a fail adds one).
 
 Example:
@@ -297,12 +298,12 @@ Triggered per exercise when that exercise reaches two fatigue stacks. Lasts **on
 **Primary lifts:**
 - **Volume:** about half the working sets (rounded up).
 - **Load:** about 10% lighter than the last successful weight, **snapped down** to an available load (§6.2). Target effort ~RPE 6. **Reps:** the last successful rep target (e.g. 225 × 4 → deload 2 × 4 @ 200). ("Intensity" in lifting means load relative to max, not perceived effort — halving it would be far too light.)
-- **Afterward:** the weight comes from the **running e1RM** (§6.4), at the last successful rep target and the configured target RPE, snapped down to an available load. No cap at the last successful weight. The sessions that failed are in the e1RM window, so the lift steps back in proportion to how badly it was missed, with no fixed step. (If the lift has no e1RM at all, it resumes at the last successful numbers.) Once these numbers are set, the pre-deload success no longer counts as the last successful numbers, so a fail before the next success reverts one load step below the failed weight (§6.6, E4c); a later fail reverts to that next success (E4e).
+- **Afterward:** the weight comes from the **running e1RM** (§6.4), at the last successful rep target and the configured target RPE, snapped down to an available load. No cap at the last successful weight. The sessions that failed are in the e1RM window, so the lift steps back in proportion to how badly it was missed, with no fixed step. (If the lift has no e1RM at all, it resumes at the last successful numbers, with an accessory's notes, below.) Once these numbers are set, the pre-deload success no longer counts as the last successful numbers, so a fail before the next success reverts one load step below the failed weight (§6.6, E4c); a later fail reverts to that next success (E4e).
   - Rationale: deloads are triggered per lift, so the trigger can't tell general fatigue from a stall on that lift. Going back to the last successful load treats every deload as fatigue and can lead straight back into the same stall.
 
 **Accessory lifts:**
 - **Same load, about half the working sets (rounded up)**, at the last successful rep target, for one week — the same set-halving as primary lifts. Edge case: a 1-set exercise stays at 1 set (`ceil(0.5) = 1`).
-- **Afterward:** resume at the last successful numbers, which a fail before the next success reverts to (E4d).
+- **Afterward:** resume at the last successful numbers, which a fail before the next success reverts to (E4d). The card's note: *"Deload done: back to your last successful numbers."*, or *"Resuming after the deload."* when the deload came before any success, so they're the reference numbers, never lifted (§6.6, E4f).
 - Rationale: accessories are mostly volume work; a lighter-touch deload is enough.
 
 Note: deload conventions vary between coaches and programs; these values are a sensible starting point, not settled science.
@@ -388,10 +389,12 @@ Bench, range 3–5, 3 sets. Given is the state before the session, then the sess
 | D6 | Bench stacks 1, lateral raise stacks 1 | **No deload** for either. Stacks never combine across exercises |
 | D7 | Stacks 0; then 235 ✗, 225 ✓, 235 ✗ | Stacks 1, stays 1, then **2** → **deload**. The 225-success / 235-fail loop cannot continue forever |
 | D8 | Accessory (lateral raise, 15–20): 15×20, 15×16, 15×14 | Set 3 < 15 → **fail**, stacks +1. The floor rule applies to accessories too |
+| D9 | No success yet (seed 45×5); 45×4, 45×3, 45×2 | **Fail**, stacks 1. 45 is the lightest load, so the revert **stays at 45 × 4**, with the lightest-load note, not "Weight lowered one step." |
+| D10 | Lat pulldown (accessory, 8–12, stack 88, 99, 110…), seed 80, below the lightest load; 80×8, 80×7, 80×6 | **Fail**, stacks 1. The revert **moves up to 88 × 8**, the lightest load, with the lightest-load note |
 
 ### 7.E Deload (§6.7)
 
-E1–E2c give the deload session; E4–E4e the weeks after.
+E1–E2c give the deload session; E4–E4g the weeks after.
 
 | ID | Given | Expected |
 |---|---|---|
@@ -405,6 +408,8 @@ E1–E2c give the deload session; E4–E4e the weeks after.
 | E4c | E4, then the week after: 220×4 @8, 220×3, 220×2 ✗ | Stacks **1**; revert to **215 × 4**, one load step below 220 (the deload cleared the last success, 225), with the lowered-weight message |
 | E4d | E4b, then the week after: 15×15, 15×14, 15×15 ✗ | Stacks **1**; revert to the **last successful numbers** (**15 × 15**) |
 | E4e | E4, then 220×4 @8, 220×4, 220×3 ✓; then 225×4 @8, 225×3, 225×2 ✗ | Stacks **1**; revert to **220 × 4**, the success after the deload |
+| E4f | Lateral raise, no success yet: 15×15, 15×14, 15×15 ✗ (revert to 12.5 × 15, "Weight lowered one step."); 12.5×15, 12.5×14, 12.5×15 ✗ (stacks 2); deload 12.5×15, 12.5×15. The week after | Resume at the reference numbers, **12.5 × 15**; stacks **0**; note "Resuming after the deload." |
+| E4g | E4f, then 12.5×15, 12.5×14, 12.5×15 ✗ | Stacks **1**; revert to **12.5 × 15**, the weight that failed: never a success, so no note says "successful", and the weight didn't drop, so **no note** |
 | E5 | E4's history, with the deload week logged as 200×5 @6 (e1RM 255.4) | Running e1RM stays **262.2**: deload sets don't change it |
 
 ### 7.F Rotation (§5.1)
