@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   activeDays,
   addDay,
@@ -69,13 +69,22 @@ function RowActions({ name, first, last, onMove, onRemove }: RowActionsProps) {
 interface Props {
   program: Program
   sessions: Session[]
+  /** An exercise whose form opens straight away (from a suggestion card, SPEC §6.6). */
+  editExerciseId?: string
   onTemplateApplied: () => void
 }
 
-export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
-  const [editing, setEditing] = useState<Editing | null>(null)
-  const [newDayName, setNewDayName] = useState('')
+export function ProgramView({ program, sessions, editExerciseId, onTemplateApplied }: Props) {
   const days = activeDays(program)
+  const [editing, setEditing] = useState<Editing | null>(() => {
+    const day = days.find((d) => d.exercises.some((e) => e.id === editExerciseId))
+    return day ? { dayId: day.id, exerciseId: editExerciseId } : null
+  })
+  const [newDayName, setNewDayName] = useState('')
+  const openedForm = useRef<HTMLLIElement>(null)
+  useEffect(() => {
+    if (editExerciseId) openedForm.current?.scrollIntoView({ block: 'start' })
+  }, [editExerciseId])
   const unseeded = new Set(needsStartingNumbers(program, sessions).map((e) => e.id))
 
   const save = (edit: (p: Program) => Program) => void updateProgram(edit)
@@ -149,7 +158,7 @@ export function ProgramView({ program, sessions, onTemplateApplied }: Props) {
           <ol className="exercise-list">
             {day.exercises.map((exercise, i) =>
               editing?.dayId === day.id && editing.exerciseId === exercise.id ? (
-                <li key={exercise.id}>
+                <li key={exercise.id} ref={openedForm}>
                   <ExerciseForm
                     initial={exercise}
                     effortScale={program.effortScale}

@@ -16,6 +16,8 @@ To release: in a PR, move the "Unreleased" notes under a new version heading, bu
 - **Effort scale buttons on narrow screens:** with a font wider than the iPhone's, or larger text, "Perceived effort" no longer runs past its button on a 320-pixel-wide screen; the word breaks onto the next line instead.
 - **A failed session right after a primary lift's deload:** the next session now drops one step below the weight that failed, instead of going back up to the weight from before the deload.
 - **The note after a failed session:** when the weight drops one step below the weight that failed (before any success, after a primary lift's deload, or after a rep-range change), the suggestion now says "Weight lowered one step." instead of claiming it's back to your last successful numbers.
+- **Failing at the lightest load:** when an exercise misses its minimums at its lightest load (or below it) before any success, the suggestion stays at the lightest load and says to check its starting numbers or add lighter loads, with an **Edit exercise** button that opens its form. The suggestion no longer says the weight was lowered.
+- **Numbers you never lifted aren't called successful:** after an exercise deloads before any success, the week after says "Resuming after the deload.", and a failed session after that no longer claims it's back to your last successful numbers.
 
 ## [1.3.0] - 2026-10-09
 
