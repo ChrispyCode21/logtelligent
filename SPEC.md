@@ -275,8 +275,8 @@ Progression state (stacks, the last successful numbers, deloads, rep extensions)
 - Reaching **two stacks on the same exercise** triggers a **deload** for that exercise (§6.7). Stacks never combine across exercises: one stack on bench plus one on lateral raises is not two stacks.
 - Stacks **reset to 0 after a deload**.
 - **While an exercise has stacks > 0, the stack logic decides next session's numbers, not the e1RM rule.** In shorthand: `stacks > 0 ? stackState.nextNumbers : e1rmPick`, where `nextNumbers` is either the **revert** (last successful numbers) or the **retry** (the exact numbers that failed) — not always "the previous weight."
-- "Last successful numbers" = the weight and rep target of the most recent session for that exercise that passed the floor rule.
-- **No successful session yet:** if a session fails before any session has succeeded (e.g. an optimistic seed), or since a primary lift's deload (§6.7), the stack is added as usual and the revert goes to **one load step below the failed weight** (accessories: at the bottom of the range). Those numbers then act as the last successful numbers.
+- "Last successful numbers" = the weight and rep target of the most recent session for that exercise that passed the floor rule (for a primary lift, since its last deload, §6.7).
+- **No successful session yet:** if a session fails before any session has succeeded (e.g. an optimistic seed, or since a primary lift's deload), the stack is added as usual and the revert goes to **one load step below the failed weight** (accessories: at the bottom of the range). Those numbers then act as the last successful numbers.
 - **Off-plan weight:** sessions are classified by the weight actually lifted. At or above the weight that failed counts as the **retry** (success clears the stack); below it counts as a revert-level session (success keeps the stack, a fail adds one).
 
 Example:
@@ -296,7 +296,7 @@ Triggered per exercise when that exercise reaches two fatigue stacks. Lasts **on
 **Primary lifts:**
 - **Volume:** about half the working sets (rounded up).
 - **Load:** about 10% lighter than the last successful weight, **snapped down** to an available load (§6.2). Target effort ~RPE 6. **Reps:** the last successful rep target (e.g. 225 × 4 → deload 2 × 4 @ 200). ("Intensity" in lifting means load relative to max, not perceived effort — halving it would be far too light.)
-- **Afterward:** the weight comes from the **running e1RM** (§6.4), at the last successful rep target and the configured target RPE, snapped down to an available load. No cap at the last successful weight. The sessions that failed are in the e1RM window, so the lift steps back in proportion to how badly it was missed, with no fixed step. (If the lift has no e1RM at all, it resumes at the last successful numbers.) The deload clears the last successful numbers, so a fail before the next success reverts one load step below the failed weight (§6.6, E4c); a later fail reverts to that next success (E4e).
+- **Afterward:** the weight comes from the **running e1RM** (§6.4), at the last successful rep target and the configured target RPE, snapped down to an available load. No cap at the last successful weight. The sessions that failed are in the e1RM window, so the lift steps back in proportion to how badly it was missed, with no fixed step. (If the lift has no e1RM at all, it resumes at the last successful numbers.) Once these numbers are set, the pre-deload success no longer counts as the last successful numbers, so a fail before the next success reverts one load step below the failed weight (§6.6, E4c); a later fail reverts to that next success (E4e).
   - Rationale: deloads are triggered per lift, so the trigger can't tell general fatigue from a stall on that lift. Going back to the last successful load treats every deload as fatigue and can lead straight back into the same stall.
 
 **Accessory lifts:**

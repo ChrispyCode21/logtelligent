@@ -96,7 +96,7 @@ export function step(
 
   const stacks = state.stacks + 1
   const failed = state.failed && weight < state.failed.weight ? state.failed : done
-  // No success yet: revert one load step below the failed weight (SPEC §6.6).
+  // No success yet, or none since a primary's deload: revert one load step below the failed weight (SPEC §6.6).
   const lastSuccess = state.lastSuccess ?? {
     weight: stepDown(weight, loads),
     reps: defaultReps(config),

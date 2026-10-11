@@ -300,9 +300,13 @@ describe('7.E Deload', () => {
       unrated(235, [3, 2, 2]),
       unrated(200, [4, 4]),
     )
-    const next = suggestion({ ...bench, seed: undefined }, history)
+    const unseeded = { ...bench, seed: undefined }
+    const next = suggestion(unseeded, history)
     expect(next).toMatchObject({ plan: 'resume', weight: 225, reps: 4, stacks: 0 })
     expect(next.predictedReps).toBeUndefined()
+    // A fail there reverts one step below it, not to the pre-deload 225 (§6.6).
+    const failed = weekly(...history.map((s) => s.sets), unrated(225, [4, 3, 2]))
+    expect(suggestion(unseeded, failed)).toMatchObject({ plan: 'revert', weight: 220, reps: 4, stacks: 1 })
   })
 
   it('E4b: after a deload, lateral raise resumes at the last successful numbers (15 x 15), stacks 0', () => {
