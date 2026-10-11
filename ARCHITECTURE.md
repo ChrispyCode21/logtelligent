@@ -38,6 +38,7 @@ public/
   _headers        HTTP security headers (served by Cloudflare; applied by `vite preview` too)
   logo.svg        Source for all generated icons (pwa-assets.config.ts)
 scripts/
+  check-all.mjs             Every CI check in CI's order, full output only for failures (`npm run check:all`)
   check-spec-coverage.mjs   CI: every SPEC §7 example ID has a test named with it
   check-conventions.mjs     CI: primitives over raw elements, tokens over raw CSS values, shared formatters
   changelog-section.mjs     CI/release: extracts a version's CHANGELOG section

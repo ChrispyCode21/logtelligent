@@ -15,7 +15,8 @@
     "format:check": "prettier --check .",
     "check:spec": "node scripts/check-spec-coverage.mjs",
     "check:conventions": "node scripts/check-conventions.mjs",
-    "check:changelog": "node scripts/changelog-section.mjs --check"
+    "check:changelog": "node scripts/changelog-section.mjs --check",
+    "check:all": "node scripts/check-all.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.6",
