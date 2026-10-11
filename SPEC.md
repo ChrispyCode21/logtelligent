@@ -269,6 +269,7 @@ Progression state (stacks, the last successful numbers, deloads, rep extensions)
 **Fatigue stacks:** each exercise carries its own fatigue-stack count.
 - A **failed** session adds **one stack** and **reverts** next session to the last successful numbers.
   Message: *"Failed to hit minimums, next week's weight will be lowered."*
+  The suggestion card's note for a revert: *"Last session missed the minimums, so the weight is back to your last successful numbers."*, or *"Weight lowered one step."* when the revert is one load step below the failed weight (no successful session yet, below).
 - If the reverted session **succeeds**, the next session retries the heavier numbers that failed.
 - If the reverted session **also fails**, that is a second stack.
 - **A stack clears only on success at the heavier numbers that originally failed.** Success at the reverted weight does *not* clear it — otherwise alternating A-success / B-fail would loop forever without ever triggering a deload.
