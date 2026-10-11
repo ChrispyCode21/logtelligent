@@ -6,6 +6,10 @@ To release: in a PR, move the "Unreleased" notes under a new version heading, bu
 
 ## [Unreleased]
 
+### Changed
+
+- **After a deload, primary lifts resume from your estimated 1RM:** the week after a primary lift's deload, its weight is picked from your estimated 1RM at your last rep target, instead of going straight back to your last successful weight. The sessions that triggered the deload count toward that estimate, so the weight steps back by about as much as the lift was missed. Accessories still resume at their last successful numbers.
+
 ### Fixed
 
 - **Effort scale buttons on narrow screens:** with a font wider than the iPhone's, or larger text, "Perceived effort" no longer runs past its button on a 320-pixel-wide screen; the word breaks onto the next line instead.

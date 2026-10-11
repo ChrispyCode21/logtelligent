@@ -83,7 +83,8 @@ export interface Numbers {
  * What the next session should be (SPEC §6.6–6.7).
  * - normal: primary lifts use the e1RM rule; accessories use double progression (`numbers`).
  * - revert: last successful numbers after a fail. retry: the heavier numbers that failed.
- * - deload: one lighter week. resume: last successful numbers after a deload.
+ * - deload: one lighter week. resume: after a deload; accessories go back to the last successful
+ *   numbers, primary lifts use the e1RM rule at the last successful rep target.
  */
 export type Plan =
   { kind: 'normal'; numbers?: Numbers } | { kind: 'revert' | 'retry' | 'deload' | 'resume'; numbers: Numbers }
