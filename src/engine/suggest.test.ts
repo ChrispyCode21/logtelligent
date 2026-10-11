@@ -62,8 +62,7 @@ describe('7.A Estimated 1RM', () => {
     const next = suggestion(bench(), history)
     expect(next.weight).toBe(200)
     expect(next.reps).toBe(4)
-    expect(next.e1rm?.basis).toBe('returningFromBreak')
-    expect(next.e1rm?.breakFactor).toBe(0.9)
+    expect(next.e1rm).toMatchObject({ basis: 'returningFromBreak', breakFactor: 0.9 })
   })
 
   it('A13: a lower-rep session 6 months ago loses to a higher-rep one 5 weeks ago: 267.3 x 0.9 = 240.5', () => {
@@ -146,7 +145,10 @@ describe('returning from a break: which session and how much off (SPEC §6.4)', 
   })
 
   it('discounts by the picked session age: 90% to day 55, 85% from 56 to 83, 80% from 84', () => {
-    const factor = (days: number) => runningE1rm([low(days)], undefined, asOf)?.breakFactor
+    const factor = (days: number) => {
+      const running = runningE1rm([low(days)], undefined, asOf)
+      return running?.basis === 'returningFromBreak' ? running.breakFactor : undefined
+    }
     expect(factor(29)).toBe(0.9)
     expect(factor(55)).toBe(0.9)
     expect(factor(56)).toBe(0.85)

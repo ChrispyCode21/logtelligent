@@ -82,6 +82,10 @@ export function formatWeight(weight: number, equipment?: EquipmentType) {
 /** An estimated 1RM to one decimal: `271.1 lb`. */
 export const formatE1rm = (value: number) => `${value.toFixed(1)} lb`
 
+/** The break note from the share of the e1RM kept (SPEC §6.4): 0.85 → `estimate lowered 15%`. */
+export const formatBreakNote = (factor: number) =>
+  `Returning from a break: estimate lowered ${Math.round((1 - factor) * 100)}%.`
+
 const DATE_STYLES = {
   /** Sat, Oct 4, 2026 */
   long: { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' },

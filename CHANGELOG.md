@@ -9,6 +9,7 @@ To release: in a PR, move the "Unreleased" notes under a new version heading, bu
 ### Changed
 
 - **After a deload, primary lifts resume from your estimated 1RM:** the week after a primary lift's deload, its weight is picked from your estimated 1RM at your last rep target, instead of going straight back to your last successful weight. The sessions that triggered the deload count toward that estimate, so the weight steps back by about as much as the lift was missed. Accessories still resume at their last successful numbers.
+- **Returning from a break:** after four weeks or more without a lift, its estimate now comes from your most recent session, or from a lower-rep session up to four weeks older than that one, instead of a lower-rep session from however long ago. The longer the break, the more the estimate is lowered: 10% up to 8 weeks, 15% up to 12 weeks, then 20%. The note says how much.
 
 ### Fixed
 

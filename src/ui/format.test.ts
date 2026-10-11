@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   formatNameList,
+  formatBreakNote,
   formatCountedSets,
   formatE1rm,
   formatExtras,
@@ -73,6 +74,14 @@ describe('formatE1rm', () => {
   it('rounds to one decimal', () => {
     expect(formatE1rm(271.0844)).toBe('271.1 lb')
     expect(formatE1rm(250)).toBe('250.0 lb')
+  })
+})
+
+describe('formatBreakNote', () => {
+  it('says how much the estimate was lowered for each tier', () => {
+    expect(formatBreakNote(0.9)).toBe('Returning from a break: estimate lowered 10%.')
+    expect(formatBreakNote(0.85)).toBe('Returning from a break: estimate lowered 15%.')
+    expect(formatBreakNote(0.8)).toBe('Returning from a break: estimate lowered 20%.')
   })
 })
 
