@@ -54,7 +54,8 @@ export function step(
 ): SessionOutcome {
   const plan = state.next
 
-  // Deloads skip the floor rule; afterward stacks are 0 and we resume (SPEC §6.7).
+  // Deloads skip the floor rule; afterward stacks are 0 and we resume from the last successful
+  // numbers (primary lifts: their rep target, at the e1RM rule's weight, SPEC §6.7).
   if (plan.kind === 'deload') {
     return {
       result: 'deload',

@@ -17,6 +17,8 @@ const PLAN_NOTES: Record<PlanKind, string | null> = {
   resume: 'Deload done: back to your last successful numbers.',
 }
 
+const PRIMARY_RESUME_NOTE = 'Deload done: weight picked from your estimated 1RM.'
+
 interface Props {
   config: ExerciseConfig
   suggestion: Suggestion
@@ -34,8 +36,11 @@ export function SuggestionCard({ config, suggestion, heading, effortScale }: Pro
     )
   }
 
-  const basisNote = suggestion.e1rm && suggestion.plan === 'normal' && BASIS_NOTES[suggestion.e1rm.basis]
-  const planNote = PLAN_NOTES[suggestion.plan]
+  // Only the e1RM rule predicts reps; primary lifts come back from a deload on it (SPEC §6.7).
+  const onE1rmRule = suggestion.predictedReps !== undefined
+  const basisNote = suggestion.e1rm && onE1rmRule && BASIS_NOTES[suggestion.e1rm.basis]
+  const planNote =
+    suggestion.plan === 'resume' && onE1rmRule ? PRIMARY_RESUME_NOTE : PLAN_NOTES[suggestion.plan]
   const { min } = config.repRange
   const max = suggestion.effectiveTop ?? config.repRange.max
 
