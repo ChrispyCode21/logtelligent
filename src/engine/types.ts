@@ -87,7 +87,8 @@ export interface Numbers {
  * What the next session should be (SPEC §6.6–6.7).
  * - normal: primary lifts use the e1RM rule; accessories use double progression (`numbers`).
  * - revert: last successful numbers after a fail, or, when there are none, reference numbers one
- *   load step below the failed weight, never lifted (`unlifted`). retry: the heavier numbers that failed.
+ *   load step below the failed weight (or the lightest load if there's none below), never lifted
+ *   (`unlifted`). retry: the heavier numbers that failed.
  * - deload: one lighter week. resume: after a deload; accessories go back to the last successful
  *   (or reference) numbers, primary lifts use the e1RM rule at the last successful rep target.
  */
