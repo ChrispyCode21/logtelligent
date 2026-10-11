@@ -65,8 +65,6 @@ export interface ExerciseSession {
   repRange?: RepRange
 }
 
-export type E1rmBasis = 'history' | 'returningFromBreak' | 'seed'
-
 export type RunningE1rm =
   | { value: number; basis: 'history' | 'seed' }
   | {
@@ -75,6 +73,8 @@ export type RunningE1rm =
       /** The share of the past session's e1RM kept, e.g. 0.85 (SPEC §6.4). */
       breakFactor: number
     }
+
+export type E1rmBasis = RunningE1rm['basis']
 
 /** A weight and rep target. `top` is the effective top of the rep range (accessories, SPEC §6.2). */
 export interface Numbers {

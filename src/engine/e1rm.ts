@@ -95,6 +95,7 @@ function breakReturn(eligible: Eligible[], asOf: Date): RunningE1rm {
   const pickStart = latest.time - BREAK_PICK_DAYS * DAY_MS
   const picked = eligible.find((s) => s.lowReps && s.time >= pickStart) ?? latest
   const ageDays = (asOf.getTime() - picked.time) / DAY_MS
+  // The `fromDays: 0` tier always matches; the fallback only satisfies the type.
   const tier = BREAK_TIERS.find((t) => ageDays >= t.fromDays) ?? BREAK_TIERS[BREAK_TIERS.length - 1]
   return { value: picked.e1rm * tier.factor, basis: 'returningFromBreak', breakFactor: tier.factor }
 }
