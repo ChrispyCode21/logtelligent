@@ -1,5 +1,13 @@
 // Display formatting shared by the UI. All weights are in pounds.
-import { countedSets, type EquipmentType, type LoggedSet, type RepRange, type Tier } from '../engine'
+import {
+  countedSets,
+  type EquipmentType,
+  type LoggedSet,
+  type PlanKind,
+  type RepRange,
+  type Suggestion,
+  type Tier,
+} from '../engine'
 import { effortSuffix, effortTarget, type EffortScale } from '../program/effort'
 
 export const EQUIPMENT_LABELS: Record<EquipmentType, string> = {
@@ -85,6 +93,28 @@ export const formatE1rm = (value: number) => `${value.toFixed(1)} lb`
 /** The break note from the share of the e1RM kept (SPEC §6.4): 0.85 → `estimate lowered 15%`. */
 export const formatBreakNote = (factor: number) =>
   `Returning from a break: estimate lowered ${Math.round((1 - factor) * 100)}%.`
+
+const PLAN_NOTES: Record<PlanKind, string | null> = {
+  normal: null,
+  revert: 'Last session missed the minimums, so the weight is back to your last successful numbers.',
+  retry: 'Retrying the numbers that failed. Hitting them clears the fatigue stack.',
+  deload: 'Deload week: fewer sets and less effort. Missing the minimums here does not count.',
+  resume: 'Deload done: back to your last successful numbers.',
+}
+
+/**
+ * The suggestion card's note on its plan (SPEC §6.6–6.7). A revert one load step below the failed
+ * weight wasn't a past success; primary lifts come back from a deload on the e1RM rule, the only
+ * rule that predicts reps.
+ */
+export function formatPlanNote(
+  suggestion: Pick<Extract<Suggestion, { kind: 'suggestion' }>, 'plan' | 'steppedDown' | 'predictedReps'>,
+): string | null {
+  if (suggestion.plan === 'revert' && suggestion.steppedDown) return 'Weight lowered one step.'
+  if (suggestion.plan === 'resume' && suggestion.predictedReps !== undefined)
+    return 'Deload done: weight picked from your estimated 1RM.'
+  return PLAN_NOTES[suggestion.plan]
+}
 
 const DATE_STYLES = {
   /** Sat, Oct 4, 2026 */
