@@ -550,7 +550,7 @@ describe('7.I Lifts (SPEC §6.9)', () => {
     expect(withDeload.e1rm!.value).toBeCloseTo(suggestion(upperA, heavy).e1rm!.value, 6)
   })
 
-  it('I8: returning from a break uses the most recent lower-rep session: 246.2, 205 x 4', () => {
+  it('I8: returning from a break uses the lower-rep session, 7 days older than the latest: 246.2, 205 x 4', () => {
     const daysAgo = (n: number) => new Date(asOf.getTime() - n * DAY_MS).toISOString()
     const own = [{ date: daysAgo(42), sets: sets(225, [5, 5, 5]) }]
     const other = deriveState(upperB, [{ date: daysAgo(35), sets: sets(185, [12, 12, 12]) }]).sessions

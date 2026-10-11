@@ -70,6 +70,8 @@ export type E1rmBasis = 'history' | 'returningFromBreak' | 'seed'
 export interface RunningE1rm {
   value: number
   basis: E1rmBasis
+  /** Returning from a break: the share of the past session's e1RM kept, e.g. 0.85 (SPEC §6.4). */
+  breakFactor?: number
 }
 
 /** A weight and rep target. `top` is the effective top of the rep range (accessories, SPEC §6.2). */
