@@ -201,7 +201,7 @@ A fixed pound increment doesn't work across exercises: +5 lb is under 2% on a 30
    - Dumbbell: a standard rack list (e.g. 10, 12.5, 15, 17.5, 20, 22.5, 25, 30…).
    - Cable / machine: a stack list I enter (e.g. …99, 110, 121…).
 2. **Per-exercise override** of those loads for my gym's actual equipment (e.g. "this gym has 22.5s").
-3. **Max relative jump** (≈ 10%) on top: if the next available load is a bigger jump, progress by **reps** instead, extending the effective top of the rep range.
+3. **Max relative jump** (≈ 10%) on top: if the next available load is a bigger jump than this, progress by **reps** instead of weight, extending the effective top of the rep range.
 
 **Rep ceiling:** the rep extension is capped at **120% of the top of the configured range, rounded up**: `ceil(top × 1.2)`. At the ceiling, the engine takes the next load step even if it exceeds the max relative jump, so lateral raises don't get stuck at sets of 25+ because the next dumbbell is a big relative jump.
 - Examples: 3–5 → ceiling 6; 8–12 → 15 (14.4 rounded up); 15–20 → 24.
