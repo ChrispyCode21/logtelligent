@@ -41,7 +41,7 @@ public/
 scripts/
   check-all.mjs             Every CI check in CI's order, full output only for failures (`npm run check:all`)
   check-spec-coverage.mjs   CI: every SPEC §7 example ID has a test named with it
-  check-conventions.mjs     CI: primitives over raw elements, tokens over raw CSS values, shared formatters
+  check-conventions.mjs     CI: primitives over raw elements, tokens over raw CSS values, shared formatters, progression through the scheme
   changelog-section.mjs     CI/release: extracts a version's CHANGELOG section
 e2e/            Playwright, against the production build (playwright.config.ts: WebKit and Chromium, at 375px and 320px)
   layout.spec.ts    Every screen: no sideways scrolling, no clipped button labels (TESTING.md)
@@ -122,7 +122,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Quality gates and releases
 
-- **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the purity rules for the engine and for program/, session/ and history/), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
+- **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the purity rules for the engine and for program/, session/ and history/), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters, progression through `schemeFor` rather than `suggestNext`/`evaluateSession`), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
 - **Architecture and quality review:** the read-only `architecture-reviewer` subagent (`.claude/agents/architecture-reviewer.md`) reports ranked findings on a branch or module against this document and CLAUDE.md. Run it before opening a PR (CLAUDE.md, "Building a slice"). Small findings that don't belong in a feature PR go on the cleanup backlog (below).
 - **Playwright** (`ci.yml`, check "Playwright"): `e2e/` in WebKit and Chromium at 375px and 320px: every screen for sideways scrolling and clipped button labels, and smoke tests of the main flows. On failure the traces are kept as a run artifact (open with `npx playwright show-trace`).
 - **Security** (`security.yml`): CodeQL on the app and the workflows; dependency review on PRs.
