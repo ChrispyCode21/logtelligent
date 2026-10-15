@@ -280,4 +280,35 @@ describe('7.L Linear, through History (SPEC §6.10)', () => {
     expect(runningE1rm(lift, undefined, asOf)?.value).toBeCloseTo(266.8, 1)
     expect(liftTimeline(p, [logged], 'Squat')[0].e1rm).toBeUndefined()
   })
+
+  it("feeds the lift's e1RM from neither a Linear deload session nor one with no effort logged", () => {
+    const adaptiveSquat = exercise('squat-b', 'Squat', { seed: { weight: 135, reps: 5 } })
+    const p = program(squat, adaptiveSquat)
+    // Three misses with no effort logged reset to 125; the 125 session, with effort, is a deload.
+    const sessions = [
+      finished('upper-a', 1, 'squat', threeSets(140, 4)),
+      finished('upper-a', 2, 'squat', threeSets(140, 4)),
+      finished('upper-a', 3, 'squat', threeSets(140, 4)),
+      finished('upper-a', 4, 'squat', firstRpe(125, [5, 5, 5])),
+    ]
+    const lift = otherLiftSessions(p, sessions, adaptiveSquat)
+    expect(lift.map((s) => !!s.isDeload)).toEqual([false, false, false, true])
+    expect(runningE1rm(lift, undefined, asOf)).toBeUndefined()
+  })
+
+  it('L34: a Linear 12-12 session is high-rep, so a lower-rep one in the window is used instead', () => {
+    const highSquat = {
+      ...exercise('squat-high', 'Squat', { repRange: { min: 12, max: 12 } }),
+      progression: { scheme: 'linear', increment: 5 },
+    } as ProgramExercise
+    const adaptiveSquat = exercise('squat-b', 'Squat', { seed: { weight: 135, reps: 5 } })
+    const p = program(squat, highSquat, adaptiveSquat)
+    const sessions = [
+      finished('upper-a', 1, 'squat', firstRpe(225, [5, 5, 5])),
+      finished('upper-a', 2, 'squat-high', firstRpe(185, [12, 12, 12])),
+    ]
+    // 225 x 5 @8 is 273.6; 185 x 12 @8 (267.3) is skipped, as in I1.
+    const lift = otherLiftSessions(p, sessions, adaptiveSquat)
+    expect(runningE1rm(lift, undefined, asOf)?.value).toBeCloseTo(273.6, 1)
+  })
 })
