@@ -29,53 +29,39 @@ export function SuggestionCard({ config, suggestion, heading, effortScale, onEdi
     )
   }
 
-  if (suggestion.scheme === 'linear') {
-    const reason = formatLinearReason(suggestion.reason)
-    return (
-      <Card>
-        <h2>{heading}</h2>
-        <p className="suggestion">
-          {formatWeight(suggestion.weight, config.equipment)} × {suggestion.reps}
-        </p>
-        <p className="muted">
-          {config.equipment === 'dumbbell' && 'Per hand · '}
-          {suggestion.sets} sets · {suggestion.reps} reps
-          {config.unilateral && ' per side'}
-        </p>
-        {reason && <p className="note">{reason}</p>}
-      </Card>
-    )
-  }
-
-  // Only the e1RM rule predicts reps (SPEC §6.4).
-  const onE1rmRule = suggestion.predictedReps !== undefined
-  const basisNote = suggestion.e1rm && onE1rmRule && e1rmNote(suggestion.e1rm)
-  const planNote = formatPlanNote(suggestion)
+  // Linear shows one rep target, its reason and nothing of Adaptive's (SPEC §6.10).
+  const adaptive = suggestion.scheme === undefined ? suggestion : undefined
   const { min } = config.repRange
-  const max = suggestion.effectiveTop ?? config.repRange.max
+  const max = adaptive?.effectiveTop ?? config.repRange.max
+  const repsText = adaptive ? `${min}–${max}` : `${suggestion.reps}`
+  const note =
+    suggestion.scheme === 'linear' ? formatLinearReason(suggestion.reason) : formatPlanNote(suggestion)
+  // Only the e1RM rule predicts reps (SPEC §6.4).
+  const onE1rmRule = adaptive?.predictedReps !== undefined
+  const basisNote = adaptive?.e1rm && onE1rmRule && e1rmNote(adaptive.e1rm)
 
   return (
     <Card>
       <h2>
         {heading}
-        {suggestion.plan === 'deload' && <span className="tag">Deload</span>}
+        {adaptive?.plan === 'deload' && <span className="tag">Deload</span>}
       </h2>
       <p className="suggestion">
         {formatWeight(suggestion.weight, config.equipment)} × {suggestion.reps}
       </p>
       <p className="muted">
         {config.equipment === 'dumbbell' && 'Per hand · '}
-        {suggestion.sets} sets · {min}–{max} reps
+        {suggestion.sets} sets · {repsText} reps
         {config.unilateral && ' per side'}
-        {suggestion.targetRpe !== undefined && (
-          <> · first set{effortTarget(effortScale, suggestion.targetRpe)}</>
+        {adaptive?.targetRpe !== undefined && (
+          <> · first set{effortTarget(effortScale, adaptive.targetRpe)}</>
         )}
       </p>
-      {suggestion.e1rm && <p className="muted">Estimated 1RM {formatE1rm(suggestion.e1rm.value)}</p>}
-      {suggestion.stacks > 0 && <p className="muted">Fatigue stacks: {suggestion.stacks} of 2</p>}
-      {planNote && <p className="note">{planNote}</p>}
+      {adaptive?.e1rm && <p className="muted">Estimated 1RM {formatE1rm(adaptive.e1rm.value)}</p>}
+      {adaptive && adaptive.stacks > 0 && <p className="muted">Fatigue stacks: {adaptive.stacks} of 2</p>}
+      {note && <p className="note">{note}</p>}
       {/* Failing at the lightest load points to the exercise's starting numbers and loads (SPEC §6.6). */}
-      {suggestion.atLightestLoad && (
+      {adaptive?.atLightestLoad && (
         <div className="actions">
           <Button onClick={onEditExercise}>Edit exercise</Button>
         </div>
