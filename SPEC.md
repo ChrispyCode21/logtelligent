@@ -325,7 +325,7 @@ Bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a ligh
 
 ## 7. Worked examples → test cases
 
-Each example is one unit test named with its stable ID (e.g. `it('B3: ...')`). Numbers come from the formulas in §6.4, not estimates. If a rule changes, update its examples. Groups A–E are **Adaptive's**; F–I are shared by every scheme (each new scheme adds a group of its own).
+Each example is one unit test named with its stable ID (e.g. `it('B3: ...')`). Numbers come from the formulas in §6.4, not estimates. If a rule changes, update its examples. Groups A–E are **Adaptive's**. F (rotation) and G (reference data) are shared. H and I show the shared rules (§6.8, §6.9) through Adaptive's results. Each new scheme adds a group of its own, and its own H- and I-style examples where they apply.
 
 Unless stated: barbell loads in 5 lb steps; dumbbell rack 10, 12.5, 15, 17.5, 20, 22.5, 25, 30, 35…; e1RM values rounded to 0.1 lb (tests allow ±0.1). `225×4 @8` is 225 lb for 4 reps at RPE 8.
 
