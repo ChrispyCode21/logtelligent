@@ -123,7 +123,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Quality gates and releases
 
-- **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the purity rules for the engine and for program/, session/ and history/), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters, progression through `schemeFor` rather than `suggestNext`/`evaluateSession`), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
+- **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the purity rules for the engine and for program/, session/ and history/), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters, progression through `schemeFor` rather than a scheme's own functions), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
 - **Architecture and quality review:** the read-only `architecture-reviewer` subagent (`.claude/agents/architecture-reviewer.md`) reports ranked findings on a branch or module against this document and CLAUDE.md. Run it before opening a PR (CLAUDE.md, "Building a slice"). Small findings that don't belong in a feature PR go on the cleanup backlog (below).
 - **Playwright** (`ci.yml`, check "Playwright"): `e2e/` in WebKit and Chromium at 375px and 320px: every screen for sideways scrolling and clipped button labels, and smoke tests of the main flows. On failure the traces are kept as a run artifact (open with `npx playwright show-trace`).
 - **Security** (`security.yml`): CodeQL on the app and the workflows; dependency review on PRs.
