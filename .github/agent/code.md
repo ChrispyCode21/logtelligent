@@ -31,8 +31,7 @@ Plans can be wrong. If the code shows a better way that stays within what the is
 ## Before you finish
 
 1. Run what CI runs with `npm run check:all`, and fix anything that fails. It prints one line per passing check and the full output of each failing one; after a fix, rerun just that check (e.g. `npm run lint`), then `check:all` once more at the end.
-2. Run the `architecture-reviewer` subagent on `git diff origin/main...HEAD`, in the foreground (`run_in_background: false`), and wait for its report: the run ends when you return, so a review still running is lost. Fix its must-fix findings; fix worth-fixing ones or say in the PR why not. Its questions for the owner go in the PR. Don't return `done` without its report.
-3. Commit everything. Work left uncommitted isn't published.
+2. Commit everything. Work left uncommitted isn't published.
 
 ## Never
 
@@ -43,7 +42,7 @@ Plans can be wrong. If the code shows a better way that stays within what the is
 
 - **`status: "done"`** when the branch is ready for review:
   - `pr_title`: short and specific, like the repo's PR titles.
-  - `pr_body`: **What and why** (a few lines, citing the SPEC section), **How it was verified** (the checks, the reviewer's result), and **Worth your attention** (anything for the owner, the reviewer's questions, and any out-of-scope finding as a suggested follow-up). Say that the preview wasn't used. Don't add "Closes #…" or a "Generated with Claude Code" line; the workflow adds both.
+  - `pr_body`: **What and why** (a few lines, citing the SPEC section), **How it was verified** (the checks), and **Worth your attention** (anything for the owner, and any out-of-scope finding as a suggested follow-up). Say that the preview wasn't used. Don't add "Closes #…" or a "Generated with Claude Code" line; the workflow adds both.
   - `touches_data`: whether it changes what's stored.
   - `comment`: one line for the issue saying what the PR does.
 - **`status: "questions"`** when you hit something the thread doesn't answer and can't decide it: `comment` holds numbered questions, each with a recommended default, as in triage. Nothing is published, so stop as soon as you know you need to ask.

@@ -37,7 +37,6 @@ jobs:
     outputs:
       result: ${{ steps.claude.outputs.structured_output }}
       decision: ${{ steps.decision.outputs.decision }}
-      complexity: ${{ steps.decision.outputs.complexity }}
       cost: ${{ steps.cost.outputs.usd }}
       model: ${{ env.MODEL }}
     steps:
@@ -72,7 +71,7 @@ jobs:
             --max-turns 40
             --allowedTools Read,Grep,Glob
             --disallowedTools Bash,Edit,Write,NotebookEdit,WebFetch,WebSearch
-            --json-schema '{"type":"object","properties":{"decision":{"type":"string","enum":["questions","split","approved_split","ready"]},"complexity":{"type":"string","enum":["routine","complex"]},"comment":{"type":"string","minLength":1,"maxLength":6000},"subissues":{"type":"array","minItems":2,"maxItems":8,"items":{"type":"object","properties":{"title":{"type":"string","minLength":1,"maxLength":100},"body":{"type":"string","minLength":1,"maxLength":2000},"blocked_by":{"type":"array","items":{"type":"integer","minimum":1}}},"required":["title","body","blocked_by"],"additionalProperties":false}}},"required":["decision","comment"],"additionalProperties":false}'
+            --json-schema '{"type":"object","properties":{"decision":{"type":"string","enum":["questions","split","approved_split","ready"]},"comment":{"type":"string","minLength":1,"maxLength":6000},"subissues":{"type":"array","minItems":2,"maxItems":8,"items":{"type":"object","properties":{"title":{"type":"string","minLength":1,"maxLength":100},"body":{"type":"string","minLength":1,"maxLength":2000},"blocked_by":{"type":"array","items":{"type":"integer","minimum":1}}},"required":["title","body","blocked_by"],"additionalProperties":false}}},"required":["decision","comment"],"additionalProperties":false}'
 
       - name: Read the decision
         id: decision
@@ -88,11 +87,6 @@ jobs:
             decision=""
           fi
           echo "decision=$decision" >> "$GITHUB_OUTPUT"
-          # Which model builds a ready issue (.github/agent/PIPELINE.md, "Coding run"): only "routine" gets the
-          # cheaper one; anything else, including no answer, gets the default.
-          complexity=$(jq -r '.complexity // empty' <<<"${RESULT:-null}" 2>/dev/null || true)
-          [ "$complexity" = routine ] || complexity=complex
-          echo "complexity=$complexity" >> "$GITHUB_OUTPUT"
 
       - name: Read the run's cost
         id: cost
@@ -121,7 +115,6 @@ jobs:
           RESULT: ${{ needs.triage.outputs.result }}
           COST: ${{ needs.triage.outputs.cost }}
           MODEL: ${{ needs.triage.outputs.model }}
-          COMPLEXITY: ${{ needs.triage.outputs.complexity }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
@@ -140,9 +133,7 @@ jobs:
             questions) next="Answer with numbered replies, then re-add \`agent-ready\`." ;;
             split) next="Reply starting \"approved\" (or with changes), then re-add \`agent-ready\`. The sub-issues are created from this comment as written." ;;
             approved_split) next="Creating the sub-issues now." ;;
-            ready)
-              builder=$([ "$COMPLEXITY" = routine ] && echo "Sonnet, as routine work" || echo "Opus")
-              next="Building it now with $builder. A PR, or questions, will follow here." ;;
+            ready) next="Building it now. A PR, or questions, will follow here." ;;
             *) next="" ;;
           esac
 
@@ -281,8 +272,8 @@ jobs:
       cancel-in-progress: false
       queue: max
     env:
-      # Sonnet for what triage judged routine (mechanical, fully planned), Opus otherwise.
-      MODEL: ${{ needs.triage.outputs.complexity == 'routine' && 'claude-sonnet-5-5' || 'claude-opus-5-5' }}
+      # Sonnet builds every PR; the local reviewer reviews it (.github/agent/PIPELINE.md, "Coding run").
+      MODEL: claude-sonnet-5-5
       # Claude's shell commands run sandboxed, with secrets removed from their environment. The
       # accepted risk this reduces is in .github/agent/PIPELINE.md ("Where it lives").
       CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: '1'
@@ -366,8 +357,8 @@ jobs:
           claude_args: |
             --model ${{ env.MODEL }}
             --max-turns 300
-            --allowedTools "Read" "Grep" "Glob" "Edit" "Write" "TodoWrite" "Task" "Agent" "Bash(npm run:*)" "Bash(npm test:*)" "Bash(npx prettier:*)" "Bash(npx vitest:*)" "Bash(npx playwright test:*)" "Bash(npx tsc:*)" "Bash(npx oxlint:*)" "Bash(git status:*)" "Bash(git diff:*)" "Bash(git log:*)" "Bash(git show:*)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git restore:*)" "Bash(git rm:*)" "Bash(git mv:*)" "Bash(git grep:*)" "Bash(ls:*)" "Bash(wc:*)"
-            --disallowedTools "WebFetch" "WebSearch" "NotebookEdit" "Bash(git push:*)" "Bash(npm install:*)" "Bash(npm i:*)" "Bash(curl:*)" "Bash(wget:*)"
+            --allowedTools "Read" "Grep" "Glob" "Edit" "Write" "TodoWrite" "Bash(npm run:*)" "Bash(npm test:*)" "Bash(npx prettier:*)" "Bash(npx vitest:*)" "Bash(npx playwright test:*)" "Bash(npx tsc:*)" "Bash(npx oxlint:*)" "Bash(git status:*)" "Bash(git diff:*)" "Bash(git log:*)" "Bash(git show:*)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git restore:*)" "Bash(git rm:*)" "Bash(git mv:*)" "Bash(git grep:*)" "Bash(ls:*)" "Bash(wc:*)"
+            --disallowedTools "Task" "Agent" "WebFetch" "WebSearch" "NotebookEdit" "Bash(git push:*)" "Bash(npm install:*)" "Bash(npm i:*)" "Bash(curl:*)" "Bash(wget:*)"
             --json-schema '{"type":"object","properties":{"status":{"type":"string","enum":["done","questions"]},"pr_title":{"type":"string","maxLength":100},"pr_body":{"type":"string","maxLength":6000},"touches_data":{"type":"boolean"},"comment":{"type":"string","minLength":1,"maxLength":6000}},"required":["status","comment"],"additionalProperties":false}'
 
       - name: Read the run's cost
