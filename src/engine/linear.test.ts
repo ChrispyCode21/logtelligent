@@ -154,6 +154,12 @@ describe('Linear details', () => {
     expectNext(next([ok(0, 135), ok(2, 145)]), 150, { kind: 'increase', increment: 5 })
   })
 
+  it('judges a past session by its own saved rep range (SPEC §6.8)', () => {
+    // Saved as 3 sets of 3 (range 3–3); the exercise is 5–5 now.
+    const saved: ExerciseSession = { ...on(0, 135, [3, 3, 3]), repRange: { min: 3, max: 3 } }
+    expectNext(next([saved]), 140, { kind: 'increase', increment: 5 })
+  })
+
   it('clears the miss count after a break', () => {
     // Two misses at 125, then six weeks off: the next miss at 125 is the first, not a reset.
     const history = [ok(0, 140), miss(2, 125), miss(4, 125)]

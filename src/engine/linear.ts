@@ -6,25 +6,25 @@ import type {
   ExerciseSession,
   LinearReason,
   LoggedSet,
+  RepRange,
   SessionOutcome,
   Suggestion,
 } from './types'
 
 // Linear (SPEC §6.10): a fixed increase each successful session, with its own failure rule.
 
-const DEFAULT_INCREMENT = 5
 const MISSES_TO_RESET = 3
 const LIGHTER_FACTOR = 0.9
 
-/** The exercise's increment; the default applies only if the exercise isn't set to Linear. */
-const incrementOf = (config: ExerciseConfig) => config.progression?.increment ?? DEFAULT_INCREMENT
+/** The exercise's increment. Linear is only reached through schemeFor, for an exercise set to it. */
+function incrementOf(config: ExerciseConfig): number {
+  if (!config.progression) throw new Error(`${config.name} isn't set to Linear`)
+  return config.progression.increment
+}
 
-/** One number: the top of the rep range (SPEC §6.10). */
-const repTarget = (config: ExerciseConfig) => config.repRange.max
-
-/** Every prescribed set is logged and reaches the rep target (SPEC §6.10). */
-function succeeded(config: ExerciseConfig, counted: LoggedSet[]): boolean {
-  return counted.length >= config.sets && counted.every((s) => s.reps >= repTarget(config))
+/** Every prescribed set is logged and reaches the rep target, the top of `range` (SPEC §6.10). */
+function succeeded(config: ExerciseConfig, range: RepRange, counted: LoggedSet[]): boolean {
+  return counted.length >= config.sets && counted.every((s) => s.reps >= range.max)
 }
 
 /** The first available load at or above `weight`; the weight itself when there's none to snap to. */
@@ -39,45 +39,50 @@ function tenPercentLighter(weight: number, loads: number[]): number {
 }
 
 interface LinearState {
-  /** The next session's weight and why; undefined before any counted session. */
-  next?: { weight: number; reason: LinearReason }
+  /** The last counted session: when, at what weight, and the next session's weight and why. */
+  last?: { time: number; weight: number; next: { weight: number; reason: LinearReason } }
   /** Misses in a row at `missWeight`. */
   misses: number
   missWeight?: number
   lastSuccess?: number
-  lastAttempt?: number
-  lastTime?: number
   /** The last session ended in a reset, so the next one is marked as a deload. */
   reset: boolean
 }
 
-/** Judge one session and advance the state (SPEC §6.10). The session's weight is its first set's. */
+/**
+ * Judge one session and advance the state (SPEC §6.10). The session's weight is its first set's;
+ * it's judged by its own saved rep range, if it has one (SPEC §6.8).
+ */
 function step(
   config: ExerciseConfig,
   loads: number[],
   state: LinearState,
+  session: ExerciseSession,
   counted: LoggedSet[],
 ): LinearState {
   const weight = counted[0].weight
-  const base = { lastAttempt: weight, reset: false }
+  const time = Date.parse(session.date)
+  const range = session.repRange ?? config.repRange
 
-  if (succeeded(config, counted)) {
+  if (succeeded(config, range, counted)) {
     const next = loadAtLeast(weight + incrementOf(config), loads)
+    const reason: LinearReason = { kind: 'increase', increment: next - weight }
     return {
-      ...base,
-      next: { weight: next, reason: { kind: 'increase', increment: next - weight } },
+      last: { time, weight, next: { weight: next, reason } },
       misses: 0,
       lastSuccess: weight,
+      reset: false,
     }
   }
 
   const misses = (state.missWeight === weight ? state.misses : 0) + 1
-  const missed = { ...base, lastSuccess: state.lastSuccess, missWeight: weight }
+  const missed = { lastSuccess: state.lastSuccess, missWeight: weight }
   if (misses >= MISSES_TO_RESET) {
-    const lighter = tenPercentLighter(weight, loads)
-    return { ...missed, next: { weight: lighter, reason: { kind: 'reset' } }, misses: 0, reset: true }
+    const next = { weight: tenPercentLighter(weight, loads), reason: { kind: 'reset' } as const }
+    return { ...missed, last: { time, weight, next }, misses: 0, reset: true }
   }
-  return { ...missed, next: { weight, reason: { kind: 'repeat' } }, misses }
+  const next = { weight, reason: { kind: 'repeat' } as const }
+  return { ...missed, last: { time, weight, next }, misses, reset: false }
 }
 
 /**
@@ -98,11 +103,11 @@ function replayState<S extends ExerciseSession>(config: ExerciseConfig, history:
       continue
     }
     // A break clears the miss count (SPEC §6.10).
-    if (state.lastTime !== undefined && state.lastTime < windowStart(new Date(session.date))) {
+    if (state.last && state.last.time < windowStart(new Date(session.date))) {
       state = { ...state, misses: 0, missWeight: undefined }
     }
     const isDeload = state.reset
-    state = { ...step(config, loads, state, counted), lastTime: Date.parse(session.date) }
+    state = step(config, loads, state, session, counted)
     sessions.push(isDeload ? { ...session, isDeload } : session)
   }
   return { state, sessions }
@@ -115,28 +120,33 @@ export function replayLinear<S extends ExerciseSession>(config: ExerciseConfig, 
 /** Next session's suggestion (SPEC §6.10). */
 export function suggestLinear(config: ExerciseConfig, history: ExerciseSession[], asOf: Date): Suggestion {
   const { state } = replayState(config, history)
-  const shape = { kind: 'suggestion', scheme: 'linear', reps: repTarget(config), sets: config.sets } as const
+  const shape = {
+    kind: 'suggestion',
+    scheme: 'linear',
+    reps: config.repRange.max,
+    sets: config.sets,
+  } as const
+  const { last } = state
 
-  if (!state.next || state.lastTime === undefined) {
+  if (!last) {
     if (!config.seed) return { kind: 'needsSeed' }
     return { ...shape, weight: config.seed.weight, reason: { kind: 'start' } }
   }
-  if (state.lastTime < windowStart(asOf)) {
-    const last = state.lastSuccess ?? state.lastAttempt ?? state.next.weight
-    const weight = tenPercentLighter(last, availableLoads(config))
+  if (last.time < windowStart(asOf)) {
+    const weight = tenPercentLighter(state.lastSuccess ?? last.weight, availableLoads(config))
     return { ...shape, weight, reason: { kind: 'break' } }
   }
-  return { ...shape, ...state.next }
+  return { ...shape, ...last.next }
 }
 
-/** A session's outcome: a success or a miss, with no message (SPEC §6.10). */
+/** A session's outcome, judged by the current settings: a success or a miss, with no message (SPEC §6.10). */
 export function evaluateLinear(
   config: ExerciseConfig,
   _history: ExerciseSession[],
   sets: LoggedSet[],
 ): SessionOutcome {
   return {
-    result: succeeded(config, countedSets(sets)) ? 'success' : 'fail',
+    result: succeeded(config, config.repRange, countedSets(sets)) ? 'success' : 'fail',
     state: { stacks: 0, next: { kind: 'normal' } },
   }
 }
