@@ -131,7 +131,7 @@ Templates are offered while the program has no active days, with building your o
 2. See every finished session of that lift from every day, newest first, each tagged with its day: date, every set (weight × reps, effort where logged, §5.6), the extras on their own line ("Extra: 185 × 8 · 185 × 7"), the note (§5.2), and the estimated 1RM over time for primary lifts. Each row has **Edit** (§5.4).
 
 - **The picker** lists each lift once, under the first day it's on: **active lifts** grouped by day, then lifts with no active exercise that have history in an **"Archived"** group. Only finished sessions count as history, so an exercise archived mid-session appears once a finished session has it, never with "No sessions logged yet."
-- **e1RM:** each point is **that session's e1RM** (from its first set alone, §6.4), not the running average. Deload sessions are listed and tagged but get no e1RM point. It's a **small line chart** (inline SVG, no chart library) above the session list, and shown on each session row. Sessions over 10 effective reps are drawn hollow, since they count toward the running e1RM only when nothing lower does (§6.4).
+- **e1RM:** each point is **that session's e1RM** (from its first set alone, §6.4), not the running average. Deload sessions are listed and tagged but get no e1RM point. It's a **small line chart** (inline SVG, no chart library) above the session list, and shown on each session row. Sessions over 10 effective reps are drawn hollow on the chart, since they count toward the running e1RM only when nothing lower does (§6.4).
 - A session whose sets were all deleted drops out of History (§5.4).
 
 ### 5.4 Edit a finished session
