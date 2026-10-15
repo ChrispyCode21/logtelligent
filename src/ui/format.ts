@@ -135,6 +135,8 @@ export function formatLinearReason(reason: LinearReason): string | null {
       return null
     case 'increase':
       return `+${reason.increment} lb`
+    case 'topOfLoads':
+      return 'Top of the loads: +1 rep'
     case 'repeat':
       return 'Repeat: reps missed last time'
     case 'reset':

@@ -147,6 +147,8 @@ interface SuggestionBase {
 export type LinearReason =
   | { kind: 'start' }
   | { kind: 'increase'; increment: number }
+  /** At the heaviest load: the weight stays and the rep target rises by 1. */
+  | { kind: 'topOfLoads' }
   | { kind: 'repeat' }
   | { kind: 'reset' }
   | { kind: 'break' }

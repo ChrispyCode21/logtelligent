@@ -22,14 +22,26 @@ function incrementOf(config: ExerciseConfig): number {
   return config.progression.increment
 }
 
-/** Every prescribed set is logged and reaches the rep target, the top of `range` (SPEC §6.10). */
-function succeeded(config: ExerciseConfig, range: RepRange, counted: LoggedSet[]): boolean {
-  return counted.length >= config.sets && counted.every((s) => s.reps >= range.max)
+/** Every prescribed set is logged and reaches the rep target (SPEC §6.10). */
+function succeeded(config: ExerciseConfig, target: number, counted: LoggedSet[]): boolean {
+  return counted.length >= config.sets && counted.every((s) => s.reps >= target)
 }
 
-/** The first available load at or above `weight`; the weight itself when there's none to snap to. */
-function loadAtLeast(weight: number, loads: number[]): number {
-  return loads.find((l) => l >= weight - 1e-9) ?? weight
+/** The rep target: the top of `range`, plus the reps added at the top of the loads (SPEC §6.10). */
+function repTarget(range: RepRange, added: number): number {
+  return range.max + added
+}
+
+/**
+ * The weight after a success at `weight` (SPEC §6.10): the first available load at or above it plus
+ * the increment, else the heaviest load; the exact sum with no loads to snap to. Undefined at or
+ * above the heaviest load, the top of the loads, where a rep is added instead.
+ */
+function increased(weight: number, increment: number, loads: number[]): number | undefined {
+  if (loads.length === 0) return weight + increment
+  const heaviest = loads[loads.length - 1]
+  if (weight >= heaviest - 1e-9) return undefined
+  return loads.find((l) => l >= weight + increment - 1e-9) ?? heaviest
 }
 
 /** 10% lighter, snapped down to an available load, never below the lightest (SPEC §6.10). */
@@ -45,6 +57,8 @@ interface LinearState {
   misses: number
   missWeight?: number
   lastSuccess?: number
+  /** Reps added to the rep target at the top of the loads; a weight change takes them off. */
+  added: number
   /** The last session ended in a reset, so the next one is marked as a deload. */
   reset: boolean
 }
@@ -64,13 +78,17 @@ function step(
   const time = Date.parse(session.date)
   const range = session.repRange ?? config.repRange
 
-  if (succeeded(config, range, counted)) {
-    const next = loadAtLeast(weight + incrementOf(config), loads)
-    const reason: LinearReason = { kind: 'increase', increment: next - weight }
+  if (succeeded(config, repTarget(range, state.added), counted)) {
+    const heavier = increased(weight, incrementOf(config), loads)
+    const next =
+      heavier === undefined
+        ? { weight, reason: { kind: 'topOfLoads' } as const }
+        : { weight: heavier, reason: { kind: 'increase', increment: heavier - weight } as const }
     return {
-      last: { time, weight, next: { weight: next, reason } },
+      last: { time, weight, next },
       misses: 0,
       lastSuccess: weight,
+      added: heavier === undefined ? state.added + 1 : 0,
       reset: false,
     }
   }
@@ -79,10 +97,10 @@ function step(
   const missed = { lastSuccess: state.lastSuccess, missWeight: weight }
   if (misses >= MISSES_TO_RESET) {
     const next = { weight: tenPercentLighter(weight, loads), reason: { kind: 'reset' } as const }
-    return { ...missed, last: { time, weight, next }, misses: 0, reset: true }
+    return { ...missed, last: { time, weight, next }, misses: 0, added: 0, reset: true }
   }
   const next = { weight, reason: { kind: 'repeat' } as const }
-  return { ...missed, last: { time, weight, next }, misses, reset: false }
+  return { ...missed, last: { time, weight, next }, misses, added: state.added, reset: false }
 }
 
 /**
@@ -93,7 +111,7 @@ function step(
 function replayState<S extends ExerciseSession>(config: ExerciseConfig, history: S[]) {
   const loads = availableLoads(config)
   const sorted = [...history].sort((a, b) => Date.parse(a.date) - Date.parse(b.date))
-  let state: LinearState = { misses: 0, reset: false }
+  let state: LinearState = { misses: 0, added: 0, reset: false }
   const sessions: S[] = []
 
   for (const session of sorted) {
@@ -102,9 +120,9 @@ function replayState<S extends ExerciseSession>(config: ExerciseConfig, history:
       sessions.push(session)
       continue
     }
-    // A break clears the miss count (SPEC §6.10).
+    // A break clears the miss count and the added reps (SPEC §6.10).
     if (state.last && state.last.time < windowStart(new Date(session.date))) {
-      state = { ...state, misses: 0, missWeight: undefined }
+      state = { ...state, misses: 0, missWeight: undefined, added: 0 }
     }
     const isDeload = state.reset
     state = step(config, loads, state, session, counted)
@@ -132,21 +150,26 @@ export function suggestLinear(config: ExerciseConfig, history: ExerciseSession[]
     if (!config.seed) return { kind: 'needsSeed' }
     return { ...shape, weight: config.seed.weight, reason: { kind: 'start' } }
   }
+  // A break lowers the weight and takes off any reps added at the top of the loads.
   if (last.time < windowStart(asOf)) {
     const weight = tenPercentLighter(state.lastSuccess ?? last.weight, availableLoads(config))
     return { ...shape, weight, reason: { kind: 'break' } }
   }
-  return { ...shape, ...last.next }
+  return { ...shape, reps: repTarget(config.repRange, state.added), ...last.next }
 }
 
-/** A session's outcome, judged by the current settings: a success or a miss, with no message (SPEC §6.10). */
+/**
+ * A session's outcome, judged by the current range and the rep target `history` leaves (a break
+ * before it isn't known here): a success or a miss, with no message (SPEC §6.10).
+ */
 export function evaluateLinear(
   config: ExerciseConfig,
-  _history: ExerciseSession[],
+  history: ExerciseSession[],
   sets: LoggedSet[],
 ): SessionOutcome {
+  const target = repTarget(config.repRange, replayState(config, history).state.added)
   return {
-    result: succeeded(config, config.repRange, countedSets(sets)) ? 'success' : 'fail',
+    result: succeeded(config, target, countedSets(sets)) ? 'success' : 'fail',
     state: { stacks: 0, next: { kind: 'normal' } },
   }
 }

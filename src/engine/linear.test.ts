@@ -144,6 +144,75 @@ describe('7.L Linear (SPEC §6.10)', () => {
     expectNext(next(history, light), 100, { kind: 'reset' })
     expectNext(next([...history, miss(6, 100)], light), 100, { kind: 'repeat' })
   })
+
+  // L22-L23: a rep-range change keeps the weight and the miss count (no fresh start).
+  const at55 = (s: ExerciseSession): ExerciseSession => ({ ...s, repRange: { min: 5, max: 5 } })
+  const at33 = (s: ExerciseSession): ExerciseSession => ({ ...s, repRange: { min: 3, max: 3 } })
+  const threes: ExerciseConfig = { ...squat, repRange: { min: 3, max: 3 } }
+  const beforeChange = [at55(ok(0, 135)), at55(miss(2, 140)), at55(miss(4, 140))]
+
+  it('L22: after a range change to 3-3, two misses at 140 repeat 140 x 3, with no fresh start', () => {
+    expectNext(next(beforeChange, threes), 140, { kind: 'repeat' }, 3)
+  })
+
+  it('L23: L22, then a miss at 3-3 is the third in a row: reset to 125 x 3', () => {
+    const history = [...beforeChange, at33(on(6, 140, [3, 3, 2]))]
+    expectNext(next(history, threes), 125, { kind: 'reset' }, 3)
+  })
+
+  // L24-L30: the top of the loads.
+  const stack: ExerciseConfig = { ...squat, equipment: 'cable', loads: [100, 110, 120] }
+  const atTop = [ok(0, 120)]
+
+  it('L24: 120 3x5 at the heaviest load suggests 120 x 6, top of the loads', () => {
+    expectNext(next(atTop, stack), 120, { kind: 'topOfLoads' }, 6)
+  })
+
+  it('L25: L24, then 120 3x6 suggests 120 x 7', () => {
+    expectNext(next([...atTop, on(2, 120, [6, 6, 6])], stack), 120, { kind: 'topOfLoads' }, 7)
+  })
+
+  it('L26: L24, then a miss at 120 x 6 repeats the raised target', () => {
+    expectNext(next([...atTop, on(2, 120, [6, 6, 5])], stack), 120, { kind: 'repeat' }, 6)
+  })
+
+  it("L27: L24, then three misses reset to 100 x 5, back to the range's top", () => {
+    const missed = [2, 4, 6].map((day) => on(day, 120, [6, 6, 5]))
+    expectNext(next([...atTop, ...missed], stack), 100, { kind: 'reset' }, 5)
+  })
+
+  it("L28: L24 six weeks ago restarts at 100 x 5, back to the range's top", () => {
+    expectNext(next(atTop, stack, 42), 100, { kind: 'break' }, 5)
+  })
+
+  it('L29: an increment past the heaviest load takes the heaviest: 110 +15 lb gives 120, +10 lb', () => {
+    const big = { ...stack, progression: { scheme: 'linear', increment: 15 } } as const
+    expectNext(next([ok(0, 110)], big), 120, { kind: 'increase', increment: 10 })
+  })
+
+  it('L30: L24, then a range change to 3-3 keeps the added rep: 120 x 4', () => {
+    expectNext(next(atTop, { ...stack, repRange: { min: 3, max: 3 } }), 120, { kind: 'topOfLoads' }, 4)
+  })
+
+  // L31-L32: bodyweight, on added weight from 0.
+  const pullUp: ExerciseConfig = {
+    ...squat,
+    id: 'pull-up',
+    name: 'Pull-Up',
+    tier: 'accessory',
+    equipment: 'bodyweight',
+    repRange: { min: 8, max: 8 },
+    seed: { weight: 0, reps: 8 },
+  }
+
+  it('L31: a pull-up at 0 added, 3x8, suggests 5 x 8, +5 lb', () => {
+    expectNext(next([on(0, 0, [8, 8, 8])], pullUp), 5, { kind: 'increase', increment: 5 }, 8)
+  })
+
+  it('L32: a pull-up missed three times at 0 resets to 0 x 8', () => {
+    const missed = [0, 2, 4].map((day) => on(day, 0, [8, 8, 7]))
+    expectNext(next(missed, pullUp), 0, { kind: 'reset' }, 8)
+  })
 })
 
 describe('Linear details', () => {
@@ -166,6 +235,37 @@ describe('Linear details', () => {
     const history = [ok(0, 140), miss(2, 125), miss(4, 125)]
     expectNext(next(history, squat, 46), 125, { kind: 'break' })
     expectNext(next([...history, miss(46, 125)]), 125, { kind: 'repeat' })
+  })
+
+  it('with no loads to snap to, adds the exact increment and never reaches a top of the loads', () => {
+    const noStack: ExerciseConfig = { ...squat, equipment: 'cable' }
+    expectNext(next([ok(0, 100)], noStack), 105, { kind: 'increase', increment: 5 })
+  })
+
+  it('at or above the heaviest load, stays at the weight lifted and adds a rep', () => {
+    const stack: ExerciseConfig = { ...squat, equipment: 'cable', loads: [100, 110, 120] }
+    expectNext(next([ok(0, 125)], stack), 125, { kind: 'topOfLoads' }, 6)
+  })
+
+  it('takes the added reps off when a heavier load is added', () => {
+    // History replays under the current loads, so 120 is no longer the top: 130 at the range's top.
+    const history = [ok(0, 120), on(2, 120, [6, 6, 6])]
+    const more: ExerciseConfig = { ...squat, equipment: 'cable', loads: [100, 110, 120, 130] }
+    expectNext(next(history, more), 130, { kind: 'increase', increment: 10 })
+  })
+
+  it('takes the added reps off after a break, even once sessions resume', () => {
+    const stack: ExerciseConfig = { ...squat, equipment: 'cable', loads: [100, 110, 120] }
+    // 120 x 6 is pending; six weeks off, then 100 3x5 succeeds at the range's top.
+    expectNext(next([ok(0, 120), ok(42, 100)], stack), 110, { kind: 'increase', increment: 10 })
+  })
+
+  it('validates against the added rep target', () => {
+    const stack: ExerciseConfig = { ...squat, equipment: 'cable', loads: [100, 110, 120] }
+    const fives = [120, 120, 120].map((weight) => ({ weight, reps: 5 }))
+    expect(linear.evaluate(stack, [ok(0, 120)], fives).result).toBe('fail')
+    const sixes = fives.map((s) => ({ ...s, reps: 6 }))
+    expect(linear.evaluate(stack, [ok(0, 120)], sixes).result).toBe('success')
   })
 
   it('gives no message and no stacks when validating', () => {
