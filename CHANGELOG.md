@@ -6,6 +6,10 @@ To release: in a PR, move the "Unreleased" notes under a new version heading, bu
 
 ## [Unreleased]
 
+### Added
+
+- **Linear progression (engine only):** a fixed weight increase every successful session, a reset 10% lighter after three misses in a row, an extra rep instead of weight once you're at the heaviest load, and a lighter restart after a break. It can't be picked for an exercise yet.
+
 ## [1.4.0] - 2026-10-11
 
 Coming back from setbacks: after a deload or a break, primary lifts resume from your estimated 1RM, and the notes after a failed session say what actually happened.

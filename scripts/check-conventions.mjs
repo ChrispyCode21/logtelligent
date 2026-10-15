@@ -89,12 +89,14 @@ for (const f of [...files('src', /\.tsx?$/)].filter(
 )) {
   check(f, formatRules)
 }
-// Progression goes through the exercise's scheme (SPEC §8): schemeFor(config).suggest / .evaluate,
-// never Adaptive's own functions. Tests may call them directly.
+// Progression goes through the exercise's scheme (SPEC §8): schemeFor(config).suggest / .evaluate /
+// .replay, never a scheme's own functions. Tests may call them directly.
 const schemeRules = [
   {
-    test: (l) => /\b(suggestNext|evaluateSession)\b/.test(l),
-    message: "Call schemeFor(config).suggest / .evaluate (SPEC §8), not Adaptive's functions directly.",
+    test: (l) =>
+      /\b(suggestNext|evaluateSession|deriveState|suggestLinear|evaluateLinear|replayLinear)\b/.test(l),
+    message:
+      "Call schemeFor(config).suggest / .evaluate / .replay (SPEC §8), not a scheme's functions directly.",
   },
 ]
 for (const f of files('src', /\.tsx?$/).filter(

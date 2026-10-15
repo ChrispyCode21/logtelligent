@@ -1,4 +1,4 @@
-import { deriveState, sessionE1rm, type ExerciseConfig, type LoggedSet } from '../engine'
+import { adaptive, schemeFor, sessionE1rm, type ExerciseConfig, type LoggedSet } from '../engine'
 import { liftExercises } from '../program/lifts'
 import type { Program } from '../program/types'
 import type { Session, Substitute } from '../session/types'
@@ -15,7 +15,7 @@ export interface TimelineEntry {
   substitute?: Substitute
   /** The session's note for next time (SPEC §5.2). */
   note?: string
-  /** That session's e1RM (SPEC §5.3): primary lifts only, none for deloads or replaced sessions. */
+  /** That session's e1RM (SPEC §5.3): Adaptive primary lifts only, none for deloads or replaced sessions. */
   e1rm?: number
   /** Over 10 effective reps: counted toward the running e1RM only when nothing lower is (SPEC §6.4). */
   highReps?: boolean
@@ -26,9 +26,15 @@ export interface TimelineEntry {
 
 /** An exercise's finished sessions for the history view, newest first. */
 export function exerciseTimeline(config: ExerciseConfig, history: LoggedExerciseSession[]): TimelineEntry[] {
-  return deriveState(config, history)
-    .sessions.map((s) => {
-      const e1rm = config.tier === 'primary' && !s.isDeload && !s.replaced ? sessionE1rm(s) : undefined
+  const scheme = schemeFor(config)
+  return scheme
+    .replay(config, history)
+    .map((s) => {
+      // History's e1RM is Adaptive's; a Linear exercise has none (SPEC §8).
+      const e1rm =
+        config.tier === 'primary' && scheme === adaptive && !s.isDeload && !s.replaced
+          ? sessionE1rm(s)
+          : undefined
       return {
         sessionId: s.sessionId,
         exerciseId: config.id,

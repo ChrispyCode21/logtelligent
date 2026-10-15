@@ -1,4 +1,4 @@
-import { countedSets, deriveState, sessionE1rm, type ExerciseSession } from '../engine'
+import { countedSets, schemeFor, sessionE1rm, type ExerciseSession } from '../engine'
 import { liftExercises, liftKey } from '../program/lifts'
 import { activeExercises, missingSeeds } from '../program/program'
 import type { Program, ProgramExercise } from '../program/types'
@@ -11,7 +11,7 @@ import { dayHasHistory, exerciseHistory, type LoggedExerciseSession } from './se
 
 /** One exercise's finished sessions, marked by its own replay (deloads, SPEC §6.7). */
 function replayed(sessions: Session[], exercise: ProgramExercise, before?: Session): LoggedExerciseSession[] {
-  return deriveState(exercise, exerciseHistory(sessions, exercise.id, before)).sessions
+  return schemeFor(exercise).replay(exercise, exerciseHistory(sessions, exercise.id, before))
 }
 
 /**
@@ -33,10 +33,13 @@ const countsForE1rm = (s: ExerciseSession) => !s.isDeload && !s.replaced && sess
 
 /**
  * Exercises still missing starting numbers, which the seed gate asks for before a session (SPEC
- * §5.1). A primary whose lift already has an e1RM from a real session needs none (§6.9).
+ * §5.1). A primary whose lift already has an e1RM from a real session needs none, if its scheme
+ * uses the lift's e1RM (§6.9, §6.10).
  */
 export function needsStartingNumbers(program: Program, sessions: Session[]): ProgramExercise[] {
-  return missingSeeds(program).filter((e) => e.tier !== 'primary' || !liftHasE1rm(program, sessions, e.name))
+  return missingSeeds(program).filter(
+    (e) => e.tier !== 'primary' || !schemeFor(e).usesLiftE1rm || !liftHasE1rm(program, sessions, e.name),
+  )
 }
 
 /**

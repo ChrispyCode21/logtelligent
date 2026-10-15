@@ -29,6 +29,8 @@ interface Props {
   log: ExerciseLog
   /** Finished history for this exercise. */
   history: ExerciseSession[]
+  /** When this session started: the date it's judged on (SPEC §8). */
+  date: Date
   suggestion: Suggestion
   effortScale: EffortScale
   /** Editing a finished session: logged sets only, no new sets and no menu (SPEC §5.4). */
@@ -42,6 +44,7 @@ export function ExerciseLogger({
   config,
   log,
   history,
+  date,
   suggestion,
   effortScale,
   finished = false,
@@ -65,9 +68,11 @@ export function ExerciseLogger({
       ) : (
         <span className="muted"> · {formatSetCount(sets, shownTarget(log, finished, target))}</span>
       )}
-      {!substitute && !log.skipped && suggestion.kind === 'suggestion' && suggestion.plan === 'deload' && (
-        <span className="tag">Deload</span>
-      )}
+      {!substitute &&
+        !log.skipped &&
+        suggestion.kind === 'suggestion' &&
+        suggestion.scheme === undefined &&
+        suggestion.plan === 'deload' && <span className="tag">Deload</span>}
     </h2>
   )
 
@@ -115,7 +120,7 @@ export function ExerciseLogger({
   const loads = availableLoads(config)
   // Validation runs once the last set is entered; a finished session always shows its outcome (SPEC §5.2, §5.4, §6.6).
   const outcome = showsOutcome(finished, sets, target)
-    ? schemeFor(config).evaluate(config, history, sets)
+    ? schemeFor(config).evaluate(config, history, sets, date)
     : undefined
 
   return (

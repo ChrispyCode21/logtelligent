@@ -5,6 +5,7 @@ import {
   formatCountedSets,
   formatE1rm,
   formatExtras,
+  formatLinearReason,
   formatPlanNote,
   formatPrescription,
   formatSet,
@@ -194,5 +195,16 @@ describe('formatNameList', () => {
     expect(formatNameList(['Bench Press', 'Deadlift'])).toBe('Bench Press and Deadlift')
     expect(formatNameList(['A', 'B', 'C'])).toBe('A, B and C')
     expect(formatNameList(['A', 'B', 'C', 'D', 'E'])).toBe('A, B, C and 2 more')
+  })
+})
+
+describe('formatLinearReason (SPEC §6.10)', () => {
+  it("words each reason, and a fresh start's as none", () => {
+    expect(formatLinearReason({ kind: 'start' })).toBeNull()
+    expect(formatLinearReason({ kind: 'increase', increment: 7.5 })).toBe('+7.5 lb')
+    expect(formatLinearReason({ kind: 'topOfLoads' })).toBe('Top of the loads: +1 rep')
+    expect(formatLinearReason({ kind: 'repeat' })).toBe('Repeat: reps missed last time')
+    expect(formatLinearReason({ kind: 'reset' })).toBe('Reset: missed 3 times in a row')
+    expect(formatLinearReason({ kind: 'break' })).toBe('Returning from a break: weight lowered 10%.')
   })
 })

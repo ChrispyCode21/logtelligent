@@ -1,8 +1,11 @@
 import type { ExerciseConfig } from '../engine'
 import type { EffortScale } from './effort'
 
-/** Archived items are hidden from the program but keep their history (SPEC §6.1). */
-export interface ProgramExercise extends ExerciseConfig {
+/**
+ * Archived items are hidden from the program but keep their history (SPEC §6.1). The scheme setting
+ * isn't stored yet, so it's left out until it can be picked (ARCHITECTURE.md, "Storage").
+ */
+export interface ProgramExercise extends Omit<ExerciseConfig, 'progression'> {
   archived?: boolean
 }
 

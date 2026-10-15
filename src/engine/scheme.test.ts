@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { adaptive, evaluateSession, schemeFor, suggestNext } from '.'
+import { adaptive, deriveState, evaluateSession, schemeFor, suggestNext } from '.'
 import type { ExerciseConfig, ExerciseSession, LoggedSet } from '.'
 
 const bench: ExerciseConfig = {
@@ -31,7 +31,7 @@ describe('progression schemes', () => {
   it('suggest and evaluate give the same results as the engine functions', () => {
     const scheme = schemeFor(bench)
     expect(scheme.suggest(bench, history, asOf, [])).toEqual(suggestNext(bench, history, asOf, []))
-    expect(scheme.evaluate(bench, history, sets)).toEqual(evaluateSession(bench, history, sets))
+    expect(scheme.evaluate(bench, history, sets, asOf)).toEqual(evaluateSession(bench, history, sets))
   })
 
   it('passes the lift sessions through to the suggestion', () => {
@@ -41,6 +41,23 @@ describe('progression schemes', () => {
     const withLift = schemeFor(bench).suggest(bench, history, asOf, lift)
     expect(withLift).toEqual(suggestNext(bench, history, asOf, lift))
     expect(withLift).not.toEqual(schemeFor(bench).suggest(bench, history, asOf, []))
+  })
+
+  it('replay marks the deload weeks, as deriveState does', () => {
+    const fail = (weight: number): LoggedSet[] => [
+      { weight, reps: 3, rpe: 10 },
+      { weight, reps: 2 },
+      { weight, reps: 2 },
+    ]
+    const failed: ExerciseSession[] = [
+      { date: '2026-10-01T12:00:00Z', sets },
+      { date: '2026-10-08T12:00:00Z', sets: fail(235) },
+      { date: '2026-10-15T12:00:00Z', sets: fail(235) },
+      { date: '2026-10-22T12:00:00Z', sets: [{ weight: 200, reps: 4, rpe: 6 }] },
+    ]
+    const replayed = schemeFor(bench).replay(bench, failed)
+    expect(replayed).toEqual(deriveState(bench, failed).sessions)
+    expect(replayed.map((s) => !!s.isDeload)).toEqual([false, false, false, true])
   })
 
   it('suggests and evaluates accessories the same way', () => {
@@ -61,6 +78,8 @@ describe('progression schemes', () => {
     const curlHistory: ExerciseSession[] = [{ date: '2026-10-01T12:00:00Z', sets: curlSets }]
     const scheme = schemeFor(curl)
     expect(scheme.suggest(curl, curlHistory, asOf, [])).toEqual(suggestNext(curl, curlHistory, asOf, []))
-    expect(scheme.evaluate(curl, curlHistory, curlSets)).toEqual(evaluateSession(curl, curlHistory, curlSets))
+    expect(scheme.evaluate(curl, curlHistory, curlSets, asOf)).toEqual(
+      evaluateSession(curl, curlHistory, curlSets),
+    )
   })
 })

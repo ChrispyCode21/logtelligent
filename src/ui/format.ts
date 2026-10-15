@@ -5,7 +5,8 @@ import {
   type LoggedSet,
   type PlanKind,
   type RepRange,
-  type Suggestion,
+  type AdaptiveSuggestion,
+  type LinearReason,
   type Tier,
 } from '../engine'
 import { effortSuffix, effortTarget, type EffortScale } from '../program/effort'
@@ -113,7 +114,7 @@ const LIGHTEST_LOAD_NOTE =
  */
 export function formatPlanNote(
   suggestion: Pick<
-    Extract<Suggestion, { kind: 'suggestion' }>,
+    AdaptiveSuggestion,
     'plan' | 'unlifted' | 'steppedDown' | 'atLightestLoad' | 'predictedReps'
   >,
 ): string | null {
@@ -125,6 +126,24 @@ export function formatPlanNote(
     return 'Deload done: weight picked from your estimated 1RM.'
   if (suggestion.plan === 'resume' && suggestion.unlifted) return 'Resuming after the deload.'
   return PLAN_NOTES[suggestion.plan]
+}
+
+/** Linear's reason line (SPEC §6.10); a fresh start shows none. */
+export function formatLinearReason(reason: LinearReason): string | null {
+  switch (reason.kind) {
+    case 'start':
+      return null
+    case 'increase':
+      return `+${reason.increment} lb`
+    case 'topOfLoads':
+      return 'Top of the loads: +1 rep'
+    case 'repeat':
+      return 'Repeat: reps missed last time'
+    case 'reset':
+      return 'Reset: missed 3 times in a row'
+    case 'break':
+      return 'Returning from a break: weight lowered 10%.'
+  }
 }
 
 const DATE_STYLES = {

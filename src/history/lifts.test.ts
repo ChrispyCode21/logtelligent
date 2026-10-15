@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { suggestNext, type LoggedSet } from '../engine'
+import { runningE1rm, suggestNext, type LoggedSet } from '../engine'
 import { liftKey } from '../program/lifts'
 import { sessionExercises } from '../session/context'
 import type { Program, ProgramExercise } from '../program/types'
@@ -228,5 +228,87 @@ describe('changing programs (SPEC §5.5)', () => {
     const change = programChange(program(), [heavy, light])
     expect(change.open).toBeUndefined()
     expect(change.discardIds).toEqual([])
+  })
+})
+
+describe('7.L Linear, through History (SPEC §6.10)', () => {
+  const squat = {
+    ...exercise('squat', 'Squat', { repRange: { min: 5, max: 5 } }),
+    progression: { scheme: 'linear', increment: 5 },
+  } as ProgramExercise
+  const threeSets = (weight: number, reps: number) => [0, 1, 2].map(() => ({ weight, reps }))
+
+  it('L20: a Linear exercise with no seed needs starting numbers, though its lift has an e1RM', () => {
+    const oldSquat = exercise('squat-old', 'Squat', { seed: { weight: 225, reps: 5 } })
+    const p = program(squat, oldSquat)
+    const logged = finished('upper-a', 1, 'squat-old', firstRpe(225, [5, 5, 5]))
+    expect(needsStartingNumbers(p, [logged]).map((e) => e.id)).toEqual(['squat'])
+    // An Adaptive primary in the same position isn't asked (I4).
+    const adaptiveSquat = exercise('squat-new', 'Squat')
+    expect(needsStartingNumbers(program(adaptiveSquat, oldSquat), [logged])).toEqual([])
+  })
+
+  it("L21: each exercise's deloads are marked by its own scheme, and Adaptive's are as before", () => {
+    const p = program(squat)
+    const sessions = [
+      finished('upper-a', 1, 'squat', threeSets(140, 4)),
+      finished('upper-a', 2, 'squat', threeSets(140, 4)),
+      finished('upper-a', 3, 'squat', threeSets(140, 4)),
+      finished('upper-a', 4, 'squat', threeSets(125, 5)),
+      // Adaptive: a success, two fails, then the deload week (as in I6).
+      finished('upper-b', 1, 'bench-b', firstRpe(185, [12, 12, 12])),
+      finished('upper-b', 2, 'bench-b', firstRpe(195, [9, 9, 8])),
+      finished('upper-b', 3, 'bench-b', firstRpe(185, [9, 9, 9])),
+      finished('upper-b', 4, 'bench-b', [
+        { weight: 165, reps: 12, rpe: 6 },
+        { weight: 165, reps: 12 },
+      ]),
+    ]
+    const squats = liftTimeline(p, sessions, 'Squat')
+    expect(squats.map((t) => t.isDeload)).toEqual([true, false, false, false])
+    expect(squats.every((t) => t.e1rm === undefined)).toBe(true)
+    const benches = liftTimeline(p, sessions, 'Bench Press')
+    expect(benches.map((t) => t.isDeload)).toEqual([true, false, false, false])
+  })
+
+  it("feeds the lift's e1RM from a Linear session with effort logged, though History shows none", () => {
+    const adaptiveSquat = exercise('squat-b', 'Squat', { seed: { weight: 135, reps: 5 } })
+    const p = program(squat, adaptiveSquat)
+    const logged = finished('upper-a', 1, 'squat', firstRpe(225, [4, 4, 4]))
+    // 225 x 4 @8 is A1's 266.8.
+    const lift = otherLiftSessions(p, [logged], adaptiveSquat)
+    expect(runningE1rm(lift, undefined, asOf)?.value).toBeCloseTo(266.8, 1)
+    expect(liftTimeline(p, [logged], 'Squat')[0].e1rm).toBeUndefined()
+  })
+
+  it("feeds the lift's e1RM from neither a Linear deload session nor one with no effort logged", () => {
+    const adaptiveSquat = exercise('squat-b', 'Squat', { seed: { weight: 135, reps: 5 } })
+    const p = program(squat, adaptiveSquat)
+    // Three misses with no effort logged reset to 125; the 125 session, with effort, is a deload.
+    const sessions = [
+      finished('upper-a', 1, 'squat', threeSets(140, 4)),
+      finished('upper-a', 2, 'squat', threeSets(140, 4)),
+      finished('upper-a', 3, 'squat', threeSets(140, 4)),
+      finished('upper-a', 4, 'squat', firstRpe(125, [5, 5, 5])),
+    ]
+    const lift = otherLiftSessions(p, sessions, adaptiveSquat)
+    expect(lift.map((s) => !!s.isDeload)).toEqual([false, false, false, true])
+    expect(runningE1rm(lift, undefined, asOf)).toBeUndefined()
+  })
+
+  it('L34: a Linear 12-12 session is high-rep, so a lower-rep one in the window is used instead', () => {
+    const highSquat = {
+      ...exercise('squat-high', 'Squat', { repRange: { min: 12, max: 12 } }),
+      progression: { scheme: 'linear', increment: 5 },
+    } as ProgramExercise
+    const adaptiveSquat = exercise('squat-b', 'Squat', { seed: { weight: 135, reps: 5 } })
+    const p = program(squat, highSquat, adaptiveSquat)
+    const sessions = [
+      finished('upper-a', 1, 'squat', firstRpe(225, [5, 5, 5])),
+      finished('upper-a', 2, 'squat-high', firstRpe(185, [12, 12, 12])),
+    ]
+    // 225 x 5 @8 is 273.6; 185 x 12 @8 (267.3) is skipped, as in I1.
+    const lift = otherLiftSessions(p, sessions, adaptiveSquat)
+    expect(runningE1rm(lift, undefined, asOf)?.value).toBeCloseTo(273.6, 1)
   })
 })

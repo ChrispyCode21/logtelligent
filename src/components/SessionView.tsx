@@ -126,6 +126,7 @@ export function SessionView({ session, program, sessions, asOf, onClose }: Props
           config={config}
           log={log}
           history={history}
+          date={new Date(session.startedAt)}
           suggestion={suggestion}
           effortScale={program.effortScale}
           finished={finished}
