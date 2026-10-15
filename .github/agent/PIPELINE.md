@@ -2,7 +2,7 @@
 
 The design and rules of the agent pipeline, for working on the pipeline itself; working on the app needs only [ARCHITECTURE.md](../../ARCHITECTURE.md) ("Agent pipeline").
 
-An issue labeled `agent-ready` triggers Claude in GitHub Actions, which asks questions if the issue is underspecified, or builds it on a branch following CLAUDE.md's "Building a slice" and opens a PR. The PR passes the same gates as any other, then a local reviewer on the owner's machine reviews it, fixes it and merges it, or holds it for the owner. Everything below is built except the local reviewer and the Sonnet-only coding run (#75) and lifting it into a shared repo (#76).
+An issue labeled `agent-ready` triggers Claude in GitHub Actions, which asks questions if the issue is underspecified, or builds it on a branch following CLAUDE.md's "Building a slice" and opens a PR. The PR passes the same gates as any other, then a local reviewer on the owner's machine reviews it, fixes it and merges it, or holds it for the owner. Everything below is built except lifting it into a shared repo (#76).
 
 ```
 issue + agent-ready ─► triage ─┬─► questions on the issue, label agent-needs-info, stop
@@ -95,20 +95,18 @@ Everything the agent writes on GitHub (PR descriptions, issue comments, commit m
 
 ## Local reviewer
 
-Not built yet (#75); until then, the owner reviews and merges.
-
-A Claude Code skill on the owner's machine (`/review-agent-prs`), billed to the owner's Claude plan rather than the Console workspace and acting with the owner's `gh` login. It runs as a desktop scheduled task every 3 hours (only while the Claude app is open and the PC awake), on demand, or on a loop in a session, so PRs don't sit for days unreviewed.
+A Claude Code skill on the owner's machine (`/review-agent-prs`, `.claude/skills/review-agent-prs/SKILL.md`), billed to the owner's Claude plan rather than the Console workspace and acting with the owner's `gh` login. It runs as a desktop scheduled task every 3 hours (only while the Claude app is open and the PC awake), on demand, or on a loop in a session, so PRs don't sit for days unreviewed.
 
 - **Which PRs:** open PRs by `claude[bot]` or `dependabot[bot]` that are due: no `reviewed` label, or commits by someone else since it was added. The owner's own PRs are left alone. The label also keeps two runs off the same PR.
 - **Which model reviews:** Opus 5.5 whenever the PR touches `src/engine/` or `src/storage/`, or has `touches-data` or `touches-gates`. Otherwise a quick Sonnet 5.5 pass rates the diff by how quietly a mistake could pass, not by size: Opus for anything where a plausible-looking change can be quietly wrong (the engine and its math, state replayed from history, rounding and dates, stored data and upgrades, the gates, design choices, an issue open to interpretation, edges no test covers); Sonnet for mechanical work or work that repeats an existing pattern, where a test or check would fail on a slip.
 - **What it checks:** compliance (the `architecture-reviewer` subagent, run on the chosen model), correctness, and the issue: the diff against the issue's "Done when" and the decisions in its thread.
 - **Fixes:** it fixes the findings it agrees with, as commits whose messages explain each fix, runs `npm run check:all`, and pushes to the PR's branch.
-- **Holds:** a valid finding it can't fix safely (e.g. the spec looks wrong) holds the PR: one short comment lists what it held and why, and the PR stays unmerged. That comment is the only thing it writes on the PR. Findings it disagrees with are dropped and don't hold it.
+- **Holds:** a valid finding it can't fix safely (e.g. the spec looks wrong) holds the PR: one short comment lists what it held and why, and the PR stays unmerged. Findings it disagrees with are dropped and don't hold it; each is listed with its reason in the merge commit, or in the comment when the PR waits.
 - **Keeping PRs green:** it brings a branch that's behind `main` up to date (the ruleset requires it) and resolves conflicts. A failed check gets at most 2 fix attempts per PR; after that the PR is held.
 - **Merging:** when CI is green and nothing is held, it merges, except:
   - `touches-data`: it comments that the PR is ready and a backup should be exported on the phone first, and leaves the merge to the owner;
   - `touches-gates`: it comments that the PR is ready, and the owner reads it and merges (green means less if the checks changed);
-  - release PRs: merging tags the version, so the owner merges.
+  - release PRs: it comments that the PR is ready, and the owner merges, since merging tags the version.
 - **Dependabot:** patch and minor bumps get a Sonnet review and merge when green. A major bump gets Opus, which reads the release notes and fixes the code if needed; then the rules above apply.
 - **Out-of-scope findings** become issues labeled `agent-followup` (never `agent-ready`, see "Where it lives"), each naming the PR it came from.
 - What it writes on GitHub follows "What the agent writes".

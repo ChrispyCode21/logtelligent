@@ -96,6 +96,7 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
       ```powershell
       gh variable set ANTHROPIC_FEDERATION_RULE_ID --body '<fdrl_…>'
       ```
+7. The local reviewer ([PIPELINE.md](.github/agent/PIPELINE.md), "Local reviewer"): in the Claude desktop app, a scheduled task on this repo's main checkout every 3 hours with the prompt `/review-agent-prs`, in a permission mode that lets it push, comment and merge without asking.
 
 ## Install on iPhone
 
