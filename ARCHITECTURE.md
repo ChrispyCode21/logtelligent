@@ -16,7 +16,8 @@ src/
     loads.ts        Available loads per equipment, snap/step helpers (SPEC §6.2)
     accessory.ts    Double progression, rep ceiling, rep extension (SPEC §6.2, §6.5)
     progression.ts  Floor rule, fatigue stacks, deloads; deriveState / evaluateSession (SPEC §6.6–6.8)
-    suggest.ts      suggestNext: the entry point the UI calls (SPEC §6.4 weight selection)
+    suggest.ts      suggestNext: Adaptive's suggestion (SPEC §6.4 weight selection)
+    scheme.ts       ProgressionScheme (suggest, evaluate), the `adaptive` scheme and `schemeFor`, the entry point the UI and storage call (SPEC §8)
     rotation.ts     nextDay (SPEC §5.1)
     sets.ts         countedSets: extra sets are recorded but never judged (SPEC §5.2)
   program/      Program model (days → exercises), pure editing functions (add, move, archive, clear…) effort scales (effort.ts), the built-in exercise bank with search (bank.ts), program templates (templates.ts), entering starting numbers: validation, pre-fill, placeholders and stack presets (seeding.ts), the exercise form's fields and validation (exerciseForm.ts), and lifts: same-named exercises (lifts.ts)
@@ -53,7 +54,7 @@ Tests sit next to the code (`*.test.ts`). Every SPEC §7 worked example is a tes
 ## Data flow
 
 1. **Read:** `App.tsx` runs one Dexie `useLiveQuery` that loads the program and all sessions. Dexie re-runs it (and React re-renders) whenever those tables change, so there's no client-side cache to keep in sync. The current time (`asOf`) is captured inside the query, which keeps renders pure.
-2. **Compute:** views call the engine with plain data: `suggestNext(config, history, asOf, lift)` for suggestions, where `lift` is the other same-named exercises' sessions (`otherLiftSessions`, each marked by its own replay), which share the running e1RM while progression comes from `history` alone (SPEC §6.9); `evaluateSession(config, history, sets)` for the validation message. `history/sessions.ts` maps stored sessions into the engine's `ExerciseSession[]` shape, keeping each one's session id. For a session that's already finished, pass it as `before` so it's judged only against the sessions that came before it.
+2. **Compute:** views call the engine with plain data, through the exercise's scheme (`schemeFor(config)`, Adaptive for every exercise for now; SPEC §8): `suggest(config, history, asOf, lift)` for suggestions, where `lift` is the other same-named exercises' sessions (`otherLiftSessions`, each marked by its own replay), which share the running e1RM while progression comes from `history` alone (SPEC §6.9); `evaluate(config, history, sets)` for the validation message. History's deload marking and e1RM (`deriveState`, `sessionE1rm`) stay Adaptive's. `history/sessions.ts` maps stored sessions into the engine's `ExerciseSession[]` shape, keeping each one's session id. For a session that's already finished, pass it as `before` so it's judged only against the sessions that came before it.
 3. **Write:** components call functions in `storage/` (`saveSets`, `startSession`, `updateProgram`…). The live query picks up the change; nothing is pushed into React state by hand.
 
 ### Progression state is derived, never stored

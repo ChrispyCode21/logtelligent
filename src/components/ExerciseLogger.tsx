@@ -1,6 +1,6 @@
 import {
   availableLoads,
-  evaluateSession,
+  schemeFor,
   stepDown,
   stepUp,
   type ExerciseConfig,
@@ -114,7 +114,9 @@ export function ExerciseLogger({
 
   const loads = availableLoads(config)
   // Validation runs once the last set is entered; a finished session always shows its outcome (SPEC §5.2, §5.4, §6.6).
-  const outcome = showsOutcome(finished, sets, target) ? evaluateSession(config, history, sets) : undefined
+  const outcome = showsOutcome(finished, sets, target)
+    ? schemeFor(config).evaluate(config, history, sets)
+    : undefined
 
   return (
     <Card>

@@ -16,7 +16,7 @@ function replayed(sessions: Session[], exercise: ProgramExercise, before?: Sessi
 
 /**
  * The finished sessions of the other exercises in this one's lift, each marked by its own replay:
- * what `suggestNext` takes as `lift`. With `before`, only sessions before it (editing, §5.4).
+ * what a scheme's `suggest` takes as `lift`. With `before`, only sessions before it (editing, §5.4).
  */
 export function otherLiftSessions(
   program: Program,

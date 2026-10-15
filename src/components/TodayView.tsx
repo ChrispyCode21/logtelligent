@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { nextDay, suggestNext } from '../engine'
+import { nextDay, schemeFor } from '../engine'
 import { activeDays } from '../program/program'
 import { needsStartingNumbers, otherLiftSessions } from '../history/lifts'
 import type { Program } from '../program/types'
@@ -109,7 +109,7 @@ export function TodayView({
         <SuggestionCard
           key={exercise.id}
           config={exercise}
-          suggestion={suggestNext(
+          suggestion={schemeFor(exercise).suggest(
             exercise,
             exerciseHistory(sessions, exercise.id),
             asOf,
