@@ -512,6 +512,7 @@ A **progression scheme** is one interface with three functions; the UI and stora
 - **Suggestions:** `suggest(config, history, asOf, lift) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by its own replay, so a scheme can replay across exercises (§6.9). Adaptive uses them only for the e1RM.
 - **Validation:** `evaluate(config, history, sets) => SessionOutcome`.
 - **Replay:** `replay(config, history) => ExerciseSession[]` returns the history with each session marked as a deload or not (and, for Adaptive, as high-rep). History's deload marking calls it through each exercise's scheme (§6.9). Linear marks the first session after each reset (§6.10).
+- **Lift e1RM:** a flag, `usesLiftE1rm`, says whether a primary joining a lift that has an e1RM can start without starting numbers (Adaptive yes, Linear no, §6.9).
 - **State is never passed in or stored:** each scheme replays `history` under its own rules (Adaptive: `deriveState(config, history)`, ARCHITECTURE.md, "Progression state is derived").
 - **History's e1RM** stays Adaptive's for every primary lift. A Linear exercise has none.
 

@@ -65,9 +65,11 @@ export function ExerciseLogger({
       ) : (
         <span className="muted"> · {formatSetCount(sets, shownTarget(log, finished, target))}</span>
       )}
-      {!substitute && !log.skipped && suggestion.kind === 'suggestion' && suggestion.plan === 'deload' && (
-        <span className="tag">Deload</span>
-      )}
+      {!substitute &&
+        !log.skipped &&
+        suggestion.kind === 'suggestion' &&
+        suggestion.scheme === undefined &&
+        suggestion.plan === 'deload' && <span className="tag">Deload</span>}
     </h2>
   )
 

@@ -1,7 +1,7 @@
 import { repsToFailure, runningE1rm } from './e1rm'
 import { availableLoads, snapDown } from './loads'
 import { deriveState, targetReps } from './progression'
-import type { ExerciseConfig, ExerciseSession, ProgressionState, RunningE1rm, Suggestion } from './types'
+import type { AdaptiveResult, ExerciseConfig, ExerciseSession, ProgressionState, RunningE1rm } from './types'
 
 const DELOAD_LOAD_FACTOR = 0.9
 const DELOAD_RPE = 6
@@ -28,7 +28,7 @@ function fromPlan(
   loads: number[],
   state: ProgressionState,
   e1rm: RunningE1rm | undefined,
-): Suggestion {
+): AdaptiveResult {
   const plan = state.next
   if (!plan.numbers) return { kind: 'needsSeed' }
 
@@ -61,7 +61,7 @@ export function suggestNext(
   history: ExerciseSession[],
   asOf: Date,
   lift: ExerciseSession[] = [],
-): Suggestion {
+): AdaptiveResult {
   const loads = availableLoads(config)
   const { state, sessions } = deriveState(config, history)
 

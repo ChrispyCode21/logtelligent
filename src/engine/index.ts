@@ -1,5 +1,6 @@
 export * from './types'
 export * from './e1rm'
+export * from './linear'
 export * from './loads'
 export * from './accessory'
 export * from './progression'

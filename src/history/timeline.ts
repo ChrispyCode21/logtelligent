@@ -1,4 +1,4 @@
-import { deriveState, sessionE1rm, type ExerciseConfig, type LoggedSet } from '../engine'
+import { schemeFor, sessionE1rm, type ExerciseConfig, type LoggedSet } from '../engine'
 import { liftExercises } from '../program/lifts'
 import type { Program } from '../program/types'
 import type { Session, Substitute } from '../session/types'
@@ -26,9 +26,14 @@ export interface TimelineEntry {
 
 /** An exercise's finished sessions for the history view, newest first. */
 export function exerciseTimeline(config: ExerciseConfig, history: LoggedExerciseSession[]): TimelineEntry[] {
-  return deriveState(config, history)
-    .sessions.map((s) => {
-      const e1rm = config.tier === 'primary' && !s.isDeload && !s.replaced ? sessionE1rm(s) : undefined
+  const scheme = schemeFor(config)
+  return scheme
+    .replay(config, history)
+    .map((s) => {
+      const e1rm =
+        config.tier === 'primary' && scheme.usesLiftE1rm && !s.isDeload && !s.replaced
+          ? sessionE1rm(s)
+          : undefined
       return {
         sessionId: s.sessionId,
         exerciseId: config.id,

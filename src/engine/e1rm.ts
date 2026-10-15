@@ -4,6 +4,9 @@ import type { ExerciseSession, RepRange, RunningE1rm, Seed } from './types'
 const DAY_MS = 24 * 60 * 60 * 1000
 const WINDOW_DAYS = 28
 const MAX_SESSIONS = 3
+
+/** The start of the 4-week window ending at `asOf` (SPEC §6.4); a session before it is a break. */
+export const windowStart = (asOf: Date) => asOf.getTime() - WINDOW_DAYS * DAY_MS
 /** Returning from a break: a lower-rep session is picked only if at most this much older than the latest (SPEC §6.4). */
 const BREAK_PICK_DAYS = 28
 /** Returning from a break: the share of the e1RM kept, by the picked session's age, oldest first (SPEC §6.4). */
@@ -123,8 +126,8 @@ export function runningE1rm(
     .sort((a, b) => b.time - a.time)
 
   if (eligible.length > 0) {
-    const windowStart = asOf.getTime() - WINDOW_DAYS * DAY_MS
-    const window = eligible.filter((s) => s.time >= windowStart)
+    const start = windowStart(asOf)
+    const window = eligible.filter((s) => s.time >= start)
     if (window.length > 0) {
       const recent = lowerRepsFirst(window).slice(0, MAX_SESSIONS)
       const value = recent.reduce((sum, s) => sum + s.e1rm, 0) / recent.length

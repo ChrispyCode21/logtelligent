@@ -15,6 +15,9 @@ export interface Seed {
   reps: number
 }
 
+/** A progression scheme other than Adaptive, with its settings (SPEC §6.10). */
+export type SchemeSetting = { scheme: 'linear'; increment: number }
+
 export interface ExerciseConfig {
   id: string
   name: string
@@ -31,6 +34,8 @@ export interface ExerciseConfig {
   /** Reps are recorded per side. */
   unilateral: boolean
   seed?: Seed
+  /** The progression scheme and its settings; Adaptive when missing (SPEC §6). */
+  progression?: SchemeSetting
 }
 
 export interface LoggedSet {
@@ -129,28 +134,51 @@ export interface SessionOutcome {
   message?: string
 }
 
-export type Suggestion =
-  | { kind: 'needsSeed' }
-  | {
-      kind: 'suggestion'
-      plan: PlanKind
-      /** A revert or resume to numbers never lifted, not a real past success (SPEC §6.6–6.7). */
-      unlifted?: boolean
-      /** An unlifted revert lighter than the weight that failed. */
-      steppedDown?: boolean
-      /** An unlifted revert that couldn't drop: the failed weight was at or below the lightest load. */
-      atLightestLoad?: boolean
-      weight: number
-      /** Rep target. */
-      reps: number
-      /** Accessories: the effective top of the rep range. */
-      effectiveTop?: number
-      sets: number
-      /** Primary lifts: target RPE for the first set (6 in a deload). */
-      targetRpe?: number
-      /** Primary lifts on the e1RM rule: reps predicted at `weight` and `targetRpe`. */
-      predictedReps?: number
-      /** Primary lifts. */
-      e1rm?: RunningE1rm
-      stacks: number
-    }
+/** What every scheme's suggestion carries: the first set's weight and rep target, and the set count. */
+interface SuggestionBase {
+  kind: 'suggestion'
+  weight: number
+  /** Rep target. */
+  reps: number
+  sets: number
+}
+
+/** Why Linear suggests this weight (SPEC §6.10). `start` is a fresh start, with no reason to show. */
+export type LinearReason =
+  | { kind: 'start' }
+  | { kind: 'increase'; increment: number }
+  | { kind: 'repeat' }
+  | { kind: 'reset' }
+  | { kind: 'break' }
+
+/** Linear's suggestion: no effort target and no e1RM (SPEC §6.10). */
+export interface LinearSuggestion extends SuggestionBase {
+  scheme: 'linear'
+  reason: LinearReason
+}
+
+/** Adaptive's suggestion (SPEC §6.3–6.7). */
+export interface AdaptiveSuggestion extends SuggestionBase {
+  scheme?: undefined
+  plan: PlanKind
+  /** A revert or resume to numbers never lifted, not a real past success (SPEC §6.6–6.7). */
+  unlifted?: boolean
+  /** An unlifted revert lighter than the weight that failed. */
+  steppedDown?: boolean
+  /** An unlifted revert that couldn't drop: the failed weight was at or below the lightest load. */
+  atLightestLoad?: boolean
+  /** Accessories: the effective top of the rep range. */
+  effectiveTop?: number
+  /** Primary lifts: target RPE for the first set (6 in a deload). */
+  targetRpe?: number
+  /** Primary lifts on the e1RM rule: reps predicted at `weight` and `targetRpe`. */
+  predictedReps?: number
+  /** Primary lifts. */
+  e1rm?: RunningE1rm
+  stacks: number
+}
+
+/** Adaptive's result: a suggestion, or a call for starting numbers. */
+export type AdaptiveResult = { kind: 'needsSeed' } | AdaptiveSuggestion
+
+export type Suggestion = AdaptiveResult | LinearSuggestion

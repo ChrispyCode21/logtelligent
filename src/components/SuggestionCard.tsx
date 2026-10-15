@@ -2,7 +2,7 @@ import type { ExerciseConfig, RunningE1rm, Suggestion } from '../engine'
 import { effortTarget, type EffortScale } from '../program/effort'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
-import { formatBreakNote, formatE1rm, formatPlanNote, formatWeight } from '../ui/format'
+import { formatBreakNote, formatE1rm, formatLinearReason, formatPlanNote, formatWeight } from '../ui/format'
 
 function e1rmNote(e1rm: RunningE1rm) {
   if (e1rm.basis === 'seed') return 'Based on your starting numbers.'
@@ -25,6 +25,24 @@ export function SuggestionCard({ config, suggestion, heading, effortScale, onEdi
       <Card>
         <h2>{heading}</h2>
         <p>{config.name} needs starting numbers before you can start a session.</p>
+      </Card>
+    )
+  }
+
+  if (suggestion.scheme === 'linear') {
+    const reason = formatLinearReason(suggestion.reason)
+    return (
+      <Card>
+        <h2>{heading}</h2>
+        <p className="suggestion">
+          {formatWeight(suggestion.weight, config.equipment)} × {suggestion.reps}
+        </p>
+        <p className="muted">
+          {config.equipment === 'dumbbell' && 'Per hand · '}
+          {suggestion.sets} sets · {suggestion.reps} reps
+          {config.unilateral && ' per side'}
+        </p>
+        {reason && <p className="note">{reason}</p>}
       </Card>
     )
   }
