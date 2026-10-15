@@ -1,8 +1,9 @@
 # The agent pipeline (.github/agent/PIPELINE.md): an issue labeled agent-ready by the owner
 # (or by the agent: its sub-issues, release issues and the next issue in a milestone queue) is triaged
 # by Claude, and a ready one is built and opened as a PR. An approved split becomes sub-issues, and a
-# closed issue can unblock them, start a release or start the next issue in its milestone. Claude never holds a write token: it returns its results as structured output, and
-# fixed steps post comments, set labels, create issues, check its commits and publish them. Keep this
+# closed issue can unblock them, start a release or start the next issue in its milestone. Claude
+# never holds a write token: it returns its results as structured output, and fixed steps post
+# comments, set labels, create issues, check its commits and publish them. Keep this
 # file's name: the Anthropic federation rule accepts only .github/workflows/agent.yml on main, so no
 # other workflow can get a token.
 name: Agent
@@ -198,7 +199,11 @@ jobs:
           set -euo pipefail
           repo=$GITHUB_REPOSITORY
           say() { printf '%s\n\n<sub>Sub-issues · [run](%s)</sub>\n' "$1" "$RUN_URL" | gh issue comment "$ISSUE" --repo "$repo" --body-file -; }
-          stop() { say "No sub-issues were created: $1"; exit 0; }
+          # agent-ready comes off before saying to re-add it, so a quick retry isn't lost (Finish is the backstop).
+          stop() {
+            gh api -X DELETE "repos/$repo/issues/$ISSUE/labels/agent-ready" >/dev/null 2>&1 || true
+            say "No sub-issues were created: $1"; exit 0
+          }
 
           # The newest proposal, and a reply from the owner after it starting "approved" (Claude judged
           # the approval too; this doesn't rest on that alone).
@@ -538,6 +543,8 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
+          # agent-ready comes off before saying to re-add it, so a quick retry isn't lost (Finish is the backstop).
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$ISSUE/labels/agent-ready" >/dev/null 2>&1 || true
           retry="Re-add \`agent-ready\` to try again."
           if [ "$CODE" != success ]; then STATUS=failed; fi
           # After the Code job, Publish's outcome decides: refused, an existing branch, or a failure
@@ -581,7 +588,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE: ${{ github.event.issue.number }}
-        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$ISSUE/labels/agent-ready" >/dev/null 2>&1 || true
+        # Already gone (404) is fine; anything else leaves the label on, which pauses the milestone queue.
+        run: |
+          if ! out=$(gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$ISSUE/labels/agent-ready" 2>&1); then
+            case "$out" in
+              *"HTTP 404"*) ;;
+              *) echo "::error::Couldn't remove agent-ready from #$ISSUE, which pauses its milestone queue. Remove it by hand."; exit 1 ;;
+            esac
+          fi
 
   # When an issue closes (.github/agent/PIPELINE.md, "Triage" and "Releases"): start the agent's sub-issues it
   # was blocking, close a parent whose sub-issues are all closed, open the release issue once a
