@@ -33,4 +33,34 @@ describe('progression schemes', () => {
     expect(scheme.suggest(bench, history, asOf, [])).toEqual(suggestNext(bench, history, asOf, []))
     expect(scheme.evaluate(bench, history, sets)).toEqual(evaluateSession(bench, history, sets))
   })
+
+  it('passes the lift sessions through to the suggestion', () => {
+    const lift: ExerciseSession[] = [
+      { date: '2026-09-28T12:00:00Z', sets: [{ weight: 245, reps: 5, rpe: 8 }] },
+    ]
+    const withLift = schemeFor(bench).suggest(bench, history, asOf, lift)
+    expect(withLift).toEqual(suggestNext(bench, history, asOf, lift))
+    expect(withLift).not.toEqual(schemeFor(bench).suggest(bench, history, asOf, []))
+  })
+
+  it('suggests and evaluates accessories the same way', () => {
+    const curl: ExerciseConfig = {
+      ...bench,
+      id: 'curl',
+      name: 'Curl',
+      tier: 'accessory',
+      repRange: { min: 8, max: 12 },
+      equipment: 'dumbbell',
+      seed: { weight: 25, reps: 10 },
+    }
+    const curlSets: LoggedSet[] = [
+      { weight: 25, reps: 12 },
+      { weight: 25, reps: 11 },
+      { weight: 25, reps: 10 },
+    ]
+    const curlHistory: ExerciseSession[] = [{ date: '2026-10-01T12:00:00Z', sets: curlSets }]
+    const scheme = schemeFor(curl)
+    expect(scheme.suggest(curl, curlHistory, asOf, [])).toEqual(suggestNext(curl, curlHistory, asOf, []))
+    expect(scheme.evaluate(curl, curlHistory, curlSets)).toEqual(evaluateSession(curl, curlHistory, curlSets))
+  })
 })
