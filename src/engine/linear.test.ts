@@ -154,6 +154,13 @@ describe('Linear details', () => {
     expectNext(next([ok(0, 135), ok(2, 145)]), 150, { kind: 'increase', increment: 5 })
   })
 
+  it('clears the miss count after a break', () => {
+    // Two misses at 125, then six weeks off: the next miss at 125 is the first, not a reset.
+    const history = [ok(0, 140), miss(2, 125), miss(4, 125)]
+    expectNext(next(history, squat, 46), 125, { kind: 'break' })
+    expectNext(next([...history, miss(46, 125)]), 125, { kind: 'repeat' })
+  })
+
   it('gives no message and no stacks when validating', () => {
     expect(linear.evaluate(squat, [], [{ weight: 135, reps: 5 }])).toMatchObject({ result: 'fail' })
     const sets = [135, 135, 135].map((weight) => ({ weight, reps: 5 }))

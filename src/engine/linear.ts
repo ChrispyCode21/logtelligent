@@ -97,6 +97,10 @@ function replayState<S extends ExerciseSession>(config: ExerciseConfig, history:
       sessions.push(session)
       continue
     }
+    // A break clears the miss count (SPEC §6.10).
+    if (state.lastTime !== undefined && state.lastTime < windowStart(new Date(session.date))) {
+      state = { ...state, misses: 0, missWeight: undefined }
+    }
     const isDeload = state.reset
     state = { ...step(config, loads, state, counted), lastTime: Date.parse(session.date) }
     sessions.push(isDeload ? { ...session, isDeload } : session)
