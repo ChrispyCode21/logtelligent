@@ -128,7 +128,8 @@ describe('7.L Linear (SPEC §6.10)', () => {
   })
 
   it("L18: a substituted session isn't a third miss", () => {
-    const replaced: ExerciseSession = { date: at(6), sets: [], replaced: true }
+    // A replaced session keeps its sets (here, a miss at 140); they still mustn't count.
+    const replaced: ExerciseSession = { ...miss(6, 140), replaced: true }
     expectNext(next([ok(0, 135), miss(2, 140), miss(4, 140), replaced]), 140, { kind: 'repeat' })
   })
 
