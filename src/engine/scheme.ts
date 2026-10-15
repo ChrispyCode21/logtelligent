@@ -8,12 +8,7 @@ import type { ExerciseConfig, ExerciseSession, LoggedSet, SessionOutcome, Sugges
  * other same-named exercises' sessions (SPEC §6.9), so a scheme can replay across exercises.
  */
 export interface ProgressionScheme {
-  suggest(
-    config: ExerciseConfig,
-    history: ExerciseSession[],
-    asOf: Date,
-    lift?: ExerciseSession[],
-  ): Suggestion
+  suggest(config: ExerciseConfig, history: ExerciseSession[], asOf: Date, lift: ExerciseSession[]): Suggestion
   evaluate(config: ExerciseConfig, history: ExerciseSession[], sets: LoggedSet[]): SessionOutcome
 }
 

@@ -468,7 +468,7 @@ Bench Press on two days: Upper A at 3–5 @8 and Upper B at 10–12 @8, both pri
 The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]`), since the 4-week window, deload exclusion (A5) and substitute exclusion (A6) all need per-session data.
 
 A **progression scheme** is one interface with two functions; the UI and storage get suggestions and validation only through it, never from a scheme's own modules. Shared helpers (load steps, rotation, counted sets) are called directly. History's deload marking still replays with Adaptive's `deriveState`; whether that moves behind the interface is open (#89, PR #117). The engine returns the program exercise's scheme (Adaptive for all, until a scheme can be chosen).
-- **Suggestions:** `suggest(config, history, asOf, lift = []) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by its own replay, so a scheme can replay across exercises (§6.9). Adaptive uses them only for the e1RM.
+- **Suggestions:** `suggest(config, history, asOf, lift) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by its own replay, so a scheme can replay across exercises (§6.9). Adaptive uses them only for the e1RM.
 - **Validation:** `evaluate(config, history, sets) => SessionOutcome`.
 - **State is never passed in or stored:** each scheme replays `history` under its own rules (Adaptive: `deriveState(config, history)`, ARCHITECTURE.md, "Progression state is derived").
 - **History's e1RM** stays Adaptive's for every primary lift.
