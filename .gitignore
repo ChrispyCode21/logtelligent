@@ -28,9 +28,10 @@ dist-ssr
 
 # Local-only: personal Claude context and this machine's preview config
 CLAUDE.local.md
-# Local Claude Code settings stay local; shared subagents are committed.
+# Local Claude Code settings stay local; shared subagents and skills are committed.
 .claude/*
 !.claude/agents/
+!.claude/skills/
 
 # Playwright output (npm run test:e2e)
 test-results

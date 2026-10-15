@@ -43,7 +43,7 @@ CHANGELOG.md isn't on this list: only its "Unreleased" section matters to new wo
 
 ## How to work
 
-- **`main` is protected.** Never push to it. Work on a branch, keep changes small with a commit per meaningful step, push the branch, and open a PR (the template has the checklist). The owner reviews and merges.
+- **`main` is protected.** Never push to it. Work on a branch, keep changes small with a commit per meaningful step, push the branch, and open a PR (the template has the checklist). The owner merges, or the local reviewer does within the limits in `.github/agent/PIPELINE.md` ("Local reviewer").
 - Before pushing, run what CI runs: `npm run check:all` (`scripts/check-all.mjs`) runs `format:check`, `lint`, `check:conventions`, `check:spec`, `check:changelog`, `test`, `build` and `test:e2e`, printing one line per passing check and the full output of each failing one.
 - Add user-facing changes to the "Unreleased" section of CHANGELOG.md. A release is a PR that bumps `package.json`'s version, moves those notes under it, and replaces TESTING.md's "Current release" checklist with checks drawn from them. It also tightens SPEC.md and ARCHITECTURE.md: cut text that repeats another section or just restates the code, without changing any behavior or removing a §7 example. Merging it tags the release automatically (semantic versioning).
 - **New work is scoped as a version:** a GitHub milestone with its issues. Settle the scope, and any open questions it touches, with the owner before building. Small refactors wait in the cleanup backlog (#74), to fold into whichever change next touches those files.
@@ -67,8 +67,9 @@ Issues labeled `agent-ready` are built in GitHub Actions with no one to ask mid-
 
 - **Step 1 becomes a comment.** Post numbered questions on the issue, each with a recommended default, and stop (the workflow swaps `agent-ready` for `agent-needs-info`). Never guess and carry on. The owner's numbered answers in the thread are the decisions; record them in SPEC.md (step 2) before any code.
 - **Step 5 is the Playwright check** (`npm run test:e2e`, also in CI), since there's no preview. New screens and flows still go into `e2e/` as step 5 says; say in the PR that the preview wasn't used.
-- **Never merge, and never edit `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`** (the agent's own prompts, reviewer and settings).
-- **Out-of-scope findings become issues**, linked from the PR, with the labels `.github/agent/PIPELINE.md` sets out (once PR follow-through, #75, is built; until then, list them in the PR as suggested follow-ups).
+- **Step 7 is left to the local reviewer** (`.github/agent/PIPELINE.md`), which reviews the PR after it opens.
+- **Never merge, and never edit `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`** (the agent's own prompts, reviewer, local reviewer skill and settings).
+- **Out-of-scope findings go in the PR** as suggested follow-ups.
 - **Write as if it's public, because it is:** nothing sensitive and short PR descriptions (`.github/agent/PIPELINE.md`, "What the agent writes").
 
 Personal working preferences, if any, live in `CLAUDE.local.md` (git-ignored, never committed).
