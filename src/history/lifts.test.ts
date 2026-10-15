@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { suggestNext, type LoggedSet } from '../engine'
+import { runningE1rm, suggestNext, type LoggedSet } from '../engine'
 import { liftKey } from '../program/lifts'
 import { sessionExercises } from '../session/context'
 import type { Program, ProgramExercise } from '../program/types'
@@ -269,5 +269,15 @@ describe('7.L Linear, through History (SPEC §6.10)', () => {
     expect(squats.every((t) => t.e1rm === undefined)).toBe(true)
     const benches = liftTimeline(p, sessions, 'Bench Press')
     expect(benches.map((t) => t.isDeload)).toEqual([true, false, false, false])
+  })
+
+  it("feeds the lift's e1RM from a Linear session with effort logged, though History shows none", () => {
+    const adaptiveSquat = exercise('squat-b', 'Squat', { seed: { weight: 135, reps: 5 } })
+    const p = program(squat, adaptiveSquat)
+    const logged = finished('upper-a', 1, 'squat', firstRpe(225, [4, 4, 4]))
+    // 225 x 4 @8 is A1's 266.8.
+    const lift = otherLiftSessions(p, [logged], adaptiveSquat)
+    expect(runningE1rm(lift, undefined, asOf)?.value).toBeCloseTo(266.8, 1)
+    expect(liftTimeline(p, [logged], 'Squat')[0].e1rm).toBeUndefined()
   })
 })
