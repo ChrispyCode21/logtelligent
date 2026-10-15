@@ -169,7 +169,7 @@ The program has an **effort scale** that sets how effort is entered and shown. A
 ## 6. Domain rules
 
 The app hosts **progression schemes**: each turns an exercise's history into its next session (§8). A scheme belongs to a program exercise, defaulting to **Adaptive**, the only one so far (§6.3–6.7).
-- **Shared by every scheme:** exercise configuration (§6.1), load steps (§6.2), stored prescriptions (§6.8) and lifts (§6.9).
+- **Shared by every scheme:** exercise configuration (§6.1), load steps (§6.2), stored prescriptions (§6.8) and lifts (§6.9). The parts of these that are Adaptive's rules are marked "Adaptive" in place: bodyweight progression (§6.1), the reps-instead rule, rep ceiling and extension (§6.2), the fresh start (§6.8), and the running e1RM, seed and per-exercise state (§6.9).
 - **Adaptive:** the progression rules, §6.3–6.7, each titled "Adaptive".
 
 ### 6.1 Exercise configuration
@@ -192,7 +192,7 @@ Per exercise, set at program-setup time:
 - **History** here means finished sessions, plus the open session if it has sets for that exercise or day.
 - **Removing the open session's day:** if the open session is on that day and has no sets, it's discarded along with the day, and the confirm says so. (Changing programs discards every open session, §5.5.)
 
-**Bodyweight** exercises can only be **accessories**. Their loads are **added weight**: 0, 5, 10, 15… lb (overridable). Every jump from 0 exceeds 10%, so they progress by reps up to the rep ceiling, then add 5 lb.
+**Bodyweight** exercises can only be **accessories**. Their loads are **added weight**: 0, 5, 10, 15… lb (overridable). Adaptive: every jump from 0 exceeds 10%, so they progress by reps up to the rep ceiling, then add 5 lb.
 
 **Dumbbell** weights are **per hand** (incline press 70 = 70 lb in each hand).
 
@@ -205,7 +205,9 @@ A fixed pound increment doesn't work across exercises: +5 lb is under 2% on a 30
    - Dumbbell: a standard rack list (e.g. 10, 12.5, 15, 17.5, 20, 22.5, 25, 30…).
    - Cable / machine: a stack list I enter (e.g. …99, 110, 121…).
 2. **Per-exercise override** of those loads for my gym's actual equipment (e.g. "this gym has 22.5s").
-3. **Max relative jump** (≈ 10%) on top: if the next available load is a bigger jump than this, progress by **reps** instead of weight, extending the effective top of the rep range.
+3. **Max relative jump** (≈ 10%) on top. Adaptive: if the next available load is a bigger jump than this, progress by **reps** instead of weight, extending the effective top of the rep range.
+
+**Adaptive's rep extension** (the rest of this section):
 
 **Rep ceiling:** the rep extension is capped at **120% of the top of the configured range, rounded up**: `ceil(top × 1.2)`. At the ceiling, the engine takes the next load step even if it exceeds the max relative jump, so lateral raises don't get stuck at sets of 25+ because the next dumbbell is a big relative jump.
 - Examples: 3–5 → ceiling 6; 8–12 → 15 (14.4 rounded up); 15–20 → 24.
@@ -306,17 +308,17 @@ Deload conventions vary between coaches and programs; these values are a sensibl
 
 ### 6.8 Stored prescriptions
 - **What's saved:** each exercise's **rep range and set count**, on **Finish**, from the program's settings at that moment. Not the target RPE (the e1RM uses the effort logged), tier, or loads (the gym's equipment, not a prescription). An open session uses the current settings, so a range fixed mid-session applies to it. Editing a finished session doesn't change its prescription.
-- **Judging:** the progression replay and the finished-session editor judge each session by its own rep range (floor rule, "range filled", rep ceiling and extension, §6.2–6.6). Sessions finished before v1.3.0 have none and use the exercise's current settings everywhere they're judged (History, Today and the finished-session editor alike), so a range change can still re-judge them, even when saved ones follow. The rep range is the only stored setting the replay reads; the set count is for display (§5.4).
-- **A rep-range change is a fresh start:** when a session's range differs from the one before it, or the current range differs from the last session's, progression starts afresh from there. Fatigue stacks, the last successful numbers and any pending revert, retry or deload are cleared. Primary lifts go back to the e1RM rule (§6.4), which doesn't depend on the range; accessories restart at the bottom of the new range at the weight they'd have been suggested. A fail before the next success reverts one load step below, as with no success yet (§6.6). Examples H1–H5 (§7.H).
+- **Judging:** the progression replay and the finished-session editor judge each session by its own rep range (Adaptive's floor rule, "range filled", rep ceiling and extension, §6.2–6.6). Sessions finished before v1.3.0 have none and use the exercise's current settings everywhere they're judged (History, Today and the finished-session editor alike), so a range change can still re-judge them, even when saved ones follow. The rep range is the only stored setting the replay reads; the set count is for display (§5.4).
+- **Adaptive: a rep-range change is a fresh start:** when a session's range differs from the one before it, or the current range differs from the last session's, progression starts afresh from there. Fatigue stacks, the last successful numbers and any pending revert, retry or deload are cleared. Primary lifts go back to the e1RM rule (§6.4), which doesn't depend on the range; accessories restart at the bottom of the new range at the weight they'd have been suggested. A fail before the next success reverts one load step below, as with no success yet (§6.6). Examples H1–H5 (§7.H).
 
 ### 6.9 Lifts
 Bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a light one.
 - **A lift is a name:** exercises with the same name, ignoring case and punctuation (as the bank search compares names), are one lift, wherever they are in the program. Nothing extra is stored: sessions belong to the exercise, so renaming one ("Bench" → "Bench Press") brings its sessions into that lift, and renaming one to something new ("Paused Bench") makes it a lift of its own, with its sessions.
 - **Whatever the equipment:** a custom dumbbell "Bench Press" shares its e1RM with a barbell one; to keep them apart, name them differently ("DB Bench Press"). Bank and template additions copy the lift's equipment, so they match.
-- **Shared:** History (§5.3) and the running e1RM, with lower-rep sessions first (§6.4). Each exercise's deload weeks, worked out by its own replay, stay out of the e1RM (§6.7). The seed is dropped once the lift has a real session on any day (§6.4).
-- **Per exercise:** the prescription, floor rule, stacks, reverts, retries, deloads and rep extension (§6.2–6.8). A failed heavy day never reverts or deloads the light day.
+- **Shared:** History (§5.3) and, in Adaptive, the running e1RM, with lower-rep sessions first (§6.4). Each exercise's deload weeks, worked out by its own replay, stay out of the e1RM (§6.7). The seed is dropped once the lift has a real session on any day (§6.4).
+- **Per exercise:** the prescription and, in Adaptive, the floor rule, stacks, reverts, retries, deloads and rep extension (§6.2–6.8). A failed heavy day never reverts or deloads the light day.
 - **A new exercise joining a lift with history** (added, or from a template):
-  - a **primary** needs no starting numbers, since the lift's e1RM picks its weight; the exercise form shows them as optional: "Optional: Bench Press already has an estimated 1RM from your history.";
+  - a **primary** needs no starting numbers (Adaptive), since the lift's e1RM picks its weight; the exercise form shows them as optional: "Optional: Bench Press already has an estimated 1RM from your history.";
   - an **accessory** is still asked, since its range may differ, pre-filled with the lift's latest weight (skipping deload weeks);
   - a **bank or template** exercise copies **equipment, loads and one-sided** from the lift's most recently logged exercise (your gym), and keeps the bank's rep range, sets and target RPE (the programming). A custom exercise is entered by hand.
 - **Templates** need no matching: a template exercise joins the lift of the same name, so its history is simply there. Examples I1–I9 (§7.I).
