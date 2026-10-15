@@ -168,6 +168,10 @@ The program has an **effort scale** that sets how effort is entered and shown. A
 
 ## 6. Domain rules
 
+The app hosts **progression schemes**: each turns an exercise's history into its next session (§8). A scheme belongs to a program exercise, defaulting to **Adaptive**, the only one so far (§6.3–6.7).
+- **Shared by every scheme:** exercise configuration (§6.1), load steps (§6.2), stored prescriptions (§6.8) and lifts (§6.9).
+- **Adaptive:** the progression rules, §6.3–6.7, each titled "Adaptive".
+
 ### 6.1 Exercise configuration
 Per exercise, set at program-setup time:
 
@@ -216,14 +220,14 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
 
 **Sets are never added by progression.** The working-set count is fixed in configuration; progression changes only reps and load. (Extra sets are the lifter's and aren't counted, §5.2.)
 
-### 6.3 Primary lifts
+### 6.3 Adaptive: primary lifts
 - **Effort is asked on the first set only, and required there.** Only the first set's effort is ever used (§6.4); efforts already stored on later sets are kept and shown.
 - **Effort is RPE in half steps from 6 to 10** (6, 6.5 … 10), entered in the program's effort scale (§5.6).
 - **The first set is the source of truth** for progression: its weight, reps and RPE drive next session's suggestion.
 - **All sets use one working weight** (extra sets aside, §5.2).
 - Sets 2+ are recorded in full. They don't steer the progression math, but they **feed validation** (§6.6).
 
-### 6.4 Estimated 1RM (primary lifts)
+### 6.4 Adaptive: estimated 1RM (primary lifts)
 - Each first set produces an **estimated 1RM (e1RM)**, adjusted for RPE: reps in reserve are added to the reps performed. Effective reps = `reps + (10 − RPE)`, so 225×7 @ RPE 7 (~3 in reserve) is estimated as a ~10-rep-max effort.
 - **Formula:** the e1RM is the **average of Epley, Brzycki, and Lombardi**:
   - Epley `w × (1 + r/30)`
@@ -247,13 +251,13 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
   3. Suggest the **heaviest available load whose predicted reps ≥ target reps**. If none does (only with a very low e1RM), suggest the lightest load.
   - Progress is implicit: if I get stronger, the e1RM and the chosen load rise; if not, the load holds.
 
-### 6.5 Accessory lifts
+### 6.5 Adaptive: accessory lifts
 - Effort is not asked (accessories don't use e1RM, so it would be informational only). Efforts already stored are kept and shown.
 - **All sets use one working weight**, as for primary lifts.
 - Progression is **double progression**: work up through the rep range at a fixed weight; once the range is filled, move up one load step (§6.2) and drop back to the bottom of the range.
 - **"Range filled": more than 50% of working sets reach the top of the range.** In practice: 2 sets → both; 3 sets → 2; 4 sets → 3.
 
-### 6.6 Validation: floor rule and fatigue stacks
+### 6.6 Adaptive: validation, floor rule and fatigue stacks
 Progression state (stacks, the last successful numbers, deloads, rep extensions) is never stored: it's derived by replaying each exercise's finished sessions, oldest first, under the rules below.
 
 **Floor rule:** when the last set of an exercise is entered, check every working set against the **bottom of its rep range**. Any set below it = a **failed** session for that exercise. (Not a total-volume comparison: volume drops naturally when weight goes up and reps reset, so it would penalize successful progression.)
@@ -284,7 +288,7 @@ Example:
 
 **Scope: the floor rule and fatigue stacks apply to every exercise, primary and accessory.** Stacks are tracked **per exercise** (under review: #87, related exercises deloading together), so fatigue on an accessory can never stall or deload a primary lift (or any other exercise). What differs by tier is the deload itself (§6.7).
 
-### 6.7 Deload
+### 6.7 Adaptive: deload
 Triggered per exercise when it reaches two fatigue stacks. Lasts **one week** (one pass through the rotation). Deload sessions are **excluded from e1RM and progression calculations** and **not subject to the floor rule**. Afterward, stacks are at 0.
 
 **Primary lifts:**
@@ -319,7 +323,7 @@ Bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a ligh
 
 ## 7. Worked examples → test cases
 
-Each example is one unit test named with its stable ID (e.g. `it('B3: ...')`). Numbers come from the formulas in §6.4, not estimates. If a rule changes, update its examples.
+Each example is one unit test named with its stable ID (e.g. `it('B3: ...')`). Numbers come from the formulas in §6.4, not estimates. If a rule changes, update its examples. Groups A–E are **Adaptive's**; F–I are shared by every scheme (each new scheme adds a group of its own).
 
 Unless stated: barbell loads in 5 lb steps; dumbbell rack 10, 12.5, 15, 17.5, 20, 22.5, 25, 30, 35…; e1RM values rounded to 0.1 lb (tests allow ±0.1). `225×4 @8` is 225 lb for 4 reps at RPE 8.
 
@@ -461,9 +465,11 @@ Bench Press on two days: Upper A at 3–5 @8 and Upper B at 10–12 @8, both pri
 
 The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]`), since the 4-week window, deload exclusion (A5) and substitute exclusion (A6) all need per-session data.
 
-- **Suggestions:** `suggestNext(config, history, asOf, lift = []) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by its own replay; they feed only the e1RM (§6.9).
-- **Validation:** `evaluateSession(config, history, sets) => SessionOutcome`.
-- **State is never passed in or stored:** both replay `history` with `deriveState(config, history)` (ARCHITECTURE.md, "Progression state is derived").
+A **progression scheme** is one interface with two functions; the UI and storage call the engine only through it, never a scheme's own modules. The engine returns the program exercise's scheme (Adaptive for all, until a scheme can be chosen).
+- **Suggestions:** `suggest(config, history, asOf, lift = []) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by its own replay, so a scheme can replay across exercises (§6.9). Adaptive uses them only for the e1RM.
+- **Validation:** `evaluate(config, history, sets) => SessionOutcome`.
+- **State is never passed in or stored:** each scheme replays `history` under its own rules (Adaptive: `deriveState(config, history)`, ARCHITECTURE.md, "Progression state is derived").
+- **History's e1RM** stays Adaptive's for every primary lift.
 
 ## 9. Open questions and ideas
 
