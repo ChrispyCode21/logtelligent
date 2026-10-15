@@ -26,6 +26,8 @@ const on = (day: number, weight: number, reps: number[], extra: LoggedSet[] = []
   sets: [...reps.map((r) => ({ weight, reps: r })), ...extra],
 })
 const ok = (day: number, weight: number) => on(day, weight, [5, 5, 5])
+/** The date of a day, for validating a session on it. */
+const dayDate = (day: number) => new Date(at(day))
 const miss = (day: number, weight: number) => on(day, weight, [5, 5, 4])
 
 /** The suggestion the day after the last session, unless `asOf` is a day number. */
@@ -190,8 +192,8 @@ describe('7.L Linear (SPEC §6.10)', () => {
     expectNext(next([ok(0, 110)], big), 120, { kind: 'increase', increment: 10 })
   })
 
-  it('L30: L24, then a range change to 3-3 keeps the added rep: 120 x 4', () => {
-    expectNext(next(atTop, { ...stack, repRange: { min: 3, max: 3 } }), 120, { kind: 'topOfLoads' }, 4)
+  it('L30: L24 stored at 5-5, then a range change to 3-3 clears the added rep: 120 x 3, no reason', () => {
+    expectNext(next(atTop.map(at55), { ...stack, repRange: { min: 3, max: 3 } }), 120, { kind: 'start' }, 3)
   })
 
   // L31-L32: bodyweight, on added weight from 0.
@@ -212,6 +214,10 @@ describe('7.L Linear (SPEC §6.10)', () => {
   it('L32: a pull-up missed three times at 0 resets to 0 x 8', () => {
     const missed = [0, 2, 4].map((day) => on(day, 0, [8, 8, 7]))
     expectNext(next(missed, pullUp), 0, { kind: 'reset' }, 8)
+  })
+
+  it('L33: L24, then 110 3x5 is a miss against the raised target: 110 x 6, repeat', () => {
+    expectNext(next([...atTop, ok(2, 110)], stack), 110, { kind: 'repeat' }, 6)
   })
 })
 
@@ -263,15 +269,58 @@ describe('Linear details', () => {
   it('validates against the added rep target', () => {
     const stack: ExerciseConfig = { ...squat, equipment: 'cable', loads: [100, 110, 120] }
     const fives = [120, 120, 120].map((weight) => ({ weight, reps: 5 }))
-    expect(linear.evaluate(stack, [ok(0, 120)], fives).result).toBe('fail')
+    expect(linear.evaluate(stack, [ok(0, 120)], fives, dayDate(2)).result).toBe('fail')
     const sixes = fives.map((s) => ({ ...s, reps: 6 }))
-    expect(linear.evaluate(stack, [ok(0, 120)], sixes).result).toBe('success')
+    expect(linear.evaluate(stack, [ok(0, 120)], sixes, dayDate(2)).result).toBe('success')
+  })
+
+  it('validates after a break as the replay judges it: against the range top, not the added reps', () => {
+    const stack: ExerciseConfig = { ...squat, equipment: 'cable', loads: [100, 110, 120] }
+    // 120 3x5 at the top (+1 rep), six weeks off: 100 x 5 is suggested, and 100 3x5 is a success.
+    expectNext(next([ok(0, 120)], stack, 42), 100, { kind: 'break' })
+    const fives = [100, 100, 100].map((weight) => ({ weight, reps: 5 }))
+    expect(linear.evaluate(stack, [ok(0, 120)], fives, dayDate(42)).result).toBe('success')
+  })
+
+  it('validates after a range change against the new top, not the added reps', () => {
+    const stack: ExerciseConfig = { ...squat, equipment: 'cable', loads: [100, 110, 120] }
+    const threes = [120, 120, 120].map((weight) => ({ weight, reps: 3 }))
+    const history = [{ ...ok(0, 120), repRange: { min: 5, max: 5 } }]
+    const changed = { ...stack, repRange: { min: 3, max: 3 } }
+    expect(linear.evaluate(changed, history, threes, dayDate(2)).result).toBe('success')
+    // The replay agrees: a success at the top adds a rep to the new range's top.
+    const logged = { ...on(2, 120, [3, 3, 3]), repRange: { min: 3, max: 3 } }
+    expectNext(next([...history, logged], changed), 120, { kind: 'topOfLoads' }, 4)
+  })
+
+  it('keeps "Repeat" after a range change when the last session missed', () => {
+    const stack: ExerciseConfig = { ...squat, equipment: 'cable', loads: [100, 110, 120] }
+    const saved = [ok(0, 120), on(2, 120, [6, 6, 5])].map((s) => ({ ...s, repRange: { min: 5, max: 5 } }))
+    expectNext(next(saved, { ...stack, repRange: { min: 3, max: 3 } }), 120, { kind: 'repeat' }, 3)
+  })
+
+  it('marks a session high-rep when its rep target is over 10 (SPEC §6.4)', () => {
+    const tens: ExerciseConfig = {
+      ...squat,
+      equipment: 'cable',
+      loads: [100, 110, 120],
+      repRange: { min: 10, max: 10 },
+    }
+    // 10 is not high-rep; at the top of the loads, the added rep makes 11, which is.
+    const history = [
+      on(0, 120, [10, 10, 10]),
+      on(2, 120, [11, 11, 11]),
+      { ...on(4, 120, [12, 12, 12]), repRange: { min: 12, max: 12 } },
+    ]
+    expect(linear.replay(tens, history).map((s) => s.highReps)).toEqual([false, true, true])
   })
 
   it('gives no message and no stacks when validating', () => {
-    expect(linear.evaluate(squat, [], [{ weight: 135, reps: 5 }])).toMatchObject({ result: 'fail' })
+    expect(linear.evaluate(squat, [], [{ weight: 135, reps: 5 }], dayDate(0))).toMatchObject({
+      result: 'fail',
+    })
     const sets = [135, 135, 135].map((weight) => ({ weight, reps: 5 }))
-    const outcome = linear.evaluate(squat, [], sets)
+    const outcome = linear.evaluate(squat, [], sets, dayDate(0))
     expect(outcome).toMatchObject({ result: 'success', state: { stacks: 0 } })
     expect(outcome.message).toBeUndefined()
   })

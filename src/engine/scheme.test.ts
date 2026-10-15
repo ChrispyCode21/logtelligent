@@ -31,7 +31,7 @@ describe('progression schemes', () => {
   it('suggest and evaluate give the same results as the engine functions', () => {
     const scheme = schemeFor(bench)
     expect(scheme.suggest(bench, history, asOf, [])).toEqual(suggestNext(bench, history, asOf, []))
-    expect(scheme.evaluate(bench, history, sets)).toEqual(evaluateSession(bench, history, sets))
+    expect(scheme.evaluate(bench, history, sets, asOf)).toEqual(evaluateSession(bench, history, sets))
   })
 
   it('passes the lift sessions through to the suggestion', () => {
@@ -78,6 +78,8 @@ describe('progression schemes', () => {
     const curlHistory: ExerciseSession[] = [{ date: '2026-10-01T12:00:00Z', sets: curlSets }]
     const scheme = schemeFor(curl)
     expect(scheme.suggest(curl, curlHistory, asOf, [])).toEqual(suggestNext(curl, curlHistory, asOf, []))
-    expect(scheme.evaluate(curl, curlHistory, curlSets)).toEqual(evaluateSession(curl, curlHistory, curlSets))
+    expect(scheme.evaluate(curl, curlHistory, curlSets, asOf)).toEqual(
+      evaluateSession(curl, curlHistory, curlSets),
+    )
   })
 })
