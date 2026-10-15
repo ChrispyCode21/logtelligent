@@ -68,7 +68,7 @@ Issues labeled `agent-ready` are built in GitHub Actions with no one to ask mid-
 - **Step 1 becomes a comment.** Post numbered questions on the issue, each with a recommended default, and stop (the workflow swaps `agent-ready` for `agent-needs-info`). Never guess and carry on. The owner's numbered answers in the thread are the decisions; record them in SPEC.md (step 2) before any code.
 - **Step 5 is the Playwright check** (`npm run test:e2e`, also in CI), since there's no preview. New screens and flows still go into `e2e/` as step 5 says; say in the PR that the preview wasn't used.
 - **Step 7 is left to the local reviewer** (`.github/agent/PIPELINE.md`), which reviews the PR after it opens.
-- **Never merge, and never edit `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`** (the agent's own prompts, reviewer and settings).
+- **Never merge, and never edit `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`** (the agent's own prompts, reviewer, local reviewer skill and settings).
 - **Out-of-scope findings go in the PR** as suggested follow-ups.
 - **Write as if it's public, because it is:** nothing sensitive and short PR descriptions (`.github/agent/PIPELINE.md`, "What the agent writes").
 
