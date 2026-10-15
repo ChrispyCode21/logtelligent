@@ -1,6 +1,7 @@
 // Fails on code that skips the shared UI building blocks (ARCHITECTURE.md, "UI"): raw elements
 // where a primitive exists, raw CSS values that equal a design token, and display formatting done
-// outside src/ui/format.ts. Mechanical rules only; judgment calls are for the architecture-reviewer
+// outside src/ui/format.ts. Also fails on progression called around the scheme interface (SPEC §8).
+// Mechanical rules only; judgment calls are for the architecture-reviewer
 // agent (.claude/agents/architecture-reviewer.md).
 //
 // A line can opt out with a comment containing `conventions-ignore` and a reason, e.g.
@@ -87,6 +88,19 @@ for (const f of [...files('src', /\.tsx?$/)].filter(
   (f) => !/[\\/]ui[\\/]format\.ts$/.test(f) && !f.startsWith(join('src', 'components')),
 )) {
   check(f, formatRules)
+}
+// Progression goes through the exercise's scheme (SPEC §8): schemeFor(config).suggest / .evaluate,
+// never Adaptive's own functions. Tests may call them directly.
+const schemeRules = [
+  {
+    test: (l) => /\b(suggestNext|evaluateSession)\b/.test(l),
+    message: "Call schemeFor(config).suggest / .evaluate (SPEC §8), not Adaptive's functions directly.",
+  },
+]
+for (const f of files('src', /\.tsx?$/).filter(
+  (f) => !f.startsWith(join('src', 'engine')) && !/\.test\.tsx?$/.test(f),
+)) {
+  check(f, schemeRules)
 }
 for (const f of files('src', /\.css$/).filter((f) => !/tokens\.css$/.test(f))) check(f, cssRules)
 

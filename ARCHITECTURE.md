@@ -16,7 +16,8 @@ src/
     loads.ts        Available loads per equipment, snap/step helpers (SPEC §6.2)
     accessory.ts    Double progression, rep ceiling, rep extension (SPEC §6.2, §6.5)
     progression.ts  Floor rule, fatigue stacks, deloads; deriveState / evaluateSession (SPEC §6.6–6.8)
-    suggest.ts      suggestNext: the entry point the UI calls (SPEC §6.4 weight selection)
+    suggest.ts      suggestNext: Adaptive's suggestion (SPEC §6.4 weight selection)
+    scheme.ts       ProgressionScheme (suggest, evaluate), the `adaptive` scheme and `schemeFor`, the entry point the UI and storage call (SPEC §8)
     rotation.ts     nextDay (SPEC §5.1)
     sets.ts         countedSets: extra sets are recorded but never judged (SPEC §5.2)
   program/      Program model (days → exercises), pure editing functions (add, move, archive, clear…) effort scales (effort.ts), the built-in exercise bank with search (bank.ts), program templates (templates.ts), entering starting numbers: validation, pre-fill, placeholders and stack presets (seeding.ts), the exercise form's fields and validation (exerciseForm.ts), and lifts: same-named exercises (lifts.ts)
@@ -40,7 +41,7 @@ public/
 scripts/
   check-all.mjs             Every CI check in CI's order, full output only for failures (`npm run check:all`)
   check-spec-coverage.mjs   CI: every SPEC §7 example ID has a test named with it
-  check-conventions.mjs     CI: primitives over raw elements, tokens over raw CSS values, shared formatters
+  check-conventions.mjs     CI: primitives over raw elements, tokens over raw CSS values, shared formatters, progression through the scheme
   changelog-section.mjs     CI/release: extracts a version's CHANGELOG section
 e2e/            Playwright, against the production build (playwright.config.ts: WebKit and Chromium, at 375px and 320px)
   layout.spec.ts    Every screen: no sideways scrolling, no clipped button labels (TESTING.md)
@@ -53,7 +54,7 @@ Tests sit next to the code (`*.test.ts`). Every SPEC §7 worked example is a tes
 ## Data flow
 
 1. **Read:** `App.tsx` runs one Dexie `useLiveQuery` that loads the program and all sessions. Dexie re-runs it (and React re-renders) whenever those tables change, so there's no client-side cache to keep in sync. The current time (`asOf`) is captured inside the query, which keeps renders pure.
-2. **Compute:** views call the engine with plain data: `suggestNext(config, history, asOf, lift)` for suggestions, where `lift` is the other same-named exercises' sessions (`otherLiftSessions`, each marked by its own replay), which share the running e1RM while progression comes from `history` alone (SPEC §6.9); `evaluateSession(config, history, sets)` for the validation message. `history/sessions.ts` maps stored sessions into the engine's `ExerciseSession[]` shape, keeping each one's session id. For a session that's already finished, pass it as `before` so it's judged only against the sessions that came before it.
+2. **Compute:** views call the engine with plain data, through the exercise's scheme (`schemeFor(config)`, Adaptive for every exercise for now; SPEC §8): `suggest(config, history, asOf, lift)` for suggestions, where `lift` is the other same-named exercises' sessions (`otherLiftSessions`, each marked by its own replay), which share the running e1RM while progression comes from `history` alone (SPEC §6.9); `evaluate(config, history, sets)` for the validation message. History (`history/lifts.ts`, `history/timeline.ts`) still replays with Adaptive's `deriveState` to mark deload weeks, which feeds History's badges and the `lift` sessions; it moves behind the scheme interface, as a third function (`replay`), with Linear (#107). History's e1RM (`sessionE1rm`) stays Adaptive's (SPEC §8). `history/sessions.ts` maps stored sessions into the engine's `ExerciseSession[]` shape, keeping each one's session id. For a session that's already finished, pass it as `before` so it's judged only against the sessions that came before it.
 3. **Write:** components call functions in `storage/` (`saveSets`, `startSession`, `updateProgram`…). The live query picks up the change; nothing is pushed into React state by hand.
 
 ### Progression state is derived, never stored
@@ -121,7 +122,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Quality gates and releases
 
-- **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the purity rules for the engine and for program/, session/ and history/), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
+- **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the purity rules for the engine and for program/, session/ and history/), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters, progression through `schemeFor` rather than `suggestNext`/`evaluateSession`), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
 - **Architecture and quality review:** the read-only `architecture-reviewer` subagent (`.claude/agents/architecture-reviewer.md`) reports ranked findings on a branch or module against this document and CLAUDE.md. Run it before opening a PR (CLAUDE.md, "Building a slice"). Small findings that don't belong in a feature PR go on the cleanup backlog (below).
 - **Playwright** (`ci.yml`, check "Playwright"): `e2e/` in WebKit and Chromium at 375px and 320px: every screen for sideways scrolling and clipped button labels, and smoke tests of the main flows. On failure the traces are kept as a run artifact (open with `npx playwright show-trace`).
 - **Security** (`security.yml`): CodeQL on the app and the workflows; dependency review on PRs.

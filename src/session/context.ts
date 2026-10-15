@@ -1,4 +1,4 @@
-import { suggestNext, type ExerciseConfig, type Suggestion } from '../engine'
+import { schemeFor, type ExerciseConfig, type Suggestion } from '../engine'
 import { otherLiftSessions } from '../history/lifts'
 import { exerciseHistory, type LoggedExerciseSession } from '../history/sessions'
 import { findExercise } from '../program/program'
@@ -41,6 +41,6 @@ export function sessionExercises(
     )
     // The lift's other exercises share the e1RM (SPEC §6.9).
     const lift = otherLiftSessions(program, sessions, current, finished ? session : undefined)
-    return [{ log, config, history, suggestion: suggestNext(config, history, asOf, lift) }]
+    return [{ log, config, history, suggestion: schemeFor(config).suggest(config, history, asOf, lift) }]
   })
 }
