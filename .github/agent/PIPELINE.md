@@ -103,10 +103,11 @@ A Claude Code skill on the owner's machine (`/review-agent-prs`), billed to the 
 - **Which model reviews:** Opus 5.5 whenever the PR touches `src/engine/` or `src/storage/`, or has `touches-data` or `touches-gates`. Otherwise a quick Sonnet 5.5 pass rates the diff by how quietly a mistake could pass, not by size: Opus for anything where a plausible-looking change can be quietly wrong (the engine and its math, state replayed from history, rounding and dates, stored data and upgrades, the gates, design choices, an issue open to interpretation, edges no test covers); Sonnet for mechanical work or work that repeats an existing pattern, where a test or check would fail on a slip.
 - **What it checks:** compliance (the `architecture-reviewer` subagent, run on the chosen model), correctness, and the issue: the diff against the issue's "Done when" and the decisions in its thread.
 - **Fixes:** it fixes the findings it agrees with, as commits whose messages explain each fix, runs `npm run check:all`, and pushes to the PR's branch.
-- **Holds:** any finding it doesn't fix, because it disagrees or can't fix it safely (e.g. the spec looks wrong), holds the PR: one short comment lists what it held and why, and the PR stays unmerged. That comment is the only thing it writes on the PR.
+- **Holds:** a valid finding it can't fix safely (e.g. the spec looks wrong) holds the PR: one short comment lists what it held and why, and the PR stays unmerged. That comment is the only thing it writes on the PR. Findings it disagrees with are dropped and don't hold it.
 - **Keeping PRs green:** it brings a branch that's behind `main` up to date (the ruleset requires it) and resolves conflicts. A failed check gets at most 2 fix attempts per PR; after that the PR is held.
 - **Merging:** when CI is green and nothing is held, it merges, except:
   - `touches-data`: it comments that the PR is ready and a backup should be exported on the phone first, and leaves the merge to the owner;
+  - `touches-gates`: it comments that the PR is ready, and the owner reads it and merges (green means less if the checks changed);
   - release PRs: merging tags the version, so the owner merges.
 - **Dependabot:** patch and minor bumps get a Sonnet review and merge when green. A major bump gets Opus, which reads the release notes and fixes the code if needed; then the rules above apply.
 - **Out-of-scope findings** become issues labeled `agent-followup` (never `agent-ready`, see "Where it lives"), each naming the PR it came from.
