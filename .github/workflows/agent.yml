@@ -1,7 +1,7 @@
 # The agent pipeline (.github/agent/PIPELINE.md): an issue labeled agent-ready by the owner
-# (or by the agent, for sub-issues and release issues) is triaged by Claude, and a ready one is built
-# and opened as a PR. An approved split becomes sub-issues, and a closed issue can unblock them or
-# start a release. Claude never holds a write token: it returns its results as structured output, and
+# (or by the agent: its sub-issues, release issues and the next issue in a milestone queue) is triaged
+# by Claude, and a ready one is built and opened as a PR. An approved split becomes sub-issues, and a
+# closed issue can unblock them, start a release or start the next issue in its milestone. Claude never holds a write token: it returns its results as structured output, and
 # fixed steps post comments, set labels, create issues, check its commits and publish them. Keep this
 # file's name: the Anthropic federation rule accepts only .github/workflows/agent.yml on main, so no
 # other workflow can get a token.
@@ -154,9 +154,14 @@ jobs:
             [ -z "$next" ] || printf '%s\n\n' "$next"; printf '<sub>%s</sub>\n' "$footer"; } \
             | gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body-file -
 
-          # agent-ready comes off after every run, so re-adding it is what starts the next one.
-          remove_label agent-ready
+          # agent-ready comes off after every run, so re-adding it is what starts the next one. For a
+          # ready issue or an approved split it stays on until the run ends (the Finish job), so the
+          # milestone queue sees the issue as in flight.
           remove_label agent-needs-info
+          case "$decision" in
+            ready | approved_split) ;;
+            *) remove_label agent-ready ;;
+          esac
           case "$decision" in
             questions | split) gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label agent-needs-info ;;
           esac
@@ -560,6 +565,24 @@ jobs:
           if [ -n "${COST:-}" ]; then footer="$footer · \$$(printf '%.2f' "$COST")"; fi
           printf '%s\n\n<sub>%s</sub>\n' "$body" "$footer" | gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body-file -
 
+  # A ready issue or approved split keeps agent-ready while its run builds (see Respond); it comes off
+  # here, however the run ended, so re-adding it starts the next one.
+  finish:
+    name: Clear agent-ready
+    needs: [triage, respond, split, code, publish, report]
+    if: >-
+      always() && (needs.triage.outputs.decision == 'ready' || needs.triage.outputs.decision == 'approved_split')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Remove agent-ready
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$ISSUE/labels/agent-ready" >/dev/null 2>&1 || true
+
   # When an issue closes (.github/agent/PIPELINE.md, "Triage" and "Releases"): start the agent's sub-issues it
   # was blocking, close a parent whose sub-issues are all closed, open the release issue once a
   # version's milestone has nothing left open, and start the next issue in the milestone queue. All
@@ -569,7 +592,8 @@ jobs:
     if: github.event.action == 'closed'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # One at a time, so two issues closing together can't both open the release issue.
+    # One at a time, so two issues closing together can't both open the release issue or both start
+    # a next issue.
     concurrency:
       group: agent-closed
       cancel-in-progress: false
@@ -595,6 +619,9 @@ jobs:
           set -euo pipefail
           repo=$GITHUB_REPOSITORY
           footer="<sub>After #$ISSUE closed · [run]($RUN_URL)</sub>"
+          # Whether step 2 or 3 found something to start (even if labeling it failed): then the
+          # milestone queue (step 4) waits.
+          started=0
 
           # A Claude App token, only when needed: labels and issues it adds start runs, and ones made
           # with this job's own token wouldn't. Call it outside $( ), so the token is kept and revoked
@@ -636,6 +663,7 @@ jobs:
 
           $footer
           BODY
+              started=1
               if app_token; then
                 url=$(as_app gh issue create --repo "$repo" --title "Release $ms_title" --body-file body.md --milestone "$ms_title")
                 # Labeled after it's created, so the labeled event starts triage.
@@ -649,7 +677,6 @@ jobs:
 
           # 3. Sub-issues it was blocking: the agent's own (created from a split, so they have a
           # parent) start once every blocker is closed as completed.
-          started=0
           if [ "$(jq -r .state_reason <<<"$ISSUE_JSON")" = completed ]; then
             blocked=$(gh api --paginate "repos/$repo/issues/$ISSUE/dependencies/blocking" \
               --jq '.[] | select(.state == "open" and .user.login == "claude[bot]") | .number')
@@ -659,9 +686,9 @@ jobs:
                 --jq '.[] | select(.state != "closed" or .state_reason != "completed") | .number')
               labels=$(gh api "repos/$repo/issues/$num" --jq '[.labels[].name | select(startswith("agent-"))] | length')
               if [ -z "$waiting" ] && [ "$labels" = 0 ]; then
+                started=1
                 if app_token && as_app gh issue edit "$num" --repo "$repo" --add-label agent-ready; then
                   note='Its blockers are all closed, so it starts now.'
-                  started=1
                 else
                   note="Its blockers are all closed, but it couldn't be started. Add \`agent-ready\` by hand."
                 fi
@@ -671,40 +698,46 @@ jobs:
           fi
 
           # 4. The milestone queue: when an agent PR completes an issue in a version's milestone and
-          # nothing else there is in flight, the next issue starts. Only one at a time, so each one
-          # builds on a main that has the last merge.
+          # nothing else there is in flight, the next issue starts. The queue starts one at a time,
+          # so each one builds on a main that has the last merge.
           [ "$started" = 0 ] || exit 0
           [ "$(jq -r .state_reason <<<"$ISSUE_JSON")" = completed ] || exit 0
           [[ "$ms_title" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 0
-          closer=$(gh api graphql -F owner="${repo%/*}" -F name="${repo#*/}" -F num="$ISSUE" -f query='
+          if ! closer=$(gh api graphql -f owner="${repo%/*}" -f name="${repo#*/}" -F num="$ISSUE" -f query='
             query($owner: String!, $name: String!, $num: Int!) {
               repository(owner: $owner, name: $name) { issue(number: $num) {
                 timelineItems(itemTypes: [CLOSED_EVENT], last: 1) { nodes { ... on ClosedEvent {
-                  closer { ... on PullRequest { headRefName } } } } } } } }' \
-            --jq '.data.repository.issue.timelineItems.nodes[0].closer.headRefName // empty' 2>/dev/null || true)
+                  closer { ... on PullRequest { headRefName headRepository { nameWithOwner } } } } } } } } }' \
+            --jq '.data.repository.issue.timelineItems.nodes[0].closer
+              | select(.headRepository.nameWithOwner == "'"$repo"'") | .headRefName // empty'); then
+            echo "::warning::Couldn't read what closed #$ISSUE; the milestone queue didn't run."
+            exit 0
+          fi
           [[ "$closer" == agent/issue-* ]] || exit 0
 
           issues=$(gh api --paginate "repos/$repo/issues?milestone=$ms_number&state=open&per_page=100" \
             --jq '.[] | select(.pull_request == null)')
-          # In flight: an open issue the pipeline is working on, or an open agent PR for one.
+          # In flight: an issue being triaged or built keeps agent-ready until its run ends (Respond
+          # and Finish), one with questions has agent-needs-info, and after that it has an open agent PR.
           busy=$(jq -s '[.[] | select(any(.labels[].name; . == "agent-ready" or . == "agent-needs-info"))] | length' <<<"$issues")
           [ "$busy" = 0 ] || exit 0
           agent_prs=$(gh api --paginate "repos/$repo/pulls?state=open&per_page=100" \
-            --jq '.[] | .head.ref | select(startswith("agent/issue-"))')
+            --jq ".[] | select(.head.repo.full_name == \"$repo\") | .head.ref | select(startswith(\"agent/issue-\"))")
           for n in $(jq -r '.number' <<<"$issues"); do
             ! grep -q "^agent/issue-$n-" <<<"$agent_prs" || exit 0
           done
 
-          # Next: the lowest-numbered open issue the owner or the agent wrote, with no agent- label,
-          # not blocked by an open issue and not a parent with open sub-issues.
+          # Next: the lowest-numbered open issue the owner or the agent wrote, other than this one,
+          # with no agent- or question label, no sub-issues, and every blocker closed as completed.
           owner=${repo%/*}
-          for num in $(jq -r --arg owner "$owner" \
-            'select(.user.login == $owner or .user.login == "claude[bot]")
-             | select(all(.labels[].name; startswith("agent-") | not)) | .number' <<<"$issues" | sort -n); do
-            blockers=$(gh api --paginate "repos/$repo/issues/$num/dependencies/blocked_by" --jq '.[] | select(.state == "open") | .number')
+          for num in $(jq -r --arg owner "$owner" --argjson done "$ISSUE" \
+            'select(.number != $done)
+             | select(.user.login == $owner or .user.login == "claude[bot]")
+             | select(all(.labels[].name; startswith("agent-") or . == "question" | not))
+             | select((.sub_issues_summary.total // 0) == 0) | .number' <<<"$issues" | sort -n); do
+            blockers=$(gh api --paginate "repos/$repo/issues/$num/dependencies/blocked_by" \
+              --jq '.[] | select(.state != "closed" or .state_reason != "completed") | .number')
             [ -z "$blockers" ] || continue
-            subs=$(gh api --paginate "repos/$repo/issues/$num/sub_issues" --jq '.[] | select(.state == "open") | .number')
-            [ -z "$subs" ] || continue
             if app_token && as_app gh issue edit "$num" --repo "$repo" --add-label agent-ready; then
               note="#$ISSUE is done, so this is next in the $ms_title milestone and starts now."
             else
