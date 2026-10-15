@@ -133,10 +133,10 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Agent pipeline
 
-Issues labeled `agent-ready` are built by Claude in GitHub Actions and arrive as PRs through the same gates as any other; the owner merges.
+Issues labeled `agent-ready` are built by Claude in GitHub Actions and arrive as PRs through the same gates as any other. A local reviewer on the owner's machine reviews each one, fixes it and merges it, or holds it for the owner (PIPELINE.md, "Local reviewer").
 
-- **Labels:** `agent-ready`: build this (the owner adds it; the agent only on issues it created, see PIPELINE.md). `agent-needs-info`: the agent asked questions and stopped; answer, then re-add `agent-ready`. `agent-followup`: found by the agent, needs the owner's decision first. `touches-data`: the PR changes what's stored. `touches-gates`: the PR changes the checks, lint, config, headers or hosting.
-- **Merge safety:** read `touches-data` and `touches-gates` PRs before merging (green means less if the checks changed), and export a backup on the phone before merging a `touches-data` one: reverting can't undo an upgrade already applied to real data.
+- **Labels:** `agent-ready`: build this (the owner adds it; the agent only on issues it created, see PIPELINE.md). `agent-needs-info`: the agent asked questions and stopped; answer, then re-add `agent-ready`. `agent-followup`: found by the local reviewer, needs the owner's look first. `reviewed`: the local reviewer has reviewed the PR. `touches-data`: the PR changes what's stored. `touches-gates`: the PR changes the checks, lint, config, headers or hosting.
+- **Merge safety:** `touches-data` and `touches-gates` PRs are always reviewed by Opus (green means less if the checks changed), and a `touches-data` one is merged by the owner after exporting a backup on the phone: reverting can't undo an upgrade already applied to real data.
 
 The design and rules, including what the agent may never do (also in CLAUDE.md): [`.github/agent/PIPELINE.md`](.github/agent/PIPELINE.md).
 

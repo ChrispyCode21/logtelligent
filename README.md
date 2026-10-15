@@ -68,7 +68,10 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
    gh label create agent-needs-info --color FBCA04 --description 'Claude asked questions; answer, then re-add agent-ready' --force
    ```
    ```powershell
-   gh label create agent-followup --color 5319E7 --description 'Found by Claude; needs a decision before it can be built' --force
+   gh label create agent-followup --color 5319E7 --description 'Found by the local reviewer; read before it is built' --force
+   ```
+   ```powershell
+   gh label create reviewed --color BFBFBF --description 'The local reviewer has reviewed this PR' --force
    ```
    ```powershell
    gh label create touches-data --color B60205 --description 'Changes what is stored; export a backup on the phone before merging' --force
