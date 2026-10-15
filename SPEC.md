@@ -188,7 +188,7 @@ Per exercise, set at program-setup time:
 - **History** here means finished sessions, plus the open session if it has sets for that exercise or day.
 - **Removing the open session's day:** if the open session is on that day and has no sets, it's discarded along with the day, and the confirm says so. (Changing programs discards every open session, §5.5.)
 
-**Bodyweight** exercises can only be **accessories**. Their loads are **added weight** — 0, 5, 10, 15… lb (overridable). Every jump from 0 exceeds 10%, so they progress by reps up to the rep ceiling, then add 5 lb.
+**Bodyweight** exercises can only be **accessories**. Their loads are **added weight**: 0, 5, 10, 15… lb (overridable). Every jump from 0 exceeds 10%, so they progress by reps up to the rep ceiling, then add 5 lb.
 
 **Dumbbell** weights are **per hand** (incline press 70 = 70 lb in each hand).
 
