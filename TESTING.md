@@ -43,7 +43,7 @@ Lean on purpose: the things any release could break that only the phone shows. R
 
 Replaced at each release with checks drawn from that release's CHANGELOG notes (see "Keeping these lists" below). Anything still unticked when the next release comes is carried over once, then dropped or turned into an issue.
 
-- [ ] **Picking Linear:** in an exercise's form, the Progression control (Adaptive | Linear) fits beside Tier at phone width. Picking Linear shows the increase field and one Reps field, and hides Target RPE. Once the exercise has been logged, Progression shows as text with "Fixed once it's been logged…".
+- [ ] **Picking Linear:** in an exercise's form, the Progression control (Adaptive | Linear) fits beside Tier at phone width. Picking Linear shows the increase field and one Reps field, and hides Target RPE. Its summary line reads "Primary · Linear +5 lb · 3 × 5 · Barbell" on one line where it fits. Once the exercise has been logged, Progression shows as text with "Fixed once it's been logged…".
 - [ ] **A Linear session:** effort on the first set reads "(optional)", tapping the chosen button again clears it, and the session finishes with no effort logged. The suggestion card shows the reason ("+5 lb" after a success).
 - [ ] **3-day Novice A/B:** applying it walks through 4 starting-weight screens (1 of 4 to 4 of 4), each asking for a weight only. Today shows Workout A, with "1 set · 5 reps" on the deadlift.
 - [ ] **Shared across workouts:** after a successful Workout A, Workout B's squat and deadlift suggest the next weight up ("+5 lb", "+10 lb"), not the starting weight again.

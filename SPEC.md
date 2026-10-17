@@ -196,7 +196,7 @@ Per exercise, set at program-setup time:
 - **History** here means finished sessions, plus the open session if it has sets for that exercise or day.
 - **Removing the open session's day:** if the open session is on that day and has no sets, it's discarded along with the day, and the confirm says so. (Changing programs discards every open session, §5.5.)
 
-**Bodyweight** exercises can only be **accessories**. Their loads are **added weight**: 0, 5, 10, 15… lb (overridable). Adaptive: every jump from 0 exceeds 10%, so they progress by reps up to the rep ceiling, then add 5 lb.
+**Bodyweight** exercises can only be **accessories**. Their loads are **added weight**: 0, 5, 10, 15… up to 200 lb (overridable). Adaptive: every jump from 0 exceeds 10%, so they progress by reps up to the rep ceiling, then add 5 lb.
 
 **Dumbbell** weights are **per hand** (incline press 70 = 70 lb in each hand).
 
@@ -205,7 +205,7 @@ A fixed pound increment doesn't work across exercises: +5 lb is under 2% on a 30
 
 **Three layers, combined:**
 1. **Equipment-type defaults** supply the available loads (the default values are under review: #61):
-   - Barbell: 5 lb total jumps (2.5 lb plate per side), starting at a 45 lb empty bar. A different bar uses the per-exercise override.
+   - Barbell: 5 lb total jumps (2.5 lb plate per side), starting at a 45 lb empty bar, up to 1000 lb. A different bar uses the per-exercise override.
    - Dumbbell: a standard rack list (e.g. 10, 12.5, 15, 17.5, 20, 22.5, 25, 30…).
    - Cable / machine: a stack list I enter (e.g. …99, 110, 121…).
 2. **Per-exercise override** of those loads for my gym's actual equipment (e.g. "this gym has 22.5s").
