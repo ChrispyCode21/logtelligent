@@ -18,6 +18,9 @@ export interface Seed {
 /** A progression scheme other than Adaptive, with its settings (SPEC §6.10). */
 export type SchemeSetting = { scheme: 'linear'; increment: number }
 
+/** A scheme by name: Adaptive is the default, stored as no setting. */
+export type SchemeId = 'adaptive' | SchemeSetting['scheme']
+
 export interface ExerciseConfig {
   id: string
   name: string

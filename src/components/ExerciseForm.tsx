@@ -4,9 +4,11 @@ import { withLiftGym } from '../history/lifts'
 import { exerciseFromBank, type BankExercise } from '../program/bank'
 import { EFFORT_SCALES, nearestOption, type EffortScale } from '../program/effort'
 import {
+  formSeedHasReps,
   fromForm,
   toForm,
   validateExerciseForm,
+  withScheme,
   withTier,
   type ExerciseFormFields,
 } from '../program/exerciseForm'
@@ -16,7 +18,7 @@ import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Field } from '../ui/Field'
 import { SegmentedControl } from '../ui/SegmentedControl'
-import { EQUIPMENT_LABELS, TIER_LABELS } from '../ui/format'
+import { EQUIPMENT_LABELS, SCHEME_LABELS, TIER_LABELS } from '../ui/format'
 import { SeedFields } from './SeedFields'
 
 const EQUIPMENT = Object.entries(EQUIPMENT_LABELS) as [EquipmentType, string][]
@@ -33,12 +35,23 @@ interface Props {
   lift?: { exercise: ProgramExercise; weight?: number }
   /** Whether a lift of this name already has an e1RM: a primary's starting numbers are then optional (SPEC §6.9). */
   liftHasE1rm?: (name: string) => boolean
+  /** The exercise has a finished session, so its scheme is fixed (SPEC §6.1). */
+  schemeLocked?: boolean
   effortScale: EffortScale
   onSave: (exercise: ProgramExercise) => void
   onCancel: () => void
 }
 
-export function ExerciseForm({ initial, preset, lift, liftHasE1rm, effortScale, onSave, onCancel }: Props) {
+export function ExerciseForm({
+  initial,
+  preset,
+  lift,
+  liftHasE1rm,
+  schemeLocked,
+  effortScale,
+  onSave,
+  onCancel,
+}: Props) {
   // A bank exercise's defaults are copied in; nothing links back to the bank (SPEC §5.1).
   // Joining a lift with history, it takes your gym's setup from it (SPEC §6.9).
   const [form, setForm] = useState(() =>
@@ -49,6 +62,9 @@ export function ExerciseForm({ initial, preset, lift, liftHasE1rm, effortScale, 
     setForm({ ...form, [key]: value })
 
   const primary = form.tier === 'primary'
+  const linear = form.scheme === 'linear'
+  // A primary on a lift with an e1RM needs no starting numbers; a Linear one starts from it (SPEC §6.9).
+  const fromLiftE1rm = primary && !!form.name.trim() && !!liftHasE1rm?.(form.name)
   const loads = parseLoads(form.loads)
   const errors = validateExerciseForm(form)
 
@@ -90,19 +106,59 @@ export function ExerciseForm({ initial, preset, lift, liftHasE1rm, effortScale, 
         />
       </Field>
 
+      {schemeLocked ? (
+        <Field
+          as="fieldset"
+          label="Progression"
+          hint="Fixed once it's been logged. To change it, add the exercise again."
+        >
+          <p>{SCHEME_LABELS[form.scheme]}</p>
+        </Field>
+      ) : (
+        <Field as="fieldset" label="Progression">
+          <SegmentedControl
+            options={(['adaptive', 'linear'] as const).map((scheme) => ({
+              value: scheme,
+              label: SCHEME_LABELS[scheme],
+            }))}
+            value={form.scheme}
+            onChange={(scheme) => setForm(withScheme(form, scheme))}
+          />
+        </Field>
+      )}
+
+      {linear && (
+        <Field label={`${form.equipment === 'bodyweight' ? 'Added weight' : 'Increase'} each session (lb)`}>
+          <input
+            inputMode="decimal"
+            value={form.increment}
+            onChange={(e) => set('increment', e.target.value)}
+          />
+        </Field>
+      )}
+
       <div className="row">
-        <Field label="Reps from">
-          <input inputMode="numeric" value={form.min} onChange={(e) => set('min', e.target.value)} />
-        </Field>
-        <Field label="to">
-          <input inputMode="numeric" value={form.max} onChange={(e) => set('max', e.target.value)} />
-        </Field>
+        {linear ? (
+          <Field label="Reps">
+            <input inputMode="numeric" value={form.reps} onChange={(e) => set('reps', e.target.value)} />
+          </Field>
+        ) : (
+          <>
+            <Field label="Reps from">
+              <input inputMode="numeric" value={form.min} onChange={(e) => set('min', e.target.value)} />
+            </Field>
+            <Field label="to">
+              <input inputMode="numeric" value={form.max} onChange={(e) => set('max', e.target.value)} />
+            </Field>
+          </>
+        )}
         <Field label="Sets">
           <input inputMode="numeric" value={form.sets} onChange={(e) => set('sets', e.target.value)} />
         </Field>
       </div>
 
-      {primary && (
+      {/* Linear has no effort target; a stored one is kept for switching back (SPEC §6.1). */}
+      {primary && !linear && (
         <Field label={TARGET_LABEL[effortScale]}>
           <select
             // A stored target between this scale's options shows as the nearest; it only changes
@@ -154,21 +210,29 @@ export function ExerciseForm({ initial, preset, lift, liftHasE1rm, effortScale, 
         <span>One side at a time (reps are per side)</span>
       </label>
 
-      {primary && form.name.trim() && liftHasE1rm?.(form.name) && (
+      {fromLiftE1rm && !linear && (
         <p className="muted">Optional: {form.name.trim()} already has an estimated 1RM from your history.</p>
       )}
-      <SeedFields
-        tier={form.tier}
-        name={form.name}
-        minReps={form.min}
-        unilateral={form.unilateral}
-        weight={form.seedWeight}
-        reps={form.seedReps}
-        weightPlaceholder={formSeedPlaceholder(form.tier, form.equipment, loads, startingWeight)}
-        onWeight={(w) => set('seedWeight', w)}
-        onReps={(r) => set('seedReps', r)}
-        className="seed"
-      />
+      {fromLiftE1rm && linear ? (
+        <p className="muted">
+          The first weight comes from {form.name.trim()}&apos;s estimated 1RM, so no starting weight is
+          needed.
+        </p>
+      ) : (
+        <SeedFields
+          tier={form.tier}
+          withReps={formSeedHasReps(form)}
+          name={form.name}
+          minReps={linear ? form.reps : form.min}
+          unilateral={form.unilateral}
+          weight={form.seedWeight}
+          reps={form.seedReps}
+          weightPlaceholder={formSeedPlaceholder(form.tier, form.equipment, loads, startingWeight)}
+          onWeight={(w) => set('seedWeight', w)}
+          onReps={(r) => set('seedReps', r)}
+          className="seed"
+        />
+      )}
 
       {attempted && errors.length > 0 && (
         <ul className="errors" role="alert">

@@ -2,7 +2,15 @@ import { useState, type ReactNode } from 'react'
 import { countedSets, type LoggedSet } from '../engine'
 import type { EffortScale } from '../program/effort'
 import { formFromSet, parseSetForm, prefill, prefillExtra, type SetForm } from '../session/setForm'
-import { addExtra, addSet, removalNeedsEffort, removeFirstSet, removeSet, updateSet } from '../session/sets'
+import {
+  addExtra,
+  addSet,
+  removalNeedsEffort,
+  removeFirstSet,
+  removeSet,
+  updateSet,
+  type EffortAsk,
+} from '../session/sets'
 import { Button } from '../ui/Button'
 import { Field } from '../ui/Field'
 import { formatSet } from '../ui/format'
@@ -17,7 +25,8 @@ interface Props {
   /** Pre-fill for the first set, usually the suggestion. */
   first?: { weight: number; reps: number }
   effortScale: EffortScale
-  rpeRequiredAt: (index: number) => boolean
+  /** Whether set `index` asks for effort, and whether it's required (SPEC §6.3, §6.10). */
+  effortAt: (index: number) => EffortAsk
   /** The next weight up or down from `weight`, if any. */
   step: (weight: number, direction: 1 | -1) => number | undefined
   allowZeroWeight: boolean
@@ -49,7 +58,7 @@ export function SetEditor({
   canAddExtra,
   first,
   effortScale,
-  rpeRequiredAt,
+  effortAt,
   step,
   allowZeroWeight,
   weightLabel,
@@ -69,7 +78,8 @@ export function SetEditor({
   const formIndex = mode.kind === 'replaceFirst' ? 0 : (editing ?? countedCount)
   // Logged sets stay editable after the last one is entered.
   const showForm = mode.kind !== 'new' || canAdd
-  const required = !extraMode && rpeRequiredAt(formIndex)
+  const asked = extraMode ? undefined : effortAt(formIndex)
+  const required = asked === 'required'
   const parsed = parseSetForm(form, { allowZeroWeight, rpeRequired: required })
   const weight = Number(form.weight)
   const reps = Number(form.reps)
@@ -110,7 +120,7 @@ export function SetEditor({
   }
 
   function deleteSet(index: number) {
-    if (!removalNeedsEffort(sets, index, rpeRequiredAt)) {
+    if (!removalNeedsEffort(sets, index, (i) => effortAt(i) === 'required')) {
       void save(removeSet(sets, index))
       return
     }
@@ -212,8 +222,9 @@ export function SetEditor({
           </Field>
 
           {/* Effort is asked only where it's used: a primary lift's first set (SPEC §6.3). */}
-          {required && (
+          {asked && (
             <EffortPicker
+              required={required}
               scale={effortScale}
               value={form.rpe}
               onChange={(rpe) => setForm({ ...form, rpe })}

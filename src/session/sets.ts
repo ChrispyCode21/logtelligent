@@ -1,4 +1,4 @@
-import { countedSets, type LoggedSet, type Suggestion, type Tier } from '../engine'
+import { countedSets, schemeId, type ExerciseConfig, type LoggedSet, type Suggestion } from '../engine'
 import type { ExerciseLog } from './types'
 
 // An exercise's prescribed sets use one working weight (SPEC §6.3, §6.5), so changing the weight on
@@ -61,18 +61,28 @@ export const hasAnySets = (logs: ExerciseLog[]) => logs.some((l) => loggedSetCou
 export const showsOutcome = (finished: boolean, sets: LoggedSet[], target: number) =>
   finished ? countedSets(sets).length > 0 : allSetsLogged(sets, target)
 
-/** RPE is required on a primary lift's first set only (SPEC §6.3, §6.5). */
-export function rpeRequired(tier: Tier, index: number): boolean {
-  return tier === 'primary' && index === 0
+/** Whether a set asks for effort: required, optional, or not asked (undefined). */
+export type EffortAsk = 'required' | 'optional' | undefined
+
+/** The exercise as far as asking for effort goes. */
+type EffortConfig = Pick<ExerciseConfig, 'tier' | 'progression'>
+
+/**
+ * Effort is asked on a primary lift's first set only: required in Adaptive (SPEC §6.3, §6.5),
+ * optional in Linear (§6.10).
+ */
+export function effortAsked(exercise: EffortConfig, index: number): EffortAsk {
+  if (exercise.tier !== 'primary' || index !== 0) return undefined
+  return schemeId(exercise) === 'adaptive' ? 'required' : 'optional'
 }
 
 /**
  * Whether a primary lift's sets have the effort its first set needs (SPEC §6.3). An exercise with
  * no sets needs no effort. Checked at Finish, and when a finished session is edited (SPEC §5.4).
  */
-export function hasRequiredEffort(tier: Tier, sets: LoggedSet[]): boolean {
+export function hasRequiredEffort(exercise: EffortConfig, sets: LoggedSet[]): boolean {
   const first = countedSets(sets)[0]
-  return !first || !rpeRequired(tier, 0) || first.rpe !== undefined
+  return !first || effortAsked(exercise, 0) !== 'required' || first.rpe !== undefined
 }
 
 /**
@@ -126,11 +136,14 @@ export function setTally(entries: { log: ExerciseLog; target: number }[]): {
  * logged (and not replaced) has an RPE on its first set. Unlogged exercises are
  * simply not logged.
  */
-export function canFinish(logs: ExerciseLog[], tierOf: (exerciseId: string) => Tier | undefined): boolean {
+export function canFinish(
+  logs: ExerciseLog[],
+  exerciseOf: (exerciseId: string) => EffortConfig | undefined,
+): boolean {
   const progression = logs.filter((l) => !l.skipped && !l.substitute)
   return (
     logs.some((l) => loggedSets(l).length > 0) &&
-    progression.every((l) => hasRequiredEffort(tierOf(l.exerciseId) ?? 'accessory', l.sets))
+    progression.every((l) => hasRequiredEffort(exerciseOf(l.exerciseId) ?? { tier: 'accessory' }, l.sets))
   )
 }
 

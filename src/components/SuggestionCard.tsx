@@ -2,7 +2,14 @@ import type { ExerciseConfig, RunningE1rm, Suggestion } from '../engine'
 import { effortTarget, type EffortScale } from '../program/effort'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
-import { formatBreakNote, formatE1rm, formatLinearReason, formatPlanNote, formatWeight } from '../ui/format'
+import {
+  formatBreakNote,
+  formatE1rm,
+  formatLinearReason,
+  formatPlanNote,
+  formatRepRange,
+  formatWeight,
+} from '../ui/format'
 
 function e1rmNote(e1rm: RunningE1rm) {
   if (e1rm.basis === 'seed') return 'Based on your starting numbers.'
@@ -33,7 +40,7 @@ export function SuggestionCard({ config, suggestion, heading, effortScale, onEdi
   const adaptive = suggestion.scheme === undefined ? suggestion : undefined
   const { min } = config.repRange
   const max = adaptive?.effectiveTop ?? config.repRange.max
-  const repsText = adaptive ? `${min}–${max}` : `${suggestion.reps}`
+  const repsText = adaptive ? formatRepRange(min, max) : `${suggestion.reps}`
   const note =
     suggestion.scheme === 'linear' ? formatLinearReason(suggestion.reason) : formatPlanNote(suggestion)
   // Only the e1RM rule predicts reps (SPEC §6.4).

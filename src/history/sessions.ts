@@ -84,6 +84,10 @@ export function exerciseHasHistory(sessions: Session[], exerciseId: string): boo
   return sessions.some((s) => s.exercises.some((e) => e.exerciseId === exerciseId && hasSets(e)))
 }
 
+/** An exercise's scheme is fixed once it has a finished session (SPEC §6.1); an open one doesn't count. */
+export const schemeIsFixed = (sessions: Session[], exerciseId: string) =>
+  exerciseHistory(sessions, exerciseId).length > 0
+
 /**
  * Whether removing a day archives it rather than deleting it (SPEC §6.1): a finished
  * session on it (even an emptied one, which still counts for the rotation), or an open one with sets.
