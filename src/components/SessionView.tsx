@@ -33,7 +33,7 @@ export function SessionView({ session, program, sessions, asOf, onClose }: Props
   const { logged, target } = setTally(
     exercises.map((e) => ({ log: e.log, target: targetSets(e.log, e.config.sets, e.suggestion) })),
   )
-  const finishable = canFinish(session.exercises, (id) => findExercise(program, id)?.tier)
+  const finishable = canFinish(session.exercises, (id) => findExercise(program, id))
 
   // Warm-up ramps to the first exercise still being done as planned (SPEC §5.2).
   const first = exercises.find((e) => !e.log.skipped && !e.log.substitute)

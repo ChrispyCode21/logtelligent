@@ -340,7 +340,7 @@ A fixed weight increase every successful session, with its own failure rule. No 
 - **Bodyweight:** the increments go on the added weight (§6.1), starting from 0; a reset or a break at 0 stays at 0.
 - **e1RM:** a Linear session whose first set has effort logged feeds the lift's running e1RM (§6.9), since those are real sets; one marked as a deload doesn't. It's high-rep (§6.4) when its rep target is over 10, since Linear prescribes no reps in reserve. History shows no e1RM for a Linear exercise.
 - **Extra sets and substitutes:** extra sets are recorded and shown but don't count (§5.2); substituted sessions don't count either, for success or for the miss count.
-- **On screen:** the weight and rep target, no effort target, and a reason: "+5 lb" (the actual increment), "Top of the loads: +1 rep", "Repeat: reps missed last time", "Reset: missed 3 times in a row", or after a break "Returning from a break: weight lowered 10%." A fresh start shows none. Examples L1–L35 (§7.L).
+- **On screen:** the weight and rep target, no effort target (effort is asked on a primary's first set, but optional), and a reason: "+5 lb" (the actual increment), "Top of the loads: +1 rep", "Repeat: reps missed last time", "Reset: missed 3 times in a row", or after a break "Returning from a break: weight lowered 10%." A fresh start shows none. Examples L1–L35 (§7.L).
 
 ## 7. Worked examples → test cases
 
