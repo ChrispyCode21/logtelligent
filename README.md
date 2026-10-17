@@ -65,7 +65,7 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
    gh label create agent-ready --color 0E8A16 --description 'Ready for Claude to build' --force
    ```
    ```powershell
-   gh label create agent-needs-info --color FBCA04 --description 'Claude asked questions; answer, then re-add agent-ready' --force
+   gh label create agent-needs-info --color FBCA04 --description 'Claude asked questions; answer, then remove this label' --force
    ```
    ```powershell
    gh label create agent-followup --color 5319E7 --description 'Found by the local reviewer; read before it is built' --force
@@ -79,7 +79,7 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
    ```powershell
    gh label create touches-gates --color D93F0B --description 'Changes the checks, config, headers or hosting; read before merging' --force
    ```
-6. Claude for the agent pipeline, with no stored key (Workload Identity Federation; [PIPELINE.md](.github/agent/PIPELINE.md), "Where it lives"):
+6. Only to re-enable the disabled GitHub Actions version of the agent pipeline ([PIPELINE.md](.github/agent/PIPELINE.md), "The Actions version"); the local builder and reviewer need none of this. Claude with no stored key (Workload Identity Federation):
    1. Install the [Claude GitHub App](https://github.com/apps/claude) on this repository only.
    2. In the [Claude Console](https://platform.claude.com) (the developer API, billed separately from a Claude plan): add credits under **Billing**, and create a workspace `github-actions` with a monthly spend limit.
    3. **Settings → Workload identity → Connect workload → GitHub Actions.** Issuer `https://token.actions.githubusercontent.com`. Match: subject `<prefix>:ref:refs/heads/main`, where `<prefix>` is the repo's GitHub OIDC subject prefix from `gh api 'repos/{owner}/logtelligent/actions/oidc/customization/sub' --jq .sub_claim_prefix` (with GitHub's immutable subjects it includes numeric IDs, e.g. `repo:owner@123/logtelligent@456`, not the `repo:owner/logtelligent` the Console's template suggests), and the claims `repository_owner`, `repository`, `ref` (`refs/heads/main`), `repository_owner_id`, `event_name` (`issues`) and `workflow_ref` (`{owner}/logtelligent/.github/workflows/agent.yml@refs/heads/main`). Enable it in the `github-actions` workspace only; scope `workspace:developer`; token lifetime 600 seconds. Don't create API keys for the service account.
