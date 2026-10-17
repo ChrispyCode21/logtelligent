@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { exerciseFromBank, findBankExercise } from './bank'
-import { fromForm, toForm, validateExerciseForm, withTier } from './exerciseForm'
+import { fromForm, toForm, validateExerciseForm, withScheme, withTier } from './exerciseForm'
 import type { ProgramExercise } from './types'
 
 const bench: ProgramExercise = {
@@ -93,5 +93,52 @@ describe('validating the exercise form', () => {
 
   it('saves no starting numbers when none are typed', () => {
     expect(fromForm({ ...valid, seedWeight: '', seedReps: '' }, bench).seed).toBeUndefined()
+  })
+})
+
+describe('the progression scheme in the form (SPEC §6.1)', () => {
+  const adaptive = toForm(bench)
+
+  it('starts Adaptive, and Linear at a 5 lb increase with Reps at the top of the range', () => {
+    expect(adaptive.scheme).toBe('adaptive')
+    const linear = withScheme(adaptive, 'linear')
+    expect(linear).toMatchObject({ scheme: 'linear', increment: '5', reps: '5', min: '3', max: '5' })
+  })
+
+  it('finds the range as it was when switched back in the same form', () => {
+    const linear = { ...withScheme(adaptive, 'linear'), reps: '8' }
+    expect(withScheme(linear, 'adaptive')).toMatchObject({ scheme: 'adaptive', min: '3', max: '5' })
+    expect(fromForm(withScheme(linear, 'adaptive'), bench).repRange).toEqual({ min: 3, max: 5 })
+  })
+
+  it('saves Linear as a range with equal ends and its increment, keeping the target RPE', () => {
+    const saved = fromForm({ ...withScheme(adaptive, 'linear'), increment: '2.5' }, bench)
+    expect(saved).toMatchObject({ repRange: { min: 5, max: 5 }, targetRpe: 8.5 })
+    expect(saved.progression).toEqual({ scheme: 'linear', increment: 2.5 })
+    expect(toForm(saved)).toMatchObject({ scheme: 'linear', increment: '2.5', reps: '5' })
+  })
+
+  it('stores no scheme for Adaptive, even switching back from a saved Linear exercise', () => {
+    const squat = fromForm(withScheme(adaptive, 'linear'), bench)
+    expect(fromForm(withScheme(toForm(squat), 'adaptive'), squat)).not.toHaveProperty('progression')
+  })
+
+  it('checks the Reps number and the increase', () => {
+    const linear = withScheme(adaptive, 'linear')
+    expect(validateExerciseForm({ ...linear, min: '9', max: '1' })).toEqual([])
+    expect(validateExerciseForm({ ...linear, reps: '0' })).toEqual([
+      'Reps must be a whole number, at least 1.',
+    ])
+    for (const increment of ['', '0', '0.25', '101', 'lots']) {
+      expect(validateExerciseForm({ ...linear, increment })).toEqual([
+        'The increase must be from 0.5 to 100 lb.',
+      ])
+    }
+  })
+
+  it("takes a Linear primary's starting numbers as a weight only, at its rep target (SPEC §5.1)", () => {
+    const linear = { ...withScheme(adaptive, 'linear'), seedWeight: '135', seedReps: '' }
+    expect(validateExerciseForm(linear)).toEqual([])
+    expect(fromForm(linear, bench).seed).toEqual({ weight: 135, reps: 5 })
   })
 })

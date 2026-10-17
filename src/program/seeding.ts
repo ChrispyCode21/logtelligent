@@ -1,5 +1,5 @@
 // Entering starting numbers (SPEC §5.1): the exercise form and the guided walkthrough.
-import { snapDown, type EquipmentType, type RepRange, type Seed, type Tier } from '../engine'
+import { snapDown, type EquipmentType, type RepRange, type SchemeId, type Seed, type Tier } from '../engine'
 import { findBankExercise } from './bank'
 import type { ProgramExercise } from './types'
 
@@ -49,23 +49,26 @@ export interface SeedInput {
   reps: string
 }
 
-/** What's wrong with typed starting numbers. Accessories enter a weight only (SPEC §5.1). */
-export function validateSeed(input: SeedInput, tier: Tier): string[] {
+/** Starting numbers are a weight × reps for an Adaptive primary, else a weight only (SPEC §5.1). */
+export const seedHasReps = (tier: Tier, scheme: SchemeId) => tier === 'primary' && scheme === 'adaptive'
+
+/** What's wrong with typed starting numbers, a weight × reps or a weight only (`seedHasReps`). */
+export function validateSeed(input: SeedInput, withReps: boolean): string[] {
   const errors: string[] = []
   const weight = Number(input.weight)
   if (input.weight === '' || !Number.isFinite(weight) || weight < 0)
     errors.push('Starting weight must be a number.')
   const reps = Number(input.reps)
-  if (tier === 'primary' && !(input.reps !== '' && Number.isInteger(reps) && reps >= 1)) {
+  if (withReps && !(input.reps !== '' && Number.isInteger(reps) && reps >= 1)) {
     errors.push('Starting reps must be at least 1.')
   }
   return errors
 }
 
 /** Valid typed starting numbers as a seed. */
-export function toSeed(input: SeedInput, tier: Tier, repRange: RepRange): Seed {
-  // Accessory seeds are a weight at the bottom of the range (SPEC §5.1).
-  return { weight: Number(input.weight), reps: tier === 'primary' ? Number(input.reps) : repRange.min }
+export function toSeed(input: SeedInput, withReps: boolean, repRange: RepRange): Seed {
+  // A weight only is at the bottom of the range: an accessory's, or Linear's one rep target (SPEC §5.1).
+  return { weight: Number(input.weight), reps: withReps ? Number(input.reps) : repRange.min }
 }
 
 // The exercise form's placeholder for an accessory's starting weight when there's no bank weight.
@@ -127,11 +130,11 @@ export function seedPrefill(
  */
 export function validateSeedStep(
   input: SeedInput,
-  tier: Tier,
+  withReps: boolean,
   askStack: boolean,
   loads: number[] | undefined,
 ): string[] {
   const stackError =
     askStack && (!loads || hasInvalidLoads(loads)) ? ['Enter the stack weights, e.g. 10, 20, 30.'] : []
-  return [...stackError, ...validateSeed(input, tier)]
+  return [...stackError, ...validateSeed(input, withReps)]
 }

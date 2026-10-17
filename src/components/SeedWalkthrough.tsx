@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { schemeId } from '../engine'
 import { findBankExercise } from '../program/bank'
 import { latestInLift, needsStartingNumbers } from '../history/lifts'
 import { activeDays, activeExercises, updateExercise } from '../program/program'
@@ -7,6 +8,7 @@ import {
   seedPrefill,
   stackLoads,
   STACK_PRESETS,
+  seedHasReps,
   toSeed,
   validateSeedStep,
   type StackPick,
@@ -100,14 +102,18 @@ function SeedStep({
   const bank = findBankExercise(exercise.name)
   const { min } = exercise.repRange
 
-  const errors = validateSeedStep(seed, exercise.tier, askStack, loads)
+  const errors = validateSeedStep(seed, seedHasReps(exercise.tier, schemeId(exercise)), askStack, loads)
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     setAttempted(true)
     if (errors.length > 0) return
     void onSave(
-      { ...exercise, loads, seed: toSeed(seed, exercise.tier, exercise.repRange) },
+      {
+        ...exercise,
+        loads,
+        seed: toSeed(seed, seedHasReps(exercise.tier, schemeId(exercise)), exercise.repRange),
+      },
       askStack ? stack : undefined,
     )
   }
@@ -145,6 +151,7 @@ function SeedStep({
 
       <SeedFields
         tier={exercise.tier}
+        withReps={seedHasReps(exercise.tier, schemeId(exercise))}
         name={exercise.name}
         minReps={String(min)}
         unilateral={exercise.unilateral}

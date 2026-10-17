@@ -14,7 +14,7 @@ import type { BankExercise } from '../program/bank'
 import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
 import { latestInLift, liftHasE1rm, needsStartingNumbers } from '../history/lifts'
-import { dayHasHistory, emptyOpenSessions, exerciseHasHistory } from '../history/sessions'
+import { dayHasHistory, emptyOpenSessions, exerciseHasHistory, schemeIsFixed } from '../history/sessions'
 import { updateProgram } from '../storage/program'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
@@ -161,6 +161,7 @@ export function ProgramView({ program, sessions, editExerciseId, onTemplateAppli
                 <li key={exercise.id} ref={openedForm}>
                   <ExerciseForm
                     initial={exercise}
+                    schemeLocked={schemeIsFixed(sessions, exercise.id)}
                     effortScale={program.effortScale}
                     liftHasE1rm={(name) => liftHasE1rm(program, sessions, name)}
                     onSave={(e) => saveExercise((p) => updateExercise(p, e))}

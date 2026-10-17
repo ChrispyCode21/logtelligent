@@ -45,14 +45,14 @@ describe('guided seeding (SPEC §5.1)', () => {
 
   it("checks a step's stack before its starting numbers", () => {
     const blank = { weight: '', reps: '' }
-    expect(validateSeedStep(blank, 'accessory', true, undefined)).toEqual([
+    expect(validateSeedStep(blank, false, true, undefined)).toEqual([
       'Enter the stack weights, e.g. 10, 20, 30.',
       'Starting weight must be a number.',
     ])
-    expect(validateSeedStep({ weight: '20', reps: '' }, 'accessory', true, [10, Number.NaN])).toEqual([
+    expect(validateSeedStep({ weight: '20', reps: '' }, false, true, [10, Number.NaN])).toEqual([
       'Enter the stack weights, e.g. 10, 20, 30.',
     ])
-    expect(validateSeedStep({ weight: '20', reps: '' }, 'accessory', false, undefined)).toEqual([])
+    expect(validateSeedStep({ weight: '20', reps: '' }, false, false, undefined)).toEqual([])
   })
 
   it('leaves exercises that are not in the bank blank', () => {
@@ -93,28 +93,24 @@ describe('typed loads', () => {
 
 describe('starting numbers (SPEC §5.1)', () => {
   it('needs a weight of 0 or more', () => {
-    expect(validateSeed({ weight: '', reps: '' }, 'accessory')).toEqual(['Starting weight must be a number.'])
-    expect(validateSeed({ weight: 'heavy', reps: '' }, 'accessory')).toEqual([
-      'Starting weight must be a number.',
-    ])
-    expect(validateSeed({ weight: '-5', reps: '' }, 'accessory')).toEqual([
-      'Starting weight must be a number.',
-    ])
-    expect(validateSeed({ weight: '0', reps: '' }, 'accessory')).toEqual([])
+    expect(validateSeed({ weight: '', reps: '' }, false)).toEqual(['Starting weight must be a number.'])
+    expect(validateSeed({ weight: 'heavy', reps: '' }, false)).toEqual(['Starting weight must be a number.'])
+    expect(validateSeed({ weight: '-5', reps: '' }, false)).toEqual(['Starting weight must be a number.'])
+    expect(validateSeed({ weight: '0', reps: '' }, false)).toEqual([])
   })
 
   it('needs whole reps of at least 1 on a primary, and none on an accessory', () => {
     const reps = ['Starting reps must be at least 1.']
-    expect(validateSeed({ weight: '225', reps: '' }, 'primary')).toEqual(reps)
-    expect(validateSeed({ weight: '225', reps: '0' }, 'primary')).toEqual(reps)
-    expect(validateSeed({ weight: '225', reps: '4.5' }, 'primary')).toEqual(reps)
-    expect(validateSeed({ weight: '225', reps: '5' }, 'primary')).toEqual([])
+    expect(validateSeed({ weight: '225', reps: '' }, true)).toEqual(reps)
+    expect(validateSeed({ weight: '225', reps: '0' }, true)).toEqual(reps)
+    expect(validateSeed({ weight: '225', reps: '4.5' }, true)).toEqual(reps)
+    expect(validateSeed({ weight: '225', reps: '5' }, true)).toEqual([])
   })
 
   it("records a primary's reps, and an accessory's weight at the bottom of its range", () => {
     const repRange = { min: 12, max: 15 }
-    expect(toSeed({ weight: '225', reps: '5' }, 'primary', repRange)).toEqual({ weight: 225, reps: 5 })
-    expect(toSeed({ weight: '20', reps: '' }, 'accessory', repRange)).toEqual({ weight: 20, reps: 12 })
+    expect(toSeed({ weight: '225', reps: '5' }, true, repRange)).toEqual({ weight: 225, reps: 5 })
+    expect(toSeed({ weight: '20', reps: '' }, false, repRange)).toEqual({ weight: 20, reps: 12 })
   })
 })
 

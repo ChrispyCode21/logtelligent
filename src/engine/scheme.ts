@@ -1,7 +1,14 @@
 import { evaluateLinear, replayLinear, suggestLinear } from './linear'
 import { deriveState, evaluateSession } from './progression'
 import { suggestNext } from './suggest'
-import type { ExerciseConfig, ExerciseSession, LoggedSet, SessionOutcome, Suggestion } from './types'
+import type {
+  ExerciseConfig,
+  ExerciseSession,
+  LoggedSet,
+  SchemeId,
+  SessionOutcome,
+  Suggestion,
+} from './types'
 
 /**
  * A progression scheme (SPEC §8): how an exercise's finished history becomes its next session.
@@ -30,6 +37,10 @@ export const linear: ProgressionScheme = {
   evaluate: evaluateLinear,
   replay: replayLinear,
 }
+
+/** The name of the scheme a program exercise uses. */
+export const schemeId = (config: Pick<ExerciseConfig, 'progression'>): SchemeId =>
+  config.progression?.scheme ?? 'adaptive'
 
 /** The scheme a program exercise uses: Adaptive unless it sets another (SPEC §6). */
 export function schemeFor(config: ExerciseConfig): ProgressionScheme {

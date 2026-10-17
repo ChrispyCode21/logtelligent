@@ -7,6 +7,8 @@ import {
   type RepRange,
   type AdaptiveSuggestion,
   type LinearReason,
+  type SchemeId,
+  type SchemeSetting,
   type Tier,
 } from '../engine'
 import { effortSuffix, effortTarget, type EffortScale } from '../program/effort'
@@ -21,6 +23,8 @@ export const EQUIPMENT_LABELS: Record<EquipmentType, string> = {
 
 export const TIER_LABELS: Record<Tier, string> = { primary: 'Primary', accessory: 'Accessory' }
 
+export const SCHEME_LABELS: Record<SchemeId, string> = { adaptive: 'Adaptive', linear: 'Linear' }
+
 interface Prescription {
   tier: Tier
   sets: number
@@ -28,17 +32,28 @@ interface Prescription {
   unilateral: boolean
   equipment: EquipmentType
   targetRpe?: number
+  progression?: SchemeSetting
 }
 
+/** A rep range, `5–7`, or one number when its ends are equal: `5` (SPEC §5.1). */
+export const formatRepRange = (min: number, max: number) => (min === max ? `${min}` : `${min}–${max}`)
+
 /**
- * What an exercise asks for: `Primary · 3 × 5–7 · Barbell`, `Accessory · 3 × 10–12 per side · Dumbbell`.
- * With a scale, a primary also shows its first-set effort target: `Primary · 3 × 5–7 @ RPE 8 · Barbell`.
+ * What an exercise asks for: `Primary · 3 × 5–7 · Barbell`, `Accessory · 3 × 10–12 per side · Dumbbell`,
+ * `Primary · Linear +5 lb · 3 × 5 · Barbell`. With a scale, an Adaptive primary also shows its first-set
+ * effort target: `Primary · 3 × 5–7 @ RPE 8 · Barbell` (SPEC §5.1).
  */
 export function formatPrescription(e: Prescription, scale?: EffortScale) {
   const target =
-    scale && e.tier === 'primary' && e.targetRpe !== undefined ? effortTarget(scale, e.targetRpe) : ''
-  const reps = `${e.sets} × ${e.repRange.min}–${e.repRange.max}${e.unilateral ? ' per side' : ''}${target}`
-  return `${TIER_LABELS[e.tier]} · ${reps} · ${EQUIPMENT_LABELS[e.equipment]}`
+    scale && e.tier === 'primary' && !e.progression && e.targetRpe !== undefined
+      ? effortTarget(scale, e.targetRpe)
+      : ''
+  const range = formatRepRange(e.repRange.min, e.repRange.max)
+  const reps = `${e.sets} × ${range}${e.unilateral ? ' per side' : ''}${target}`
+  const scheme = e.progression
+    ? ` · ${SCHEME_LABELS[e.progression.scheme]} +${e.progression.increment} lb`
+    : ''
+  return `${TIER_LABELS[e.tier]}${scheme} · ${reps} · ${EQUIPMENT_LABELS[e.equipment]}`
 }
 
 /** `225 × 4 @ 8` (`225 × 4 · 2 left`, `225 × 4 · Challenging` in other scales), or `225 × 4` without effort. */
