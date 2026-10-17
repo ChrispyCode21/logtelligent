@@ -6,6 +6,10 @@ To release: in a PR, move the "Unreleased" notes under a new version heading, bu
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-17
+
+Linear progression: pick it for any exercise, or start from the new 3-day Novice A/B template, and the weight goes up every successful session.
+
 ### Added
 
 - **3-day Novice A/B template:** two workouts alternated three days a week (squat, bench or overhead press, and deadlift), every lift 5 reps on Linear progression: +5 lb each successful session, +10 lb on the deadlift.
