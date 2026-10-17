@@ -96,9 +96,13 @@ test('sets up the 3-day Novice A/B: a starting weight for each lift, then Linear
 }) => {
   await tab(page, 'Program').click()
   await page.getByRole('button', { name: 'Use 3-day Novice A/B' }).click()
-  await finishWalkthrough(page, async () => {
+  // Once per lift: Workout B's squat and deadlift share Workout A's (SPEC §6.10).
+  const asked: string[] = []
+  await finishWalkthrough(page, async (exercise) => {
     await expect(page.getByLabel('Starting weight (lb)')).toBeVisible()
+    asked.push(await exercise.innerText())
   })
+  expect(asked).toEqual(['Back Squat', 'Bench Press', 'Deadlift', 'Overhead Press'])
   await expect(page.getByRole('button', { name: 'Start Workout A' })).toBeVisible()
   await expect(exerciseCard(page, 'Deadlift').getByText(/× 5$/)).toBeVisible()
   await expect(exerciseCard(page, 'Deadlift').getByText(/^1 set · 5 reps/)).toBeVisible()

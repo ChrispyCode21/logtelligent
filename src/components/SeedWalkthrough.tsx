@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { schemeId } from '../engine'
 import { findBankExercise } from '../program/bank'
-import { latestInLift, needsStartingNumbers } from '../history/lifts'
-import { activeDays, activeExercises, updateExercise } from '../program/program'
+import { latestInLift, needsStartingNumbers, startingNumbersStep } from '../history/lifts'
+import { activeDays, updateExercise } from '../program/program'
 import {
   needsStack,
   seedPrefill,
@@ -40,8 +40,8 @@ export function SeedWalkthrough({ program, sessions, onClose }: Props) {
   // cable/machine exercise.
   const [lastStack, setLastStack] = useState<StackPick>({ choice: '5', custom: '' })
   const days = activeDays(program)
-  const all = activeExercises(program)
   const missing = needsStartingNumbers(program, sessions)
+  const place = startingNumbersStep(program, sessions)
   const exercise = missing[0]
   if (!exercise) return null
   const day = days.find((d) => d.exercises.some((e) => e.id === exercise.id))!
@@ -57,7 +57,7 @@ export function SeedWalkthrough({ program, sessions, onClose }: Props) {
       key={exercise.id}
       exercise={exercise}
       dayName={day.name}
-      progress={`${all.length - missing.length + 1} of ${all.length}`}
+      progress={`${place.step} of ${place.of}`}
       last={missing.length === 1}
       initialStack={lastStack}
       liftWeight={latestInLift(program, sessions, exercise.name)?.weight}

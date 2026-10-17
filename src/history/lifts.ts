@@ -112,6 +112,17 @@ export function needsStartingNumbers(program: Program, sessions: Session[]): Pro
 }
 
 /**
+ * The walkthrough's place, "step of total" (SPEC §5.1), counting progressions rather than
+ * exercises: a Linear group shares one set of starting numbers (§6.10), so it's one step.
+ */
+export function startingNumbersStep(program: Program, sessions: Session[]): { step: number; of: number } {
+  const groups = (exercises: ProgramExercise[]) =>
+    new Set(exercises.map((e) => progressionGroup(program, e)[0]?.id ?? e.id)).size
+  const total = groups(activeExercises(program))
+  return { step: total - groups(needsStartingNumbers(program, sessions)) + 1, of: total }
+}
+
+/**
  * The lift's most recently logged exercise, where a new exercise in the lift copies its equipment
  * and loads from, and the starting weight an accessory is pre-filled with: the first counted set of
  * the latest session that wasn't a deload week (SPEC §6.9). Replaced sessions don't count.
