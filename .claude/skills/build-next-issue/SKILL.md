@@ -41,11 +41,15 @@ Settled decisions stay settled: a decision in any of those threads, in SPEC.md, 
 
 ## 4. Questions, or build
 
-Ask only when behavior is truly open: something SPEC.md, the issue and the threads leave undecided that changes what the user sees or what's stored, or an issue whose scope is open. Never ask about labels, wording, placement on the screen or validation limits: choose sensibly, don't write them into SPEC.md, and list them in the PR under "Worth your attention". If the issue is too big for one PR, propose a split (titles, one line each, and blockers) as a question; the owner creates the sub-issues.
+Ask only when behavior is truly open: something SPEC.md, the issue and the threads leave undecided that changes what the user sees or what's stored, or an issue whose scope is open. Never ask about labels, wording, placement on the screen or validation limits: choose sensibly, don't write them into SPEC.md, and list them in the PR under "Worth your attention". If the issue is too big for one PR, propose a split (titles, one line each, and blockers) as a question.
+
+**Answers that call for new issues** (a split accepted, or another issue the owner's answer asks for) are the go-ahead to create them; don't ask again. Create each in the issue's milestone as a settled spec, with the owner's answers folded in and no open questions, in the Task form's sections. Make them sub-issues of the issue (`gh api -X POST 'repos/{owner}/{repo}/issues/<n>/sub_issues' -F sub_issue_id=<id>`, where `<id>` is the new issue's `.id`, not its number), and add the blockers the split names (`gh api -X POST 'repos/{owner}/{repo}/issues/<later>/dependencies/blocked_by' -F issue_id=<earlier's id>`). Rewrite the issue's body as the settled spec of what's left to it, and comment the split on it in one line. Then go back to step 2: the new issues are candidates, and the parent waits for them.
 
 **Questions:** post one comment with numbered questions, each with a recommended default and the settled decisions it builds on, add the `agent-needs-info` label, and go back to step 3 with the next candidate. The owner answers in the thread and removes the label; a later run builds it.
 
-**Build** the first candidate with nothing to ask (at most one per run), then stop.
+**Numbers:** an issue that adds or changes progression rules (`src/engine/`) has its §7 worked examples approved on the issue before it's built, since a wrong number passes tests written from it. Once nothing is left to ask, post the new and changed §7 examples as tables of numbers, with their proposed IDs, in one comment, add `agent-needs-info`, and go back to step 3 as for questions. The owner's reply approving them is the go-ahead. A reply that changes a number is a decision: post the revised tables for approval again. The PR's §7 examples are the approved tables as posted. All discussion stays on the issue: the PR is never a draft and never asks the owner to settle anything.
+
+**Build** the first candidate with nothing to ask or approve (at most one per run), then stop.
 
 ## 5. Build it
 
