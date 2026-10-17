@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto'
 import Dexie from 'dexie'
+import { adaptive, schemeFor } from '../engine'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { Program } from '../program/types'
 import type { Session } from '../session/types'
@@ -38,9 +39,9 @@ afterEach(async () => {
 })
 
 describe('database upgrades', () => {
-  it('is at version 6; a new version needs an upgrade test from the one before it, then this bump', async () => {
+  it('is at version 7; a new version needs an upgrade test from the one before it, then this bump', async () => {
     await db.open()
-    expect(db.verno).toBe(6)
+    expect(db.verno).toBe(7)
   })
 
   it('opens a v1 database (sessions only) with its sessions intact', async () => {
@@ -62,7 +63,31 @@ describe('database upgrades', () => {
     expect((await db.programs.get('main'))?.effortScale).toBe('perceived')
   })
 
-  it('opens a v5 database, the version before this one, unchanged (extra sets, notes)', async () => {
+  it('opens a v6 database, the version before this one, with its exercises unchanged and Adaptive', async () => {
+    const bench = {
+      id: 'bench',
+      name: 'Bench Press',
+      tier: 'primary',
+      repRange: { min: 5, max: 7 },
+      targetRpe: 8,
+      sets: 3,
+      equipment: 'barbell',
+      maxRelativeJump: 0.1,
+      unilateral: false,
+      seed: { weight: 225, reps: 5 },
+    } as const
+    const program: Program = {
+      ...v2Program,
+      effortScale: 'rpe',
+      days: [{ id: 'upper-a', name: 'Upper A', exercises: [bench] }],
+    }
+    await saveAtVersion(6, { programs: [program], sessions: [session] })
+    const stored = await db.programs.get('main')
+    expect(stored).toEqual(program)
+    expect(schemeFor(stored!.days[0].exercises[0])).toBe(adaptive)
+  })
+
+  it('opens a v5 database unchanged (extra sets, notes)', async () => {
     const v5Session: Session = {
       ...session,
       note: 'Felt strong',

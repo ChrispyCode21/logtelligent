@@ -4,6 +4,9 @@ import type { Program, ProgramDay, ProgramExercise } from './types'
 /** The max relative load jump is fixed for every exercise; it's not in the form (SPEC §6.1). */
 export const MAX_RELATIVE_JUMP = 0.1
 
+/** Linear's increment in lb: the default for an exercise the user sets to Linear (SPEC §6.10), and its limits. */
+export const LINEAR_INCREMENT = { initial: 5, min: 0.5, max: 100 } as const
+
 /** What a new user starts with, before anything is saved. */
 export const EMPTY_PROGRAM: Program = { id: 'main', days: [], effortScale: DEFAULT_EFFORT_SCALE }
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { Program, ProgramExercise } from '../program/types'
 import type { Session } from '../session/types'
 import { backupFilename, buildBackup, parseBackup } from './backup'
 
@@ -110,6 +111,48 @@ describe('JSON backup (SPEC §2)', () => {
       json.sessions[0].exercises[0].prescription = prescription
       expect(() => parseBackup(JSON.stringify(json))).toThrow('sessions[0].exercises[0].prescription')
     }
+  })
+
+  describe('progression scheme (SPEC §6.1)', () => {
+    const squat: ProgramExercise = {
+      id: 'squat',
+      name: 'Squat',
+      tier: 'primary',
+      repRange: { min: 5, max: 5 },
+      targetRpe: 8,
+      sets: 3,
+      equipment: 'barbell',
+      maxRelativeJump: 0.1,
+      unilateral: false,
+      progression: { scheme: 'linear', increment: 2.5 },
+    }
+    const withSquat = (e: object) => ({
+      ...program,
+      days: [{ id: 'lower-a', name: 'Lower A', exercises: [e] }],
+    })
+
+    it('round-trips a Linear exercise and its increment', () => {
+      const backup = buildBackup(withSquat(squat) as Program, [], new Date('2026-10-04T12:00:00Z'))
+      expect(parseBackup(JSON.stringify(backup))).toEqual(backup)
+    })
+
+    it('reads an exercise from before schemes as Adaptive: no scheme stored', () => {
+      const { progression: _, ...old } = squat
+      const backup = buildBackup(withSquat(old) as Program, [], new Date())
+      expect(parseBackup(JSON.stringify(backup)).program?.days[0].exercises[0]).toEqual(old)
+    })
+
+    it('rejects an unknown scheme or an increment out of bounds', () => {
+      for (const progression of [
+        { scheme: 'waves', increment: 5 },
+        { scheme: 'linear', increment: 0 },
+        { scheme: 'linear', increment: 500 },
+        { scheme: 'linear' },
+      ]) {
+        const backup = buildBackup(withSquat({ ...squat, progression }) as Program, [], new Date())
+        expect(() => parseBackup(JSON.stringify(backup))).toThrow('program.days[0].exercises[0].progression')
+      }
+    })
   })
 
   it('rejects a note that is empty or over 200 characters', () => {
