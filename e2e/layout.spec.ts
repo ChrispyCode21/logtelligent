@@ -178,3 +178,10 @@ test('Program: the exercise form with Linear picked, and with its scheme fixed',
   await page.getByRole('button', { name: /^Bench Press/ }).click()
   await expectFitsScreen(page, 'exercise form, scheme fixed', page.getByText(/^Fixed once it's been logged/))
 })
+
+test('every step of the 3-day Novice A/B walkthrough', async ({ page }) => {
+  await tab(page, 'Program').click()
+  await page.getByRole('button', { name: 'Use 3-day Novice A/B' }).click()
+  await finishWalkthrough(page, (exercise) => expectFitsScreen(page, 'Novice walkthrough step', exercise))
+  await expectFitsScreen(page, 'Today, Workout A', page.getByRole('button', { name: 'Start Workout A' }))
+})

@@ -5,6 +5,7 @@ import {
   exerciseCard,
   expect,
   expectConfirm,
+  finishWalkthrough,
   historyRows,
   logASession,
   logSets,
@@ -88,4 +89,19 @@ test('sets an exercise to Linear and logs it with no effort, which then fixes it
   await page.getByRole('button', { name: /^Bench Press/ }).click()
   await expect(page.getByText(/^Fixed once it's been logged/)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Adaptive', exact: true })).toHaveCount(0)
+})
+
+test('sets up the 3-day Novice A/B: a starting weight for each lift, then Linear suggestions', async ({
+  page,
+}) => {
+  await tab(page, 'Program').click()
+  await page.getByRole('button', { name: 'Use 3-day Novice A/B' }).click()
+  await finishWalkthrough(page, async () => {
+    await expect(page.getByLabel('Starting weight (lb)')).toBeVisible()
+  })
+  await expect(page.getByRole('button', { name: 'Start Workout A' })).toBeVisible()
+  await expect(exerciseCard(page, 'Deadlift').getByText(/× 5$/)).toBeVisible()
+
+  await tab(page, 'Program').click()
+  await expect(page.getByText('Primary · Linear +10 lb · 1 × 5 · Barbell')).toHaveCount(2)
 })

@@ -6,6 +6,7 @@ import { applyTemplate, TEMPLATES, templateDays, type ProgramTemplate } from './
 import type { Program } from './types'
 
 const upperLower = TEMPLATES[0]
+const novice = TEMPLATES[1]
 
 describe('program templates (SPEC §5.1)', () => {
   it('uses only bank exercises, with settings the exercise form would accept (SPEC §6.1, §6.10)', () => {
@@ -109,6 +110,33 @@ describe('program templates (SPEC §5.1)', () => {
         .flatMap((d) => d.exercises)
         .every((e) => e.unilateral),
     ).toBe(true)
+  })
+})
+
+describe('the 3-day Novice A/B template (SPEC §5.1)', () => {
+  const days = templateDays(novice)
+  const summary = (d: (typeof days)[number]) =>
+    d.exercises.map((e) => [e.name, e.tier, e.sets, e.repRange, e.progression])
+  const linear = (increment: number) => ({ scheme: 'linear', increment })
+  const five = { min: 5, max: 5 }
+
+  it('alternates Workout A and B, every exercise a primary on Linear at 5–5, +5 lb, the deadlift +10 lb', () => {
+    expect(days.map((d) => d.name)).toEqual(['Workout A', 'Workout B'])
+    expect(summary(days[0])).toEqual([
+      ['Back Squat', 'primary', 3, five, linear(5)],
+      ['Bench Press', 'primary', 3, five, linear(5)],
+      ['Deadlift', 'primary', 1, five, linear(10)],
+    ])
+    expect(summary(days[1])).toEqual([
+      ['Back Squat', 'primary', 3, five, linear(5)],
+      ['Overhead Press', 'primary', 3, five, linear(5)],
+      ['Deadlift', 'primary', 1, five, linear(10)],
+    ])
+  })
+
+  it('says how it progresses and resets', () => {
+    expect(novice.description).toMatch(/every successful session/)
+    expect(novice.description).toMatch(/three times in a row resets 10% lighter/)
   })
 })
 
