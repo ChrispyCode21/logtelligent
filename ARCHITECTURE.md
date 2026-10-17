@@ -40,7 +40,7 @@ public/
   _headers        HTTP security headers (served by Cloudflare; applied by `vite preview` too)
   logo.svg        Source for all generated icons (pwa-assets.config.ts)
 scripts/
-  check-all.mjs             Every CI check in CI's order, full output only for failures (`npm run check:all`)
+  check-all.mjs             Every CI check in CI's order, full output only for failures (`npm run check:all`; `--fast` for `check:fast`)
   check-spec-coverage.mjs   CI: every SPEC §7 example ID has a test named with it
   check-conventions.mjs     CI: primitives over raw elements, tokens over raw CSS values, shared formatters, progression through the scheme
   changelog-section.mjs     CI/release: extracts a version's CHANGELOG section
@@ -135,9 +135,9 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Agent pipeline
 
-Issues labeled `agent-ready` are built by Claude in GitHub Actions and arrive as PRs through the same gates as any other. A local reviewer on the owner's machine reviews each one, fixes it and merges it, or holds it for the owner (PIPELINE.md, "Local reviewer").
+Two desktop scheduled tasks on the owner's machine, run on the owner's Claude plan, work through the lowest open version milestone. A local builder builds its next unblocked issue and opens a PR (or asks numbered questions on the issue), one PR at a time, and those PRs pass the same gates as any other. A local reviewer reviews each one, fixes it and merges it, or holds it for the owner. The GitHub Actions version (`agent.yml`) is disabled.
 
-- **Labels:** `agent-ready`: build this (the owner adds it; the agent on its own sub-issues and release issues, and on the next issue in a milestone once an agent PR there merges and nothing else is in flight, see PIPELINE.md). `agent-needs-info`: the agent asked questions and stopped; answer, then re-add `agent-ready`. `agent-followup`: found by the local reviewer, needs the owner's look first. `reviewed`: the local reviewer has reviewed the PR. `touches-data`: the PR changes what's stored. `touches-gates`: the PR changes the checks, lint, config, headers or hosting.
+- **Labels:** `agent-needs-info`: the builder asked questions and skips the issue; answer, then remove the label. `agent-followup`: found by the local reviewer, needs the owner's look first (put it in a milestone and remove the label to have it built). `reviewed`: the local reviewer has reviewed the PR. `touches-data`: the PR changes what's stored. `touches-gates`: the PR changes the checks, lint, config, headers or hosting.
 - **Merge safety:** the owner reads and merges `touches-data` and `touches-gates` PRs (green means less if the checks changed), exporting a backup on the phone before merging a `touches-data` one: reverting can't undo an upgrade already applied to real data.
 
 The design and rules, including what the agent may never do (also in CLAUDE.md): [`.github/agent/PIPELINE.md`](.github/agent/PIPELINE.md).
