@@ -1,4 +1,4 @@
-# Something that doesn't work as SPEC.md says. Add `agent-ready` when it's ready to fix
+# Something that doesn't work as SPEC.md says. Put it in a version's milestone to have it fixed
 # (.github/agent/PIPELINE.md).
 name: Bug
 description: Something that doesn't work as it should.
@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Add the **`agent-ready`** label when this is ready to fix. Claude comments numbered questions if it can't tell what's expected.
+        Put it in a version's milestone to have it fixed. Claude comments numbered questions if it can't tell what's expected.
   - type: textarea
     id: happened
     attributes:

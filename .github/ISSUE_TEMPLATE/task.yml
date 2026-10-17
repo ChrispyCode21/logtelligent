@@ -1,5 +1,5 @@
-# A feature, change or cleanup. Fill it in, then add `agent-ready` when it's ready to build
-# (.github/agent/PIPELINE.md). Triage reads every field; anything left open becomes a question.
+# A feature, change or cleanup. Fill it in and put it in a version's milestone to have it built
+# (.github/agent/PIPELINE.md). The builder reads every field; anything left open becomes a question.
 name: Task
 description: A feature, change or cleanup to build.
 labels: [enhancement]
@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Add the **`agent-ready`** label when this is ready to build. Claude checks it against SPEC.md first and comments numbered questions if anything is open; answer with numbered replies and re-add the label.
+        Put it in a version's milestone to have it built. Claude checks it against SPEC.md first and comments numbered questions (labeled `agent-needs-info`) if anything is open; answer with numbered replies and remove the label.
   - type: textarea
     id: what
     attributes:
