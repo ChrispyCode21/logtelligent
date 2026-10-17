@@ -72,7 +72,7 @@ Each day has a fixed set of exercises. Upper A and Upper B use different exercis
 - **Upper B:** Overhead Press, Pull-Up, Incline Dumbbell Press, Seated Cable Row, Dumbbell Curl, Face Pull
 - **Lower B:** Deadlift, Bulgarian Split Squat, Leg Extension, Seated Leg Curl, Hanging Leg Raise
 
-Templates are offered while the program has no active days, with building your own as the alternative; switching from another program is "Change your program" first (§5.5). Applying one needs no confirm. It produces a normal, fully editable program, its days added after any archived ones; the effort scale is kept. Each template exercise joins the lift of the same name (§6.9).
+Templates are offered while the program has no active days, with building your own as the alternative; switching from another program is "Change your program" first (§5.5). Applying one needs no confirm. It produces a normal, fully editable program, its days added after any archived ones; the effort scale is kept. Each template exercise joins the lift of the same name (§6.9). A template can set each exercise's sets, rep range, target RPE, tier and scheme with its settings, copied in when it's applied; anything it doesn't set is the bank's default. The same bank exercise can appear on several days with different settings.
 
 **Guided starting-numbers walkthrough:** after picking a template, and from Today's seed gate for any program with exercises missing starting numbers. One screen per exercise still missing them; the seed gate's rules are unchanged.
 - **Next** saves that exercise's starting numbers straight away. **Finish later** leaves; the seed gate resumes at the first exercise still missing numbers. There is no Back button (edit an exercise on the Program tab instead).
