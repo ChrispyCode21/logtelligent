@@ -18,9 +18,6 @@ export interface ProgramTemplate {
   days: { name: string; exercises: TemplateExercise[] }[]
 }
 
-/** The bank id of a template exercise. */
-export const templateBankId = (entry: TemplateExercise) => (typeof entry === 'string' ? entry : entry.bank)
-
 export const TEMPLATES: ProgramTemplate[] = [
   {
     id: 'upper-lower-4',
@@ -74,11 +71,9 @@ export function templateDays(template: ProgramTemplate): ProgramDay[] {
     id: crypto.randomUUID(),
     name: day.name,
     exercises: day.exercises.map((entry) => {
-      const bankId = templateBankId(entry)
-      const e = BANK.find((b) => b.id === bankId)
-      if (!e) throw new Error(`Template ${template.id} uses unknown bank exercise ${bankId}`)
-      if (typeof entry === 'string') return exerciseFromBank(e)
-      const { bank: _, ...settings } = entry
+      const { bank, ...settings } = typeof entry === 'string' ? { bank: entry } : entry
+      const e = BANK.find((b) => b.id === bank)
+      if (!e) throw new Error(`Template ${template.id} uses unknown bank exercise ${bank}`)
       // Copied, so editing the program never changes the template.
       return structuredClone({ ...exerciseFromBank(e), ...settings })
     }),

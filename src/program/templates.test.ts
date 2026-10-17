@@ -1,16 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import { BANK, exerciseFromBank } from './bank'
 import { activeDays, clearProgram, EMPTY_PROGRAM, missingSeeds } from './program'
-import { applyTemplate, templateBankId, TEMPLATES, templateDays, type ProgramTemplate } from './templates'
+import { LINEAR_INCREMENT } from './program'
+import { applyTemplate, TEMPLATES, templateDays, type ProgramTemplate } from './templates'
 import type { Program } from './types'
 
 const upperLower = TEMPLATES[0]
 
 describe('program templates (SPEC §5.1)', () => {
-  it('uses only bank exercises', () => {
-    for (const t of TEMPLATES)
-      for (const day of t.days)
-        for (const e of day.exercises) expect(BANK.map((b) => b.id)).toContain(templateBankId(e))
+  it('uses only bank exercises, with settings the exercise form would accept (SPEC §6.1, §6.10)', () => {
+    for (const t of TEMPLATES) {
+      // templateDays throws on an unknown bank id.
+      for (const e of templateDays(t).flatMap((d) => d.exercises)) {
+        expect(e.repRange.min).toBeLessThanOrEqual(e.repRange.max)
+        expect(e.tier === 'primary' && e.equipment === 'bodyweight').toBe(false)
+        if (e.progression) {
+          expect(e.repRange.min).toBe(e.repRange.max)
+          expect(e.progression.increment).toBeGreaterThanOrEqual(LINEAR_INCREMENT.min)
+          expect(e.progression.increment).toBeLessThanOrEqual(LINEAR_INCREMENT.max)
+        }
+      }
+    }
   })
 
   it('ships the decided 4-day Upper/Lower', () => {
@@ -163,7 +173,8 @@ describe('template settings (SPEC §5.1)', () => {
   })
 
   it('copies the settings, so editing the program leaves the template alone', () => {
-    day1.exercises[0].repRange.max = 99
+    const [own] = templateDays(tiered)
+    own.exercises[0].repRange.max = 99
     expect(templateDays(tiered)[0].exercises[0].repRange).toEqual({ min: 3, max: 3 })
   })
 })
