@@ -44,5 +44,5 @@ export const schemeId = (config: Pick<ExerciseConfig, 'progression'>): SchemeId 
 
 /** The scheme a program exercise uses: Adaptive unless it sets another (SPEC §6). */
 export function schemeFor(config: ExerciseConfig): ProgressionScheme {
-  return config.progression?.scheme === 'linear' ? linear : adaptive
+  return schemeId(config) === 'linear' ? linear : adaptive
 }

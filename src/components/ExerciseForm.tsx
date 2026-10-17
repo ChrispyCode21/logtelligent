@@ -107,8 +107,12 @@ export function ExerciseForm({
       </Field>
 
       {schemeLocked ? (
-        <Field label="Progression" hint="Fixed once it's been logged. To change it, add the exercise again.">
-          <p className="scheme-name">{SCHEME_LABELS[form.scheme]}</p>
+        <Field
+          as="fieldset"
+          label="Progression"
+          hint="Fixed once it's been logged. To change it, add the exercise again."
+        >
+          <p>{SCHEME_LABELS[form.scheme]}</p>
         </Field>
       ) : (
         <Field as="fieldset" label="Progression">

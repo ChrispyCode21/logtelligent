@@ -102,7 +102,8 @@ function SeedStep({
   const bank = findBankExercise(exercise.name)
   const { min } = exercise.repRange
 
-  const errors = validateSeedStep(seed, seedHasReps(exercise.tier, schemeId(exercise)), askStack, loads)
+  const withReps = seedHasReps(exercise.tier, schemeId(exercise))
+  const errors = validateSeedStep(seed, withReps, askStack, loads)
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -112,7 +113,7 @@ function SeedStep({
       {
         ...exercise,
         loads,
-        seed: toSeed(seed, seedHasReps(exercise.tier, schemeId(exercise)), exercise.repRange),
+        seed: toSeed(seed, withReps, exercise.repRange),
       },
       askStack ? stack : undefined,
     )
@@ -151,7 +152,7 @@ function SeedStep({
 
       <SeedFields
         tier={exercise.tier}
-        withReps={seedHasReps(exercise.tier, schemeId(exercise))}
+        withReps={withReps}
         name={exercise.name}
         minReps={String(min)}
         unilateral={exercise.unilateral}
