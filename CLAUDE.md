@@ -21,7 +21,7 @@ CHANGELOG.md isn't on this list: only its "Unreleased" section matters to new wo
 ## Stack
 
 - React + TypeScript, built with Vite.
-- Dexie (IndexedDB) for local-only storage. No backend; data never leaves the device except by user export.
+- Dexie (IndexedDB) as the local-first store the app reads and writes. Server storage (a Worker + Cloudflare D1, synced in the background) is planned in #64; until it ships, data leaves the device only by user export.
 - vite-plugin-pwa for install + offline.
 - Vitest for tests; oxlint for lint; Prettier for formatting.
 - Hosted on Cloudflare (Workers static assets, `wrangler.jsonc`), with security headers in `public/_headers`.

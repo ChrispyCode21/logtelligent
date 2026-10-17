@@ -14,7 +14,7 @@ Hand-typed workout notes (e.g. in Apple Notes) record what happened but don't te
 
 - **PWA** (installable web app, added to the iPhone home screen). No App Store.
 - **React + TypeScript**, built with **Vite**.
-- **Local-only data** in the browser's IndexedDB, via **Dexie**. No backend, no accounts. Data never leaves the device except through a backup the user exports.
+- **Local-first data** in the browser's IndexedDB, via **Dexie**: the app reads and writes on the device, so it works offline. Data is also to be kept in a server database (Cloudflare D1), synced in the background: under way in #64. Until that ships, data leaves the device only through a backup the user exports.
 - **Offline-capable** (service worker via `vite-plugin-pwa`) — gym signal is unreliable.
 - **Free static hosting** on Cloudflare (ARCHITECTURE.md, "Hosting and security").
 - **Pounds only.**
@@ -28,7 +28,6 @@ Not part of the app; adding one is a scoping decision for the owner:
 - Rest timer (rest is self-judged).
 - Push notifications / reminders.
 - Apple Watch or Apple Health integration.
-- Cloud sync, accounts, or any backend.
 - LLM / AI coaching.
 - Native iOS app or App Store distribution.
 - Logging warm-up sets.
