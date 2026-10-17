@@ -8,6 +8,7 @@ import {
   formatLinearReason,
   formatPlanNote,
   formatPrescription,
+  formatRepRange,
   formatSet,
   formatSetCount,
   formatSets,
@@ -138,6 +139,22 @@ describe('formatPrescription (SPEC §5.1)', () => {
 
   it('shows tier, sets × reps and the equipment label', () => {
     expect(formatPrescription(bench)).toBe('Primary · 3 × 5–7 · Barbell')
+  })
+
+  it('shows a Linear exercise’s scheme and increment, one rep number and no effort target', () => {
+    const squat = {
+      ...bench,
+      repRange: { min: 5, max: 5 },
+      progression: { scheme: 'linear', increment: 5 },
+    } as const
+    expect(formatPrescription(squat, 'rpe')).toBe('Primary · Linear +5 lb · 3 × 5 · Barbell')
+  })
+
+  it('shows a range with equal ends as one number, whatever the scheme', () => {
+    expect(formatPrescription({ ...bench, repRange: { min: 5, max: 5 } }, 'rpe')).toBe(
+      'Primary · 3 × 5 @ RPE 8 · Barbell',
+    )
+    expect(formatRepRange(8, 12)).toBe('8–12')
   })
 
   it('adds a primary’s effort target in the scale given', () => {

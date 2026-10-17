@@ -5,6 +5,7 @@ import {
   addSet,
   allSetsLogged,
   canFinish,
+  effortAsked,
   hasAnySets,
   hasRequiredEffort,
   loggedSetCount,
@@ -75,17 +76,17 @@ describe('the session tally, "Only X of Y sets logged" (SPEC §5.2)', () => {
 
 describe("a primary's first-set effort (SPEC §6.3)", () => {
   it('is needed on a primary, not on an accessory', () => {
-    expect(hasRequiredEffort('primary', [set])).toBe(false)
-    expect(hasRequiredEffort('primary', [{ ...set, rpe: 8 }, set])).toBe(true)
-    expect(hasRequiredEffort('accessory', [set])).toBe(true)
+    expect(hasRequiredEffort({ tier: 'primary' }, [set])).toBe(false)
+    expect(hasRequiredEffort({ tier: 'primary' }, [{ ...set, rpe: 8 }, set])).toBe(true)
+    expect(hasRequiredEffort({ tier: 'accessory' }, [set])).toBe(true)
   })
 
   it('goes missing when set 1 is deleted and set 2 has none', () => {
-    expect(hasRequiredEffort('primary', removeSet([{ ...set, rpe: 8 }, set], 0))).toBe(false)
+    expect(hasRequiredEffort({ tier: 'primary' }, removeSet([{ ...set, rpe: 8 }, set], 0))).toBe(false)
   })
 
   it('is not needed with no sets', () => {
-    expect(hasRequiredEffort('primary', [])).toBe(true)
+    expect(hasRequiredEffort({ tier: 'primary' }, [])).toBe(true)
   })
 })
 
@@ -186,10 +187,20 @@ describe('set editing (one working weight, SPEC §6.3)', () => {
   })
 
   describe('finishing a session', () => {
-    const tierOf = (id: string) => (id === 'bench' ? 'primary' : 'accessory')
+    const tierOf = (id: string) => ({ tier: id === 'bench' ? ('primary' as const) : ('accessory' as const) })
 
     it('needs at least one logged set', () => {
       expect(canFinish([{ exerciseId: 'bench', sets: [] }], tierOf)).toBe(false)
+    })
+
+    it('leaves effort optional on a Linear primary (SPEC §6.10)', () => {
+      const linear = { tier: 'primary', progression: { scheme: 'linear', increment: 5 } } as const
+      const squat = { exerciseId: 'squat', sets: [{ weight: 225, reps: 5 }] }
+      expect(canFinish([squat], () => linear)).toBe(true)
+      expect(effortAsked(linear, 0)).toBe('optional')
+      expect(effortAsked(linear, 1)).toBeUndefined()
+      expect(effortAsked({ tier: 'primary' }, 0)).toBe('required')
+      expect(effortAsked({ tier: 'accessory' }, 0)).toBeUndefined()
     })
 
     it('needs an RPE on the first set of each logged primary lift', () => {
@@ -209,7 +220,7 @@ describe('set editing (one working weight, SPEC §6.3)', () => {
 })
 
 describe('finishing with the exercise menu (SPEC §5.2)', () => {
-  const tierOf = (id: string) => (id === 'bench' ? 'primary' : 'accessory')
+  const tierOf = (id: string) => ({ tier: id === 'bench' ? ('primary' as const) : ('accessory' as const) })
 
   it('a replaced primary counts its substitute sets and needs no RPE', () => {
     const logs = [
@@ -261,8 +272,8 @@ describe('extra sets (SPEC §5.2)', () => {
 
   it('never need or supply set 1’s effort, and never become set 1 on a delete', () => {
     const primary = (i: number) => i === 0
-    expect(hasRequiredEffort('primary', [x(185, 8)])).toBe(true)
-    expect(hasRequiredEffort('primary', [{ ...set, rpe: 8 }, x(185, 8)])).toBe(true)
+    expect(hasRequiredEffort({ tier: 'primary' }, [x(185, 8)])).toBe(true)
+    expect(hasRequiredEffort({ tier: 'primary' }, [{ ...set, rpe: 8 }, x(185, 8)])).toBe(true)
     expect(removalNeedsEffort([{ ...set, rpe: 8 }, x(185, 8)], 0, primary)).toBe(false)
   })
 

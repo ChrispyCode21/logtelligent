@@ -49,3 +49,9 @@ db.version(6).stores({
   sessions: '++id, startedAt',
   programs: 'id',
 })
+// v7: a program exercise may carry a `progression` scheme and its settings (SPEC §6.1). No index
+// change and no upgrade: one without it is Adaptive, as every exercise was before.
+db.version(7).stores({
+  sessions: '++id, startedAt',
+  programs: 'id',
+})

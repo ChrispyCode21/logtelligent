@@ -163,3 +163,18 @@ test('Program: days, the exercise form and picker, and after changing programs',
     page.getByRole('button', { name: 'Use 4-day Upper/Lower' }),
   )
 })
+
+test('Program: the exercise form with Linear picked, and with its scheme fixed', async ({ page }) => {
+  await setUpFromTemplate(page)
+  await tab(page, 'Program').click()
+  await page.getByRole('button', { name: /^Bench Press/ }).click()
+  await page.getByRole('button', { name: 'Linear', exact: true }).click()
+  await expectFitsScreen(page, 'exercise form, Linear', page.getByLabel('Increase each session (lb)'))
+  await page.getByRole('button', { name: 'Save exercise' }).click()
+  await expectFitsScreen(page, 'Program with a Linear exercise', page.getByText(/· Linear \+5 lb ·/))
+
+  await restore(page)
+  await tab(page, 'Program').click()
+  await page.getByRole('button', { name: /^Bench Press/ }).click()
+  await expectFitsScreen(page, 'exercise form, scheme fixed', page.getByText(/^Fixed once it's been logged/))
+})

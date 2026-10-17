@@ -4,6 +4,7 @@ import {
   dayHasHistory,
   emptyOpenSessions,
   exerciseHasHistory,
+  schemeIsFixed,
   exerciseHistory,
   lastLoggedDayId,
   lastNoteFor,
@@ -144,6 +145,15 @@ describe('history when removing from the program (SPEC §6.1)', () => {
     startedAt: '2026-10-01T10:00:00Z',
     finishedAt: finished ? '2026-10-01T11:00:00Z' : undefined,
     exercises,
+  })
+
+  describe('schemeIsFixed (SPEC §6.1)', () => {
+    it('fixes the scheme once a finished session has sets for the exercise, not for an open one', () => {
+      const logged = [{ exerciseId: 'bench', sets: [set] }]
+      expect(schemeIsFixed([session(1, 'a', true, logged)], 'bench')).toBe(true)
+      expect(schemeIsFixed([session(1, 'a', false, logged)], 'bench')).toBe(false)
+      expect(schemeIsFixed([session(1, 'a', true, [{ exerciseId: 'bench', sets: [] }])], 'bench')).toBe(false)
+    })
   })
 
   describe('exerciseHasHistory', () => {

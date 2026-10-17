@@ -10,7 +10,7 @@ import {
 import type { EffortScale } from '../program/effort'
 import {
   allSetsLogged,
-  rpeRequired,
+  effortAsked,
   shownTarget,
   showsOutcome,
   substituteStep,
@@ -103,7 +103,7 @@ export function ExerciseLogger({
           canAdd={canAdd}
           canAddExtra={canAddExtra}
           effortScale={effortScale}
-          rpeRequiredAt={() => false}
+          effortAt={() => undefined}
           step={substituteStep}
           allowZeroWeight
           weightLabel="Weight (lb)"
@@ -133,7 +133,7 @@ export function ExerciseLogger({
         canAddExtra={canAddExtra}
         first={suggestion.kind === 'suggestion' ? suggestion : undefined}
         effortScale={effortScale}
-        rpeRequiredAt={(i) => rpeRequired(config.tier, i)}
+        effortAt={(i) => effortAsked(config, i)}
         step={(w, dir) =>
           loads.length === 0 ? undefined : dir === 1 ? stepUp(w, loads) : stepDown(w, loads)
         }

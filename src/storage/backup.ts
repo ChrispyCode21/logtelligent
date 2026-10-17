@@ -1,5 +1,13 @@
-import { countedSets, type EquipmentType, type LoggedSet, type RepRange, type Seed } from '../engine'
+import {
+  countedSets,
+  type EquipmentType,
+  type LoggedSet,
+  type RepRange,
+  type SchemeSetting,
+  type Seed,
+} from '../engine'
 import { EFFORT_SCALE_IDS, LEGACY_EFFORT_SCALE, type EffortScale } from '../program/effort'
+import { LINEAR_INCREMENT } from '../program/program'
 import type { Program, ProgramDay, ProgramExercise } from '../program/types'
 import type { ExerciseLog, Prescription, Session, Substitute } from '../session/types'
 import { normalizeNote } from '../session/notes'
@@ -176,7 +184,18 @@ function exercise(v: unknown, path: string): ProgramExercise {
         reps: num(s.reps, `${path}.seed.reps`, 1, 100, true),
       })
     }),
+    // The scheme (SPEC §6.1). Backups from before it have none: every exercise was Adaptive.
+    progression: optional(e.progression, (pr) => schemeSetting(pr, `${path}.progression`)),
     archived: optional(e.archived, (b) => bool(b, `${path}.archived`)),
+  })
+}
+
+function schemeSetting(v: unknown, path: string): SchemeSetting {
+  const s = obj(v, path)
+  if (s.scheme !== 'linear') throw new Damaged(`${path}.scheme`)
+  return compact<SchemeSetting>({
+    scheme: 'linear',
+    increment: num(s.increment, `${path}.increment`, LINEAR_INCREMENT.min, LINEAR_INCREMENT.max),
   })
 }
 
