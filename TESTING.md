@@ -39,22 +39,21 @@ Lean on purpose: the things any release could break that only the phone shows. R
 - Restore from file… reads an export back: when what's stored changes.
 - Any real `confirm()` the release adds or rewords.
 
-### Current release: v1.4.0
+### Current release: v1.5.0
 
 Replaced at each release with checks drawn from that release's CHANGELOG notes (see "Keeping these lists" below). Anything still unticked when the next release comes is carried over once, then dropped or turned into an issue.
+
+- [ ] **Picking Linear:** in an exercise's form, the Progression control (Adaptive | Linear) fits beside Tier at phone width. Picking Linear shows the increase field and one Reps field, and hides Target RPE. Once the exercise has been logged, Progression shows as text with "Fixed once it's been logged…".
+- [ ] **A Linear session:** effort on the first set reads "(optional)", tapping the chosen button again clears it, and the session finishes with no effort logged. The suggestion card shows the reason ("+5 lb" after a success).
+- [ ] **3-day Novice A/B:** applying it walks through 4 starting-weight screens (1 of 4 to 4 of 4), each asking for a weight only. Today shows Workout A, with "1 set · 5 reps" on the deadlift.
+- [ ] **Shared across workouts:** after a successful Workout A, Workout B's squat and deadlift suggest the next weight up ("+5 lb", "+10 lb"), not the starting weight again.
+- [ ] **Restore from file…:** an export with a Linear exercise restores with its scheme and increase intact (this release stores a scheme on each exercise).
+
+Carried over from v1.4.0:
 
 - [ ] **Effort scale buttons:** on the Program tab's Effort scale card, "Perceived effort" sits inside its button on two lines, whole words only. If a word ever has to break (larger text), it hyphenates onto the next line and never runs past the edge. (The browser tests cover a wider font at 320 px.)
 - [ ] **Notes on Today's suggestion:** a note after a failed session, a deload or a break ("Weight lowered one step.", "Deload done: weight picked from your estimated 1RM.", "Resuming after the deload.", "Returning from a break: estimate lowered 15%.") wraps cleanly inside the card.
 - [ ] **Failing at the lightest load:** the "You're at the lightest load…" note reads well on the card, and its **Edit exercise** button is easy to tap and opens that exercise's form.
-
-Carried over from v1.3.0:
-
-- [ ] **Change your program:** the real "Change your program? …" `confirm()`, adding "Your open session (N sets logged) will be discarded." when a session is open. Afterwards Today starts at the new program's first day.
-- [ ] **One history per lift:** with the same lift on two days, History lists it once, with sessions tagged by day, and a high-rep session's chart point is hollow.
-- [ ] **Adding a lift you already do:** a primary needs no starting numbers; an accessory picked from the exercise list copies your equipment and weight stack.
-- [ ] **Sessions remember their prescription:** a finished session edited from History reads "3 of 3 sets"; changing a rep range starts Today's suggestion fresh.
-- [ ] **Removing a day mid-session:** the real "Delete Upper A? Its open session has nothing logged yet…" `confirm()`.
-- [ ] **Bigger tap targets:** the warm-up ✕ and the Program tab's ↑ ↓ ✕ buttons are easy to hit one-handed, and long exercise names still read well beside them.
 
 ### Keeping these lists
 
