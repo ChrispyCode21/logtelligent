@@ -47,7 +47,9 @@ Ask only when behavior is truly open: something SPEC.md, the issue and the threa
 
 **Questions:** post one comment with numbered questions, each with a recommended default and the settled decisions it builds on, add the `agent-needs-info` label, and go back to step 3 with the next candidate. The owner answers in the thread and removes the label; a later run builds it.
 
-**Build** the first candidate with nothing to ask (at most one per run), then stop.
+**Numbers:** an issue that adds or changes progression rules (`src/engine/`) has its §7 worked examples approved on the issue before it's built, since a wrong number passes tests written from it. Once nothing is left to ask, post the new and changed §7 examples as tables of numbers, with their proposed IDs, in one comment, add `agent-needs-info`, and go back to step 3 as for questions. The owner's reply approving them is the go-ahead. A reply that changes a number is a decision: post the revised tables for approval again. The PR's §7 examples are the approved tables as posted. All discussion stays on the issue: the PR is never a draft and never asks the owner to settle anything.
+
+**Build** the first candidate with nothing to ask or approve (at most one per run), then stop.
 
 ## 5. Build it
 
