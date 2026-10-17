@@ -59,7 +59,7 @@ Each day has a fixed set of exercises. Upper A and Upper B use different exercis
 - **Custom…** covers anything not listed.
 - **After picking,** the usual exercise form opens, prefilled with the bank's defaults, description and placeholder starting weight: review, enter starting numbers, Save. Bank and custom exercises share this flow. The defaults are copied into a normal, fully editable exercise; no link to the bank is stored. An exercise joining a lift with history copies some setup from it instead (§6.9).
 
-**Starting numbers (seed):** no session can start until every exercise has them (a primary joining a lift with history is the exception, §6.9).
+**Starting numbers (seed):** no session can start until every exercise has them (a primary joining a lift with history is the exception, §6.9, and a Linear exercise can use another's, §6.10).
 - **Primary lifts:** a weight × reps you could do confidently: hard, but you wouldn't fail. Prompt along the lines of: *"Enter a weight and reps you're confident you could do: hard, but you wouldn't fail."* It is recorded as a set at **RPE 7** and produces the seed e1RM (§6.4).
 - **Accessory lifts:** a weight at the **bottom of the configured rep range**, e.g. *"What's a weight you can do 15 lateral raises (per side) with that would be hard, but achievable?"* It is recorded as weight × bottom-of-range reps at **RPE 8** (informational: accessories don't use e1RM). The first suggestion is that weight at the bottom of the range.
 - **Linear exercises** (§6.10): a weight only, the first session's weight for the rep target.
@@ -319,7 +319,7 @@ Bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a ligh
 - **A lift is a name:** exercises with the same name, ignoring case and punctuation (as the bank search compares names), are one lift, wherever they are in the program. Nothing extra is stored: sessions belong to the exercise, so renaming one ("Bench" → "Bench Press") brings its sessions into that lift, and renaming one to something new ("Paused Bench") makes it a lift of its own, with its sessions.
 - **Whatever the equipment:** a custom dumbbell "Bench Press" shares its e1RM with a barbell one; to keep them apart, name them differently ("DB Bench Press"). Bank and template additions copy the lift's equipment, so they match.
 - **Shared:** History (§5.3) and the running e1RM, with lower-rep sessions first (§6.4). Adaptive's primaries pick their weight from it; Linear's part in it is in §6.10. Each exercise's deload weeks, worked out by its own replay, stay out of the e1RM (§6.7). The seed is dropped once the lift has a real session on any day (§6.4).
-- **Per exercise:** the prescription and, in Adaptive, the floor rule, stacks, reverts, retries, deloads and rep extension (§6.2–6.8). A failed heavy day never reverts or deloads the light day.
+- **Per exercise:** the prescription and, in Adaptive, the floor rule, stacks, reverts, retries, deloads and rep extension (§6.2–6.8). Linear's progression is shared by exercises with the same prescription (§6.10). A failed heavy day never reverts or deloads the light day.
 - **A new exercise joining a lift with history** (added, or from a template):
   - a **primary** needs no starting numbers, since the lift's e1RM picks its weight (Linear's first weight, §6.10); the exercise form shows them as optional: "Optional: Bench Press already has an estimated 1RM from your history.";
   - an **accessory** is still asked, since its range may differ, pre-filled with the lift's latest weight (skipping deload weeks);
@@ -336,11 +336,12 @@ A fixed weight increase every successful session, with its own failure rule. No 
 - **Top of the loads:** at the exercise's heaviest available load, a success adds **1 rep** to the rep target instead of weight; a miss repeats that target. The added reps go, putting the rep target back to the top of the range, when a success below the heaviest load raises the weight, on a reset or a break, when a heavier load is added (history replays under the current loads, so that weight is no longer the top), and on a rep-range change (below). A miss at any weight keeps them: a lighter weight lifted while reps are added is judged against the raised target (L33). The heaviest load is the last of the exercise's loads (§6.2): the barbell default runs to 1000 lb and bodyweight's to 200 lb added, so in practice it's a dumbbell rack, a stack or an override list that tops out. With no loads (a cable or machine with no stack entered) there's no heaviest, so this never applies. A session at or above the heaviest load counts as at it, and the next session stays at the weight lifted.
 - **Rep-range change:** the weight is kept and there's no fresh start (unlike Adaptive, §6.8): each finished session is judged by its own saved rep range, the next by the new one, and the miss count carries on. Reps added at the top of the loads are cleared, so the new range's top is the target; a suggestion that would have added a rep shows no reason, as at a fresh start.
 - **Starting weight:** for a primary whose lift has an e1RM from a real session (§6.9), the heaviest available load for the rep target at RPE 7, as an Adaptive primary picks it (§6.4); its seed isn't used. Otherwise the seed's weight, entered as a weight only (§5.1).
+- **Shared across days:** Linear exercises in one lift (§6.9) with the same rep range and set count, archived ones included, share one progression: the weight, miss count, resets, added reps and breaks come from all their sessions together, in date order, so a squat on Workout A and Workout B goes up every session. Each uses its own increment and loads. One with no seed uses the seed of another in the group, so starting numbers are asked once. History marks each session on the exercise it was logged under. A different rep range or set count, or another scheme, progresses apart.
 - **Returning from a break:** with no session in the 4-week window (§6.4), the weight is **10% below the last successful weight**, snapped down, at the top of the range. The last successful weight is the weight of the last session that succeeded; if none ever did, the last weight attempted. The miss count clears.
 - **Bodyweight:** the increments go on the added weight (§6.1), starting from 0; a reset or a break at 0 stays at 0.
 - **e1RM:** a Linear session whose first set has effort logged feeds the lift's running e1RM (§6.9), since those are real sets; one marked as a deload doesn't. It's high-rep (§6.4) when its rep target is over 10, since Linear prescribes no reps in reserve. History shows no e1RM for a Linear exercise.
 - **Extra sets and substitutes:** extra sets are recorded and shown but don't count (§5.2); substituted sessions don't count either, for success or for the miss count.
-- **On screen:** the weight and rep target, no effort target (effort is asked on a primary's first set, but optional), and a reason: "+5 lb" (the actual increment), "Top of the loads: +1 rep", "Repeat: reps missed last time", "Reset: missed 3 times in a row", or after a break "Returning from a break: weight lowered 10%." A fresh start shows none. Examples L1–L35 (§7.L).
+- **On screen:** the weight and rep target, no effort target (effort is asked on a primary's first set, but optional), and a reason: "+5 lb" (the actual increment), "Top of the loads: +1 rep", "Repeat: reps missed last time", "Reset: missed 3 times in a row", or after a break "Returning from a break: weight lowered 10%." A fresh start shows none. Examples L1–L42 (§7.L).
 
 ## 7. Worked examples → test cases
 
@@ -471,6 +472,18 @@ A barbell squat, 3 sets of 5 (range 5–5), +5 lb, seed 135, unless stated. `3×
 | L33 | L24, then 110 3×5 | **110 × 6**, "Repeat": while a rep is added, a lighter weight is judged against the raised target, so fewer reps is a miss |
 | L34 | Squat on two days, both Linear with effort logged: 3 × 5 (5–5) at 225×5 @8 (e1RM 273.6), and 3 × 12 (12–12) at 185×12 @8 (267.3) | The 12–12 session is high-rep (rep target 12, no reps in reserve), so with a lower-rep session in the window it's skipped: lift e1RM **273.6** (as I1) |
 
+Shared across days: a squat on Workout A and on Workout B, both 3 × 5 (5–5), +5 lb, seed 95 on A only, unless stated. Sessions alternate A, B, A…
+
+| ID | Given | Expected |
+|---|---|---|
+| L36 | No history | B needs no starting numbers; both suggest **95 × 5** |
+| L37 | A 95 3×5 | B: **100 × 5**, "+5 lb" |
+| L38 | A 95 3×5; B 100 3×5; A 105 3×5 | B: **110 × 5**, "+5 lb"; A also suggests 110 |
+| L39 | A 95 ✗; B 95 ✗; A 95 ✗ | B: **85 × 5**, "Reset: missed 3 times in a row" (95 × 0.9 = 85.5, snapped down): misses count across both |
+| L40 | L39, then B 85 3×5 | A: **90 × 5**, "+5 lb"; History marks that B session as the deload, on B |
+| L41 | B is 5 × 5 (with seed 95): A 95 3×5 | B: **95 × 5**, no reason; A: 100 × 5: a different set count progresses apart |
+| L42 | B's increase is +10 lb: A 95 3×5 | B: **105 × 5**, "+10 lb"; A: 100 × 5, "+5 lb" |
+
 ### 7.F Rotation (§5.1)
 
 Days: [Upper A, Lower A, Upper B, Lower B].
@@ -529,7 +542,7 @@ Bench Press on two days: Upper A at 3–5 @8 and Upper B at 10–12 @8, both pri
 The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]`), since the 4-week window, deload exclusion (A5) and substitute exclusion (A6) all need per-session data.
 
 A **progression scheme** is one interface with three functions; the UI and storage get suggestions, validation and replays only through it, never from a scheme's own modules. Shared helpers (load steps, rotation, counted sets) are called directly. The engine returns the program exercise's scheme (Adaptive unless the exercise sets another).
-- **Suggestions:** `suggest(config, history, asOf, lift) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by its own replay, so a scheme can replay across exercises (§6.9). Adaptive and Linear use them only for the e1RM.
+- **Suggestions:** `suggest(config, history, asOf, lift) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by the replay of the exercise that logged it, so a scheme can replay across exercises (§6.9). Adaptive and Linear use them only for the e1RM.
 - **Validation:** `evaluate(config, history, sets, date) => SessionOutcome`, `date` being the session's, so a scheme can judge it as its replay will (Linear's break, §6.10).
 - **Replay:** `replay(config, history) => ExerciseSession[]` returns the history with each session marked as a deload or not, and as high-rep or not (§6.4). History's deload marking calls it through each exercise's scheme (§6.9). Linear marks the first session after each reset (§6.10).
 - **State is never passed in or stored:** each scheme replays `history` under its own rules (Adaptive: `deriveState(config, history)`, ARCHITECTURE.md, "Progression state is derived").

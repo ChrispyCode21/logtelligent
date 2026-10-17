@@ -2,7 +2,8 @@ import { adaptive, schemeFor, sessionE1rm, type ExerciseConfig, type LoggedSet }
 import { liftExercises } from '../program/lifts'
 import type { Program } from '../program/types'
 import type { Session, Substitute } from '../session/types'
-import { exerciseHistory, type LoggedExerciseSession } from './sessions'
+import { progressionHistory } from './lifts'
+import type { LoggedExerciseSession } from './sessions'
 
 export interface TimelineEntry {
   sessionId: number
@@ -24,11 +25,16 @@ export interface TimelineEntry {
   dayName?: string
 }
 
-/** An exercise's finished sessions for the history view, newest first. */
+/**
+ * An exercise's finished sessions for the history view, newest first. `history` may hold its Linear
+ * group's sessions too (`progressionHistory`, SPEC §6.10): they're replayed, but only this
+ * exercise's own are shown.
+ */
 export function exerciseTimeline(config: ExerciseConfig, history: LoggedExerciseSession[]): TimelineEntry[] {
   const scheme = schemeFor(config)
   return scheme
     .replay(config, history)
+    .filter((s) => s.exerciseId === undefined || s.exerciseId === config.id)
     .map((s) => {
       // History's e1RM is Adaptive's; a Linear exercise has none (SPEC §8).
       const e1rm =
@@ -53,13 +59,13 @@ export function exerciseTimeline(config: ExerciseConfig, history: LoggedExercise
 
 /**
  * A lift's finished sessions on every day, newest first (SPEC §5.3, §6.9). Each exercise is
- * replayed on its own, so deloads and stacks stay per exercise.
+ * replayed on its own, so deloads and stacks stay per exercise, except a Linear group's (§6.10).
  */
 export function liftTimeline(program: Program, sessions: Session[], name: string): TimelineEntry[] {
   const dayNames = new Map(program.days.map((d) => [d.id, d.name]))
   const dayOf = new Map(sessions.map((s) => [s.id, s.dayId && dayNames.get(s.dayId)]))
   return liftExercises(program, name)
-    .flatMap((e) => exerciseTimeline(e, exerciseHistory(sessions, e.id)))
+    .flatMap((e) => exerciseTimeline(e, progressionHistory(program, sessions, e)))
     .map((entry) => ({ ...entry, dayName: dayOf.get(entry.sessionId) }))
     .sort((a, b) => Date.parse(b.date) - Date.parse(a.date) || b.sessionId - a.sessionId)
 }

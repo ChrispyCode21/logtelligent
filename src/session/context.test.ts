@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { LoggedSet } from '../engine'
+import { linear, type LoggedSet } from '../engine'
 import type { Program } from '../program/types'
 import { sessionExercises } from './context'
 import { shownTarget, targetSets } from './sets'
@@ -152,5 +152,63 @@ describe('the exercises of a session and what they are judged against (SPEC §5.
   it('leaves out exercises no longer in the program', () => {
     const gone = { ...middle, exercises: [...middle.exercises, { exerciseId: 'deleted', sets: [] }] }
     expect(sessionExercises(gone, program, [first, gone], now).map((e) => e.config.id)).toEqual(['bench'])
+  })
+})
+
+describe('a Linear progression shared across days, in a session (SPEC §6.10)', () => {
+  const squat = (id: string, seed?: boolean) => ({
+    id,
+    name: 'Back Squat',
+    tier: 'primary' as const,
+    repRange: { min: 5, max: 5 },
+    targetRpe: 8,
+    sets: 3,
+    equipment: 'barbell' as const,
+    maxRelativeJump: 0.1,
+    unilateral: false,
+    progression: { scheme: 'linear' as const, increment: 5 },
+    ...(seed && { seed: { weight: 95, reps: 5 } }),
+  })
+  const novice: Program = {
+    id: 'main',
+    effortScale: 'rpe',
+    days: [
+      { id: 'workout-a', name: 'Workout A', exercises: [squat('squat-a', true)] },
+      { id: 'workout-b', name: 'Workout B', exercises: [squat('squat-b')] },
+    ],
+  }
+  const on = (id: number, day: number, exerciseId: string, weight: number, finished = true): Session => {
+    const startedAt = `2026-10-0${day}T10:00:00.000Z`
+    return {
+      id,
+      dayId: exerciseId === 'squat-a' ? 'workout-a' : 'workout-b',
+      startedAt,
+      finishedAt: finished ? startedAt : undefined,
+      exercises: [{ exerciseId, sets: weight ? [0, 1, 2].map(() => ({ weight, reps: 5 })) : [] }],
+    }
+  }
+  const asOf = new Date('2026-10-08T10:00:00.000Z')
+
+  it("starts an unseeded B from A's starting numbers in a live session", () => {
+    const live = on(1, 1, 'squat-b', 0, false)
+    const [b] = sessionExercises(live, novice, [live], asOf)
+    expect(b.suggestion).toMatchObject({ kind: 'suggestion', weight: 95 })
+  })
+
+  it("suggests B's next weight from A's session, and judges B's sets against the shared history", () => {
+    const a = on(1, 1, 'squat-a', 95)
+    const live = on(2, 2, 'squat-b', 0, false)
+    const [b] = sessionExercises(live, novice, [a, live], asOf)
+    expect(b.suggestion).toMatchObject({ weight: 100, reason: { kind: 'increase', increment: 5 } })
+    expect(b.history.map((h) => h.sessionId)).toEqual([1])
+    const done = [0, 1, 2].map(() => ({ weight: 100, reps: 5 }))
+    expect(linear.evaluate(b.config, b.history, done, new Date(live.startedAt)).result).toBe('success')
+  })
+
+  it('edits a finished session against only the group sessions before it', () => {
+    const logged = [on(1, 1, 'squat-a', 95), on(2, 2, 'squat-b', 100), on(3, 3, 'squat-a', 105)]
+    const [b] = sessionExercises(logged[1], novice, logged, asOf)
+    expect(b.history.map((h) => h.sessionId)).toEqual([1])
+    expect(b.suggestion).toMatchObject({ weight: 100 })
   })
 })

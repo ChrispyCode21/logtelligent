@@ -9,6 +9,8 @@ export interface LoggedExerciseSession extends ExerciseSession {
   substitute?: Substitute
   /** The session's note for next time, shown on each of its History rows (SPEC §5.2). */
   note?: string
+  /** Which exercise logged it, in a progression shared across days (`progressionHistory`, SPEC §6.10). */
+  exerciseId?: string
 }
 
 /**

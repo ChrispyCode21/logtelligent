@@ -10,6 +10,7 @@ import {
   needsStartingNumbers,
   otherLiftSessions,
   programChange,
+  suggestFor,
   withLiftGym,
 } from './lifts'
 import { historyGroups } from './picker'
@@ -327,5 +328,103 @@ describe('7.L Linear, through History (SPEC §6.10)', () => {
     // 225 x 5 @8 is 273.6; 185 x 12 @8 (267.3) is skipped, as in I1.
     const lift = otherLiftSessions(p, sessions, adaptiveSquat)
     expect(runningE1rm(lift, undefined, asOf)?.value).toBeCloseTo(273.6, 1)
+  })
+})
+
+describe('7.L Linear, shared across days (SPEC §6.10)', () => {
+  const linear = (increment = 5) => ({ scheme: 'linear', increment }) as const
+  const squatA = exercise('squat-a', 'Back Squat', {
+    repRange: { min: 5, max: 5 },
+    seed: { weight: 95, reps: 5 },
+    progression: linear(),
+  })
+  const squatB = exercise('squat-b', 'Back Squat', { repRange: { min: 5, max: 5 }, progression: linear() })
+  const novice = (a: ProgramExercise = squatA, b: ProgramExercise = squatB): Program => ({
+    id: 'main',
+    effortScale: 'rpe',
+    days: [
+      { id: 'workout-a', name: 'Workout A', exercises: [a] },
+      { id: 'workout-b', name: 'Workout B', exercises: [b] },
+    ],
+  })
+  const sets = (weight: number, reps: number[]) => reps.map((r) => ({ weight, reps: r }))
+  const dayOf = (id: string) => (id === 'squat-a' ? 'workout-a' : 'workout-b')
+  const ok = (day: number, id: string, weight: number) =>
+    finished(dayOf(id), day, id, sets(weight, [5, 5, 5]))
+  const miss = (day: number, id: string, weight: number) =>
+    finished(dayOf(id), day, id, sets(weight, [5, 5, 4]))
+  const next = (p: Program, sessions: Session[], e: ProgramExercise) => suggestFor(p, sessions, e, asOf)
+  const expectNext = (s: ReturnType<typeof next>, weight: number, reason: object) =>
+    expect(s).toMatchObject({ kind: 'suggestion', scheme: 'linear', weight, reps: 5, reason })
+
+  it('L36: with no history, B needs no starting numbers and both suggest 95 x 5', () => {
+    const p = novice()
+    expect(needsStartingNumbers(p, [])).toEqual([])
+    expectNext(next(p, [], squatA), 95, { kind: 'start' })
+    expectNext(next(p, [], squatB), 95, { kind: 'start' })
+  })
+
+  it('L37: A 95 3x5, then B suggests 100 x 5, +5 lb', () => {
+    expectNext(next(novice(), [ok(1, 'squat-a', 95)], squatB), 100, { kind: 'increase', increment: 5 })
+  })
+
+  it('L38: A 95, B 100, A 105, all 3x5, then B and A both suggest 110 x 5', () => {
+    const logged = [ok(1, 'squat-a', 95), ok(2, 'squat-b', 100), ok(3, 'squat-a', 105)]
+    expectNext(next(novice(), logged, squatB), 110, { kind: 'increase', increment: 5 })
+    expectNext(next(novice(), logged, squatA), 110, { kind: 'increase', increment: 5 })
+  })
+
+  it('L39: A, B, A each miss at 95, then B resets to 85 x 5: misses count across both', () => {
+    const logged = [miss(1, 'squat-a', 95), miss(2, 'squat-b', 95), miss(3, 'squat-a', 95)]
+    expectNext(next(novice(), logged, squatB), 85, { kind: 'reset' })
+  })
+
+  it('L40: L39, then B 85 3x5: A suggests 90 x 5, and History marks that B session as the deload, on B', () => {
+    const reset = ok(4, 'squat-b', 85)
+    const logged = [miss(1, 'squat-a', 95), miss(2, 'squat-b', 95), miss(3, 'squat-a', 95), reset]
+    expectNext(next(novice(), logged, squatA), 90, { kind: 'increase', increment: 5 })
+    const timeline = liftTimeline(novice(), logged, 'Back Squat')
+    expect(timeline.map((e) => [e.sessionId, e.exerciseId, e.isDeload])).toEqual([
+      [reset.id, 'squat-b', true],
+      [logged[2].id, 'squat-a', false],
+      [logged[1].id, 'squat-b', false],
+      [logged[0].id, 'squat-a', false],
+    ])
+  })
+
+  it('L41: B on 5 x 5 progresses apart: after A 95 3x5, B suggests its own 95 x 5 and A 100 x 5', () => {
+    const fiveByFive = { ...squatB, sets: 5, seed: { weight: 95, reps: 5 } }
+    const p = novice(squatA, fiveByFive)
+    const logged = [ok(1, 'squat-a', 95)]
+    expect(next(p, logged, fiveByFive)).toMatchObject({ weight: 95, sets: 5, reason: { kind: 'start' } })
+    expectNext(next(p, logged, squatA), 100, { kind: 'increase', increment: 5 })
+  })
+
+  it("L42: B's increase is +10 lb: after A 95 3x5, B suggests 105 x 5 and A 100 x 5", () => {
+    const plusTen = { ...squatB, progression: linear(10) }
+    const p = novice(squatA, plusTen)
+    const logged = [ok(1, 'squat-a', 95)]
+    expectNext(next(p, logged, plusTen), 105, { kind: 'increase', increment: 10 })
+    expectNext(next(p, logged, squatA), 100, { kind: 'increase', increment: 5 })
+  })
+
+  it('shares with an archived exercise of the same prescription, so a new program carries on', () => {
+    const fresh = { ...squatB, id: 'squat-new' }
+    const p: Program = {
+      ...novice(),
+      days: [
+        { id: 'workout-a', name: 'Workout A', archived: true, exercises: [{ ...squatA, archived: true }] },
+        { id: 'new', name: 'New', exercises: [fresh] },
+      ],
+    }
+    expectNext(next(p, [ok(1, 'squat-a', 95)], fresh), 100, { kind: 'increase', increment: 5 })
+  })
+
+  it('leaves Adaptive exercises on their own', () => {
+    const adaptiveB = exercise('squat-b', 'Back Squat', { repRange: { min: 5, max: 5 } })
+    const p = novice(squatA, adaptiveB)
+    expect(needsStartingNumbers(p, []).map((e) => e.id)).toEqual(['squat-b'])
+    const seeded = { ...adaptiveB, seed: { weight: 95, reps: 5 } }
+    expect(next(novice(squatA, seeded), [ok(1, 'squat-a', 95)], seeded)).not.toHaveProperty('scheme')
   })
 })
