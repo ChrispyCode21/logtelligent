@@ -4,8 +4,10 @@ import {
   backup,
   exerciseCard,
   expect,
+  expectConfirm,
   historyRows,
   logASession,
+  logSets,
   restore,
   setUpFromTemplate,
   tab,
@@ -61,4 +63,29 @@ test('exports the data it restored', async ({ page }) => {
   const exported = JSON.parse(await readFile(await file.path(), 'utf8'))
   expect(exported.program).toEqual(backup.program)
   expect(exported.sessions).toEqual(backup.sessions)
+})
+
+test('sets an exercise to Linear and logs it with no effort, which then fixes its scheme', async ({
+  page,
+}) => {
+  await setUpFromTemplate(page)
+  await tab(page, 'Program').click()
+  await page.getByRole('button', { name: /^Bench Press/ }).click()
+  await page.getByRole('button', { name: 'Linear', exact: true }).click()
+  await expect(page.getByLabel('Target RPE on the first set')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Save exercise' }).click()
+  await expect(page.getByText('Primary · Linear +5 lb · 3 × 7 · Barbell')).toBeVisible()
+
+  await tab(page, 'Today').click()
+  await page.getByRole('button', { name: 'Start Upper A' }).click()
+  await expect(exerciseCard(page, 'Bench Press').getByRole('group', { name: /\(optional\)$/ })).toBeVisible()
+  await logSets(page, 'Bench Press', 3)
+  await page.getByRole('button', { name: 'Finish session' }).click()
+  await expectConfirm(page, /^Only 3 of \d+ sets logged\. Finish anyway\?/)
+  await expect(page.getByRole('button', { name: 'Start Lower A' })).toBeVisible()
+
+  await tab(page, 'Program').click()
+  await page.getByRole('button', { name: /^Bench Press/ }).click()
+  await expect(page.getByText(/^Fixed once it's been logged/)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Adaptive', exact: true })).toHaveCount(0)
 })
