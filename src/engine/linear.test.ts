@@ -222,7 +222,7 @@ describe('7.L Linear (SPEC §6.10)', () => {
 })
 
 describe('Linear details', () => {
-  it('asks for starting numbers with no seed and no history', () => {
+  it('L35: no seed, no history and no lift e1RM needs starting numbers', () => {
     expect(next([], { ...squat, seed: undefined })).toEqual({ kind: 'needsSeed' })
   })
 
@@ -325,8 +325,7 @@ describe('Linear details', () => {
     expect(outcome.message).toBeUndefined()
   })
 
-  it('is the scheme of an exercise set to Linear, and has no e1RM', () => {
+  it('is the scheme of an exercise set to Linear', () => {
     expect(schemeFor(squat)).toBe(linear)
-    expect(linear.usesLiftE1rm).toBe(false)
   })
 })

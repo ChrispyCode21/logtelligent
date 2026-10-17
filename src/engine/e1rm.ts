@@ -15,7 +15,8 @@ const BREAK_TIERS = [
   { fromDays: 56, factor: 0.85 },
   { fromDays: 0, factor: 0.9 },
 ]
-const SEED_RPE = 7
+/** Starting numbers are recorded at this effort (SPEC §5.1); Linear's first weight is picked at it (§6.10). */
+export const SEED_RPE = 7
 // Brzycki divides by (37 - r), so the averaged formula is only defined below 37 reps.
 const MAX_REPS = 36
 

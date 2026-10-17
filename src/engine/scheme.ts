@@ -14,8 +14,6 @@ export interface ProgressionScheme {
   evaluate(config: ExerciseConfig, history: ExerciseSession[], sets: LoggedSet[], date: Date): SessionOutcome
   /** The history with each session marked as a deload or not, for History's deload marking (SPEC §8). */
   replay<S extends ExerciseSession>(config: ExerciseConfig, history: S[]): S[]
-  /** A primary joining a lift that already has an e1RM needs no starting numbers (SPEC §6.9). */
-  readonly usesLiftE1rm: boolean
 }
 
 /** Today's progression (SPEC §6.3–6.7): e1RM for primaries, double progression for accessories. */
@@ -24,15 +22,13 @@ export const adaptive: ProgressionScheme = {
   // Adaptive judges a session the same whatever its date, so it takes none.
   evaluate: evaluateSession,
   replay: (config, history) => deriveState(config, history).sessions,
-  usesLiftE1rm: true,
 }
 
 /** A fixed increase each successful session (SPEC §6.10). */
 export const linear: ProgressionScheme = {
-  suggest: (config, history, asOf) => suggestLinear(config, history, asOf),
+  suggest: suggestLinear,
   evaluate: evaluateLinear,
   replay: replayLinear,
-  usesLiftE1rm: false,
 }
 
 /** The scheme a program exercise uses: Adaptive unless it sets another (SPEC §6). */

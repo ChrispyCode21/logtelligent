@@ -1,6 +1,7 @@
-import { isHighRepRange, windowStart } from './e1rm'
+import { isHighRepRange, runningE1rm, SEED_RPE, windowStart } from './e1rm'
 import { availableLoads, snapDown } from './loads'
 import { countedSets } from './sets'
+import { pickWeight } from './suggest'
 import type {
   ExerciseConfig,
   ExerciseSession,
@@ -153,8 +154,24 @@ export function replayLinear<S extends ExerciseSession>(config: ExerciseConfig, 
   return replayState(config, history).sessions
 }
 
+/**
+ * The first weight (SPEC §6.10): for a primary whose lift has an e1RM from a real session (`lift`,
+ * SPEC §6.9), the heaviest load for the rep target at RPE 7; otherwise the seed's weight.
+ */
+function startingWeight(config: ExerciseConfig, lift: ExerciseSession[], asOf: Date): number | undefined {
+  const loads = availableLoads(config)
+  const e1rm = config.tier === 'primary' && loads.length > 0 ? runningE1rm(lift, undefined, asOf) : undefined
+  if (e1rm) return pickWeight(e1rm.value, config.repRange.max, SEED_RPE, loads).weight
+  return config.seed?.weight
+}
+
 /** Next session's suggestion (SPEC §6.10). */
-export function suggestLinear(config: ExerciseConfig, history: ExerciseSession[], asOf: Date): Suggestion {
+export function suggestLinear(
+  config: ExerciseConfig,
+  history: ExerciseSession[],
+  asOf: Date,
+  lift: ExerciseSession[] = [],
+): Suggestion {
   const { state } = replayState(config, history)
   const shape = {
     kind: 'suggestion',
@@ -165,8 +182,9 @@ export function suggestLinear(config: ExerciseConfig, history: ExerciseSession[]
   const { last } = state
 
   if (!last) {
-    if (!config.seed) return { kind: 'needsSeed' }
-    return { ...shape, weight: config.seed.weight, reason: { kind: 'start' } }
+    const weight = startingWeight(config, lift, asOf)
+    if (weight === undefined) return { kind: 'needsSeed' }
+    return { ...shape, weight, reason: { kind: 'start' } }
   }
   // A break lowers the weight and takes off any reps added at the top of the loads.
   if (last.time < windowStart(asOf)) {

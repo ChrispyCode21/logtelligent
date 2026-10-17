@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { runningE1rm, suggestNext, type LoggedSet } from '../engine'
+import { linear, runningE1rm, suggestNext, type LoggedSet } from '../engine'
 import { liftKey } from '../program/lifts'
 import { sessionExercises } from '../session/context'
 import type { Program, ProgramExercise } from '../program/types'
@@ -238,14 +238,31 @@ describe('7.L Linear, through History (SPEC §6.10)', () => {
   } as ProgramExercise
   const threeSets = (weight: number, reps: number) => [0, 1, 2].map(() => ({ weight, reps }))
 
-  it('L20: a Linear exercise with no seed needs starting numbers, though its lift has an e1RM', () => {
+  it('L20: a Linear primary on a lift with an e1RM of 273.6 needs no starting numbers and starts at 215 x 5', () => {
     const oldSquat = exercise('squat-old', 'Squat', { seed: { weight: 225, reps: 5 } })
     const p = program(squat, oldSquat)
     const logged = finished('upper-a', 1, 'squat-old', firstRpe(225, [5, 5, 5]))
-    expect(needsStartingNumbers(p, [logged]).map((e) => e.id)).toEqual(['squat'])
-    // An Adaptive primary in the same position isn't asked (I4).
-    const adaptiveSquat = exercise('squat-new', 'Squat')
-    expect(needsStartingNumbers(program(adaptiveSquat, oldSquat), [logged])).toEqual([])
+    expect(needsStartingNumbers(p, [logged])).toEqual([])
+    const lift = otherLiftSessions(p, [logged], squat)
+    expect(runningE1rm(lift, undefined, asOf)?.value).toBeCloseTo(273.6, 1)
+    const start = {
+      kind: 'suggestion',
+      scheme: 'linear',
+      weight: 215,
+      reps: 5,
+      sets: 3,
+      reason: { kind: 'start' },
+    }
+    expect(linear.suggest(squat, [], asOf, lift)).toEqual(start)
+    // A seed is left unused.
+    expect(linear.suggest({ ...squat, seed: { weight: 135, reps: 5 } }, [], asOf, lift)).toEqual(start)
+  })
+
+  it('a Linear accessory on a lift with an e1RM still needs a starting weight', () => {
+    const curl = { ...squat, tier: 'accessory' } as ProgramExercise
+    const oldSquat = exercise('squat-old', 'Squat', { seed: { weight: 225, reps: 5 } })
+    const logged = finished('upper-a', 1, 'squat-old', firstRpe(225, [5, 5, 5]))
+    expect(needsStartingNumbers(program(curl, oldSquat), [logged]).map((e) => e.id)).toEqual(['squat'])
   })
 
   it("L21: each exercise's deloads are marked by its own scheme, and Adaptive's are as before", () => {
