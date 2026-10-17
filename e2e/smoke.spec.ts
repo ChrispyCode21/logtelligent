@@ -101,6 +101,7 @@ test('sets up the 3-day Novice A/B: a starting weight for each lift, then Linear
   })
   await expect(page.getByRole('button', { name: 'Start Workout A' })).toBeVisible()
   await expect(exerciseCard(page, 'Deadlift').getByText(/× 5$/)).toBeVisible()
+  await expect(exerciseCard(page, 'Deadlift').getByText(/^1 set · 5 reps/)).toBeVisible()
 
   await tab(page, 'Program').click()
   await expect(page.getByText('Primary · Linear +10 lb · 1 × 5 · Barbell')).toHaveCount(2)
