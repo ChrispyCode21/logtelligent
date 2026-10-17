@@ -44,7 +44,7 @@ CHANGELOG.md isn't on this list: only its "Unreleased" section matters to new wo
 ## How to work
 
 - **`main` is protected.** Never push to it. Work on a branch, keep changes small with a commit per meaningful step, push the branch, and open a PR (the template has the checklist). The owner merges, or the local reviewer does within the limits in `.github/agent/PIPELINE.md` ("Local reviewer").
-- Before pushing, run what CI runs: `npm run check:all` (`scripts/check-all.mjs`) runs `format:check`, `lint`, `check:conventions`, `check:spec`, `check:changelog`, `test`, `build` and `test:e2e`, printing one line per passing check and the full output of each failing one.
+- Before pushing, run the fast checks: `npm run check:fast` (`scripts/check-all.mjs --fast`) runs `format:check`, `lint`, `check:conventions`, `check:spec`, `check:changelog`, `typecheck` and `test`, printing one line per passing check and the full output of each failing one. Add the Playwright specs the change touches (`npx playwright test e2e/<spec> -g "<name>"`). CI runs the full suite (`npm run check:all`, which adds `build` and every `test:e2e`) on the PR.
 - Add user-facing changes to the "Unreleased" section of CHANGELOG.md. A release is a PR that bumps `package.json`'s version, moves those notes under it, and replaces TESTING.md's "Current release" checklist with checks drawn from them. It also tightens SPEC.md and ARCHITECTURE.md: cut text that repeats another section or just restates the code, without changing any behavior or removing a §7 example. Merging it tags the release automatically (semantic versioning).
 - **New work is scoped as a version:** a GitHub milestone with its issues. Settle the scope, and any open questions it touches, with the owner before building. Small refactors wait in the cleanup backlog (#74), to fold into whichever change next touches those files.
 
@@ -59,14 +59,14 @@ One slice per PR, in this order:
 5. **Verify in the preview** per TESTING.md: the flows by DOM. Add any new screen or state to `e2e/layout.spec.ts` (see "Tests"), and a new main flow to `e2e/smoke.spec.ts`. Leave the preview's data as it was.
 6. **Update the docs in the same PR:** ARCHITECTURE.md (folder map, UI, storage), CHANGELOG.md "Unreleased" for user-facing changes, SPEC.md wherever behavior changed or was clarified, and, for anything the preview can't check, a note in the PR for the release's phone checklist (TESTING.md).
 7. **Review:** run the `architecture-reviewer` subagent (`.claude/agents/`) on the branch's diff. Fix the must-fix findings; fix worth-fixing ones or say in the PR why not; raise its questions with the owner.
-8. **Open the PR** with what changed, how it was verified, anything worth the owner's attention, and any data to review, after running the CI checks.
+8. **Open the PR** with what changed, how it was verified, anything worth the owner's attention, and any data to review, after running the fast checks.
 
-### Running from an issue (GitHub Actions)
+### Running from an issue (scheduled builder)
 
-Issues labeled `agent-ready` are built in GitHub Actions with no one to ask mid-run (`.github/agent/PIPELINE.md`; the prompts are `.github/agent/triage.md` and `code.md`). The steps above still apply, except:
+The local builder (`/build-next-issue`, a desktop scheduled task) builds a milestone's issues one at a time with no one to ask mid-run (`.github/agent/PIPELINE.md`, "Local builder"). The steps above still apply, except:
 
-- **Step 1 becomes a comment.** Post numbered questions on the issue, each with a recommended default, and stop (the workflow swaps `agent-ready` for `agent-needs-info`). Never guess and carry on. The owner's numbered answers in the thread are the decisions; record them in SPEC.md (step 2) before any code.
-- **Step 5 is the Playwright check** (`npm run test:e2e`, also in CI), since there's no preview. New screens and flows still go into `e2e/` as step 5 says; say in the PR that the preview wasn't used.
+- **Step 1 becomes a comment.** Post numbered questions on the issue, each with a recommended default, label it `agent-needs-info`, and move on to the next issue. Never guess and carry on, and never re-ask what a thread or SPEC.md already settled. The owner's numbered answers in the thread are the decisions; record them in SPEC.md (step 2) before any code.
+- **Step 5 is the Playwright specs** the change touches or adds, since no one watches the preview. New screens and flows still go into `e2e/` as step 5 says; say in the PR that the preview wasn't used.
 - **Step 7 is left to the local reviewer** (`.github/agent/PIPELINE.md`), which reviews the PR after it opens.
 - **Never merge, and never edit `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`** (the agent's own prompts, reviewer, local reviewer skill and settings).
 - **Out-of-scope findings go in the PR** as suggested follow-ups.

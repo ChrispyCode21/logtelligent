@@ -1,18 +1,18 @@
 // Runs every check CI runs, in CI's order (.github/workflows/ci.yml; keep the two in step).
+// With --fast (`npm run check:fast`), only the quick ones: no build or Playwright, but a type-check.
 // Prints one line per passing check and the full output of each failing one, so reading the
 // result costs little when everything passes (CLAUDE.md, "How to work"). Runs them all even after
 // a failure, so every failure shows at once. Exits 1 if any failed.
 import { spawnSync } from 'node:child_process'
 
+const fast = process.argv.includes('--fast')
 const checks = [
   'format:check',
   'lint',
   'check:conventions',
   'check:spec',
   'check:changelog',
-  'test',
-  'build',
-  'test:e2e',
+  ...(fast ? ['typecheck', 'test'] : ['test', 'build', 'test:e2e']),
 ]
 
 const failed = []
