@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { nextDay, schemeFor } from '../engine'
+import { nextDay } from '../engine'
 import { activeDays } from '../program/program'
-import { needsStartingNumbers, otherLiftSessions } from '../history/lifts'
+import { needsStartingNumbers, suggestFor } from '../history/lifts'
 import type { Program } from '../program/types'
 import type { Session } from '../session/types'
-import { exerciseHistory, lastLoggedDayId, lastNoteFor } from '../history/sessions'
+import { lastLoggedDayId, lastNoteFor } from '../history/sessions'
 import { startSession } from '../storage/sessions'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
@@ -109,12 +109,7 @@ export function TodayView({
         <SuggestionCard
           key={exercise.id}
           config={exercise}
-          suggestion={schemeFor(exercise).suggest(
-            exercise,
-            exerciseHistory(sessions, exercise.id),
-            asOf,
-            otherLiftSessions(program, sessions, exercise),
-          )}
+          suggestion={suggestFor(program, sessions, exercise, asOf)}
           heading={exercise.name}
           effortScale={program.effortScale}
           onEditExercise={() => onEditExercise(exercise.id)}

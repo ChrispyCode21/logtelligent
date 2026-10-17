@@ -8,7 +8,7 @@ To release: in a PR, move the "Unreleased" notes under a new version heading, bu
 
 ### Added
 
-- **Linear progression:** pick **Linear** under Progression in an exercise's form for a fixed weight increase every successful session (5 lb unless you change it), a reset 10% lighter after three misses in a row, an extra rep instead of weight once you're at the heaviest load, and a lighter restart after a break. A Linear exercise has one Reps number and no effort target; effort on its first set is optional. On a lift that already has an estimated 1RM, its first weight comes from that estimate; otherwise it asks for a starting weight. The scheme is fixed once the exercise has been logged.
+- **Linear progression:** pick **Linear** under Progression in an exercise's form for a fixed weight increase every successful session (5 lb unless you change it), a reset 10% lighter after three misses in a row, an extra rep instead of weight once you're at the heaviest load, and a lighter restart after a break. A Linear exercise has one Reps number and no effort target; effort on its first set is optional. On a lift that already has an estimated 1RM, its first weight comes from that estimate; otherwise it asks for a starting weight. The scheme is fixed once the exercise has been logged. Linear exercises of the same name with the same reps and sets (a squat on two workouts, say) share one progression, so it goes up every session whichever day it's on, and their starting weight is asked once.
 - **Summary lines** show a Linear exercise's increase ("Primary · Linear +5 lb · 3 × 5 · Barbell"), and a rep range with equal ends shows as one number ("3 × 5", not "3 × 5–5").
 
 ## [1.4.0] - 2026-10-11

@@ -1,4 +1,12 @@
-import { countedSets, schemeFor, sessionE1rm, type ExerciseSession } from '../engine'
+import {
+  countedSets,
+  schemeFor,
+  schemeId,
+  sessionE1rm,
+  type ExerciseSession,
+  type Seed,
+  type Suggestion,
+} from '../engine'
 import { liftExercises, liftKey } from '../program/lifts'
 import { activeExercises, missingSeeds } from '../program/program'
 import type { Program, ProgramExercise } from '../program/types'
@@ -7,11 +15,74 @@ import type { Session } from '../session/types'
 import { dayHasHistory, exerciseHistory, type LoggedExerciseSession } from './sessions'
 
 // A lift's sessions across the program (SPEC §6.9): they share the e1RM and History, while
-// each exercise keeps its own progression.
+// each exercise keeps its own progression, except Linear exercises with the same prescription (§6.10).
 
-/** One exercise's finished sessions, marked by its own replay (deloads, SPEC §6.7). */
-function replayed(sessions: Session[], exercise: ProgramExercise, before?: Session): LoggedExerciseSession[] {
-  return schemeFor(exercise).replay(exercise, exerciseHistory(sessions, exercise.id, before))
+const sameRange = (a: ProgramExercise, b: ProgramExercise) =>
+  a.repRange.min === b.repRange.min && a.repRange.max === b.repRange.max
+
+/**
+ * The exercises whose sessions one progression is replayed from: for a Linear exercise, every
+ * Linear exercise in its lift with the same rep range and set count, archived ones included, in
+ * program order (SPEC §6.10); otherwise the exercise alone.
+ */
+export function progressionGroup(program: Program, exercise: ProgramExercise): ProgramExercise[] {
+  if (schemeId(exercise) !== 'linear') return [exercise]
+  const group = liftExercises(program, exercise.name).filter(
+    (e) => schemeId(e) === 'linear' && sameRange(e, exercise) && e.sets === exercise.sets,
+  )
+  // An exercise not (yet) in the program, e.g. one being added, still has its own sessions.
+  return group.some((e) => e.id === exercise.id) ? group : [exercise, ...group]
+}
+
+/**
+ * The finished sessions an exercise's progression replays (SPEC §6.10): its own, plus its Linear
+ * group's, oldest first, each tagged with the exercise that logged it. With `before`, only
+ * sessions before it (editing, §5.4).
+ */
+export function progressionHistory(
+  program: Program,
+  sessions: Session[],
+  exercise: ProgramExercise,
+  before?: Session,
+): LoggedExerciseSession[] {
+  return progressionGroup(program, exercise)
+    .flatMap((e) => exerciseHistory(sessions, e.id, before).map((s) => ({ ...s, exerciseId: e.id })))
+    .sort((a, b) => Date.parse(a.date) - Date.parse(b.date) || a.sessionId - b.sessionId)
+}
+
+/** The starting numbers a progression starts from: the exercise's own, else its group's (SPEC §6.10). */
+export function groupSeed(program: Program, exercise: ProgramExercise): Seed | undefined {
+  return exercise.seed ?? progressionGroup(program, exercise).find((e) => e.seed)?.seed
+}
+
+/**
+ * An exercise's next suggestion as of `asOf`, from all finished history (SPEC §6): its progression
+ * history, its group's starting numbers and its lift's other sessions for the e1RM.
+ */
+export function suggestFor(
+  program: Program,
+  sessions: Session[],
+  exercise: ProgramExercise,
+  asOf: Date,
+): Suggestion {
+  return schemeFor(exercise).suggest(
+    { ...exercise, seed: groupSeed(program, exercise) },
+    progressionHistory(program, sessions, exercise),
+    asOf,
+    otherLiftSessions(program, sessions, exercise),
+  )
+}
+
+/** One exercise's finished sessions, marked by its progression's replay (deloads, SPEC §6.7, §6.10). */
+function replayed(
+  program: Program,
+  sessions: Session[],
+  exercise: ProgramExercise,
+  before?: Session,
+): LoggedExerciseSession[] {
+  return schemeFor(exercise)
+    .replay(exercise, progressionHistory(program, sessions, exercise, before))
+    .filter((s) => s.exerciseId === exercise.id)
 }
 
 /**
@@ -26,17 +97,20 @@ export function otherLiftSessions(
 ): LoggedExerciseSession[] {
   return liftExercises(program, exercise.name)
     .filter((e) => e.id !== exercise.id)
-    .flatMap((e) => replayed(sessions, e, before))
+    .flatMap((e) => replayed(program, sessions, e, before))
 }
 
 const countsForE1rm = (s: ExerciseSession) => !s.isDeload && !s.replaced && sessionE1rm(s) !== undefined
 
 /**
  * Exercises still missing starting numbers, which the seed gate asks for before a session (SPEC
- * §5.1). A primary whose lift already has an e1RM from a real session needs none (§6.9, §6.10).
+ * §5.1). A primary whose lift already has an e1RM from a real session needs none (§6.9, §6.10),
+ * nor does a Linear exercise whose group has them (§6.10).
  */
 export function needsStartingNumbers(program: Program, sessions: Session[]): ProgramExercise[] {
-  return missingSeeds(program).filter((e) => e.tier !== 'primary' || !liftHasE1rm(program, sessions, e.name))
+  return missingSeeds(program).filter(
+    (e) => !groupSeed(program, e) && (e.tier !== 'primary' || !liftHasE1rm(program, sessions, e.name)),
+  )
 }
 
 /**
@@ -55,7 +129,7 @@ export function latestInLift(
   let latest: Found | undefined
   let latestWeight: Found | undefined
   for (const exercise of liftExercises(program, name)) {
-    for (const s of replayed(sessions, exercise)) {
+    for (const s of replayed(program, sessions, exercise)) {
       const first = countedSets(s.sets)[0]
       if (s.replaced || !first) continue
       const found = { exercise, weight: first.weight, time: Date.parse(s.date), id: s.sessionId }
@@ -68,7 +142,7 @@ export function latestInLift(
 
 /** Whether the lift has an e1RM from a real session: a primary joining it needs no starting numbers. */
 export function liftHasE1rm(program: Program, sessions: Session[], name: string): boolean {
-  return liftExercises(program, name).some((x) => replayed(sessions, x).some(countsForE1rm))
+  return liftExercises(program, name).some((x) => replayed(program, sessions, x).some(countsForE1rm))
 }
 
 /**

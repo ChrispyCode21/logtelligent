@@ -1,6 +1,6 @@
 import { schemeFor, type ExerciseConfig, type Suggestion } from '../engine'
-import { otherLiftSessions } from '../history/lifts'
-import { exerciseHistory, type LoggedExerciseSession } from '../history/sessions'
+import { groupSeed, otherLiftSessions, progressionHistory } from '../history/lifts'
+import type { LoggedExerciseSession } from '../history/sessions'
 import { findExercise } from '../program/program'
 import type { Program } from '../program/types'
 import { prescribedConfig } from './prescription'
@@ -33,10 +33,13 @@ export function sessionExercises(
   return session.exercises.flatMap((log) => {
     const current = findExercise(program, log.exerciseId)
     if (!current) return []
-    const config = finished ? prescribedConfig(current, log) : current
+    // A Linear exercise with no starting numbers of its own starts from its group's (SPEC §6.10).
+    const seeded = { ...current, seed: groupSeed(program, current) }
+    const config = finished ? prescribedConfig(seeded, log) : seeded
     // Earlier sessions with no saved range are judged by today's range, as everywhere else, not
     // by the one this session saved (the engine falls back to the config it's given).
-    const history = exerciseHistory(sessions, config.id, finished ? session : undefined).map((h) =>
+    // A Linear exercise's progression is shared with same-prescription exercises (SPEC §6.10).
+    const history = progressionHistory(program, sessions, current, finished ? session : undefined).map((h) =>
       h.repRange ? h : { ...h, repRange: current.repRange },
     )
     // The lift's other exercises share the e1RM (SPEC §6.9).
