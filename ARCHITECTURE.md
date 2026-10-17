@@ -21,7 +21,7 @@ src/
     scheme.ts       ProgressionScheme (suggest, evaluate, replay), the `adaptive` and `linear` schemes and `schemeFor`, the entry point the UI and storage call (SPEC §8)
     rotation.ts     nextDay (SPEC §5.1)
     sets.ts         countedSets: extra sets are recorded but never judged (SPEC §5.2)
-  program/      Program model (days → exercises), pure editing functions (add, move, archive, clear…) effort scales (effort.ts), the built-in exercise bank with search (bank.ts), program templates (templates.ts), entering starting numbers: validation, pre-fill, placeholders and stack presets (seeding.ts), the exercise form's fields and validation (exerciseForm.ts), and lifts: same-named exercises (lifts.ts)
+  program/      Program model (days → exercises), pure editing functions (add, move, archive, clear…) effort scales (effort.ts), the built-in exercise bank with search (bank.ts), program templates, each exercise a bank id with any settings of its own (templates.ts), entering starting numbers: validation, pre-fill, placeholders and stack presets (seeding.ts), the exercise form's fields and validation (exerciseForm.ts), and lifts: same-named exercises (lifts.ts)
   session/      Session types (types.ts) and pure session rules: set editing (one working weight), each exercise's set target,
                 the "Only X of Y" tally, the first-set effort check, canFinish and a substitute's weight step (sets.ts); set pre-fill and the set form's
                 validation (setForm.ts); each exercise's history and suggestion for a live or finished session (context.ts); note text and the Finish confirm (notes.ts); saving and applying a finished session's prescription (prescription.ts);

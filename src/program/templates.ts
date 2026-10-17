@@ -2,12 +2,20 @@
 import { BANK, exerciseFromBank } from './bank'
 import type { Program, ProgramDay, ProgramExercise } from './types'
 
+/** What a template can set for one of its exercises; the rest is the bank's default (SPEC §5.1). */
+export type TemplateSettings = Partial<
+  Pick<ProgramExercise, 'sets' | 'repRange' | 'targetRpe' | 'tier' | 'progression'>
+>
+
+/** A template exercise: a bank id, with any settings of its own. */
+export type TemplateExercise = string | ({ bank: string } & TemplateSettings)
+
 export interface ProgramTemplate {
   id: string
   name: string
   description: string
-  /** Each day's exercises are bank ids, in session order. */
-  days: { name: string; exercises: string[] }[]
+  /** Each day's exercises, in session order. */
+  days: { name: string; exercises: TemplateExercise[] }[]
 }
 
 export const TEMPLATES: ProgramTemplate[] = [
@@ -57,15 +65,17 @@ export const TEMPLATES: ProgramTemplate[] = [
   },
 ]
 
-/** The template's days as new program days, with fresh ids and no starting numbers. */
+/** The template's days as new program days, with fresh ids, its settings and no starting numbers. */
 export function templateDays(template: ProgramTemplate): ProgramDay[] {
   return template.days.map((day) => ({
     id: crypto.randomUUID(),
     name: day.name,
-    exercises: day.exercises.map((bankId) => {
-      const e = BANK.find((b) => b.id === bankId)
-      if (!e) throw new Error(`Template ${template.id} uses unknown bank exercise ${bankId}`)
-      return exerciseFromBank(e)
+    exercises: day.exercises.map((entry) => {
+      const { bank, ...settings } = typeof entry === 'string' ? { bank: entry } : entry
+      const e = BANK.find((b) => b.id === bank)
+      if (!e) throw new Error(`Template ${template.id} uses unknown bank exercise ${bank}`)
+      // Copied, so editing the program never changes the template.
+      return structuredClone({ ...exerciseFromBank(e), ...settings })
     }),
   }))
 }
