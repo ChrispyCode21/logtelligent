@@ -58,7 +58,7 @@ export function SuggestionCard({ config, suggestion, heading, effortScale, onEdi
       </p>
       <p className="muted">
         {config.equipment === 'dumbbell' && 'Per hand · '}
-        {suggestion.sets} sets · {repsText} reps
+        {suggestion.sets} {suggestion.sets === 1 ? 'set' : 'sets'} · {repsText} reps
         {config.unilateral && ' per side'}
         {adaptive?.targetRpe !== undefined && (
           <> · first set{effortTarget(effortScale, adaptive.targetRpe)}</>

@@ -10,6 +10,7 @@ import {
   needsStartingNumbers,
   otherLiftSessions,
   programChange,
+  startingNumbersStep,
   suggestFor,
   withLiftGym,
 } from './lifts'
@@ -362,6 +363,14 @@ describe('7.L Linear, shared across days (SPEC §6.10)', () => {
     expect(needsStartingNumbers(p, [])).toEqual([])
     expectNext(next(p, [], squatA), 95, { kind: 'start' })
     expectNext(next(p, [], squatB), 95, { kind: 'start' })
+  })
+
+  it("counts a group's shared starting numbers as one walkthrough step", () => {
+    const unseeded = novice({ ...squatA, seed: undefined })
+    expect(startingNumbersStep(unseeded, [])).toEqual({ step: 1, of: 1 })
+    const withBench = { ...unseeded, days: [...unseeded.days, { id: 'c', name: 'C', exercises: [benchA] }] }
+    // The bench already has its starting numbers, so the squat is step 2 of 2.
+    expect(startingNumbersStep(withBench, [])).toEqual({ step: 2, of: 2 })
   })
 
   it('L37: A 95 3x5, then B suggests 100 x 5, +5 lb', () => {

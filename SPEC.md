@@ -66,11 +66,15 @@ Each day has a fixed set of exercises. Upper A and Upper B use different exercis
 - The seed is an estimate; if it's off, the progression rules correct it: at worst, one easy (or failed) week, and the next is accurate.
 - The exercise form and the walkthrough (below) share one starting-numbers entry with this wording. The form shows a **placeholder** weight as a suggestion: the bank's, snapped down onto the exercise's typed loads. The walkthrough fills in a value instead, and only it offers stack quick picks.
 
-**Templates:** one ships, a **4-day Upper/Lower**, built from bank exercises with their bank defaults:
+**Templates:** two ship. A **4-day Upper/Lower**, built from bank exercises with their bank defaults:
 - **Upper A:** Bench Press, Barbell Row, Dumbbell Shoulder Press, Lat Pulldown, Lateral Raise, Triceps Pushdown
 - **Lower A:** Back Squat, Romanian Deadlift, Leg Press, Lying Leg Curl, Standing Calf Raise
 - **Upper B:** Overhead Press, Pull-Up, Incline Dumbbell Press, Seated Cable Row, Dumbbell Curl, Face Pull
 - **Lower B:** Deadlift, Bulgarian Split Squat, Leg Extension, Seated Leg Curl, Hanging Leg Raise
+
+A **3-day Novice A/B**, Workout A and B alternated, every exercise a primary on Linear (§6.10) at 5–5, +5 lb (the deadlift +10 lb):
+- **Workout A:** Back Squat 3 × 5, Bench Press 3 × 5, Deadlift 1 × 5
+- **Workout B:** Back Squat 3 × 5, Overhead Press 3 × 5, Deadlift 1 × 5
 
 Templates are offered while the program has no active days, with building your own as the alternative; switching from another program is "Change your program" first (§5.5). Applying one needs no confirm. It produces a normal, fully editable program, its days added after any archived ones; the effort scale is kept. Each template exercise joins the lift of the same name (§6.9). A template can set each exercise's sets, rep range, target RPE, tier and scheme with its settings, copied in when it's applied; anything it doesn't set is the bank's default. The same bank exercise can appear on several days with different settings.
 

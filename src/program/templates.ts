@@ -18,6 +18,15 @@ export interface ProgramTemplate {
   days: { name: string; exercises: TemplateExercise[] }[]
 }
 
+/** A novice lift: a primary on Linear at 5–5 (SPEC §5.1, §6.10). */
+const novice = (bank: string, sets: number, increment = 5): TemplateExercise => ({
+  bank,
+  tier: 'primary',
+  sets,
+  repRange: { min: 5, max: 5 },
+  progression: { scheme: 'linear', increment },
+})
+
 export const TEMPLATES: ProgramTemplate[] = [
   {
     id: 'upper-lower-4',
@@ -60,6 +69,22 @@ export const TEMPLATES: ProgramTemplate[] = [
           'seated-leg-curl',
           'hanging-leg-raise',
         ],
+      },
+    ],
+  },
+  {
+    id: 'novice-ab-3',
+    name: '3-day Novice A/B',
+    description:
+      'Two workouts, A and B, alternated three days a week: squat, a press and deadlift. Weight goes up every successful session; a lift missed three times in a row resets 10% lighter.',
+    days: [
+      {
+        name: 'Workout A',
+        exercises: [novice('back-squat', 3), novice('bench-press', 3), novice('deadlift', 1, 10)],
+      },
+      {
+        name: 'Workout B',
+        exercises: [novice('back-squat', 3), novice('overhead-press', 3), novice('deadlift', 1, 10)],
       },
     ],
   },
