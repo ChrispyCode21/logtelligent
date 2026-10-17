@@ -25,13 +25,11 @@ const sameRange = (a: ProgramExercise, b: ProgramExercise) =>
  * Linear exercise in its lift with the same rep range and set count, archived ones included, in
  * program order (SPEC §6.10); otherwise the exercise alone.
  */
-export function progressionGroup(program: Program, exercise: ProgramExercise): ProgramExercise[] {
+function progressionGroup(program: Program, exercise: ProgramExercise): ProgramExercise[] {
   if (schemeId(exercise) !== 'linear') return [exercise]
-  const group = liftExercises(program, exercise.name).filter(
+  return liftExercises(program, exercise.name).filter(
     (e) => schemeId(e) === 'linear' && sameRange(e, exercise) && e.sets === exercise.sets,
   )
-  // An exercise not (yet) in the program, e.g. one being added, still has its own sessions.
-  return group.some((e) => e.id === exercise.id) ? group : [exercise, ...group]
 }
 
 /**
@@ -86,7 +84,7 @@ function replayed(
 }
 
 /**
- * The finished sessions of the other exercises in this one's lift, each marked by its own replay:
+ * The finished sessions of the other exercises in this one's lift, each marked by its own exercise's replay:
  * what a scheme's `suggest` takes as `lift`. With `before`, only sessions before it (editing, §5.4).
  */
 export function otherLiftSessions(

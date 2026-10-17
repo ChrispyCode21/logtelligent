@@ -457,18 +457,6 @@ A barbell squat, 3 sets of 5 (range 5–5), +5 lb, seed 135, unless stated. `3×
 | L19 | Loads 100, 110, seed 100: 100 ✗ three times | **100 × 5**, "Reset: missed 3 times in a row": never below the lightest load; the count restarts |
 | L20 | No history; the lift's e1RM is 273.6 from another exercise (225 × 5 @ 8) | **215 × 5**, no reason: the heaviest load for 5 reps at RPE 7; the seed isn't used |
 | L35 | No seed, no history, and the lift has no e1RM | **Needs starting numbers** |
-
-Shared across days: a squat on Workout A and on Workout B, both 3 × 5 (5–5), +5 lb, seed 95 on A only, unless stated. Sessions alternate A, B, A…
-
-| ID | Given | Expected |
-|---|---|---|
-| L36 | No history | B needs no starting numbers; both suggest **95 × 5** |
-| L37 | A 95 3×5 | B: **100 × 5**, "+5 lb" |
-| L38 | A 95 3×5; B 100 3×5; A 105 3×5 | B: **110 × 5**, "+5 lb"; A also suggests 110 |
-| L39 | A 95 ✗; B 95 ✗; A 95 ✗ | B: **85 × 5**, "Reset: missed 3 times in a row" (95 × 0.9 = 85.5, snapped down): misses count across both |
-| L40 | L39, then B 85 3×5 | A: **90 × 5**, "+5 lb"; History marks that B session as the deload, on B |
-| L41 | B is 5 × 5 (with seed 95): A 95 3×5 | B: **95 × 5**, no reason; A: 100 × 5: a different set count progresses apart |
-| L42 | B's increase is +10 lb: A 95 3×5 | B: **105 × 5**, "+10 lb"; A: 100 × 5, "+5 lb" |
 | L21 | An Adaptive bench and a Linear squat, each with a deload-marked session | History marks each exercise's deloads by its own scheme; Adaptive's are as before |
 | L22 | 135 3×5; 140 ✗; 140 ✗, both stored at 5–5. Range now 3–3 | **140 × 3**, "Repeat": the weight is kept, with no fresh start |
 | L23 | L22, then 140 3, 3, 2 ✗ (stored at 3–3) | **125 × 3**, "Reset": the miss count carried across the range change |
@@ -483,6 +471,18 @@ Shared across days: a squat on Workout A and on Workout B, both 3 × 5 (5–5), 
 | L32 | Pull-up as L31: 0 ✗ three times | **0 × 8**, "Reset": a reset at 0 stays at 0 |
 | L33 | L24, then 110 3×5 | **110 × 6**, "Repeat": while a rep is added, a lighter weight is judged against the raised target, so fewer reps is a miss |
 | L34 | Squat on two days, both Linear with effort logged: 3 × 5 (5–5) at 225×5 @8 (e1RM 273.6), and 3 × 12 (12–12) at 185×12 @8 (267.3) | The 12–12 session is high-rep (rep target 12, no reps in reserve), so with a lower-rep session in the window it's skipped: lift e1RM **273.6** (as I1) |
+
+Shared across days: a squat on Workout A and on Workout B, both 3 × 5 (5–5), +5 lb, seed 95 on A only, unless stated. Sessions alternate A, B, A…
+
+| ID | Given | Expected |
+|---|---|---|
+| L36 | No history | B needs no starting numbers; both suggest **95 × 5** |
+| L37 | A 95 3×5 | B: **100 × 5**, "+5 lb" |
+| L38 | A 95 3×5; B 100 3×5; A 105 3×5 | B: **110 × 5**, "+5 lb"; A also suggests 110 |
+| L39 | A 95 ✗; B 95 ✗; A 95 ✗ | B: **85 × 5**, "Reset: missed 3 times in a row" (95 × 0.9 = 85.5, snapped down): misses count across both |
+| L40 | L39, then B 85 3×5 | A: **90 × 5**, "+5 lb"; History marks that B session as the deload, on B |
+| L41 | B is 5 × 5 (with seed 95): A 95 3×5 | B: **95 × 5**, no reason; A: 100 × 5: a different set count progresses apart |
+| L42 | B's increase is +10 lb: A 95 3×5 | B: **105 × 5**, "+10 lb"; A: 100 × 5, "+5 lb" |
 
 ### 7.F Rotation (§5.1)
 
@@ -542,7 +542,7 @@ Bench Press on two days: Upper A at 3–5 @8 and Upper B at 10–12 @8, both pri
 The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]`), since the 4-week window, deload exclusion (A5) and substitute exclusion (A6) all need per-session data.
 
 A **progression scheme** is one interface with three functions; the UI and storage get suggestions, validation and replays only through it, never from a scheme's own modules. Shared helpers (load steps, rotation, counted sets) are called directly. The engine returns the program exercise's scheme (Adaptive unless the exercise sets another).
-- **Suggestions:** `suggest(config, history, asOf, lift) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by its own replay, so a scheme can replay across exercises (§6.9). Adaptive and Linear use them only for the e1RM.
+- **Suggestions:** `suggest(config, history, asOf, lift) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by the replay of the exercise that logged it, so a scheme can replay across exercises (§6.9). Adaptive and Linear use them only for the e1RM.
 - **Validation:** `evaluate(config, history, sets, date) => SessionOutcome`, `date` being the session's, so a scheme can judge it as its replay will (Linear's break, §6.10).
 - **Replay:** `replay(config, history) => ExerciseSession[]` returns the history with each session marked as a deload or not, and as high-rep or not (§6.4). History's deload marking calls it through each exercise's scheme (§6.9). Linear marks the first session after each reset (§6.10).
 - **State is never passed in or stored:** each scheme replays `history` under its own rules (Adaptive: `deriveState(config, history)`, ARCHITECTURE.md, "Progression state is derived").
