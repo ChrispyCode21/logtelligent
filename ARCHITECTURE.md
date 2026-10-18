@@ -29,7 +29,8 @@ src/
   history/      Pure history helpers: stored sessions → engine history, optionally before a given session (sessions.ts);
                 a lift's sessions across the program: the other exercises' sessions for the e1RM, the seed gate,
                 the latest weight and gym setup a new exercise copies (lifts.ts);
-                the History tab's view-model: a lift's timeline on every day with e1RM (timeline.ts) and the picker's lifts (picker.ts)
+                the History tab's view-model: a lift's timeline on every day with e1RM (timeline.ts) and the picker's lifts (picker.ts);
+                synthetic training history for tests (synthetic.ts), which the replay benchmark (replayBenchmark.test.ts) times
                 program/, session/ and history/ are pure too: no React, Dexie, storage or UI imports (enforced by lint).
   storage/      Everything that touches IndexedDB: Dexie schema, reads, writes, backup/restore
   components/   React UI (see "UI" below)
@@ -43,6 +44,7 @@ scripts/
   check-all.mjs             Every CI check in CI's order, full output only for failures (`npm run check:all`; `--fast` for `check:fast`)
   check-spec-coverage.mjs   CI: every SPEC §7 example ID has a test named with it
   check-conventions.mjs     CI: primitives over raw elements, tokens over raw CSS values, shared formatters, progression through the scheme
+  check-bundle-size.mjs     CI (end of `npm run build`): the gzipped JavaScript and CSS stay within their budget
   changelog-section.mjs     CI/release: extracts a version's CHANGELOG section
 e2e/            Playwright, against the production build (playwright.config.ts: WebKit and Chromium, at 375px and 320px)
   layout.spec.ts    Every screen: no sideways scrolling, no clipped button labels (TESTING.md)
@@ -66,7 +68,7 @@ Fatigue stacks, the last successful numbers, deload status and accessory rep ext
 - Editing or importing history automatically recomputes everything after it. Editing a finished session (SPEC §5.4) relies on this: `session/context.ts` judges it against only the sessions before it, as of when it started.
 - Deload and replaced sessions are identified during the replay, which is how they're excluded from e1RM (A5, A6).
 - Each session is judged by the rep range it was prescribed (`ExerciseSession.repRange`, from the saved prescription; SPEC §6.8), or the current range for sessions without one. A range change between sessions, or from the last session to today's settings, is a fresh start (`freshStart`): stacks and pending plans are cleared. A finished session's editor uses `prescribedConfig`, so it's judged and counted as it was when finished.
-- Cost is negligible at this scale (a few hundred sessions per exercise at most).
+- Cost is negligible at this scale (a few hundred sessions per exercise at most). The replay benchmark (`history/replayBenchmark.test.ts`) keeps it so: after about 3 years of synthetic history (`history/synthetic.ts`), one session's suggestions must take under 50 ms for each scheme. A new scheme adds a program that uses it there. Replay checkpoints are worth building only once it nears the limit.
 
 ## Storage
 
@@ -124,7 +126,7 @@ Any change to what's stored (a new field, table or shape) needs all of these, in
 
 ## Quality gates and releases
 
-- **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the purity rules for the engine and for program/, session/ and history/), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters, progression through `schemeFor` rather than a scheme's own functions), SPEC §7 coverage, CHANGELOG has the current version, unit tests, type-check and build.
+- **CI** (`.github/workflows/ci.yml`, check "Checks"): Prettier, oxlint (including the purity rules for the engine and for program/, session/ and history/), UI conventions (`scripts/check-conventions.mjs`: primitives over raw elements, tokens over raw CSS values, shared formatters, progression through `schemeFor` rather than a scheme's own functions), SPEC §7 coverage, CHANGELOG has the current version, unit tests (including the replay benchmark, above), type-check and build. The build ends with the bundle size budget (`scripts/check-bundle-size.mjs`): 150 KB of gzipped JavaScript and 10 KB of CSS, raised deliberately in a PR when a feature needs it; code splitting is worth doing only once it nears the limit.
 - **Architecture and quality review:** the read-only `architecture-reviewer` subagent (`.claude/agents/architecture-reviewer.md`) reports ranked findings on a branch or module against this document and CLAUDE.md. Run it before opening a PR (CLAUDE.md, "Building a slice"). Small findings that don't belong in a feature PR go on the cleanup backlog (below).
 - **Playwright** (`ci.yml`, check "Playwright"): `e2e/` in WebKit and Chromium at 375px and 320px: every screen for sideways scrolling and clipped button labels, and smoke tests of the main flows. On failure the traces are kept as a run artifact (open with `npx playwright show-trace`).
 - **Security** (`security.yml`): CodeQL on the app and the workflows; dependency review on PRs.

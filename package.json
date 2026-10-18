@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && npm run --silent check:size",
     "lint": "oxlint",
     "typecheck": "tsc -b",
     "preview": "vite preview",
@@ -17,6 +17,7 @@
     "check:spec": "node scripts/check-spec-coverage.mjs",
     "check:conventions": "node scripts/check-conventions.mjs",
     "check:changelog": "node scripts/changelog-section.mjs --check",
+    "check:size": "node scripts/check-bundle-size.mjs",
     "check:all": "node scripts/check-all.mjs",
     "check:fast": "node scripts/check-all.mjs --fast"
   },
