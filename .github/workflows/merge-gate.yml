@@ -1,0 +1,67 @@
+# Merge gate (ARCHITECTURE.md, "Quality gates and releases"): labels each PR touches-data or
+# touches-gates from the paths it changes, and keeps GitHub auto-merge to the owner's PRs without
+# either label. Auto-merge is switched on per PR by the owner (or a Claude session acting as the
+# owner), so the merge is the owner's and starts release.yml; this workflow only ever switches it off.
+# pull_request_target runs with this file from main and a write token, so it must never check out or
+# run the PR's code: it reads only the PR's file list and labels through the API.
+name: Merge gate
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, labeled, unlabeled, auto_merge_enabled]
+
+permissions: {}
+
+concurrency:
+  group: merge-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Gate
+    # Dependabot PRs are left to the local reviewer's rules (.github/agent/PIPELINE.md).
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+      issues: write # labels are issue labels
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+      AUTHOR: ${{ github.event.pull_request.user.login }}
+      OWNER: ${{ github.repository_owner }}
+    steps:
+      - name: Label by path
+        run: |
+          set -euo pipefail
+          changed=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[] | .filename, (.previous_filename // empty)')
+          # Keep these in step with .github/agent/PIPELINE.md's label table. Labels are only added:
+          # the builder may also mark a PR touches-data by judgment, and the owner removes a label.
+          if grep -q '^src/storage/' <<<"$changed"; then
+            gh api -X POST "repos/$REPO/issues/$PR/labels" -f 'labels[]=touches-data' >/dev/null
+          fi
+          # What decides "green": the check scripts, lint, format, type and test config, the security
+          # headers and hosting, and the workflows and rulesets that run and require the checks.
+          if grep -qE '^(scripts/|\.oxlintrc\.json$|\.prettier|playwright\.config\.ts$|vite\.config\.ts$|tsconfig[^/]*\.json$|public/_headers$|wrangler\.jsonc$|\.github/(workflows|rulesets)/)' <<<"$changed"; then
+            gh api -X POST "repos/$REPO/issues/$PR/labels" -f 'labels[]=touches-gates' >/dev/null
+          fi
+
+      - name: Keep auto-merge to ungated owner PRs
+        run: |
+          set -euo pipefail
+          pr=$(gh api graphql -f query='query($owner:String!,$name:String!,$n:Int!){repository(owner:$owner,name:$name){pullRequest(number:$n){id autoMergeRequest{enabledAt} labels(first:50){nodes{name}}}}}' \
+            -F owner="${REPO%/*}" -F name="${REPO#*/}" -F n="$PR" --jq .data.repository.pullRequest)
+          [ "$(jq -r '.autoMergeRequest != null' <<<"$pr")" = true ] || exit 0
+          gated=$(jq -r '[.labels.nodes[].name | select(. == "touches-data" or . == "touches-gates")] | join(", ")' <<<"$pr")
+          reason=""
+          if [ "$AUTHOR" != "$OWNER" ]; then
+            reason="it isn't the owner's PR"
+          elif [ -n "$gated" ]; then
+            reason="it's labeled $gated, so the owner reads it and merges"
+          fi
+          [ -n "$reason" ] || exit 0
+          gh api graphql -f query='mutation($id:ID!){disablePullRequestAutoMerge(input:{pullRequestId:$id}){clientMutationId}}' \
+            -F id="$(jq -r .id <<<"$pr")" >/dev/null
+          gh pr comment "$PR" --repo "$REPO" --body "Auto-merge switched off: $reason."
