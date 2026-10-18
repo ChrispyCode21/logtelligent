@@ -26,7 +26,7 @@ milestone ─► builder ─┬─► questions on the issue, label agent-needs-
 | `agent-followup` | purple | Found by the local reviewer, outside the PR's scope; the owner reads it, then moves it into a milestone and removes the label to have it built. |
 | `reviewed` | gray | The local reviewer has reviewed the PR at its latest commit (see "Local reviewer"). |
 | `touches-data` | red | The PR changes what's stored (see "Merge safety"). |
-| `touches-gates` | orange | The PR changes what decides "green": the check scripts, lint, format, type or test config, the security headers or hosting (see "Merge safety"). |
+| `touches-gates` | orange | The PR changes what decides "green": the check scripts, lint, format, type or test config, the security headers or hosting (see "Merge safety"). `merge-gate.yml` also sets both labels from a PR's paths, on every PR but Dependabot's. |
 | `agent-ready` | green | Used only by the disabled Actions version ("The Actions version"). |
 
 [README.md](../../README.md) ("Setting up a new deployment") has the commands that create them. Open questions and ideas carry GitHub's `question` and `enhancement` labels.
