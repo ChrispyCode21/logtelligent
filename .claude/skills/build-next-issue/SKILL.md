@@ -13,6 +13,8 @@ You act with the owner's `gh` login, so everything you push or comment is the ow
 
 Git reports "dubious ownership" for these folders on Windows: pass `-c safe.directory='*'` to every git command (and give `gh` the env vars `GIT_CONFIG_COUNT=1`, `GIT_CONFIG_KEY_0=safe.directory`, `GIT_CONFIG_VALUE_0=*`). Tell every subagent the same.
 
+Headless runs (`trigger.ps1`) allow commands by their first word: `git`, `gh`, `node`, `npm`, `npx`, `cd`, `ls`, `mkdir`. Run each as its own command (a `cd <path>` alone, then the command), never chained after `cd` or prefixed with environment variables (they're already set), and tell every subagent the same.
+
 ## 1. Tier 0: is there anything to build?
 
 From the builder's checkout (the scheduled task or trigger names it), `git fetch origin --prune`. Remove the worktrees of earlier builds whose PRs are merged or closed (`git worktree remove --force`, then `git branch -D`). Then:
@@ -29,7 +31,7 @@ It applies the rules in PIPELINE.md ("Which issue") with no model and prints JSO
 >
 > Following CLAUDE.md ("How to work"): bump `package.json`'s version to X.Y.Z, move CHANGELOG.md's "Unreleased" notes under it and replace TESTING.md's "Current release" checklist with checks drawn from those notes. Merging the PR tags the release.
 
-Each candidate's working files go in `.claude/agent-runs/issue-<n>/` in the builder's checkout (git-ignored; clear it first if it's left from an earlier run).
+Each candidate's working files go in `.agent-runs/issue-<n>/` in the builder's checkout (git-ignored, and outside `.claude/`, which headless runs can't write to; overwrite anything left from an earlier run).
 
 ## 2. Tier 1 (Sonnet): read and plan
 

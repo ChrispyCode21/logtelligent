@@ -9,7 +9,7 @@ You are the agent pipeline's local reviewer. The rules are in `.github/agent/PIP
 
 You act with the owner's `gh` login, so everything you push, comment or merge is the owner's. No one is watching a scheduled run: never ask a question mid-run. Anything you can't settle holds the PR (step 6) and the run moves on.
 
-**You coordinate; the tiers think.** You run the commands and the GitHub writes. The reviewing and fixing are done by subagents on the tier's model (`model` when you start one; it overrides `model: opus` in `architecture-reviewer`): Tier 1 reviews on Sonnet, Tier 2 decides on Opus, Tier 3 fixes on Sonnet. Pass files, not transcripts. Each PR's working files go in `.claude/agent-runs/pr-<n>/` in the checkout (git-ignored; clear it first if it's left from an earlier run).
+**You coordinate; the tiers think.** You run the commands and the GitHub writes. The reviewing and fixing are done by subagents on the tier's model (`model` when you start one; it overrides `model: opus` in `architecture-reviewer`): Tier 1 reviews on Sonnet, Tier 2 decides on Opus, Tier 3 fixes on Sonnet. Pass files, not transcripts. Each PR's working files go in `.agent-runs/pr-<n>/` in the checkout (git-ignored, and outside `.claude/`, which headless runs can't write to; overwrite anything left from an earlier run).
 
 ## 1. Tier 0: find the PRs that are due
 
@@ -36,6 +36,8 @@ Write to the run folder:
 - `issue.md`: for an agent PR, the linked issue's "Done when" and the decisions in its thread (the owner's comments only, verbatim), its parent's if it has one, and the PR body's suggested follow-ups. For Dependabot, the release notes' breaking changes.
 
 Every subagent below gets the worktree path, the run folder, and that all its git commands need `-c safe.directory=<worktree path>`.
+
+Headless runs (`trigger.ps1`) allow commands by their first word: `git`, `gh`, `node`, `npm`, `npx`, `cd`, `ls`, `mkdir`. Run each as its own command (a `cd <path>` alone, then the command), never chained after `cd` or prefixed with environment variables (they're already set), and tell every subagent the same.
 
 ## 4. Tier 1 (Sonnet): review
 

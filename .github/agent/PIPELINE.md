@@ -52,7 +52,7 @@ Each version has a **milestone** (v1.4.0, v2.0.0…), created by the owner when 
 
 ## Tiers
 
-Each run is one coordinating session that runs the commands and the GitHub writes and hands the thinking to subagents, each on the model its tier calls for (`model` when the subagent starts). Tiers pass files, not transcripts: each gets the paths of a few files in the run folder (`.claude/agent-runs/`, git-ignored) and nothing of the earlier tiers' working, so the expensive tier reads the least.
+Each run is one coordinating session that runs the commands and the GitHub writes and hands the thinking to subagents, each on the model its tier calls for (`model` when the subagent starts). Tiers pass files, not transcripts: each gets the paths of a few files in the run folder (`.agent-runs/`, git-ignored) and nothing of the earlier tiers' working, so the expensive tier reads the least.
 
 | Tier | Model | Builder | Reviewer |
 |---|---|---|---|
@@ -65,7 +65,7 @@ Tier 0 is a script, so a run with nothing to do costs no tokens. With `--claim` 
 
 ## Triggers
 
-Besides the nightly schedule, three local triggers start a run when something happens, with no webhooks. Each goes through `trigger.ps1`, which waits for a run in progress, refreshes the agent's checkout, runs Tier 0, and if there's work either runs the skill headless (`claude -p` on Sonnet, in the agent's checkout, with the owner's CLI login and `gh`; logs in `%LOCALAPPDATA%\Logtelligent-agent\`) or, during peak hours, schedules itself for 11:05 AM Pacific instead.
+Besides the nightly schedule, three local triggers start a run when something happens, with no webhooks. Each goes through `trigger.ps1`, which waits for a run in progress, refreshes the agent's checkout, runs Tier 0, and if there's work either runs the skill headless (`claude -p` on Sonnet, in the agent's checkout, with the owner's CLI login and `gh`; logs in `%LOCALAPPDATA%\Logtelligent-agent\`) or, during peak hours, schedules itself for 11:05 AM Pacific instead. Its permissions (git, gh, node, npm, npx, file edits, subagents) are in a settings file it passes to `claude`, so the subagents get them too; run folders sit outside `.claude/`, which headless runs can't write to. After a headless run, the watcher leaves that agent alone for 3 hours, so a run that fails or can't finish its work isn't retried every 30 minutes.
 
 - **Pre-push hook** (`hooks/pre-push`): when the owner pushes to an `agent/issue-*` or `dependabot/*` branch from their own checkout or its worktrees, it waits for the push to land, removes the PR's `reviewed` label (making it due) and starts the reviewer. The agents' own pushes don't trigger it.
 - **Watcher** (optional): a Windows scheduled task that runs `trigger.ps1` for both agents every 30 minutes, which catches what happens on GitHub (an answered question, a removed label, a merge that frees the builder). It costs nothing until Tier 0 finds work.
