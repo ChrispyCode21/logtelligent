@@ -203,9 +203,10 @@ Per exercise, set at program-setup time:
 A fixed pound increment doesn't work across exercises: +5 lb is under 2% on a 300 lb squat, but +2.5 lb is 20% on a 12.5 lb lateral raise. Each exercise needs its own description of how it progresses.
 
 **Three layers, combined:**
-1. **Equipment-type defaults** supply the available loads (the default values are under review: #61):
+1. **Equipment-type defaults** supply the available loads:
    - Barbell: 5 lb total jumps (2.5 lb plate per side), starting at a 45 lb empty bar, up to 1000 lb. A different bar uses the per-exercise override.
-   - Dumbbell: a standard rack list (e.g. 10, 12.5, 15, 17.5, 20, 22.5, 25, 30…).
+   - Dumbbell, per hand: 10, 12.5, 15, 17.5, 20, 22.5, then 25 to 150 lb in 5 lb steps.
+   - Bodyweight: added weight, 0 to 200 lb in 5 lb steps (§6.1).
    - Cable / machine: a stack list I enter (e.g. …99, 110, 121…).
 2. **Per-exercise override** of those loads for my gym's actual equipment (e.g. "this gym has 22.5s").
 3. **Max relative jump** (≈ 10%) on top. Adaptive: if the next available load is a bigger jump than this, progress by **reps** instead of weight, extending the effective top of the rep range.
@@ -249,8 +250,7 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
     - **The discount** depends on the chosen session's age today: **28 to 55 days → 90%**, **56 to 83 days → 85%**, **84 days or more → 80%** (the floor) (A4, A14). The tiers are first guesses, to revisit after real use.
   - Layoff overshoot beyond that is caught by the fail/deload logic (§6.6).
 - **No history yet:** a primary lift's first e1RM comes from its **setup seed** (§5.1): weight × reps treated as RPE 7. The seed is used **only until the lift's first real session** (on any day) and is **not** averaged into the running e1RM afterward, so a bad guess can't linger for three sessions.
-- **Data-driven targets** (under review: #60)**:** given the running e1RM and a weight, the engine predicts expected reps by inverting the formula (e.g. Epley inverted: reps to failure ≈ `30 × (e1RM / w − 1)`), minus the target reps in reserve. The program stores **intent** (e.g. "3 sets, first set ~RPE 8, 3–5 reps") and the engine chooses the weight.
-- **Weight-selection rule:**
+- **Weight-selection rule:** the program stores **intent** (e.g. "3 sets, first set ~RPE 8, 3–5 reps") and the engine chooses the weight:
   1. Target reps = **midpoint of the rep range, rounded up** (3–5 → 4; 5–7 → 6). The midpoint leaves room on both sides: a good day lands above it, a bad day can still clear the floor.
   2. For each available load, predicted reps = reps to failure (the averaged formula, inverted numerically) − (10 − target RPE).
   3. Suggest the **heaviest available load whose predicted reps ≥ target reps**. If none does (only with a very low e1RM), suggest the lightest load.
@@ -310,7 +310,7 @@ Triggered per exercise when it reaches two fatigue stacks. Lasts **one week** (o
 Deload conventions vary between coaches and programs; these values are a sensible starting point, not settled science.
 
 ### 6.8 Stored prescriptions
-- **What's saved:** each exercise's **rep range and set count**, on **Finish**, from the program's settings at that moment. Not the target RPE (the e1RM uses the effort logged), tier, or loads (the gym's equipment, not a prescription). An open session uses the current settings, so a range fixed mid-session applies to it. Editing a finished session doesn't change its prescription.
+- **What's saved:** each exercise's **rep range and set count**, on **Finish**, from the program's settings at that moment. Not the target RPE: the e1RM uses the effort logged, and §6.4's lower-rep filter deliberately judges past sessions by today's target RPE, so changing it re-judges them. Nor the tier or loads (the gym's equipment, not a prescription). An open session uses the current settings, so a range fixed mid-session applies to it. Editing a finished session doesn't change its prescription.
 - **Judging:** the progression replay and the finished-session editor judge each session by its own rep range (Adaptive's floor rule, "range filled", rep ceiling and extension, §6.2–6.6). Sessions finished before v1.3.0 have none and use the exercise's current settings everywhere they're judged (History, Today and the finished-session editor alike), so a range change can still re-judge them, even when saved ones follow. The rep range is the only stored setting the replay reads; the set count is for display (§5.4).
 - **Adaptive: a rep-range change is a fresh start:** when a session's range differs from the one before it, or the current range differs from the last session's, progression starts afresh from there. Fatigue stacks, the last successful numbers and any pending revert, retry or deload are cleared. Primary lifts go back to the e1RM rule (§6.4), which doesn't depend on the range; accessories restart at the bottom of the new range at the weight they'd have been suggested. A fail before the next success reverts one load step below, as with no success yet (§6.6). Examples H1–H5 (§7.H).
 
