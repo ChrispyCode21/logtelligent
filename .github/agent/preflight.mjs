@@ -28,8 +28,10 @@ const run = (cmd, args) =>
   execFileSync(cmd, args, { encoding: 'utf8', env, stdio: ['ignore', 'pipe', 'pipe'] }).trim()
 const ghJson = (args) => JSON.parse(run('gh', args) || 'null')
 const api = (path) => ghJson(['api', path])
-// The owner's own folder, not the shared temp dir; trigger.ps1 checks the same path.
-const LOCK_DIR = join(process.env.LOCALAPPDATA || homedir(), 'Logtelligent-agent')
+// The owner's own folder, not the shared temp dir; trigger.ps1 checks the same path. Not AppData:
+// the Claude desktop app's processes see a private copy of it, so its scheduled runs and the
+// triggers' runs wouldn't see each other's lock.
+const LOCK_DIR = join(homedir(), '.logtelligent-agent')
 const lockPath = (agent) => join(LOCK_DIR, `${agent}.lock`)
 const idle = (reason, extra = {}) => ({ status: 'idle', reason, ...extra })
 
