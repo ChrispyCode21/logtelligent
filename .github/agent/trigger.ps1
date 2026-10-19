@@ -5,7 +5,8 @@
 #
 # -Branch/-Sha come from the pre-push hook: wait for that push to land, then mark the branch's PR
 # due for review. -Now ignores peak hours and the cool-down. Logs go to
-# %LOCALAPPDATA%\Logtelligent-agent\.
+# %USERPROFILE%\.logtelligent-agent\ (not AppData: the Claude app's own processes see a private copy
+# of AppData, so the desktop's scheduled runs and these runs wouldn't share the lock).
 param(
   [Parameter(Mandatory)][ValidateSet('build', 'review')][string]$Agent,
   [string]$Branch,
@@ -26,7 +27,7 @@ $PeakEnd = 11
 # every 30 minutes.
 $CooldownHours = 3
 
-$LogDir = Join-Path $env:LOCALAPPDATA 'Logtelligent-agent'
+$LogDir = Join-Path $env:USERPROFILE '.logtelligent-agent'
 New-Item -ItemType Directory -Force $LogDir | Out-Null
 function Log($message) {
   [IO.File]::AppendAllText((Join-Path $LogDir 'trigger.log'), "$(Get-Date -Format s) [$Agent] $message`r`n")
