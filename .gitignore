@@ -39,3 +39,6 @@ playwright-report
 
 # Agent pipeline inputs, written by .github/workflows/agent.yml
 .agent-input/
+
+# Agent pipeline run folders (.github/agent/PIPELINE.md, "Tiers")
+.agent-runs/
