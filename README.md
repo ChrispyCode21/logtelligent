@@ -96,7 +96,8 @@ Commands are PowerShell-safe (single quotes stop PowerShell reading `{owner}` as
       ```powershell
       gh variable set ANTHROPIC_FEDERATION_RULE_ID --body '<fdrl_…>'
       ```
-7. The local reviewer ([PIPELINE.md](.github/agent/PIPELINE.md), "Local reviewer"): in the Claude desktop app, a scheduled task on this repo's main checkout every 3 hours with the prompt `/review-agent-prs`, in a permission mode that lets it push, comment and merge without asking.
+7. The local reviewer ([PIPELINE.md](.github/agent/PIPELINE.md), "Local reviewer"): in the Claude desktop app, a scheduled task on this repo's main checkout nightly at 4:00 AM Central with the prompt `/review-agent-prs`, in a permission mode that lets it push, comment and merge without asking.
+8. The local triggers ([PIPELINE.md](.github/agent/PIPELINE.md), "Triggers"), optional: `powershell -ExecutionPolicy Bypass -File .github/agent/install-triggers.ps1` (add `-Watch` for the watcher), with `claude` and `gh` signed in.
 
 ## Install on iPhone
 

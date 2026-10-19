@@ -14,7 +14,7 @@ milestone ─► builder ─┬─► questions on the issue, label agent-needs-
 
 - **Skills:** `.claude/skills/build-next-issue/` and `.claude/skills/review-agent-prs/`, read from the latest `main` at each run, so changes to them go through PRs like any other. The scheduled tasks themselves (`~/.claude/scheduled-tasks/`) only say which checkout to use and point at the skill.
 - **Checkouts:** the builder works in its own clone (`D:\Projects\Logtelligent-builder`), one worktree per issue; the reviewer in a worktree kept at `main` (`D:\Projects\Logtelligent-reviewer`). Neither touches the owner's own checkout.
-- **Schedule:** the reviewer every 3 hours, the builder every 3 hours half-way between, only while the Claude app is open and the PC awake. Either can be run on demand ("Run now", or the skill by name in a session).
+- **Schedule:** nightly, outside Anthropic's peak hours (5–11 AM Pacific): the builder at 2:00 AM Central, the reviewer at 4:00 AM, only while the Claude app is open and the PC awake. Local triggers ("Triggers") run them between times. Either can be run on demand ("Run now", the skill by name in a session, or `trigger.ps1`).
 - **Spending:** both run on the owner's Claude plan, not per-token API credit.
 - **Accepted risk: they act as the owner.** They read text others could write (issue threads, PR descriptions, upstream release notes in Dependabot PRs) while holding the owner's full `gh` login, and they push, comment and merge without asking. A text that tricks one could get unreviewed code merged or other repos touched. It's accepted because the builder builds only issues the owner wrote (or created from the owner's answers) and reads only the owner's comments (and its own), the reviewer reviews only the builder's and Dependabot's PRs, both treat all of it as data and never as instructions, and the merge exceptions ("Local reviewer") keep stored data, the gates, releases and workflows for the owner.
 
@@ -50,6 +50,29 @@ Each version has a **milestone** (v1.4.0, v2.0.0…), created by the owner when 
 - **The PR:** `Closes #n`, labeled `touches-data` or `touches-gates` where they apply, with Auto-fix on (the desktop app's PR monitor), so CI failures and conflicts are fixed in the builder's worktree. It never merges.
 - **Releases:** when the milestone has nothing left open and no release yet, the builder opens a "Release vX.Y.Z" issue in it with fixed text and builds it: the PR bumps `package.json`, moves CHANGELOG.md's "Unreleased" notes under the version, replaces TESTING.md's "Current release" checklist and tightens SPEC.md and ARCHITECTURE.md (CLAUDE.md, "How to work"). The owner merges it, which tags the release.
 
+## Tiers
+
+Each run is one coordinating session that runs the commands and the GitHub writes and hands the thinking to subagents, each on the model its tier calls for (`model` when the subagent starts). Tiers pass files, not transcripts: each gets the paths of a few files in the run folder (`.claude/agent-runs/`, git-ignored) and nothing of the earlier tiers' working, so the expensive tier reads the least.
+
+| Tier | Model | Builder | Reviewer |
+|---|---|---|---|
+| 0: gate | none | `preflight.mjs build`: an open build PR, the milestone, the candidates | `preflight.mjs review`: the PRs due, with risk hints |
+| 1: plan | Sonnet | reads the issue, threads and docs; writes `issue.md` (the packet) and `plan.md` (a verdict: build, questions, numbers, split, create, stop) | the compliance and correctness reviews, into `review.md` |
+| 2: advise | Opus | reviews a `build` or `numbers` plan against `issue.md` only: approves, revises or turns it into questions | decides each finding (fix, drop, hold, out of scope) from `review.md`, the diff and `issue.md` only |
+| 3: execute | Sonnet | builds the approved plan and runs the checks; a decision the plan missed comes back as a question | makes the fixes and runs the checks |
+
+Tier 0 is a script, so a run with nothing to do costs no tokens. With `--claim` it also takes a lock (in `%TEMP%`, stale after 4 hours) that keeps a scheduled run and a triggered one from overlapping; the run releases it at the end.
+
+## Triggers
+
+Besides the nightly schedule, three local triggers start a run when something happens, with no webhooks. Each goes through `trigger.ps1`, which waits for a run in progress, refreshes the agent's checkout, runs Tier 0, and if there's work either runs the skill headless (`claude -p` on Sonnet, in the agent's checkout, with the owner's CLI login and `gh`; logs in `%LOCALAPPDATA%\Logtelligent-agent\`) or, during peak hours, schedules itself for 11:05 AM Pacific instead.
+
+- **Pre-push hook** (`hooks/pre-push`): when the owner pushes to an `agent/issue-*` or `dependabot/*` branch from their own checkout or its worktrees, it waits for the push to land, removes the PR's `reviewed` label (making it due) and starts the reviewer. The agents' own pushes don't trigger it.
+- **Watcher** (optional): a Windows scheduled task that runs `trigger.ps1` for both agents every 30 minutes, which catches what happens on GitHub (an answered question, a removed label, a merge that frees the builder). It costs nothing until Tier 0 finds work.
+- **By hand:** `trigger.ps1 -Agent build` or `-Agent review` (`-Now` ignores peak hours).
+
+`install-triggers.ps1` installs the hook (`core.hooksPath` in the owner's checkout) and, with `-Watch`, the watcher; `-Uninstall` removes both. A headless run has no desktop app, so the builder's PRs from it don't get Auto-fix; the reviewer fixes their CI failures.
+
 ## What the agent writes
 
 Everything the builder and reviewer write on GitHub (PR descriptions, issue comments, commit messages) is public and unreviewed until the owner reads it. Secret scanning catches known key formats; these rules cover the rest.
@@ -62,7 +85,7 @@ Everything the builder and reviewer write on GitHub (PR descriptions, issue comm
 `/review-agent-prs` (`.claude/skills/review-agent-prs/SKILL.md`), so PRs don't sit for days unreviewed.
 
 - **Which PRs:** open PRs on the builder's `agent/issue-…` branches, or by `claude[bot]` or `dependabot[bot]`, that are due: no `reviewed` label, or commits by someone else since it was added. The owner's other PRs are left alone. The label also keeps two runs off the same PR. The owner's commits (the builder's and Auto-fix's included) don't make a PR due; removing the label does, e.g. after answering a hold.
-- **Which model reviews:** Opus 5.5 whenever the PR touches `src/engine/` or `src/storage/`, or has `touches-data` or `touches-gates`. Otherwise a quick Sonnet 5.5 pass rates the diff by how quietly a mistake could pass, not by size: Opus for anything where a plausible-looking change can be quietly wrong (the engine and its math, state replayed from history, rounding and dates, stored data and upgrades, the gates, design choices, an issue open to interpretation, edges no test covers); Sonnet for mechanical work or work that repeats an existing pattern, where a test or check would fail on a slip.
+- **Which models:** by tier ("Tiers"). Sonnet reviews; Opus decides what each finding gets, weighing most what could pass quietly (the engine and its math, state replayed from history, rounding and dates, stored data and upgrades, the gates); Sonnet fixes. Opus is skipped only when there's nothing to weigh: a PR that isn't high-risk (`src/engine/`, `src/storage/`, `touches-data`, `touches-gates`, a Dependabot major bump) with no findings, or a Dependabot minor or patch bump whose findings are all mechanical.
 - **What it checks:** compliance (the `architecture-reviewer` subagent, run on the chosen model), correctness, and the issue: the diff against the issue's "Done when" and the decisions in its thread.
 - **Fixes:** it fixes the findings it agrees with, as commits whose messages explain each fix, runs `npm run check:fast`, and pushes to the PR's branch.
 - **Holds:** a valid finding it can't fix safely (e.g. the spec looks wrong) holds the PR: one short comment lists what it held and why, and the PR stays unmerged. Findings it disagrees with are dropped and don't hold it; each is listed with its reason in the merge commit, or in the comment when the PR waits.
@@ -72,7 +95,7 @@ Everything the builder and reviewer write on GitHub (PR descriptions, issue comm
   - `touches-gates`: it comments that the PR is ready, and the owner reads it and merges (green means less if the checks changed);
   - release PRs (those that change `package.json`'s version): it comments that the PR is ready, and the owner merges, since merging tags the version;
   - Dependabot PRs that touch `.github/workflows/`: it comments that the PR is ready, and the owner reads it and merges (Dependabot PRs never carry `touches-gates`).
-- **Dependabot:** patch and minor bumps get a Sonnet review and merge when green. A major bump gets Opus, which reads the release notes and fixes the code if needed; then the rules above apply.
+- **Dependabot:** patch and minor bumps get a Sonnet review and merge when green. A major bump is high-risk: Opus weighs the release notes' breaking changes against the diff, and Sonnet fixes the code if needed; then the rules above apply.
 - **Out-of-scope findings,** its own and the follow-ups the builder suggested in the PR description, become issues labeled `agent-followup`, each naming the PR it came from.
 - What it writes on GitHub follows "What the agent writes".
 
