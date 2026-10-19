@@ -49,7 +49,7 @@ try {
   }
 
   # 2. A run already going (preflight.mjs's lock) will pick this up; don't touch its checkout.
-  $lock = Join-Path $env:TEMP "logtelligent-agent-$Agent.lock"
+  $lock = Join-Path $LogDir "$Agent.lock"
   if ((Test-Path $lock) -and ((Get-Date) - (Get-Item $lock).LastWriteTime).TotalHours -lt 4) {
     Log 'a run is in progress; it will pick this up'
     exit 0

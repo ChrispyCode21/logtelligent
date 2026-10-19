@@ -11,8 +11,8 @@
 // triggered one never overlap; a lock older than LOCK_HOURS was left by a run that crashed.
 // --ignore-lock is for the run holding the lock, to check again part way through.
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { closeSync, fstatSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { homedir } from 'node:os'
 import { join } from 'node:path'
 
 const LOCK_HOURS = 4
@@ -28,14 +28,32 @@ const run = (cmd, args) =>
   execFileSync(cmd, args, { encoding: 'utf8', env, stdio: ['ignore', 'pipe', 'pipe'] }).trim()
 const ghJson = (args) => JSON.parse(run('gh', args) || 'null')
 const api = (path) => ghJson(['api', path])
-const lockPath = (agent) => join(tmpdir(), `logtelligent-agent-${agent}.lock`)
+// The owner's own folder, not the shared temp dir; trigger.ps1 checks the same path.
+const LOCK_DIR = join(process.env.LOCALAPPDATA || homedir(), 'Logtelligent-agent')
+const lockPath = (agent) => join(LOCK_DIR, `${agent}.lock`)
 const idle = (reason, extra = {}) => ({ status: 'idle', reason, ...extra })
 
+// Who holds the lock, or null. One file handle for the age and the text, so they agree.
 function lockHolder(agent) {
-  const path = lockPath(agent)
-  if (!existsSync(path)) return null
-  const ageHours = (Date.now() - statSync(path).mtimeMs) / 3_600_000
-  return ageHours < LOCK_HOURS ? readFileSync(path, 'utf8').trim() : null
+  let fd
+  try {
+    fd = openSync(lockPath(agent), 'r')
+  } catch {
+    return null
+  }
+  try {
+    const ageHours = (Date.now() - fstatSync(fd).mtimeMs) / 3_600_000
+    return ageHours < LOCK_HOURS ? readFileSync(fd, 'utf8').trim() : null
+  } finally {
+    closeSync(fd)
+  }
+}
+
+function claim(agent) {
+  mkdirSync(LOCK_DIR, { recursive: true })
+  rmSync(lockPath(agent), { force: true }) // stale, or this run's own (--ignore-lock)
+  // 'wx' fails if another run created it in the meantime.
+  writeFileSync(lockPath(agent), `pid ${process.pid}, since ${new Date().toISOString()}`, { flag: 'wx' })
 }
 
 function semver(title) {
@@ -192,8 +210,7 @@ try {
   const holder = !process.argv.includes('--ignore-lock') && lockHolder(mode)
   if (holder) result = idle(`Another ${mode} run is in progress (${holder}).`)
   else result = mode === 'build' ? build() : review()
-  if (result.status === 'work' && process.argv.includes('--claim'))
-    writeFileSync(lockPath(mode), `pid ${process.pid}, since ${new Date().toISOString()}`)
+  if (result.status === 'work' && process.argv.includes('--claim')) claim(mode)
 } catch (error) {
   result = { status: 'error', reason: String(error.stderr || error.message).trim() }
 }

@@ -61,7 +61,7 @@ Each run is one coordinating session that runs the commands and the GitHub write
 | 2: advise | Opus | reviews a `build` or `numbers` plan against `issue.md` only: approves, revises or turns it into questions | decides each finding (fix, drop, hold, out of scope) from `review.md`, the diff and `issue.md` only |
 | 3: execute | Sonnet | builds the approved plan and runs the checks; a decision the plan missed comes back as a question | makes the fixes and runs the checks |
 
-Tier 0 is a script, so a run with nothing to do costs no tokens. With `--claim` it also takes a lock (in `%TEMP%`, stale after 4 hours) that keeps a scheduled run and a triggered one from overlapping; the run releases it at the end.
+Tier 0 is a script, so a run with nothing to do costs no tokens. With `--claim` it also takes a lock (in `%LOCALAPPDATA%\Logtelligent-agent\`, stale after 4 hours) that keeps a scheduled run and a triggered one from overlapping; the run releases it at the end.
 
 ## Triggers
 
