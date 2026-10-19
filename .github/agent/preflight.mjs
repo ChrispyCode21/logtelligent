@@ -148,12 +148,15 @@ function review() {
     '--limit',
     '200',
     '--json',
-    'number,title,body,author,headRefName,isDraft,labels',
+    'number,title,body,author,headRefName,isDraft,isCrossRepository,labels',
   ])
-    .filter((p) => !p.isDraft)
+    // Only PRs the owner or the agents opened, from this repo: a branch name alone can be copied
+    // by anyone's fork.
+    .filter((p) => !p.isDraft && !p.isCrossRepository)
     .filter(
       (p) =>
-        p.headRefName.startsWith('agent/issue-') || ['app/claude', 'app/dependabot'].includes(p.author.login),
+        (p.headRefName.startsWith('agent/issue-') && p.author.login === me) ||
+        ['app/claude', 'app/dependabot'].includes(p.author.login),
     )
     .sort((a, b) => a.number - b.number)
 
