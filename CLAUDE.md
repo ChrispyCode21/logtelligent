@@ -63,12 +63,12 @@ One slice per PR, in this order:
 
 ### Running from an issue (scheduled builder)
 
-The local builder (`/build-next-issue`, a desktop scheduled task) builds a milestone's issues one at a time with no one to ask mid-run (`.github/agent/PIPELINE.md`, "Local builder"). The steps above still apply, except:
+The builder (nightshift's `/nightshift:build-next-issue`, a desktop scheduled task; `.github/agent/PIPELINE.md`) builds a milestone's issues one at a time with no one to ask mid-run. The steps above still apply, except:
 
 - **Step 1 becomes a comment.** Post numbered questions on the issue, each with a recommended default, label it `agent-needs-info`, and move on to the next issue. Never guess and carry on, and never re-ask what a thread or SPEC.md already settled. The owner's numbered answers in the thread are the decisions; record them in SPEC.md (step 2) before any code.
 - **Step 5 is the Playwright specs** the change touches or adds, since no one watches the preview. New screens and flows still go into `e2e/` as step 5 says; say in the PR that the preview wasn't used.
-- **Step 7 is left to the local reviewer** (`.github/agent/PIPELINE.md`), which reviews the PR after it opens.
-- **Never merge, and never edit `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`** (the agent's own prompts, reviewer, local reviewer skill and settings).
+- **Step 7 is left to the reviewer** (nightshift's `/nightshift:review-prs`), which reviews the PR after it opens.
+- **Never merge, and never edit `.github/workflows/`, `.github/rulesets/`, `.github/agent/` or `.claude/`** (the agent's own prompts, reviewer, nightshift config and settings).
 - **Out-of-scope findings go in the PR** as suggested follow-ups.
 - **Write as if it's public, because it is:** nothing sensitive and short PR descriptions (`.github/agent/PIPELINE.md`, "What the agent writes").
 
