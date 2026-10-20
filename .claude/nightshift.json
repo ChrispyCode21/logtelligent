@@ -1,0 +1,35 @@
+{
+  "checks": {
+    "fast": "npm run check:fast",
+    "e2e": "npx playwright test",
+    "install": "npm ci"
+  },
+  "builder": {
+    "milestones": "semver",
+    "authors": "owner",
+    "branchPrefix": "agent/issue-",
+    "docs": ["SPEC.md", "CLAUDE.md", "ARCHITECTURE.md"],
+    "spec": { "path": "SPEC.md", "recordDecisionsFirst": true },
+    "workedExamples": { "paths": ["src/engine/"], "approveOnIssue": true, "section": "SPEC.md §7" },
+    "neverEdit": [".github/workflows/", ".github/rulesets/", ".claude/"],
+    "release": { "issueText": ".claude/nightshift/release-issue.md" }
+  },
+  "reviewer": {
+    "authors": ["agent", "app/dependabot", "app/claude"],
+    "projectReviewer": ".claude/agents/architecture-reviewer.md",
+    "highRisk": { "paths": ["src/engine/", "src/storage/"], "labels": ["touches-data", "touches-gates"] },
+    "ownerMerges": {
+      "labels": ["touches-data", "touches-gates"],
+      "release": true,
+      "dependabotWorkflows": true
+    },
+    "mergeNotes": { "touches-data": "Export a backup on the phone before merging." },
+    "mergeMethod": "merge"
+  },
+  "standards": {
+    "baseline": true,
+    "rules": ["ARCHITECTURE.md"],
+    "checker": "scripts/check-conventions.mjs",
+    "exceptions": []
+  }
+}

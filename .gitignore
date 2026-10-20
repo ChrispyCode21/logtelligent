@@ -32,6 +32,8 @@ CLAUDE.local.md
 .claude/*
 !.claude/agents/
 !.claude/skills/
+!.claude/nightshift.json
+!.claude/nightshift/
 
 # Playwright output (npm run test:e2e)
 test-results

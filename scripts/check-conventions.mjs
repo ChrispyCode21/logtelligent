@@ -18,19 +18,25 @@ function files(dir, pattern) {
 }
 
 const problems = []
+// Each rule carries the nightshift baseline name it enforces, so standards.exceptions and the
+// reviewer's findings use the same names. The scheme rule is Logtelligent's own.
+const named = (rule, rules) => rules.map((r) => ({ rule, ...r }))
+
 function check(file, rules) {
   const lines = readFileSync(file, 'utf8').split('\n')
   lines.forEach((line, i) => {
     if (line.includes('conventions-ignore')) return
-    for (const { test, message } of rules) {
+    for (const { rule, test, message } of rules) {
       if (test(line))
-        problems.push(`${relative('.', file).replaceAll('\\', '/')}:${i + 1}  ${message}\n    ${line.trim()}`)
+        problems.push(
+          `[${rule}] ${relative('.', file).replaceAll('\\', '/')}:${i + 1}  ${message}\n    ${line.trim()}`,
+        )
     }
   })
 }
 
 // Components compose the primitives in src/ui/ instead of raw elements with shared class names.
-const componentRules = [
+const componentRules = named('use-primitives', [
   { test: (l) => /<button[\s>]/.test(l), message: 'Use <Button> from src/ui/Button, not a raw <button>.' },
   {
     test: (l) => /<(label|fieldset)[^>]*className=["'{`][^>]*\bfield\b/.test(l),
@@ -40,10 +46,10 @@ const componentRules = [
     test: (l) => /<(section|div|li|form)[^>]*className=["'{`][^>]*\bcard\b/.test(l),
     message: 'Use <Card> from src/ui/Card, not a raw element with the "card" class.',
   },
-]
+])
 
 // Display formatting lives in src/ui/format.ts.
-const formatRules = [
+const formatRules = named('one-formatter', [
   {
     test: (l) => /\.toLocaleDateString\(/.test(l),
     message: 'Format dates with formatDate() from src/ui/format.ts.',
@@ -52,14 +58,14 @@ const formatRules = [
     test: (l) => /\b(function|const)\s+format(Set|Sets|Date|Weight|E1rm)\b/.test(l),
     message: 'This formatter already exists in src/ui/format.ts; import it instead of redefining it.',
   },
-]
+])
 
 // A raw CSS value that equals a token must use the token (src/styles/tokens.css). Values with no
 // token (1px hairlines, 2px offsets, icon sizes) are fine.
 const SPACE = new Set(['4px', '6px', '8px', '12px', '16px', '24px'])
 const RADIUS = new Set(['8px', '10px', '12px', '999px'])
 const TAP = new Set(['44px', '52px'])
-const cssRules = [
+const cssRules = named('tokens-only', [
   {
     test: (l) =>
       /^\s*(gap|margin|margin-\w+|padding|padding-\w+)\s*:/.test(l) &&
@@ -81,7 +87,7 @@ const cssRules = [
       [...l.matchAll(/\b\d+px\b/g)].some(([v]) => TAP.has(v)),
     message: 'Use --tap-target / --tap-target-lg for this size.',
   },
-]
+])
 
 for (const f of files('src/components', /\.tsx$/)) check(f, [...componentRules, ...formatRules])
 for (const f of [...files('src', /\.tsx?$/)].filter(
@@ -91,14 +97,14 @@ for (const f of [...files('src', /\.tsx?$/)].filter(
 }
 // Progression goes through the exercise's scheme (SPEC §8): schemeFor(config).suggest / .evaluate /
 // .replay, never a scheme's own functions. Tests may call them directly.
-const schemeRules = [
+const schemeRules = named('scheme-interface', [
   {
     test: (l) =>
       /\b(suggestNext|evaluateSession|deriveState|suggestLinear|evaluateLinear|replayLinear)\b/.test(l),
     message:
       "Call schemeFor(config).suggest / .evaluate / .replay (SPEC §8), not a scheme's functions directly.",
   },
-]
+])
 for (const f of files('src', /\.tsx?$/).filter(
   (f) => !f.startsWith(join('src', 'engine')) && !/\.test\.tsx?$/.test(f),
 )) {
