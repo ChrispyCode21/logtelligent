@@ -91,6 +91,54 @@ test('sets an exercise to Linear and logs it with no effort, which then fixes it
   await expect(page.getByRole('button', { name: 'Adaptive', exact: true })).toHaveCount(0)
 })
 
+test('adds a Waves exercise, logs its week with an AMRAP set, and moves on to week 2', async ({ page }) => {
+  await setUpFromTemplate(page)
+  await tab(page, 'Program').click()
+  await page.getByRole('button', { name: '+ Add exercise' }).first().click()
+  await page.getByRole('button', { name: 'Custom exercise…' }).click()
+  await page.getByLabel('Name', { exact: true }).fill('Push Press')
+  await page.getByRole('button', { name: 'Waves', exact: true }).click()
+  await expect(page.getByLabel('Reps from')).toHaveCount(0)
+  await expect(page.getByLabel('Target RPE on the first set')).toHaveCount(0)
+  await page.getByLabel('Weight (lb)').fill('95')
+  await page.getByLabel('Reps', { exact: true }).fill('5')
+  await page.getByRole('button', { name: 'Save exercise' }).click()
+  await expect(page.getByText('Primary · Waves +5 lb · Barbell')).toBeVisible()
+
+  await tab(page, 'Today').click()
+  const card = exerciseCard(page, 'Push Press')
+  await expect(card.getByText('Week 1 of 4')).toBeVisible()
+  await expect(card.getByRole('listitem')).toHaveCount(3)
+  await expect(card.getByRole('listitem').nth(2)).toHaveText(/× 5\+ \(AMRAP\)$/)
+  await expect(card.getByText(/^Training max \d+/)).toBeVisible()
+
+  await page.getByRole('button', { name: 'Start Upper A' }).click()
+  const logger = exerciseCard(page, 'Push Press')
+  await logSets(page, 'Push Press', 2)
+  await expect(logger.getByRole('heading', { name: /^Set 3 · AMRAP, 5\+ reps$/ })).toBeVisible()
+  // Effort is asked on the AMRAP set, optional.
+  await logger
+    .getByRole('group', { name: /\(optional\)$/ })
+    .getByRole('button')
+    .first()
+    .click()
+  await logger.getByRole('button', { name: 'Log set' }).click()
+  await expect(logger.locator('.set-list li')).toHaveCount(3)
+  await expect(logger.locator('.set-row').first()).not.toHaveText(/left/)
+  await expect(logger.locator('.set-row').nth(2)).toHaveText(/left/)
+  await page.getByRole('button', { name: 'Finish session' }).click()
+  await expectConfirm(page, /^Only 3 of \d+ sets logged\. Finish anyway\?/)
+  await expect(page.getByRole('button', { name: 'Start Lower A' })).toBeVisible()
+
+  await page.getByRole('combobox').selectOption({ label: 'Upper A' })
+  await expectConfirm(page, /^Upper A isn't next in the rotation/)
+  await expect(exerciseCard(page, 'Push Press').getByText('Week 2 of 4')).toBeVisible()
+
+  await tab(page, 'History').click()
+  await page.getByLabel('Exercise').selectOption({ label: 'Push Press' })
+  await expect(historyRows(page)).toHaveCount(1)
+})
+
 test('sets up the 3-day Novice A/B: a starting weight for each lift, then Linear suggestions', async ({
   page,
 }) => {

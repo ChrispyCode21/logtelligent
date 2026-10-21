@@ -112,6 +112,15 @@ export async function logSets(page: Page, exercise: string, count: number) {
   }
 }
 
+/** Set Bench Press (from the template) to Waves at its default increment, keeping its starting numbers. */
+export async function setBenchToWaves(page: Page) {
+  await tab(page, 'Program').click()
+  await page.getByRole('button', { name: /^Bench Press/ }).click()
+  await page.getByRole('button', { name: 'Waves', exact: true }).click()
+  await page.getByRole('button', { name: 'Save exercise' }).click()
+  await expect(page.getByText('Primary · Waves +5 lb · Barbell')).toBeVisible()
+}
+
 /** Start Upper A, log Bench Press's 3 sets, and finish (confirming that the rest weren't logged). */
 export async function logASession(page: Page) {
   await page.getByRole('button', { name: 'Start Upper A' }).click()
@@ -229,6 +238,41 @@ export const atLightestLoad = {
     ),
   })),
 } satisfies Backup
+
+/**
+ * A Waves bench press that has finished weeks 1 to 3 on the last three days, so Today shows week 4,
+ * the deload (SPEC §6.11). Dated from now, so the days since don't read as a break.
+ */
+export function wavesBackup(): Backup {
+  const day = (daysAgo: number) => new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString()
+  const [bench] = backup.program.days[0].exercises
+  const logged = (weights: number[], id: number, daysAgo: number) => ({
+    id,
+    dayId: 'upper-a',
+    startedAt: day(daysAgo),
+    finishedAt: day(daysAgo),
+    exercises: [
+      {
+        exerciseId: 'bench',
+        sets: weights.map((weight, i) => ({ weight, reps: 5, ...(i === 2 && { rpe: 9 }) })),
+        prescription: prescribed(3, 5),
+      },
+    ],
+  })
+  return {
+    ...backup,
+    program: {
+      ...backup.program,
+      days: [
+        {
+          ...backup.program.days[0],
+          exercises: [{ ...bench, progression: { scheme: 'waves' as const, increment: 5 } }],
+        },
+      ],
+    },
+    sessions: [logged([145, 165, 190], 1, 3), logged([155, 175, 200], 2, 2), logged([165, 190, 210], 3, 1)],
+  }
+}
 
 /** Restore a backup through the Program tab's "Restore from file…". */
 export async function restore(page: Page, data: Backup = backup) {

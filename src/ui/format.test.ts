@@ -13,6 +13,10 @@ import {
   formatSetCount,
   formatSets,
   formatSetsWithExtras,
+  formatTrainingMax,
+  formatWavesReason,
+  formatWavesSet,
+  formatWavesWeek,
   formatWeight,
 } from './format'
 
@@ -150,6 +154,14 @@ describe('formatPrescription (SPEC §5.1)', () => {
     expect(formatPrescription(squat, 'rpe')).toBe('Primary · Linear +5 lb · 3 × 5 · Barbell')
   })
 
+  it('shows a Waves exercise’s scheme and increment, with no sets × reps and no effort target', () => {
+    const press = { ...bench, progression: { scheme: 'waves', increment: 5 } } as const
+    expect(formatPrescription(press, 'rpe')).toBe('Primary · Waves +5 lb · Barbell')
+    expect(formatPrescription({ ...press, tier: 'accessory', unilateral: true }, 'rpe')).toBe(
+      'Accessory · Waves +5 lb · Barbell',
+    )
+  })
+
   it('shows a range with equal ends as one number, whatever the scheme', () => {
     expect(formatPrescription({ ...bench, repRange: { min: 5, max: 5 } }, 'rpe')).toBe(
       'Primary · 3 × 5 @ RPE 8 · Barbell',
@@ -212,6 +224,32 @@ describe('formatNameList', () => {
     expect(formatNameList(['Bench Press', 'Deadlift'])).toBe('Bench Press and Deadlift')
     expect(formatNameList(['A', 'B', 'C'])).toBe('A, B and C')
     expect(formatNameList(['A', 'B', 'C', 'D', 'E'])).toBe('A, B, C and 2 more')
+  })
+})
+
+describe('Waves on screen (SPEC §6.11)', () => {
+  it('words the week, with week 4 as a deload', () => {
+    expect(formatWavesWeek(2)).toBe('Week 2 of 4')
+    expect(formatWavesWeek(4)).toBe('Week 4 of 4 · Deload')
+  })
+
+  it('words each set, marking the AMRAP set with its minimum', () => {
+    expect(formatWavesSet({ weight: 160, reps: 5 })).toBe('160 × 5')
+    expect(formatWavesSet({ weight: 210, reps: 5, amrap: true })).toBe('210 × 5+ (AMRAP)')
+  })
+
+  it('words the training max', () => {
+    expect(formatTrainingMax(245)).toBe('Training max 245 lb')
+  })
+
+  it('words each reason, and a start and a mid-cycle week as none', () => {
+    expect(formatWavesReason({ kind: 'start' })).toBeNull()
+    expect(formatWavesReason({ kind: 'continue' })).toBeNull()
+    expect(formatWavesReason({ kind: 'increase', increment: 10 })).toBe('Training max +10 lb')
+    expect(formatWavesReason({ kind: 'drop' })).toBe(
+      'Training max lowered 10%: an AMRAP was missed last cycle',
+    )
+    expect(formatWavesReason({ kind: 'break' })).toBe('Returning from a break: training max lowered 10%')
   })
 })
 

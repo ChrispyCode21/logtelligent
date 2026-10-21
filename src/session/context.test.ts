@@ -155,6 +155,48 @@ describe('the exercises of a session and what they are judged against (SPEC §5.
   })
 })
 
+describe('a Waves exercise in a finished session (SPEC §5.4, §6.11)', () => {
+  const press: Program = {
+    id: 'main',
+    effortScale: 'rpe',
+    days: [
+      {
+        id: 'upper-a',
+        name: 'Upper A',
+        exercises: [
+          {
+            ...program.days[0].exercises[0],
+            id: 'ohp',
+            name: 'Overhead Press',
+            progression: { scheme: 'waves', increment: 5 },
+          },
+        ],
+      },
+    ],
+  }
+  const wave = (id: number, day: number, finished = true): Session => {
+    const startedAt = `2026-09-${String(day).padStart(2, '0')}T10:00:00.000Z`
+    return {
+      id,
+      dayId: 'upper-a',
+      startedAt,
+      finishedAt: finished ? startedAt : undefined,
+      exercises: [{ exerciseId: 'ohp', sets: [135, 150, 170].map((weight) => ({ weight, reps: 5 })) }],
+    }
+  }
+
+  it('carries the plan as of when the session started, not the next week’s', () => {
+    const logged = [wave(1, 1), wave(2, 8)]
+    const [then] = sessionExercises(logged[0], press, logged, now)
+    const live = wave(3, 15, false)
+    const [next] = sessionExercises(live, press, [...logged, live], new Date(live.startedAt))
+    expect(then.suggestion).toMatchObject({ scheme: 'waves', week: 1, sets: 3 })
+    expect(next.suggestion).toMatchObject({ scheme: 'waves', week: 3 })
+    expect(then.suggestion).toMatchObject({ setPlan: [{}, {}, { amrap: true }] })
+    expect(then.history).toEqual([])
+  })
+})
+
 describe('a Linear progression shared across days, in a session (SPEC §6.10)', () => {
   const squat = (id: string, seed?: boolean) => ({
     id,

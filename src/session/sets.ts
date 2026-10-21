@@ -2,12 +2,16 @@ import { countedSets, schemeId, type ExerciseConfig, type LoggedSet, type Sugges
 import type { ExerciseLog } from './types'
 
 // An exercise's prescribed sets use one working weight (SPEC §6.3, §6.5), so changing the weight on
-// any of them changes it on all of them. Extra sets (SPEC §5.2) come after the prescribed
+// any of them changes it on all of them; a Waves exercise's prescribed sets each keep their own
+// (SPEC §6.11), which the `ownWeight` argument says. Extra sets (SPEC §5.2) come after the prescribed
 // ones and keep their own weight, so one can be a lighter back-off set.
 
+/** Whether this exercise's prescribed sets each have their own weight: Waves (SPEC §6.11). */
+export const ownWeights = (exercise: Pick<ExerciseConfig, 'progression'>) => schemeId(exercise) === 'waves'
+
 /** Log a prescribed set, before any extras. */
-export function addSet(sets: LoggedSet[], set: LoggedSet): LoggedSet[] {
-  const counted = countedSets(sets).map((s) => ({ ...s, weight: set.weight }))
+export function addSet(sets: LoggedSet[], set: LoggedSet, ownWeight = false): LoggedSet[] {
+  const counted = countedSets(sets).map((s) => (ownWeight ? s : { ...s, weight: set.weight }))
   return [...counted, set, ...sets.filter((s) => s.extra)]
 }
 
@@ -16,12 +20,15 @@ export function addExtra(sets: LoggedSet[], set: LoggedSet): LoggedSet[] {
   return [...sets, { weight: set.weight, reps: set.reps, extra: true }]
 }
 
-/** Change one set. A prescribed set's weight applies to every prescribed set; an extra changes alone. */
-export function updateSet(sets: LoggedSet[], index: number, set: LoggedSet): LoggedSet[] {
+/**
+ * Change one set. A prescribed set's weight applies to every prescribed set, unless they have their
+ * own weights (Waves); an extra changes alone.
+ */
+export function updateSet(sets: LoggedSet[], index: number, set: LoggedSet, ownWeight = false): LoggedSet[] {
   if (sets[index].extra) {
     return sets.map((s, i) => (i === index ? { weight: set.weight, reps: set.reps, extra: true } : s))
   }
-  return sets.map((s, i) => (i === index ? set : s.extra ? s : { ...s, weight: set.weight }))
+  return sets.map((s, i) => (i === index ? set : s.extra || ownWeight ? s : { ...s, weight: set.weight }))
 }
 
 export function removeSet(sets: LoggedSet[], index: number): LoggedSet[] {
@@ -43,8 +50,8 @@ export function removalNeedsEffort(
 }
 
 /** Remove set 1, saving the effort (and any other change) given for the set that takes its place. */
-export function removeFirstSet(sets: LoggedSet[], newFirst: LoggedSet): LoggedSet[] {
-  return updateSet(removeSet(sets, 0), 0, newFirst)
+export function removeFirstSet(sets: LoggedSet[], newFirst: LoggedSet, ownWeight = false): LoggedSet[] {
+  return updateSet(removeSet(sets, 0), 0, newFirst, ownWeight)
 }
 
 /** Sets logged in a log: the original exercise's and any substitute's, extras included. */
@@ -69,9 +76,15 @@ type EffortConfig = Pick<ExerciseConfig, 'tier' | 'progression'>
 
 /**
  * Effort is asked on a primary lift's first set only: required in Adaptive (SPEC §6.3, §6.5),
- * optional in Linear (§6.10).
+ * optional in Linear (§6.10). A Waves exercise asks it, optionally, on the set its week's plan marks
+ * as the AMRAP, at any tier; week 4 has none (§6.11). That needs the `suggestion` for the week.
  */
-export function effortAsked(exercise: EffortConfig, index: number): EffortAsk {
+export function effortAsked(exercise: EffortConfig, index: number, suggestion?: Suggestion): EffortAsk {
+  if (schemeId(exercise) === 'waves') {
+    const planned =
+      suggestion?.kind === 'suggestion' && suggestion.scheme === 'waves' && suggestion.setPlan[index]
+    return planned && planned.amrap ? 'optional' : undefined
+  }
   if (exercise.tier !== 'primary' || index !== 0) return undefined
   return schemeId(exercise) === 'adaptive' ? 'required' : 'optional'
 }
@@ -79,11 +92,21 @@ export function effortAsked(exercise: EffortConfig, index: number): EffortAsk {
 /**
  * Whether a primary lift's sets have the effort its first set needs (SPEC §6.3). An exercise with
  * no sets needs no effort. Checked at Finish, and when a finished session is edited (SPEC §5.4).
+ * effortAsked(exercise, 0) with no suggestion returns undefined for Waves, which is right only
+ * because Waves effort is never required (SPEC §6.11); if that changes, pass the suggestion here
+ * and in canFinish.
  */
 export function hasRequiredEffort(exercise: EffortConfig, sets: LoggedSet[]): boolean {
   const first = countedSets(sets)[0]
   return !first || effortAsked(exercise, 0) !== 'required' || first.rpe !== undefined
 }
+
+/** The suggestion is for a deload week: Adaptive's (SPEC §6.7), or Waves' week 4 (§6.11). */
+export const isDeload = (suggestion: Suggestion) =>
+  suggestion.kind === 'suggestion' &&
+  (suggestion.scheme === 'waves'
+    ? suggestion.week === 4
+    : suggestion.scheme === undefined && suggestion.plan === 'deload')
 
 /**
  * How many sets this exercise wants today: the configured count, halved in a deload

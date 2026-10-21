@@ -39,9 +39,52 @@ afterEach(async () => {
 })
 
 describe('database upgrades', () => {
-  it('is at version 7; a new version needs an upgrade test from the one before it, then this bump', async () => {
+  it('is at version 8; a new version needs an upgrade test from the one before it, then this bump', async () => {
     await db.open()
-    expect(db.verno).toBe(7)
+    expect(db.verno).toBe(8)
+  })
+
+  it('opens a v7 database, the version before this one, with a Linear exercise and an Adaptive one unchanged', async () => {
+    const exercise = {
+      name: 'Squat',
+      tier: 'primary',
+      repRange: { min: 5, max: 5 },
+      targetRpe: 8,
+      sets: 3,
+      equipment: 'barbell',
+      maxRelativeJump: 0.1,
+      unilateral: false,
+    } as const
+    const program: Program = {
+      ...v2Program,
+      effortScale: 'rpe',
+      days: [
+        {
+          id: 'lower-a',
+          name: 'Lower A',
+          exercises: [
+            { ...exercise, id: 'squat', progression: { scheme: 'linear', increment: 5 } },
+            { ...exercise, id: 'deadlift', name: 'Deadlift' },
+          ],
+        },
+      ],
+    }
+    await saveAtVersion(7, { programs: [program], sessions: [session] })
+    const stored = await db.programs.get('main')
+    expect(stored).toEqual(program)
+    expect(await db.sessions.toArray()).toEqual([session])
+    // A Waves exercise saves and reads back too.
+    const waves: Program = {
+      ...program,
+      days: [
+        {
+          ...program.days[0],
+          exercises: [{ ...exercise, id: 'ohp', progression: { scheme: 'waves', increment: 5 } }],
+        },
+      ],
+    }
+    await db.programs.put(waves)
+    expect(await db.programs.get('main')).toEqual(waves)
   })
 
   it('opens a v1 database (sessions only) with its sessions intact', async () => {

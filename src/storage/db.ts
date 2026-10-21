@@ -55,3 +55,9 @@ db.version(7).stores({
   sessions: '++id, startedAt',
   programs: 'id',
 })
+// v8: a program exercise's `progression` may be Waves (SPEC §6.1, §6.11) as well as Linear. No index
+// change and no upgrade: one without it is Adaptive, and a Linear one is as it was.
+db.version(8).stores({
+  sessions: '++id, startedAt',
+  programs: 'id',
+})

@@ -55,6 +55,48 @@ describe('reading the set form', () => {
   })
 })
 
+describe('pre-fill from a Waves plan (SPEC §5.2, §6.11)', () => {
+  const plan = [
+    { weight: 160, reps: 5 },
+    { weight: 185, reps: 5 },
+    { weight: 210, reps: 5, amrap: true },
+  ]
+
+  it('fills each prescribed set from its own place in the plan', () => {
+    expect(prefill([], plan[0], plan)).toEqual({ weight: '160', reps: '5' })
+    expect(prefill([{ weight: 160, reps: 6 }], plan[0], plan)).toEqual({ weight: '185', reps: '5' })
+  })
+
+  it('fills the AMRAP set with its minimum reps', () => {
+    const two = [
+      { weight: 160, reps: 5 },
+      { weight: 185, reps: 5 },
+    ]
+    expect(prefill(two, plan[0], plan)).toEqual({ weight: '210', reps: '5' })
+  })
+
+  it('fills the place of a deleted set from the plan for that place', () => {
+    const afterDelete = [
+      { weight: 160, reps: 5 },
+      { weight: 210, reps: 7, rpe: 9 },
+    ]
+    expect(prefill(afterDelete, plan[0], plan)).toEqual({ weight: '210', reps: '5' })
+  })
+
+  it('falls back to the set before once the plan is used up', () => {
+    const three = plan.map((p) => ({ weight: p.weight, reps: p.reps }))
+    expect(prefill(three, plan[0], plan)).toEqual({ weight: '210', reps: '5' })
+  })
+
+  it('fills an extra from the set before it', () => {
+    const sets = [
+      { weight: 210, reps: 8 },
+      { weight: 150, reps: 10, extra: true },
+    ]
+    expect(prefillExtra(sets)).toEqual({ weight: '150', reps: '10' })
+  })
+})
+
 describe('pre-fill with extra sets (SPEC §5.2)', () => {
   const sets = [
     { weight: 225, reps: 5, rpe: 8 },

@@ -6,6 +6,11 @@ To release: in a PR, move the "Unreleased" notes under a new version heading, bu
 
 ## [Unreleased]
 
+### Added
+
+- **Waves progression on the exercise form:** pick Waves for an exercise, with how much its training max rises each cycle (5 lb to start). Its starting numbers are a weight and reps, like a primary's.
+- **Running a Waves session:** each of the three sets shows its own weight, which you can change without changing the others, and the last set of weeks 1 to 3 is marked AMRAP with its minimum reps. Effort is optional on that set. Today shows the week, the sets, the training max and why it changed, and week 4 is marked as a deload.
+
 ## [1.5.0] - 2026-10-17
 
 Linear progression: pick it for any exercise, or start from the new 3-day Novice A/B template, and the weight goes up every successful session.

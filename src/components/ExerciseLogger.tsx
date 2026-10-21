@@ -11,6 +11,8 @@ import type { EffortScale } from '../program/effort'
 import {
   allSetsLogged,
   effortAsked,
+  isDeload,
+  ownWeights,
   shownTarget,
   showsOutcome,
   substituteStep,
@@ -68,11 +70,7 @@ export function ExerciseLogger({
       ) : (
         <span className="muted"> · {formatSetCount(sets, shownTarget(log, finished, target))}</span>
       )}
-      {!substitute &&
-        !log.skipped &&
-        suggestion.kind === 'suggestion' &&
-        suggestion.scheme === undefined &&
-        suggestion.plan === 'deload' && <span className="tag">Deload</span>}
+      {!substitute && !log.skipped && isDeload(suggestion) && <span className="tag">Deload</span>}
     </h2>
   )
 
@@ -132,8 +130,12 @@ export function ExerciseLogger({
         canAdd={canAdd}
         canAddExtra={canAddExtra}
         first={suggestion.kind === 'suggestion' ? suggestion : undefined}
+        plan={
+          suggestion.kind === 'suggestion' && suggestion.scheme === 'waves' ? suggestion.setPlan : undefined
+        }
+        ownWeights={ownWeights(config)}
         effortScale={effortScale}
-        effortAt={(i) => effortAsked(config, i)}
+        effortAt={(i) => effortAsked(config, i, suggestion)}
         step={(w, dir) =>
           loads.length === 0 ? undefined : dir === 1 ? stepUp(w, loads) : stepDown(w, loads)
         }

@@ -3,7 +3,7 @@ import { Field } from '../ui/Field'
 
 interface Props {
   tier: Tier
-  /** A weight × reps (an Adaptive primary), else a weight only (`seedHasReps`, SPEC §5.1). */
+  /** A weight × reps (an Adaptive primary, or Waves), else a weight only (`seedHasReps`, SPEC §5.1). */
   withReps: boolean
   /** For the accessory question: the exercise's name and the bottom of its rep range, as far as known. */
   name: string

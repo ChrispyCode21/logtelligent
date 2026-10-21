@@ -142,3 +142,53 @@ describe('the progression scheme in the form (SPEC §6.1)', () => {
     expect(fromForm(linear, bench).seed).toEqual({ weight: 135, reps: 5 })
   })
 })
+
+describe('Waves in the form (SPEC §6.1, §6.11)', () => {
+  const waves = withScheme(toForm(bench), 'waves')
+
+  it('starts at a 5 lb increase', () => {
+    expect(waves).toMatchObject({ scheme: 'waves', increment: '5' })
+  })
+
+  it('is valid without a usable rep range or set count', () => {
+    expect(validateExerciseForm({ ...waves, min: '', max: 'x', sets: '0' })).toEqual([])
+  })
+
+  it('checks the increment, within the same bounds as Linear', () => {
+    for (const increment of ['', '0', '0.25', '101', 'lots']) {
+      expect(validateExerciseForm({ ...waves, increment })).toEqual([
+        'The increase must be from 0.5 to 100 lb.',
+      ])
+    }
+    for (const increment of ['0.5', '10', '100']) {
+      expect(validateExerciseForm({ ...waves, increment })).toEqual([])
+    }
+  })
+
+  it('stores the scheme and increment, keeping the rep range, sets and target RPE', () => {
+    const saved = fromForm({ ...waves, increment: '10' }, bench)
+    expect(saved.progression).toEqual({ scheme: 'waves', increment: 10 })
+    expect(saved).toMatchObject({ repRange: { min: 3, max: 5 }, sets: 3, targetRpe: 8.5 })
+    expect(toForm(saved)).toMatchObject({ scheme: 'waves', increment: '10' })
+  })
+
+  it('stores a valid range and set count for a new Waves exercise whose were never typed', () => {
+    const saved = fromForm({ ...waves, min: '', max: '', sets: '' })
+    expect(saved).toMatchObject({ repRange: { min: 5, max: 5 }, sets: 3 })
+  })
+
+  it('takes starting numbers as a weight and reps, for either tier (SPEC §5.1)', () => {
+    for (const tier of ['primary', 'accessory'] as const) {
+      const form = { ...waves, tier, seedWeight: '135', seedReps: '' }
+      expect(validateExerciseForm(form)).toEqual(['Starting reps must be at least 1.'])
+      expect(fromForm({ ...form, seedReps: '5' }, bench).seed).toEqual({ weight: 135, reps: 5 })
+    }
+  })
+
+  it('keeps the typed values switching Linear to Waves and back to Adaptive in one form', () => {
+    const linear = { ...withScheme(toForm(bench), 'linear'), reps: '8' }
+    const back = withScheme(withScheme(linear, 'waves'), 'adaptive')
+    expect(back).toMatchObject({ scheme: 'adaptive', min: '3', max: '5', sets: '3' })
+    expect(fromForm(back, bench)).not.toHaveProperty('progression')
+  })
+})

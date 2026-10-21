@@ -42,6 +42,16 @@ p {
   font-weight: 700;
 }
 
+/* Waves' sets, one a line; the AMRAP line is the longest, so the text is smaller than a one-weight suggestion's. */
+.wave-sets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .note {
   margin-top: var(--space-3);
   padding: var(--space-3) 10px;

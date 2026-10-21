@@ -1,5 +1,13 @@
 // Entering starting numbers (SPEC §5.1): the exercise form and the guided walkthrough.
-import { snapDown, type EquipmentType, type RepRange, type SchemeId, type Seed, type Tier } from '../engine'
+import {
+  schemeId,
+  snapDown,
+  type EquipmentType,
+  type RepRange,
+  type SchemeId,
+  type Seed,
+  type Tier,
+} from '../engine'
 import { findBankExercise } from './bank'
 import type { ProgramExercise } from './types'
 
@@ -49,8 +57,15 @@ export interface SeedInput {
   reps: string
 }
 
-/** Starting numbers are a weight × reps for an Adaptive primary, else a weight only (SPEC §5.1). */
-export const seedHasReps = (tier: Tier, scheme: SchemeId) => tier === 'primary' && scheme === 'adaptive'
+/**
+ * Starting numbers are a weight × reps for an Adaptive primary and for a Waves exercise of any tier
+ * (its training max comes from the e1RM), else a weight only (SPEC §5.1).
+ */
+export const seedHasReps = (tier: Tier, scheme: SchemeId) =>
+  scheme === 'waves' || (tier === 'primary' && scheme === 'adaptive')
+
+/** The reps a Waves exercise's starting numbers pre-fill with: its rep range isn't used (SPEC §6.1). */
+const WAVES_SEED_REPS = 5
 
 /** What's wrong with typed starting numbers, a weight × reps or a weight only (`seedHasReps`). */
 export function validateSeed(input: SeedInput, withReps: boolean): string[] {
@@ -109,7 +124,7 @@ export function formSeedPlaceholder(
 /**
  * Starting numbers to pre-fill: the lift's latest weight when it has history (SPEC §6.9),
  * else a bank exercise's placeholder weight, snapped down onto the stack if one is given; and, for
- * primaries, the top of the rep range. Others start blank.
+ * primaries, the top of the rep range (Waves: 5). Others start blank.
  */
 export function seedPrefill(
   e: ProgramExercise,
@@ -120,7 +135,8 @@ export function seedPrefill(
   if (weight === undefined) return { weight: '', reps: '' }
   return {
     weight: String(snapStartingWeight(weight, stack)),
-    reps: e.tier === 'primary' ? String(e.repRange.max) : '',
+    reps:
+      schemeId(e) === 'waves' ? String(WAVES_SEED_REPS) : e.tier === 'primary' ? String(e.repRange.max) : '',
   }
 }
 

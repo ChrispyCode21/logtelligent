@@ -24,6 +24,10 @@ interface Props {
   canAddExtra: boolean
   /** Pre-fill for the first set, usually the suggestion. */
   first?: { weight: number; reps: number }
+  /** Waves: each prescribed set has its own weight and rep target, the AMRAP set marked (SPEC §5.2, §6.11). */
+  plan?: { weight: number; reps: number; amrap?: boolean }[]
+  /** The prescribed sets each keep their own weight (Waves), not one working weight (SPEC §5.2). */
+  ownWeights?: boolean
   effortScale: EffortScale
   /** Whether set `index` asks for effort, and whether it's required (SPEC §6.3, §6.10). */
   effortAt: (index: number) => EffortAsk
@@ -50,13 +54,16 @@ const NEW: Mode = { kind: 'new' }
 
 /**
  * Logged sets (tap to edit or delete) and the form for the next set. One working weight across the
- * prescribed sets; extra sets come after them with their own weight and no effort.
+ * prescribed sets, unless they have their own (Waves); extra sets come after them with their own
+ * weight and no effort.
  */
 export function SetEditor({
   sets,
   canAdd,
   canAddExtra,
   first,
+  plan,
+  ownWeights = false,
   effortScale,
   effortAt,
   step,
@@ -66,7 +73,7 @@ export function SetEditor({
   footer,
   onSave,
 }: Props) {
-  const [form, setForm] = useState<SetForm>(() => prefill(sets, first))
+  const [form, setForm] = useState<SetForm>(() => prefill(sets, first, plan))
   const [modeState, setMode] = useState<Mode>(NEW)
   // A save re-renders with the new sets before the mode resets, so a deleted last set can leave the
   // index past the end for one render.
@@ -98,7 +105,7 @@ export function SetEditor({
   async function save(nextSets: LoggedSet[]) {
     await onSave(nextSets)
     setMode(NEW)
-    setForm(prefill(nextSets, first))
+    setForm(prefill(nextSets, first, plan))
   }
 
   function submit(e: React.FormEvent) {
@@ -109,13 +116,13 @@ export function SetEditor({
   function withSubmitted(set: LoggedSet): LoggedSet[] {
     switch (mode.kind) {
       case 'new':
-        return addSet(sets, set)
+        return addSet(sets, set, ownWeights)
       case 'edit':
-        return updateSet(sets, mode.index, set)
+        return updateSet(sets, mode.index, set, ownWeights)
       case 'extra':
         return addExtra(sets, set)
       case 'replaceFirst':
-        return removeFirstSet(sets, set)
+        return removeFirstSet(sets, set, ownWeights)
     }
   }
 
@@ -140,15 +147,24 @@ export function SetEditor({
 
   function cancel() {
     setMode(NEW)
-    setForm(prefill(sets, first))
+    setForm(prefill(sets, first, plan))
+  }
+
+  /** The AMRAP set's mark with its minimum, for the set at this place among the prescribed sets. */
+  const amrapMark = (place: number) => {
+    const planned = plan?.[place]
+    return planned?.amrap ? ` · AMRAP, ${planned.reps}+ reps` : ''
   }
 
   function formText(): { heading: string; submitLabel: string } {
     switch (mode.kind) {
       case 'new':
-        return { heading: `Set ${countedCount + 1}`, submitLabel: 'Log set' }
+        return { heading: `Set ${countedCount + 1}${amrapMark(countedCount)}`, submitLabel: 'Log set' }
       case 'edit':
-        return { heading: `Editing ${setLabel(mode.index).toLowerCase()}`, submitLabel: 'Save set' }
+        return {
+          heading: `Editing ${setLabel(mode.index).toLowerCase()}${sets[mode.index].extra ? '' : amrapMark(mode.index)}`,
+          submitLabel: 'Save set',
+        }
       case 'extra':
         return { heading: 'Extra set', submitLabel: 'Log extra set' }
       case 'replaceFirst':
@@ -168,7 +184,10 @@ export function SetEditor({
                 aria-current={mode.kind === 'replaceFirst' ? i === 1 : editing === i}
                 onClick={() => startEdit(i)}
               >
-                <span>{setLabel(i)}</span>
+                <span>
+                  {setLabel(i)}
+                  {!set.extra && plan?.[i]?.amrap && <span className="muted"> · AMRAP</span>}
+                </span>
                 <span>{formatSet(set, effortScale)}</span>
               </Button>
             </li>
@@ -184,7 +203,7 @@ export function SetEditor({
             label={
               <>
                 {weightLabel}
-                {!extraMode && countedCount > 0 && (
+                {!extraMode && !ownWeights && countedCount > 0 && (
                   <span className="muted"> · applies to all sets{hasExtras && ' but extras'}</span>
                 )}
               </>
@@ -221,7 +240,7 @@ export function SetEditor({
             </div>
           </Field>
 
-          {/* Effort is asked only where it's used: a primary lift's first set (SPEC §6.3). */}
+          {/* Effort is asked only where it's used: a primary lift's first set (SPEC §6.3), a Waves AMRAP set (§6.11). */}
           {asked && (
             <EffortPicker
               required={required}

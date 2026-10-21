@@ -7,6 +7,8 @@ import {
   type RepRange,
   type AdaptiveSuggestion,
   type LinearReason,
+  type WavesReason,
+  type WavesSet,
   type SchemeId,
   type SchemeSetting,
   type Tier,
@@ -44,7 +46,8 @@ export const formatRepRange = (min: number, max: number) => (min === max ? `${mi
 
 /**
  * What an exercise asks for: `Primary · 3 × 5–7 · Barbell`, `Accessory · 3 × 10–12 per side · Dumbbell`,
- * `Primary · Linear +5 lb · 3 × 5 · Barbell`. With a scale, an Adaptive primary also shows its first-set
+ * `Primary · Linear +5 lb · 3 × 5 · Barbell`, `Primary · Waves +5 lb · Barbell` (its wave sets its reps
+ * and sets, so it shows neither). With a scale, an Adaptive primary also shows its first-set
  * effort target: `Primary · 3 × 5–7 @ RPE 8 · Barbell` (SPEC §5.1).
  */
 export function formatPrescription(e: Prescription, scale?: EffortScale) {
@@ -57,7 +60,8 @@ export function formatPrescription(e: Prescription, scale?: EffortScale) {
   const scheme = e.progression
     ? ` · ${SCHEME_LABELS[e.progression.scheme]} +${e.progression.increment} lb`
     : ''
-  return `${TIER_LABELS[e.tier]}${scheme} · ${reps} · ${EQUIPMENT_LABELS[e.equipment]}`
+  const shown = e.progression?.scheme === 'waves' ? '' : ` · ${reps}`
+  return `${TIER_LABELS[e.tier]}${scheme}${shown} · ${EQUIPMENT_LABELS[e.equipment]}`
 }
 
 /** `225 × 4 @ 8` (`225 × 4 · 2 left`, `225 × 4 · Challenging` in other scales), or `225 × 4` without effort. */
@@ -162,6 +166,31 @@ export function formatLinearReason(reason: LinearReason): string | null {
       return 'Reset: missed 3 times in a row'
     case 'break':
       return 'Returning from a break: weight lowered 10%.'
+  }
+}
+
+/** Waves' week line (SPEC §6.11): `Week 2 of 4`, `Week 4 of 4 · Deload`. */
+export const formatWavesWeek = (week: number) => `Week ${week} of 4${week === 4 ? ' · Deload' : ''}`
+
+/** One Waves set (SPEC §6.11): `160 × 5`; the AMRAP set shows its minimum, `210 × 5+ (AMRAP)`. */
+export const formatWavesSet = (set: WavesSet) =>
+  set.amrap ? `${set.weight} × ${set.reps}+ (AMRAP)` : `${set.weight} × ${set.reps}`
+
+/** `Training max 245 lb` (SPEC §6.11). */
+export const formatTrainingMax = (tm: number) => `Training max ${tm} lb`
+
+/** Waves' reason line (SPEC §6.11); a fresh start and a mid-cycle week show none. */
+export function formatWavesReason(reason: WavesReason): string | null {
+  switch (reason.kind) {
+    case 'start':
+    case 'continue':
+      return null
+    case 'increase':
+      return `Training max +${reason.increment} lb`
+    case 'drop':
+      return 'Training max lowered 10%: an AMRAP was missed last cycle'
+    case 'break':
+      return 'Returning from a break: training max lowered 10%'
   }
 }
 
