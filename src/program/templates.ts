@@ -27,6 +27,23 @@ const novice = (bank: string, sets: number, increment = 5): TemplateExercise => 
   progression: { scheme: 'linear', increment },
 })
 
+/** A main lift: a primary on Waves (SPEC §5.1, §6.11); Waves ignores sets and range, kept valid at 5–5. */
+const main = (bank: string, increment: number): TemplateExercise => ({
+  bank,
+  tier: 'primary',
+  sets: 3,
+  repRange: { min: 5, max: 5 },
+  progression: { scheme: 'waves', increment },
+})
+
+/** The same lift's volume work: an Adaptive accessory at 5 × 10 (SPEC §5.1). */
+const volume = (bank: string): TemplateExercise => ({
+  bank,
+  tier: 'accessory',
+  sets: 5,
+  repRange: { min: 10, max: 10 },
+})
+
 export const TEMPLATES: ProgramTemplate[] = [
   {
     id: 'upper-lower-4',
@@ -86,6 +103,18 @@ export const TEMPLATES: ProgramTemplate[] = [
         name: 'Workout B',
         exercises: [novice('back-squat', 3), novice('overhead-press', 3), novice('deadlift', 1, 10)],
       },
+    ],
+  },
+  {
+    id: 'main-lift-volume-4',
+    name: '4-day Main Lift + Volume (5/3/1-style)',
+    description:
+      'Four training days, one main lift each: press, deadlift, bench and squat. The main lift runs in four-week waves of a training max, its last set as many reps as you can; then 5 × 10 of the same lift, and one accessory.',
+    days: [
+      { name: 'Press', exercises: [main('overhead-press', 5), volume('overhead-press'), 'lat-pulldown'] },
+      { name: 'Deadlift', exercises: [main('deadlift', 10), volume('deadlift'), 'hanging-leg-raise'] },
+      { name: 'Bench', exercises: [main('bench-press', 5), volume('bench-press'), 'barbell-row'] },
+      { name: 'Squat', exercises: [main('back-squat', 10), volume('back-squat'), 'lying-leg-curl'] },
     ],
   },
 ]

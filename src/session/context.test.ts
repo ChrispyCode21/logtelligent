@@ -197,6 +197,78 @@ describe('a Waves exercise in a finished session (SPEC §5.4, §6.11)', () => {
   })
 })
 
+describe('the same lift twice on one day, a main lift and its volume work (SPEC §5.1, §6.9)', () => {
+  const base = program.days[0].exercises[0]
+  const day: Program = {
+    id: 'main',
+    effortScale: 'rpe',
+    days: [
+      {
+        id: 'press',
+        name: 'Press',
+        exercises: [
+          {
+            ...base,
+            id: 'ohp-main',
+            name: 'Overhead Press',
+            seed: { weight: 100, reps: 5 },
+            progression: { scheme: 'waves', increment: 5 },
+          },
+          {
+            ...base,
+            id: 'ohp-volume',
+            name: 'Overhead Press',
+            tier: 'accessory',
+            sets: 5,
+            repRange: { min: 10, max: 10 },
+            targetRpe: 8,
+            seed: { weight: 80, reps: 10 },
+          },
+        ],
+      },
+    ],
+  }
+  const at = (
+    id: number,
+    dayOfMonth: number,
+    finished: boolean,
+    main: number[],
+    volume: number[],
+  ): Session => {
+    const startedAt = `2026-10-${String(dayOfMonth).padStart(2, '0')}T10:00:00.000Z`
+    return {
+      id,
+      dayId: 'press',
+      startedAt,
+      finishedAt: finished ? startedAt : undefined,
+      exercises: [
+        { exerciseId: 'ohp-main', sets: main.map((weight) => ({ weight, reps: 5 })) },
+        { exerciseId: 'ohp-volume', sets: volume.map((weight) => ({ weight, reps: 10 })) },
+      ],
+    }
+  }
+  const asOf = new Date('2026-10-20T10:00:00.000Z')
+
+  it('gives each its own suggestion: the Waves three-set prescription and the Adaptive 5 x 10', () => {
+    const live = at(1, 20, false, [], [])
+    const [main, volume] = sessionExercises(live, day, [live], asOf)
+    expect(main.config.id).toBe('ohp-main')
+    expect(main.suggestion).toMatchObject({ scheme: 'waves', week: 1, sets: 3 })
+    expect(volume.config.id).toBe('ohp-volume')
+    expect(volume.suggestion).toMatchObject({ kind: 'suggestion', sets: 5 })
+    expect(volume.suggestion).not.toMatchObject({ scheme: 'waves' })
+  })
+
+  it("keeps one's logged sets out of the other's history", () => {
+    const done = at(1, 13, true, [65, 75, 85], [80, 80, 80, 80, 80])
+    const live = at(2, 20, false, [], [])
+    const [main, volume] = sessionExercises(live, day, [done, live], asOf)
+    expect(main.history.map((h) => h.sets.length)).toEqual([3])
+    expect(volume.history.map((h) => h.sets.length)).toEqual([5])
+    expect(volume.history.every((h) => h.sets.every((s) => s.reps === 10))).toBe(true)
+  })
+})
+
 describe('a Linear progression shared across days, in a session (SPEC §6.10)', () => {
   const squat = (id: string, seed?: boolean) => ({
     id,

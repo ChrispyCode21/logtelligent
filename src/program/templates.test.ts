@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { BANK, exerciseFromBank } from './bank'
+import { liftKey } from './lifts'
 import { activeDays, clearProgram, EMPTY_PROGRAM, missingSeeds } from './program'
 import { SCHEME_INCREMENT } from './program'
 import { applyTemplate, TEMPLATES, templateDays, type ProgramTemplate } from './templates'
@@ -137,6 +138,52 @@ describe('the 3-day Novice A/B template (SPEC §5.1)', () => {
   it('says how it progresses and resets', () => {
     expect(novice.description).toMatch(/every successful session/)
     expect(novice.description).toMatch(/three times in a row resets 10% lighter/)
+  })
+})
+
+describe('the 4-day Main Lift + Volume template (SPEC §5.1)', () => {
+  const template = TEMPLATES[2]
+  const days = templateDays(template)
+  const waves = (increment: number) => ({ scheme: 'waves', increment })
+
+  it('has four days, each a main lift, the same lift as volume work, and an accessory', () => {
+    expect(days.map((d) => [d.name, d.exercises.map((e) => e.name)])).toEqual([
+      ['Press', ['Overhead Press', 'Overhead Press', 'Lat Pulldown']],
+      ['Deadlift', ['Deadlift', 'Deadlift', 'Hanging Leg Raise']],
+      ['Bench', ['Bench Press', 'Bench Press', 'Barbell Row']],
+      ['Squat', ['Back Squat', 'Back Squat', 'Lying Leg Curl']],
+    ])
+  })
+
+  it('puts each main lift on Waves: +5 lb for the press and bench, +10 lb for the squat and deadlift', () => {
+    expect(days.map((d) => [d.exercises[0].tier, d.exercises[0].progression])).toEqual([
+      ['primary', waves(5)],
+      ['primary', waves(10)],
+      ['primary', waves(5)],
+      ['primary', waves(10)],
+    ])
+  })
+
+  it('follows each main lift with the same lift as an Adaptive accessory at 5 x 10', () => {
+    for (const d of days) {
+      const v = d.exercises[1]
+      expect(v).toMatchObject({ tier: 'accessory', sets: 5, repRange: { min: 10, max: 10 } })
+      expect(v.progression).toBeUndefined()
+      expect(v.name).toBe(d.exercises[0].name)
+    }
+  })
+
+  it('has the same lift twice on one day as two exercises of one lift', () => {
+    for (const d of days) {
+      expect(d.exercises[0].id).not.toBe(d.exercises[1].id)
+      expect(liftKey(d.exercises[0].name)).toBe(liftKey(d.exercises[1].name))
+    }
+  })
+
+  it('fills an empty program with four days, every exercise needing starting numbers', () => {
+    const program = applyTemplate(EMPTY_PROGRAM, template)
+    expect(activeDays(program)).toHaveLength(4)
+    expect(missingSeeds(program)).toHaveLength(12)
   })
 })
 
