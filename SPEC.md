@@ -172,7 +172,7 @@ The program has an **effort scale** that sets how effort is entered and shown. A
 
 ## 6. Domain rules
 
-The app hosts **progression schemes**: each turns an exercise's history into its next session (§8). A scheme belongs to a program exercise, defaulting to **Adaptive** (§6.3–6.7); **Linear** (§6.10) is the other. Exercise configuration (§6.1), load steps (§6.2), stored prescriptions (§6.8) and lifts (§6.9) are shared by every scheme; the parts of them that are Adaptive's alone are marked "Adaptive" in place.
+The app hosts **progression schemes**: each turns an exercise's history into its next session (§8). A scheme belongs to a program exercise, defaulting to **Adaptive** (§6.3–6.7); **Linear** (§6.10) and **Waves** (§6.11) are the others. Exercise configuration (§6.1), load steps (§6.2), stored prescriptions (§6.8) and lifts (§6.9) are shared by every scheme; the parts of them that are Adaptive's alone are marked "Adaptive" in place.
 
 ### 6.1 Exercise configuration
 Per exercise, set at program-setup time:
@@ -186,7 +186,7 @@ Per exercise, set at program-setup time:
 | **Progression profile** | How this exercise's load can change (§6.2) |
 | Unilateral | Reps are always recorded **per side** (e.g. single-arm or alternating DB curls: 30×15 = 15 each side) |
 | Target RPE (primary lifts) | First-set target, half steps, default 8; worded in the program's effort scale (§5.6) |
-| **Progression scheme** | Adaptive (the default) or Linear with its increment (§6.10). A Linear exercise has one Reps number (a range with equal ends) and no target RPE; a stored target is kept for switching back. Fixed once the exercise has a finished session: to change it, add the exercise again |
+| **Progression scheme** | Adaptive (the default), Linear with its increment (§6.10) or Waves with its increment (§6.11). A Linear exercise has one Reps number (a range with equal ends) and no target RPE; a stored target is kept for switching back. Waves sets every set's reps, and its three sets, from the wave, so the configured rep range, set count and target RPE aren't used by it. Fixed once the exercise has a finished session: to change it, add the exercise again |
 | Starting numbers (seed) | §5.1 |
 
 **Not in the setup form:** the max relative jump, a fixed 10% for every exercise (§6.2).
@@ -241,7 +241,7 @@ When the ceiling is filled, take the load step and reset to the bottom of the co
   - Lombardi `w × r^0.1`
   - These are three curve-fits of the same set, not independent measurements: their agreement is a sanity check, not added confidence.
 - **Shared by the lift:** the running e1RM below is the lift's (§6.9), from the first sets of all its sessions on every day.
-- **Lower-rep sessions first:** a session counts toward the running e1RM only if it was prescribed for **10 or fewer effective reps** (the top of its rep range plus the reps in reserve its target effort leaves, `max + (10 − target RPE)`; a Linear session's rep target, §6.10), unless none in the window were; then the higher-rep ones are used. Rep-max formulas are least reliable at high reps, and people differ in how many reps they manage at a given load.
+- **Lower-rep sessions first:** a session counts toward the running e1RM only if it was prescribed for **10 or fewer effective reps** (the top of its rep range plus the reps in reserve its target effort leaves, `max + (10 − target RPE)`; a Linear session's rep target, §6.10; a Waves session prescribes at most 5 reps and no reps in reserve, so it always counts, W38), unless none in the window were; then the higher-rep ones are used. Rep-max formulas are least reliable at high reps, and people differ in how many reps they manage at a given load.
   - **Judged by the prescription, not the reps done,** so a great day on a 6–8 range (9 reps @ 8) never drops out (I9). The range is the session's saved one (§6.8), else today's; the target RPE is today's (it isn't saved).
 - **Running e1RM:** the average of the e1RMs from **up to the last 3 sessions within the last 4 weeks**.
   - Average over **however many sessions exist** (1, 2, or 3); divide by the actual count, never padding with 0 or a placeholder.
@@ -318,8 +318,8 @@ Deload conventions vary between coaches and programs; these values are a sensibl
 Bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a light one.
 - **A lift is a name:** exercises with the same name, ignoring case and punctuation (as the bank search compares names), are one lift, wherever they are in the program. Nothing extra is stored: sessions belong to the exercise, so renaming one ("Bench" → "Bench Press") brings its sessions into that lift, and renaming one to something new ("Paused Bench") makes it a lift of its own, with its sessions.
 - **Whatever the equipment:** a custom dumbbell "Bench Press" shares its e1RM with a barbell one; to keep them apart, name them differently ("DB Bench Press"). Bank and template additions copy the lift's equipment, so they match.
-- **Shared:** History (§5.3) and the running e1RM, with lower-rep sessions first (§6.4). Adaptive's primaries pick their weight from it; Linear's part in it is in §6.10. Each exercise's deload weeks, worked out by its own replay, stay out of the e1RM (§6.7). The seed is dropped once the lift has a real session on any day (§6.4).
-- **Per exercise:** the prescription and, in Adaptive, the floor rule, stacks, reverts, retries, deloads and rep extension (§6.2–6.8). Linear's progression is shared by exercises with the same prescription (§6.10). A failed heavy day never reverts or deloads the light day.
+- **Shared:** History (§5.3) and the running e1RM, with lower-rep sessions first (§6.4). Adaptive's primaries pick their weight from it; Linear's and Waves' parts in it are in §6.10 and §6.11. Each exercise's deload weeks, worked out by its own replay, stay out of the e1RM (§6.7). The seed is dropped once the lift has a real session on any day (§6.4).
+- **Per exercise:** the prescription and, in Adaptive, the floor rule, stacks, reverts, retries, deloads and rep extension (§6.2–6.8). Linear's progression is shared by exercises with the same prescription (§6.10). Waves' wave, training max and misses belong to the program exercise alone (§6.11). A failed heavy day never reverts or deloads the light day.
 - **A new exercise joining a lift with history** (added, or from a template):
   - a **primary** needs no starting numbers, since the lift's e1RM picks its weight (Linear's first weight, §6.10); the exercise form shows them as optional: "Optional: Bench Press already has an estimated 1RM from your history.";
   - an **accessory** is still asked, since its range may differ, pre-filled with the lift's latest weight (skipping deload weeks);
@@ -343,9 +343,30 @@ A fixed weight increase every successful session, with its own failure rule. No 
 - **Extra sets and substitutes:** extra sets are recorded and shown but don't count (§5.2); substituted sessions don't count either, for success or for the miss count.
 - **On screen:** the weight and rep target, no effort target (effort is asked on a primary's first set, but optional), and a reason: "+5 lb" (the actual increment), "Top of the loads: +1 rep", "Repeat: reps missed last time", "Reset: missed 3 times in a row", or after a break "Returning from a break: weight lowered 10%." A fresh start shows none. Examples L1–L42 (§7.L).
 
+### 6.11 Waves
+5/3/1-style four-week waves of percentages of a training max (TM). Each Waves exercise has its own wave and TM, whatever lift it is (§6.9). The engine always prescribes three sets from the wave, whatever the configured set count.
+
+**Weeks:** the last set of weeks 1–3 is the AMRAP set (as many reps as possible); its prescribed reps are its minimum, written `5+`.
+
+| Week | Set 1 | Set 2 | Set 3 |
+|---|---|---|---|
+| 1 | 65% × 5 | 75% × 5 | 85% × 5+ |
+| 2 | 70% × 3 | 80% × 3 | 90% × 3+ |
+| 3 | 75% × 5 | 85% × 3 | 95% × 1+ |
+| 4 (deload) | 40% × 5 | 50% × 5 | 60% × 5 |
+
+- **Weight per set:** the percentage of the TM, snapped to the **nearest** available load (§6.2); an exact tie rounds up, never below the lightest load. With no loads to snap to (a cable or machine with no stack entered) it's exact. The suggestion carries a weight and rep target per set, marking the AMRAP set. The one-working-weight rule (§5.2, §6.3) is Adaptive's and Linear's.
+- **Starting TM:** 90% of the lift's running e1RM (§6.4) at the exercise's first Waves session, from the lift's other exercises' sessions before it, else 90% of the seed's e1RM (starting numbers entered as for a primary, §5.1); snapped down to an available load. With neither, it needs starting numbers. After that the TM moves only by the rules below, never by the e1RM, and all of it is derived by replay.
+- **What advances the wave:** each finished session of the program exercise with at least one prescribed set logged is one week. A substituted session (§5.2) and a session with no prescribed set don't advance it. Extra sets are recorded and shown but don't count (§5.2). The week after week 4 is week 1 of the next cycle.
+- **A session's outcome:** judged on the AMRAP set alone (the third prescribed set, weeks 1–3): met when its reps reach the minimum, a miss when under it or **not logged** (the session's note says why, §5.2). Sets 1 and 2 never fail a session. Week 4 has no AMRAP and is a deload. The result is success, fail or deload.
+- **Cycle end (after week 4):** if any AMRAP in the cycle was missed, the TM drops 10% (TM × 0.9, snapped down to an available load; one drop however many were missed) instead of rising. Otherwise it rises by the increment: the first available load at or above TM + increment (the exact sum with no loads; past the heaviest load, the heaviest). The increment is a setting on the program exercise: a template sets it (+5 lb press and bench, +10 lb squat and deadlift); an exercise the user adds, or switches to Waves, starts at 5 lb, whatever its name (as Linear, §6.10).
+- **Returning from a break:** with no session in the 4-week window (§6.4), the TM, as it stands after any cycle-end change, drops 10% (snapped down), any missed AMRAP in the unfinished cycle is cleared (so only one drop), and the wave restarts at week 1.
+- **Effort and e1RM:** effort is asked (optional) on the AMRAP set instead of the first set, and that set alone feeds the lift's running e1RM (§6.9); effort on other sets is ignored for it, and an AMRAP set with no effort gives no e1RM. Deload weeks don't feed it (§6.7), and History marks them as deloads. A Waves session counts as lower-rep (§6.4).
+- Examples W1–W42 (§7.W).
+
 ## 7. Worked examples → test cases
 
-Each example is one unit test named with its stable ID (e.g. `it('B3: ...')`). Numbers come from the formulas in §6.4, not estimates. If a rule changes, update its examples. Groups A–E are **Adaptive's**, L is **Linear's**. F (rotation) and G (reference data) are shared. H and I show the shared rules (§6.8, §6.9) through Adaptive's results. Each new scheme adds a group of its own, and its own H- and I-style examples where they apply.
+Each example is one unit test named with its stable ID (e.g. `it('B3: ...')`). Numbers come from the formulas in §6.4, not estimates. If a rule changes, update its examples. Groups A–E are **Adaptive's**, L is **Linear's**, W is **Waves'**. F (rotation) and G (reference data) are shared. H and I show the shared rules (§6.8, §6.9) through Adaptive's results. Each new scheme adds a group of its own, and its own H- and I-style examples where they apply.
 
 Unless stated: barbell loads in 5 lb steps; dumbbell rack 10, 12.5, 15, 17.5, 20, 22.5, 25, 30, 35…; e1RM values rounded to 0.1 lb (tests allow ±0.1). `225×4 @8` is 225 lb for 4 reps at RPE 8.
 
@@ -484,6 +505,97 @@ Shared across days: a squat on Workout A and on Workout B, both 3 × 5 (5–5), 
 | L41 | B is 5 × 5 (with seed 95): A 95 3×5 | B: **95 × 5**, no reason; A: 100 × 5: a different set count progresses apart |
 | L42 | B's increase is +10 lb: A 95 3×5 | B: **105 × 5**, "+10 lb"; A: 100 × 5, "+5 lb" |
 
+### 7.W Waves (§6.11)
+
+A barbell squat on Waves unless stated: 5 lb loads from 45, increment +10, TM 245 once started. "Nearest" = nearest available load, an exact tie rounds up. `5+` is an AMRAP set with that minimum; set 3 of weeks 1-3 is the AMRAP set. Sessions in a table are a week apart unless stated, so no break applies.
+
+Starting TM (§6.11):
+
+| ID | Given | Expected |
+|---|---|---|
+| W1 | First Waves session; the lift's running e1RM is 273.6 (225 × 5 @8) | TM = 273.6 × 0.9 = 246.2, snapped down: **245** |
+| W2 | First Waves session; no real session in the lift; seed 225 × 5 (treated as RPE 7, e1RM 280.4) | TM = 280.4 × 0.9 = 252.4, snapped down: **250** |
+| W3 | First Waves session; no seed, and the lift has no e1RM | **Needs starting numbers** |
+| W4 | W1's TM 245; the lift's e1RM later rises to 290 from other sessions | TM stays **245**: it's set from the e1RM at the exercise's first Waves session only, and after that moves only by the cycle rules (255 after a met cycle, +10) |
+
+Weights per week, TM 245 (each cell: percentage, exact weight, snapped weight). Sets 1 and 2 are not AMRAP; set 3 is, in weeks 1-3:
+
+| ID | Week | Set 1 | Set 2 | Set 3 |
+|---|---|---|---|---|
+| W5 | 1 | 65% = 159.25 → **160 × 5** | 75% = 183.75 → **185 × 5** | 85% = 208.25 → **210 × 5+** (AMRAP) |
+| W6 | 2 | 70% = 171.5 → **170 × 3** | 80% = 196 → **195 × 3** | 90% = 220.5 → **220 × 3+** (AMRAP) |
+| W7 | 3 | 75% = 183.75 → **185 × 5** | 85% = 208.25 → **210 × 3** | 95% = 232.75 → **235 × 1+** (AMRAP) |
+| W8 | 4 (deload) | 40% = 98 → **100 × 5** | 50% = 122.5 → **125 × 5** (a tie, rounds up) | 60% = 147 → **145 × 5** (no AMRAP) |
+
+A full cycle and the cycle increase, +10 lb, TM 245, every AMRAP met:
+
+| ID | Given | Expected |
+|---|---|---|
+| W9 | Weeks 1-4 logged as prescribed, AMRAPs 210 × 7, 220 × 5, 235 × 3, no AMRAP in week 4 | After week 4: TM 245 + 10 = **255**. Next session is week 1 of cycle 2: 65% = 165.75 → **165 × 5**, 75% = 191.25 → **190 × 5**, 85% = 216.75 → **215 × 5+** |
+| W10 | As W9 but the AMRAPs are exactly the minimums (210 × 5, 220 × 3, 235 × 1) | Met (the minimum counts): TM **255** |
+| W11 | As W9, increment 2.5 | TM 245 + 2.5 = 247.5, not a load, so the next load up: **250** |
+| W12 | As W9 but sets 1 and 2 fall short (160 × 4, 185 × 4) with the AMRAP met (210 × 5) | Only AMRAP sets are judged: TM **255** |
+| W13 | Week 1 logged as 160 × 5, 185 × 5 only (the AMRAP set not logged); weeks 2-4 as prescribed | An AMRAP set not logged is a miss (the session's note says why, §5.2; as Linear, §6.10). The session still advances the wave. At the end of the cycle: TM 245 × 0.9 = 220.5, snapped down: **220** (instead of 255) |
+| W14 | Week 1: 160 × 5, 185 × 5, 210 × 5, plus an extra set 210 × 9; weeks 2-4 as prescribed | The extra set doesn't count (§5.2): the AMRAP is the third prescribed set, 5 = minimum, met. TM **255** |
+
+A missed AMRAP and the TM drop:
+
+| ID | Given | Expected |
+|---|---|---|
+| W15 | TM 245, week 1's AMRAP 210 × 4 (minimum 5); weeks 2-4 met | At the end of the cycle: TM 245 × 0.9 = 220.5, snapped down: **220** (instead of 255). Next session, week 1 of cycle 2: 65% = 143 → **145 × 5**, 75% = 165 → **165 × 5**, 85% = 187 → **185 × 5+** |
+| W16 | TM 245, week 2's AMRAP 220 × 2 (minimum 3); weeks 1, 3, 4 met | TM **220**: one miss anywhere in the cycle drops it, at the cycle's end |
+| W17 | As W15 and week 2 also misses (220 × 2) | One drop only: TM **220**, not 198 |
+| W18 | Week 1 AMRAP missed (210 × 4), and before the cycle ends the lift's e1RM rises | The drop still applies at cycle end: TM **220** |
+
+What advances the wave:
+
+| ID | Given | Expected |
+|---|---|---|
+| W19 | No sessions | Suggests week 1 |
+| W20 | Week 1 logged | Suggests week 2: 70% = 171.5 → **170 × 3**, 195 × 3, 220 × 3+ |
+| W21 | Week 1 logged, then a session where the exercise was replaced by a substitute (§5.2) | Still suggests **week 2**: a substituted session doesn't advance the wave |
+| W22 | Weeks 1-3 logged, then a session with no prescribed sets logged | Still suggests **week 4**: a session with nothing counted is skipped |
+| W23 | Weeks 1-4 logged | Suggests week 1 of the next cycle |
+| W24 | History marking (`replay`) for 8 finished sessions, a week apart | Sessions 4 and 8 are marked **deload**; others are not. A replaced session is passed through unmarked and isn't counted |
+
+Returning from a break (the TM drop applies to the TM as it stands after any cycle-end change):
+
+| ID | Given | Expected |
+|---|---|---|
+| W25 | TM 245, weeks 1-2 logged, then nothing for 6 weeks | TM 245 × 0.9 = 220.5 → **220**; the wave restarts at week 1: **145 × 5, 165 × 5, 185 × 5+** (not week 3) |
+| W26 | TM 245, weeks 1-4 all met (TM 255 after the cycle), then nothing for 6 weeks | TM 255 × 0.9 = 229.5 → **225**; week 1: 65% = 146.25 → **145 × 5**, 75% = 168.75 → **170 × 5**, 85% = 191.25 → **190 × 5+** |
+| W27 | Week 1 logged 27 days ago, nothing since | No break: week 2, TM 245 |
+| W28 | Weeks 1-2 logged, a 6-week gap, then week 1 logged, in the replay of the full history | The session after the gap is week 1 of the restarted wave (TM 220) and it advances normally to week 2 |
+| W29 | A missed AMRAP earlier in the cycle, then a 6-week break | The break restarts the wave and clears the miss: TM 245 × 0.9 → **220** once, not dropped twice |
+
+Weights between available loads:
+
+| ID | Given | Expected |
+|---|---|---|
+| W30 | Dumbbell rack (...30, 35, 40, 45...), TM 50, week 1 | 65% = 32.5 → **35 × 5**, 75% = 37.5 → **40 × 5**, 85% = 42.5 → **45 × 5+** (each a tie, rounded up) |
+| W31 | Cable stack in 10 lb steps (...100, 110, 120...), TM 190, week 1 | 65% = 123.5 → **120 × 5**, 75% = 142.5 → **140 × 5**, 85% = 161.5 → **160 × 5+** |
+| W32 | Barbell, TM 100, week 4 | 40% = 40, below the lightest load (45) → **45 × 5**; 50% → **50 × 5**; 60% → **60 × 5** |
+| W33 | Cable machine with no stack entered (no loads), TM 200, week 1 | Exact: **130 × 5, 150 × 5, 170 × 5+** |
+| W34 | TM drop to a value between loads: TM 250 with a missed AMRAP, barbell | 250 × 0.9 = 225 → **225** (exact load); TM 245 → 220.5 → **220** (snapped down, never up to 225) |
+
+Effort and e1RM:
+
+| ID | Given | Expected |
+|---|---|---|
+| W35 | Week 1 AMRAP 210 × 8 @10, set 1 logged with effort @8 | The e1RM comes from the AMRAP set, not set 1: effective reps 8, Epley 266.0, Brzycki 260.7, Lombardi 258.5 → **e1RM 261.7** |
+| W36 | The same session with no effort on the AMRAP set (effort only on set 1) | The session gives **no e1RM** (the effort on set 1 is ignored) |
+| W37 | Week 4 (deload) with effort logged on its sets | **Not in the lift's e1RM**, as E5 |
+| W38 | Waves session with a 5+ AMRAP, and a Linear/Adaptive session of 12 prescribed reps in the same lift window | The Waves session is not high-rep (prescribed reps 5 or fewer, no reps in reserve), so the lower-rep rule (§6.4) keeps it and skips the 12-rep one |
+
+Outcome, per session:
+
+| ID | Given | Expected |
+|---|---|---|
+| W39 | Week 1, AMRAP 210 × 5 (min 5) | Result **success**; the outcome carries no Adaptive state |
+| W40 | Week 1, AMRAP 210 × 4 | Result **fail**; no state |
+| W41 | Week 4 (deload week) | Result **deload**; no state |
+| W42 | Linear's outcome for any session | Carries no `state` either (no made-up `{ stacks: 0, next: ... }`) |
+
 ### 7.F Rotation (§5.1)
 
 Days: [Upper A, Lower A, Upper B, Lower B].
@@ -542,9 +654,9 @@ Bench Press on two days: Upper A at 3–5 @8 and Upper B at 10–12 @8, both pri
 The engine takes per-exercise history as dated sessions (not bare `LoggedSet[][]`), since the 4-week window, deload exclusion (A5) and substitute exclusion (A6) all need per-session data.
 
 A **progression scheme** is one interface with three functions; the UI and storage get suggestions, validation and replays only through it, never from a scheme's own modules. Shared helpers (load steps, rotation, counted sets) are called directly. The engine returns the program exercise's scheme (Adaptive unless the exercise sets another).
-- **Suggestions:** `suggest(config, history, asOf, lift) => Suggestion`. `lift` holds the other same-named exercises' sessions, each marked by the replay of the exercise that logged it, so a scheme can replay across exercises (§6.9). Adaptive and Linear use them only for the e1RM.
-- **Validation:** `evaluate(config, history, sets, date) => SessionOutcome`, `date` being the session's, so a scheme can judge it as its replay will (Linear's break, §6.10).
-- **Replay:** `replay(config, history) => ExerciseSession[]` returns the history with each session marked as a deload or not, and as high-rep or not (§6.4). History's deload marking calls it through each exercise's scheme (§6.9).
+- **Suggestions:** `suggest(config, history, asOf, lift) => Suggestion`. Waves' carries a weight and rep target per set, marking the AMRAP set; its first set's stay the suggestion's `weight` and `reps`. `lift` holds the other same-named exercises' sessions, each marked by the replay of the exercise that logged it, so a scheme can replay across exercises (§6.9). Adaptive and Linear use them only for the e1RM; Waves only for its starting TM and the e1RM.
+- **Validation:** `evaluate(config, history, sets, date) => SessionOutcome` (a result and an optional message), `date` being the session's, so a scheme can judge it as its replay will (Linear's break, §6.10). State belongs to each scheme: Adaptive's outcome adds its `ProgressionState`; Linear's and Waves' carry none.
+- **Replay:** `replay(config, history) => ExerciseSession[]` returns the history with each session marked as a deload or not, and as high-rep or not (§6.4); a session may also name the set its e1RM comes from (Waves: the AMRAP set), the first by default. History's deload marking calls it through each exercise's scheme (§6.9).
 - **State is never passed in or stored:** each scheme replays `history` under its own rules (Adaptive: `deriveState(config, history)`, ARCHITECTURE.md, "Progression state is derived").
 
 ## 9. Open questions and ideas
