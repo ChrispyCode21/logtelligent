@@ -50,7 +50,7 @@ Not part of the app; adding one is a scoping decision for the owner:
 
 Each day has a fixed set of exercises. Upper A and Upper B use different exercises; swapping exercises within a day from week to week is discouraged, because it breaks tracking.
 
-**The Program tab**, top to bottom: the effort scale card (§5.6); the templates (below) while there are no active days; the days and their exercises; the "Change your program" card (§5.5) while there are active days; backup. Each exercise shows one summary line, the same format everywhere ("Primary · 3 × 5–7 · Barbell", "Primary · Linear +5 lb · 3 × 5 · Barbell"): a scheme other than Adaptive with its setting, equipment by its label, "per side" wherever it applies, and the effort target only on the Program tab and never for Linear. A range with equal ends shows as one number.
+**The Program tab**, top to bottom: the effort scale card (§5.6); the templates (below) while there are no active days; the days and their exercises; the "Change your program" card (§5.5) while there are active days; backup. Each exercise shows one summary line, the same format everywhere ("Primary · 3 × 5–7 · Barbell", "Primary · Linear +5 lb · 3 × 5 · Barbell", "Primary · Waves +5 lb · Barbell"): a scheme other than Adaptive with its setting, equipment by its label, "per side" wherever it applies, and the effort target only on the Program tab and never for Linear or Waves. A Waves exercise shows no sets × reps, since its wave sets them (§6.11). A range with equal ends shows as one number.
 
 **Exercise bank:** the exercises in `src/program/bank.ts`, built in (no network), text only. Each has a name, tier, equipment, default rep range, sets, unilateral, a one-line description, and a placeholder starting weight.
 - "Add exercise" opens the bank grouped by body area (Chest, Back, Shoulders, Arms, Legs, Core), a display label only, not a muscle-group model. Groups start collapsed, with a count. Typing in the search box filters across all groups and opens every group with a match.
@@ -62,6 +62,7 @@ Each day has a fixed set of exercises. Upper A and Upper B use different exercis
 - **Primary lifts:** a weight × reps you could do confidently: hard, but you wouldn't fail. Prompt along the lines of: *"Enter a weight and reps you're confident you could do: hard, but you wouldn't fail."* It is recorded as a set at **RPE 7** and produces the seed e1RM (§6.4).
 - **Accessory lifts:** a weight at the **bottom of the configured rep range**, e.g. *"What's a weight you can do 15 lateral raises (per side) with that would be hard, but achievable?"* It is recorded as weight × bottom-of-range reps at **RPE 8** (informational: accessories don't use e1RM). The first suggestion is that weight at the bottom of the range.
 - **Linear exercises** (§6.10): a weight only, the first session's weight for the rep target.
+- **Waves exercises** (§6.11): as for a primary, a weight × reps you could do confidently, recorded at RPE 7, whatever the tier.
 - The seed is an estimate; if it's off, the progression rules correct it: at worst, one easy (or failed) week, and the next is accurate.
 - The exercise form and the walkthrough (below) share one starting-numbers entry with this wording. The form shows a **placeholder** weight as a suggestion: the bank's, snapped down onto the exercise's typed loads. The walkthrough fills in a value instead, and only it offers stack quick picks.
 
@@ -94,17 +95,18 @@ Templates are offered while the program has no active days, with building your o
 1. The app opens to the **next day in the rotation**, with the day's "Last time: …" note under its name (below).
 2. I can choose a different day, but only after an explicit acknowledgement. Example: I did Lower A but forgot to log it; I can still log Upper B. A skipped day is simply not logged, and the rotation continues from the day I *did* log.
 3. A **warm-up reminder banner** at the top of the session, dismissible for that session. It ramps to the day's first exercise at its suggested weight: *"Warm up for Bench Press (225): 5–10 min easy cardio, then ramp: 45 × 10, 110 × 5, 155 × 3, 190 × 1."* Ramp weights are the lightest load, then ~50%, ~70% and ~85% of the working weight, snapped down to available loads (duplicates dropped). With no working weight to ramp to (e.g. unweighted bodyweight), only the cardio line shows. Warm-up sets are not logged.
-4. Each exercise shows its suggested weight and rep target. Exercises in a deload week are marked as such (§6.7).
-5. I log each working set. The next set **pre-fills** from the previous set's weight and reps (never its effort), so a repeat set is one tap.
+4. Each exercise shows its suggested weight and rep target. Exercises in a deload week are marked as such (§6.7), a Waves exercise in week 4 included (§6.11).
+5. I log each working set. The next set **pre-fills** from the previous set's weight and reps (never its effort), so a repeat set is one tap. A Waves prescribed set pre-fills from that set's weight and rep target in the suggestion, the AMRAP set with its minimum reps.
 6. When the last set of an exercise is entered, validation runs (§6.6) and any message is shown.
 7. Finish the session (below), or discard it ("Discard this session? Its logged sets will be deleted."), which also discards its note.
 
 **Sets:**
-- **Set target:** the configured count, halved (rounded up) in a deload week (§6.7); a substitute's is the configured count. The exercise's header shows "2 of 3 sets", and "3 of 3 sets + 1 extra" with extras.
+- **Set target:** the configured count, halved (rounded up) in a deload week (§6.7); a Waves exercise's is the wave's three sets (§6.11), week 4 included; a substitute's is the configured count. The exercise's header shows "2 of 3 sets", and "3 of 3 sets + 1 extra" with extras.
 - Once the target is logged, the new-set form is hidden and **+ Add set** offers an extra set (below), for originals and substitutes alike.
 - Logged sets stay editable (weight, reps, effort where it's asked) and deletable until the session is finished, and afterwards in the finished-session editor (§5.4).
-- **One working weight** among the prescribed sets: changing one changes the others (§6.3). Effort is asked on a primary's first set only (§6.3).
-- **Deleting set 1 of a primary:** if the set that would become set 1 has no effort, the delete asks for one: that set opens in the form with effort required, and the delete and the effort are saved together; Cancel keeps set 1. Deleting a later set never asks.
+- **Adaptive and Linear: one working weight** among the prescribed sets: changing one changes the others (§6.3). **Waves:** each prescribed set has its own weight, and changing one never changes another (§6.11). Effort is asked on an Adaptive or Linear primary's first set (§6.3, §6.10), and on a Waves exercise's AMRAP set (optional; none in week 4). A substitute follows its own rules, whatever the scheme of the exercise it replaces.
+- **Deleting set 1 of a primary:** where set 1's effort is required (Adaptive), if the set that would become set 1 has no effort, the delete asks for one: that set opens in the form with effort required, and the delete and the effort are saved together; Cancel keeps set 1. Deleting a later set never asks.
+- **Deleting a prescribed set of a Waves exercise:** the sets after it move up a place and keep their weights and effort. The AMRAP set is always the third prescribed set (§6.11), and the form for the missing set pre-fills from the plan for that place.
 - **Deleting every prescribed set** of an exercise makes it "not done" for that session (no fail, no stack), as with a skip, even if extras are kept (the session can still finish).
 
 **Extra sets** (beyond the prescribed ones):
@@ -141,7 +143,7 @@ Templates are offered while the program has no active days, with building your o
 ### 5.4 Edit a finished session
 - **Any finished session** can be edited, however old: each History row's **Edit** opens that whole session, every exercise in it, with the same set list and set form as a live session. There's no new-set form, no ⋯ menu, no warm-up banner and no Finish; **Done** closes it. Each change saves as it's made.
 - **What can change:** a set's weight, reps and effort; deleting a set (extras included); the note; deleting the whole session. Adding sets (extras too), and undoing a replace or skip, stay closed.
-- **Same rules as a live session:** one working weight among the prescribed sets; set 1 of a primary keeps its effort (§5.2); deleting every prescribed set makes the exercise "not done" (no fail, no stack).
+- **Same rules as a live session:** one working weight among the prescribed sets (a Waves exercise's prescribed sets each keep their own weight, and effort is asked on its AMRAP set, optional, §5.2); set 1 of a primary keeps its effort (§5.2); deleting every prescribed set makes the exercise "not done" (no fail, no stack).
 - **Progression recomputes:** state is derived by replaying history (§6.6), so an edit recomputes everything after it, with no cut-off. The session's validation messages are judged against the sessions before it in **replay order**: by start time, then by id for sessions that started at the same moment. It's judged by its saved prescription (§6.8), which editing doesn't change.
 - **Outcome messages:** each exercise's validation message shows whenever it has sets, not only when all its target sets are in, since the replay judged it however many there were.
 - **Set counts:** a session with a saved prescription shows "2 of 3 sets" (the target halved for a deload week), as when live. One without (finished before v1.3.0) shows the sets logged, "3 sets" or "1 set + 2 extras", since today's program may differ from what was prescribed then.
@@ -186,7 +188,7 @@ Per exercise, set at program-setup time:
 | **Progression profile** | How this exercise's load can change (§6.2) |
 | Unilateral | Reps are always recorded **per side** (e.g. single-arm or alternating DB curls: 30×15 = 15 each side) |
 | Target RPE (primary lifts) | First-set target, half steps, default 8; worded in the program's effort scale (§5.6) |
-| **Progression scheme** | Adaptive (the default), Linear with its increment (§6.10) or Waves with its increment (§6.11). A Linear exercise has one Reps number (a range with equal ends) and no target RPE; a stored target is kept for switching back. Waves sets every set's reps, and its three sets, from the wave, so the configured rep range, set count and target RPE aren't used by it. Fixed once the exercise has a finished session: to change it, add the exercise again |
+| **Progression scheme** | Adaptive (the default), Linear with its increment (§6.10) or Waves with its increment (§6.11). A Linear exercise has one Reps number (a range with equal ends) and no target RPE; a stored target is kept for switching back. Waves sets every set's reps, and its three sets, from the wave, so the configured rep range, set count and target RPE aren't used by it: its form shows the increment and hides them, keeping their stored values. Fixed once the exercise has a finished session: to change it, add the exercise again |
 | Starting numbers (seed) | §5.1 |
 
 **Not in the setup form:** the max relative jump, a fixed 10% for every exercise (§6.2).
@@ -362,6 +364,7 @@ A fixed weight increase every successful session, with its own failure rule. No 
 - **Cycle end (after week 4):** if any AMRAP in the cycle was missed, the TM drops 10% (TM × 0.9, snapped down to an available load; one drop however many were missed) instead of rising. Otherwise it rises by the increment: the first available load at or above TM + increment (the exact sum with no loads; past the heaviest load, the heaviest). The increment is a setting on the program exercise: a template sets it (+5 lb press and bench, +10 lb squat and deadlift); an exercise the user adds, or switches to Waves, starts at 5 lb, whatever its name (as Linear, §6.10).
 - **Returning from a break:** with no session in the 4-week window (§6.4), the TM, as it stands after any cycle-end change, drops 10% (snapped down), any missed AMRAP in the unfinished cycle is cleared (so only one drop), and the wave restarts at week 1.
 - **Effort and e1RM:** effort is asked (optional) on the AMRAP set instead of the first set, and that set alone feeds the lift's running e1RM (§6.9); effort on other sets is ignored for it, and an AMRAP set with no effort gives no e1RM. Deload weeks don't feed it (§6.7), and History marks them as deloads. A Waves session counts as lower-rep (§6.4).
+- **On screen:** the week ("Week 2 of 4", or "Week 4 of 4 · Deload"); each set's weight and reps ("160 × 5"); the AMRAP set, marked, with its minimum ("210 × 5+ (AMRAP)"); the training max ("Training max 245 lb"); and a reason: "Training max +10 lb" (the actual change), "Training max lowered 10%: an AMRAP was missed last cycle", or after a break "Returning from a break: training max lowered 10%". A fresh start and a mid-cycle week show none. A Waves session's outcome shows no message.
 - Examples W1–W42 (§7.W).
 
 ## 7. Worked examples → test cases
