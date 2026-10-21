@@ -48,7 +48,7 @@ Not part of the app; adding one is a scoping decision for the owner:
 3. Configure each exercise (§6.1).
 4. Enter each exercise's starting numbers (below).
 
-Each day has a fixed set of exercises. Upper A and Upper B use different exercises; swapping exercises within a day from week to week is discouraged, because it breaks tracking.
+Each day has a fixed set of exercises, and the same lift can appear twice on one day (a template's main lift and its volume work); each entry keeps its own scheme and per-exercise progression. Upper A and Upper B use different exercises; swapping exercises within a day from week to week is discouraged, because it breaks tracking.
 
 **The Program tab**, top to bottom: the effort scale card (§5.6); the templates (below) while there are no active days; the days and their exercises; the "Change your program" card (§5.5) while there are active days; backup. Each exercise shows one summary line, the same format everywhere ("Primary · 3 × 5–7 · Barbell", "Primary · Linear +5 lb · 3 × 5 · Barbell", "Primary · Waves +5 lb · Barbell"): a scheme other than Adaptive with its setting, equipment by its label, "per side" wherever it applies, and the effort target only on the Program tab and never for Linear or Waves. A Waves exercise shows no sets × reps, since its wave sets them (§6.11). A range with equal ends shows as one number.
 
@@ -66,7 +66,7 @@ Each day has a fixed set of exercises. Upper A and Upper B use different exercis
 - The seed is an estimate; if it's off, the progression rules correct it: at worst, one easy (or failed) week, and the next is accurate.
 - The exercise form and the walkthrough (below) share one starting-numbers entry with this wording. The form shows a **placeholder** weight as a suggestion: the bank's, snapped down onto the exercise's typed loads. The walkthrough fills in a value instead, and only it offers stack quick picks.
 
-**Templates:** two ship. A **4-day Upper/Lower**, built from bank exercises with their bank defaults:
+**Templates:** three ship. A **4-day Upper/Lower**, built from bank exercises with their bank defaults:
 - **Upper A:** Bench Press, Barbell Row, Dumbbell Shoulder Press, Lat Pulldown, Lateral Raise, Triceps Pushdown
 - **Lower A:** Back Squat, Romanian Deadlift, Leg Press, Lying Leg Curl, Standing Calf Raise
 - **Upper B:** Overhead Press, Pull-Up, Incline Dumbbell Press, Seated Cable Row, Dumbbell Curl, Face Pull
@@ -75,6 +75,12 @@ Each day has a fixed set of exercises. Upper A and Upper B use different exercis
 A **3-day Novice A/B**, Workout A and B alternated, every exercise a primary on Linear (§6.10) at 5–5, +5 lb (the deadlift +10 lb):
 - **Workout A:** Back Squat 3 × 5, Bench Press 3 × 5, Deadlift 1 × 5
 - **Workout B:** Back Squat 3 × 5, Overhead Press 3 × 5, Deadlift 1 × 5
+
+A **4-day Main Lift + Volume (5/3/1-style)**, Boring But Big: each day's main lift is a primary on Waves (§6.11) at the increment shown, followed by the same lift, under the same name, as an Adaptive accessory at 5 × 10 (so it shares the lift's history, §6.9), then one accessory with its bank defaults:
+- **Press:** Overhead Press (Waves +5 lb), Overhead Press 5 × 10, Lat Pulldown
+- **Deadlift:** Deadlift (Waves +10 lb), Deadlift 5 × 10, Hanging Leg Raise
+- **Bench:** Bench Press (Waves +5 lb), Bench Press 5 × 10, Barbell Row
+- **Squat:** Back Squat (Waves +10 lb), Back Squat 5 × 10, Lying Leg Curl
 
 Templates are offered while the program has no active days, with building your own as the alternative; switching from another program is "Change your program" first (§5.5). Applying one needs no confirm. It produces a normal, fully editable program, its days added after any archived ones; the effort scale is kept. Each template exercise joins the lift of the same name (§6.9). A template can set each exercise's sets, rep range, target RPE, tier and scheme with its settings, copied in when it's applied; anything it doesn't set is the bank's default. The same bank exercise can appear on several days with different settings.
 
@@ -321,7 +327,7 @@ Bench is bench, whether it's 3 × 3–5 on a heavy day or 3 × 12–15 on a ligh
 - **A lift is a name:** exercises with the same name, ignoring case and punctuation (as the bank search compares names), are one lift, wherever they are in the program. Nothing extra is stored: sessions belong to the exercise, so renaming one ("Bench" → "Bench Press") brings its sessions into that lift, and renaming one to something new ("Paused Bench") makes it a lift of its own, with its sessions.
 - **Whatever the equipment:** a custom dumbbell "Bench Press" shares its e1RM with a barbell one; to keep them apart, name them differently ("DB Bench Press"). Bank and template additions copy the lift's equipment, so they match.
 - **Shared:** History (§5.3) and the running e1RM, with lower-rep sessions first (§6.4). Adaptive's primaries pick their weight from it; Linear's and Waves' parts in it are in §6.10 and §6.11. Each exercise's deload weeks, worked out by its own replay, stay out of the e1RM (§6.7). The seed is dropped once the lift has a real session on any day (§6.4).
-- **Per exercise:** the prescription and, in Adaptive, the floor rule, stacks, reverts, retries, deloads and rep extension (§6.2–6.8). Linear's progression is shared by exercises with the same prescription (§6.10). Waves' wave, training max and misses belong to the program exercise alone (§6.11). A failed heavy day never reverts or deloads the light day.
+- **Per exercise:** the prescription and, in Adaptive, the floor rule, stacks, reverts, retries, deloads and rep extension (§6.2–6.8). Linear's progression is shared by exercises with the same prescription (§6.10). Waves' wave, training max and misses belong to the program exercise alone (§6.11). A failed heavy day never reverts or deloads the light day. Two exercises of one lift may be on the same day: each progresses under its own scheme and settings, while sharing the lift's history and running e1RM.
 - **A new exercise joining a lift with history** (added, or from a template):
   - a **primary** needs no starting numbers, since the lift's e1RM picks its weight (Linear's first weight, §6.10); the exercise form shows them as optional: "Optional: Bench Press already has an estimated 1RM from your history.";
   - an **accessory** is still asked, since its range may differ, pre-filled with the lift's latest weight (skipping deload weeks);
