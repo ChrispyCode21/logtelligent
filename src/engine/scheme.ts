@@ -1,6 +1,7 @@
 import { evaluateLinear, replayLinear, suggestLinear } from './linear'
 import { deriveState, evaluateSession } from './progression'
 import { suggestNext } from './suggest'
+import { evaluateWaves, replayWaves, suggestWaves } from './waves'
 import type {
   ExerciseConfig,
   ExerciseSession,
@@ -38,11 +39,25 @@ export const linear: ProgressionScheme = {
   replay: replayLinear,
 }
 
+/** Percentages of a training max in four-week waves (SPEC §6.11). */
+export const waves: ProgressionScheme = {
+  suggest: suggestWaves,
+  evaluate: evaluateWaves,
+  replay: replayWaves,
+}
+
 /** The name of the scheme a program exercise uses. */
 export const schemeId = (config: Pick<ExerciseConfig, 'progression'>): SchemeId =>
   config.progression?.scheme ?? 'adaptive'
 
 /** The scheme a program exercise uses: Adaptive unless it sets another (SPEC §6). */
 export function schemeFor(config: ExerciseConfig): ProgressionScheme {
-  return schemeId(config) === 'linear' ? linear : adaptive
+  switch (schemeId(config)) {
+    case 'linear':
+      return linear
+    case 'waves':
+      return waves
+    default:
+      return adaptive
+  }
 }

@@ -217,8 +217,5 @@ export function evaluateLinear(
   const { last } = replayState(config, [...history, session]).state
   // With no prescribed set logged, the replay skips it, so `last` is an earlier session.
   const judged = countedSets(sets).length > 0 && last?.time === date.getTime()
-  return {
-    result: judged && last.succeeded ? 'success' : 'fail',
-    state: { stacks: 0, next: { kind: 'normal' } },
-  }
+  return { result: judged && last.succeeded ? 'success' : 'fail' }
 }

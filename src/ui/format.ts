@@ -23,7 +23,11 @@ export const EQUIPMENT_LABELS: Record<EquipmentType, string> = {
 
 export const TIER_LABELS: Record<Tier, string> = { primary: 'Primary', accessory: 'Accessory' }
 
-export const SCHEME_LABELS: Record<SchemeId, string> = { adaptive: 'Adaptive', linear: 'Linear' }
+export const SCHEME_LABELS: Record<SchemeId, string> = {
+  adaptive: 'Adaptive',
+  linear: 'Linear',
+  waves: 'Waves',
+}
 
 interface Prescription {
   tier: Tier

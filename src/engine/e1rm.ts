@@ -55,15 +55,18 @@ export function repsToFailure(e1rm: number, weight: number): number {
   return (lo + hi) / 2
 }
 
-/** A session's first (counted) set, when it carries an RPE: the e1RM comes from it alone (SPEC §6.3). */
-function ratedFirstSet(session: ExerciseSession) {
-  const first = countedSets(session.sets)[0]
-  return first?.rpe === undefined ? undefined : { ...first, rpe: first.rpe }
+/**
+ * The session's counted set its e1RM comes from, when it carries an RPE: the first, or the one the
+ * replay names (Waves' AMRAP set); the e1RM comes from it alone (SPEC §6.3, §6.11).
+ */
+function ratedSet(session: ExerciseSession) {
+  const set = countedSets(session.sets)[session.e1rmSet ?? 0]
+  return set?.rpe === undefined ? undefined : { ...set, rpe: set.rpe }
 }
 
 export function sessionE1rm(session: ExerciseSession): number | undefined {
-  const first = ratedFirstSet(session)
-  return first && setE1rm(first)
+  const rated = ratedSet(session)
+  return rated && setE1rm(rated)
 }
 
 /** Sessions prescribed for at most this many effective reps count before higher-rep ones (SPEC §6.4). */

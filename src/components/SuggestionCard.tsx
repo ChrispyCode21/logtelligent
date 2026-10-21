@@ -41,8 +41,11 @@ export function SuggestionCard({ config, suggestion, heading, effortScale, onEdi
   const { min } = config.repRange
   const max = adaptive?.effectiveTop ?? config.repRange.max
   const repsText = adaptive ? formatRepRange(min, max) : `${suggestion.reps}`
+  // A Waves suggestion shows its first set only, with no note, until its screens are built.
   const note =
-    suggestion.scheme === 'linear' ? formatLinearReason(suggestion.reason) : formatPlanNote(suggestion)
+    suggestion.scheme === 'linear'
+      ? formatLinearReason(suggestion.reason)
+      : adaptive && formatPlanNote(adaptive)
   // Only the e1RM rule predicts reps (SPEC §6.4).
   const onE1rmRule = adaptive?.predictedReps !== undefined
   const basisNote = adaptive?.e1rm && onE1rmRule && e1rmNote(adaptive.e1rm)
