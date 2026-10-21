@@ -92,6 +92,9 @@ export function effortAsked(exercise: EffortConfig, index: number, suggestion?: 
 /**
  * Whether a primary lift's sets have the effort its first set needs (SPEC §6.3). An exercise with
  * no sets needs no effort. Checked at Finish, and when a finished session is edited (SPEC §5.4).
+ * effortAsked(exercise, 0) with no suggestion returns undefined for Waves, which is right only
+ * because Waves effort is never required (SPEC §6.11); if that changes, pass the suggestion here
+ * and in canFinish.
  */
 export function hasRequiredEffort(exercise: EffortConfig, sets: LoggedSet[]): boolean {
   const first = countedSets(sets)[0]
