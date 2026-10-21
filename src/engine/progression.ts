@@ -3,6 +3,7 @@ import { isHighRepRange } from './e1rm'
 import { availableLoads, stepDown } from './loads'
 import { countedSets } from './sets'
 import type {
+  AdaptiveOutcome,
   ExerciseConfig,
   ExerciseSession,
   LoggedSet,
@@ -10,7 +11,6 @@ import type {
   Plan,
   ProgressionState,
   RepRange,
-  SessionOutcome,
 } from './types'
 
 export const FAIL_MESSAGE = "Failed to hit minimums, next week's weight will be lowered."
@@ -51,7 +51,7 @@ export function step(
   loads: number[],
   state: ProgressionState,
   sets: LoggedSet[],
-): SessionOutcome {
+): AdaptiveOutcome {
   const plan = state.next
 
   // Deloads skip the floor rule; afterward stacks are 0 and we resume from the last successful
@@ -197,7 +197,7 @@ export function evaluateSession(
   config: ExerciseConfig,
   history: ExerciseSession[],
   sets: LoggedSet[],
-): SessionOutcome {
+): AdaptiveOutcome {
   const { state } = deriveState(config, history)
   return step(config, availableLoads(config), state, countedSets(sets))
 }

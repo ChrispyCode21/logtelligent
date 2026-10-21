@@ -437,3 +437,40 @@ describe('7.L Linear, shared across days (SPEC §6.10)', () => {
     expect(next(novice(squatA, seeded), [ok(1, 'squat-a', 95)], seeded)).not.toHaveProperty('scheme')
   })
 })
+
+describe('Waves, through History (SPEC §6.11)', () => {
+  const wavesSquat = {
+    ...exercise('squat-w', 'Squat', { repRange: { min: 5, max: 5 } }),
+    progression: { scheme: 'waves', increment: 10 },
+  } as ProgramExercise
+  const adaptiveSquat = exercise('squat-a', 'Squat', { seed: { weight: 225, reps: 5 } })
+
+  it("the lift's e1RM comes from a Waves session's AMRAP set, and its deload week stays out", () => {
+    const week = (day: number, sets: LoggedSet[]) => finished('upper-a', day, 'squat-w', sets)
+    const sessions = [
+      week(1, [
+        { weight: 160, reps: 5, rpe: 8 },
+        { weight: 185, reps: 5 },
+        { weight: 210, reps: 8, rpe: 10 },
+      ]),
+      week(2, [
+        { weight: 170, reps: 3 },
+        { weight: 195, reps: 3 },
+        { weight: 220, reps: 3 },
+      ]),
+      week(3, [
+        { weight: 185, reps: 5 },
+        { weight: 210, reps: 3 },
+        { weight: 235, reps: 1 },
+      ]),
+      week(4, [
+        { weight: 100, reps: 5, rpe: 6 },
+        { weight: 125, reps: 5, rpe: 6 },
+        { weight: 145, reps: 5, rpe: 6 },
+      ]),
+    ]
+    const lift = otherLiftSessions(program(wavesSquat, adaptiveSquat), sessions, adaptiveSquat)
+    expect(lift.map((s) => s.isDeload)).toEqual([false, false, false, true])
+    expect(runningE1rm(lift, undefined, asOf)?.value).toBeCloseTo(261.7, 1)
+  })
+})

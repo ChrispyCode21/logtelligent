@@ -315,13 +315,14 @@ describe('Linear details', () => {
     expect(linear.replay(tens, history).map((s) => s.highReps)).toEqual([false, true, true])
   })
 
-  it('gives no message and no stacks when validating', () => {
+  it('W42: gives no message and no state when validating', () => {
     expect(linear.evaluate(squat, [], [{ weight: 135, reps: 5 }], dayDate(0))).toMatchObject({
       result: 'fail',
     })
     const sets = [135, 135, 135].map((weight) => ({ weight, reps: 5 }))
     const outcome = linear.evaluate(squat, [], sets, dayDate(0))
-    expect(outcome).toMatchObject({ result: 'success', state: { stacks: 0 } })
+    expect(outcome.result).toBe('success')
+    expect(outcome).not.toHaveProperty('state')
     expect(outcome.message).toBeUndefined()
   })
 

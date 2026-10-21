@@ -23,10 +23,23 @@ const template = (id: string): Program => {
   return syntheticProgram(applyTemplate(EMPTY_PROGRAM, t))
 }
 
+/** The 4-day Upper/Lower program with every exercise on Waves (a fixture: the Waves template is #85). */
+const wavesProgram = (): Program => {
+  const program = template('upper-lower-4')
+  return {
+    ...program,
+    days: program.days.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => ({ ...e, progression: { scheme: 'waves', increment: 5 } as const })),
+    })),
+  }
+}
+
 /** A program for each scheme built so far, every exercise on it. */
 const PROGRAMS = {
   adaptive: template('upper-lower-4'),
   linear: template('novice-ab-3'),
+  waves: wavesProgram(),
 }
 
 describe('replay benchmark', () => {

@@ -15,8 +15,8 @@ export interface Seed {
   reps: number
 }
 
-/** A progression scheme other than Adaptive, with its settings (SPEC §6.10). */
-export type SchemeSetting = { scheme: 'linear'; increment: number }
+/** A progression scheme other than Adaptive, with its settings (SPEC §6.10–6.11). */
+export type SchemeSetting = { scheme: 'linear'; increment: number } | { scheme: 'waves'; increment: number }
 
 /** A scheme by name: Adaptive is the default, stored as no setting. */
 export type SchemeId = 'adaptive' | SchemeSetting['scheme']
@@ -71,6 +71,11 @@ export interface ExerciseSession {
    * sessions logged before v1.3.0, which are judged by the exercise's current range.
    */
   repRange?: RepRange
+  /**
+   * The index, among the session's counted (non-extra) sets, of the set its e1RM comes from; the
+   * first when missing. Set by the engine's replay (Waves: the AMRAP set, SPEC §6.11).
+   */
+  e1rmSet?: number
 }
 
 export type RunningE1rm =
@@ -132,9 +137,12 @@ export type SessionResult = 'success' | 'fail' | 'deload'
 
 export interface SessionOutcome {
   result: SessionResult
-  /** State after this session. */
-  state: ProgressionState
   message?: string
+}
+
+/** Adaptive's outcome also carries its state after the session; the other schemes have none (SPEC §8). */
+export interface AdaptiveOutcome extends SessionOutcome {
+  state: ProgressionState
 }
 
 /** What every scheme's suggestion carries: the first set's weight and rep target, and the set count. */
@@ -162,6 +170,34 @@ export interface LinearSuggestion extends SuggestionBase {
   reason: LinearReason
 }
 
+/** Why Waves suggests this wave (SPEC §6.11), as data: any text is the UI's. `start` and `continue` need none. */
+export type WavesReason =
+  | { kind: 'start' }
+  | { kind: 'continue' }
+  /** A met cycle raised the training max. */
+  | { kind: 'increase'; increment: number }
+  /** A missed AMRAP in the cycle lowered it. */
+  | { kind: 'drop' }
+  | { kind: 'break' }
+
+/** One prescribed set of a Waves session; the AMRAP set takes as many reps as possible, `reps` being its minimum. */
+export interface WavesSet {
+  weight: number
+  reps: number
+  amrap?: boolean
+}
+
+/** Waves' suggestion: a weight and rep target per set (SPEC §6.11). `weight` and `reps` are the first set's. */
+export interface WavesSuggestion extends SuggestionBase {
+  scheme: 'waves'
+  /** The week of the wave. */
+  week: 1 | 2 | 3 | 4
+  /** The training max the weights come from. */
+  tm: number
+  setPlan: WavesSet[]
+  reason: WavesReason
+}
+
 /** Adaptive's suggestion (SPEC §6.3–6.7). */
 export interface AdaptiveSuggestion extends SuggestionBase {
   scheme?: undefined
@@ -186,4 +222,4 @@ export interface AdaptiveSuggestion extends SuggestionBase {
 /** Adaptive's result: a suggestion, or a call for starting numbers. */
 export type AdaptiveResult = { kind: 'needsSeed' } | AdaptiveSuggestion
 
-export type Suggestion = AdaptiveResult | LinearSuggestion
+export type Suggestion = AdaptiveResult | LinearSuggestion | WavesSuggestion

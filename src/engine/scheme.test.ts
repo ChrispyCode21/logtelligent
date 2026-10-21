@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { adaptive, deriveState, evaluateSession, schemeFor, suggestNext } from '.'
+import { adaptive, deriveState, evaluateSession, schemeFor, suggestNext, waves } from '.'
 import type { ExerciseConfig, ExerciseSession, LoggedSet } from '.'
 
 const bench: ExerciseConfig = {
@@ -81,5 +81,15 @@ describe('progression schemes', () => {
     expect(scheme.evaluate(curl, curlHistory, curlSets, asOf)).toEqual(
       evaluateSession(curl, curlHistory, curlSets),
     )
+  })
+})
+
+describe('the Waves scheme', () => {
+  it('is the scheme of an exercise set to Waves', () => {
+    expect(schemeFor({ ...bench, progression: { scheme: 'waves', increment: 5 } })).toBe(waves)
+  })
+
+  it('leaves every other exercise on Adaptive', () => {
+    expect(schemeFor(bench)).toBe(adaptive)
   })
 })
