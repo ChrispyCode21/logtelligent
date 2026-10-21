@@ -7,7 +7,7 @@ import {
   type Seed,
 } from '../engine'
 import { EFFORT_SCALE_IDS, LEGACY_EFFORT_SCALE, type EffortScale } from '../program/effort'
-import { LINEAR_INCREMENT } from '../program/program'
+import { SCHEME_INCREMENT } from '../program/program'
 import type { Program, ProgramDay, ProgramExercise } from '../program/types'
 import type { ExerciseLog, Prescription, Session, Substitute } from '../session/types'
 import { normalizeNote } from '../session/notes'
@@ -192,10 +192,10 @@ function exercise(v: unknown, path: string): ProgramExercise {
 
 function schemeSetting(v: unknown, path: string): SchemeSetting {
   const s = obj(v, path)
-  if (s.scheme !== 'linear') throw new Damaged(`${path}.scheme`)
+  if (s.scheme !== 'linear' && s.scheme !== 'waves') throw new Damaged(`${path}.scheme`)
   return compact<SchemeSetting>({
-    scheme: 'linear',
-    increment: num(s.increment, `${path}.increment`, LINEAR_INCREMENT.min, LINEAR_INCREMENT.max),
+    scheme: s.scheme,
+    increment: num(s.increment, `${path}.increment`, SCHEME_INCREMENT.min, SCHEME_INCREMENT.max),
   })
 }
 

@@ -2,12 +2,16 @@ import { countedSets, schemeId, type ExerciseConfig, type LoggedSet, type Sugges
 import type { ExerciseLog } from './types'
 
 // An exercise's prescribed sets use one working weight (SPEC §6.3, §6.5), so changing the weight on
-// any of them changes it on all of them. Extra sets (SPEC §5.2) come after the prescribed
+// any of them changes it on all of them; a Waves exercise's prescribed sets each keep their own
+// (SPEC §6.11), which the `ownWeight` argument says. Extra sets (SPEC §5.2) come after the prescribed
 // ones and keep their own weight, so one can be a lighter back-off set.
 
+/** Whether this exercise's prescribed sets each have their own weight: Waves (SPEC §6.11). */
+export const ownWeights = (exercise: Pick<ExerciseConfig, 'progression'>) => schemeId(exercise) === 'waves'
+
 /** Log a prescribed set, before any extras. */
-export function addSet(sets: LoggedSet[], set: LoggedSet): LoggedSet[] {
-  const counted = countedSets(sets).map((s) => ({ ...s, weight: set.weight }))
+export function addSet(sets: LoggedSet[], set: LoggedSet, ownWeight = false): LoggedSet[] {
+  const counted = countedSets(sets).map((s) => (ownWeight ? s : { ...s, weight: set.weight }))
   return [...counted, set, ...sets.filter((s) => s.extra)]
 }
 
@@ -16,12 +20,15 @@ export function addExtra(sets: LoggedSet[], set: LoggedSet): LoggedSet[] {
   return [...sets, { weight: set.weight, reps: set.reps, extra: true }]
 }
 
-/** Change one set. A prescribed set's weight applies to every prescribed set; an extra changes alone. */
-export function updateSet(sets: LoggedSet[], index: number, set: LoggedSet): LoggedSet[] {
+/**
+ * Change one set. A prescribed set's weight applies to every prescribed set, unless they have their
+ * own weights (Waves); an extra changes alone.
+ */
+export function updateSet(sets: LoggedSet[], index: number, set: LoggedSet, ownWeight = false): LoggedSet[] {
   if (sets[index].extra) {
     return sets.map((s, i) => (i === index ? { weight: set.weight, reps: set.reps, extra: true } : s))
   }
-  return sets.map((s, i) => (i === index ? set : s.extra ? s : { ...s, weight: set.weight }))
+  return sets.map((s, i) => (i === index ? set : s.extra || ownWeight ? s : { ...s, weight: set.weight }))
 }
 
 export function removeSet(sets: LoggedSet[], index: number): LoggedSet[] {
@@ -43,8 +50,8 @@ export function removalNeedsEffort(
 }
 
 /** Remove set 1, saving the effort (and any other change) given for the set that takes its place. */
-export function removeFirstSet(sets: LoggedSet[], newFirst: LoggedSet): LoggedSet[] {
-  return updateSet(removeSet(sets, 0), 0, newFirst)
+export function removeFirstSet(sets: LoggedSet[], newFirst: LoggedSet, ownWeight = false): LoggedSet[] {
+  return updateSet(removeSet(sets, 0), 0, newFirst, ownWeight)
 }
 
 /** Sets logged in a log: the original exercise's and any substitute's, extras included. */
@@ -67,11 +74,19 @@ export type EffortAsk = 'required' | 'optional' | undefined
 /** The exercise as far as asking for effort goes. */
 type EffortConfig = Pick<ExerciseConfig, 'tier' | 'progression'>
 
+/** The AMRAP set is always the third prescribed set (SPEC §5.2, §6.11). */
+export const AMRAP_INDEX = 2
+
 /**
  * Effort is asked on a primary lift's first set only: required in Adaptive (SPEC §6.3, §6.5),
- * optional in Linear (§6.10).
+ * optional in Linear (§6.10). A Waves exercise asks it, optionally, on its AMRAP set at any tier,
+ * and nowhere in week 4 (§6.11); that needs the `suggestion` for the week.
  */
-export function effortAsked(exercise: EffortConfig, index: number): EffortAsk {
+export function effortAsked(exercise: EffortConfig, index: number, suggestion?: Suggestion): EffortAsk {
+  if (schemeId(exercise) === 'waves') {
+    const week4 = suggestion?.kind === 'suggestion' && suggestion.scheme === 'waves' && suggestion.week === 4
+    return index === AMRAP_INDEX && suggestion?.kind === 'suggestion' && !week4 ? 'optional' : undefined
+  }
   if (exercise.tier !== 'primary' || index !== 0) return undefined
   return schemeId(exercise) === 'adaptive' ? 'required' : 'optional'
 }

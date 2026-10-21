@@ -10,6 +10,7 @@ import {
   hasRequiredEffort,
   loggedSetCount,
   loggedSets,
+  ownWeights,
   removalNeedsEffort,
   removeFirstSet,
   removeSet,
@@ -32,6 +33,105 @@ const suggestion = (sets: number, plan: 'normal' | 'deload' = 'normal'): Suggest
 })
 const bench = (sets: ExerciseLog['sets'] = []): ExerciseLog => ({ exerciseId: 'bench', sets })
 const set = { weight: 225, reps: 5 }
+
+const wavesSuggestion = (week: 1 | 2 | 3 | 4): Suggestion => ({
+  kind: 'suggestion',
+  scheme: 'waves',
+  week,
+  tm: 245,
+  weight: 160,
+  reps: 5,
+  sets: 3,
+  setPlan: [
+    { weight: 160, reps: 5 },
+    { weight: 185, reps: 5 },
+    { weight: 210, reps: 5, amrap: true },
+  ],
+  reason: { kind: 'start' },
+})
+
+describe('Waves sets each keep their own weight (SPEC §5.2, §6.11)', () => {
+  const sets = [
+    { weight: 160, reps: 5 },
+    { weight: 185, reps: 5 },
+  ]
+
+  it('keeps earlier prescribed sets as they are when another is added', () => {
+    expect(addSet(sets, { weight: 210, reps: 7 }, true).map((s) => s.weight)).toEqual([160, 185, 210])
+  })
+
+  it('keeps an extra with its own weight when a prescribed set is added', () => {
+    const withExtra = [...sets, { weight: 100, reps: 10, extra: true }]
+    expect(addSet(withExtra, { weight: 210, reps: 7 }, true).map((s) => s.weight)).toEqual([160, 185, 210, 100])
+  })
+
+  it('changes one set alone', () => {
+    expect(updateSet(sets, 0, { weight: 155, reps: 5 }, true).map((s) => s.weight)).toEqual([155, 185])
+  })
+
+  it('moves later sets up when one is deleted, keeping their weights and effort', () => {
+    const three = [...sets, { weight: 210, reps: 7, rpe: 9 }]
+    expect(removeSet(three, 1)).toEqual([sets[0], { weight: 210, reps: 7, rpe: 9 }])
+  })
+
+  it('still gives Adaptive, Linear and substitutes one working weight', () => {
+    expect(addSet(sets, { weight: 210, reps: 7 }).map((s) => s.weight)).toEqual([210, 210, 210])
+    expect(updateSet(sets, 0, { weight: 155, reps: 5 }).map((s) => s.weight)).toEqual([155, 155])
+  })
+
+  it('is set per exercise by its scheme', () => {
+    expect(ownWeights({ progression: { scheme: 'waves', increment: 5 } })).toBe(true)
+    expect(ownWeights({ progression: { scheme: 'linear', increment: 5 } })).toBe(false)
+    expect(ownWeights({})).toBe(false)
+  })
+})
+
+describe('effort on a Waves exercise (SPEC §6.11)', () => {
+  const waves = { progression: { scheme: 'waves', increment: 5 } } as const
+  const primary = { tier: 'primary', ...waves } as const
+
+  it('is optional on the AMRAP set in weeks 1 to 3, for either tier', () => {
+    for (const tier of ['primary', 'accessory'] as const) {
+      expect(effortAsked({ tier, ...waves }, 2, wavesSuggestion(1))).toBe('optional')
+      expect(effortAsked({ tier, ...waves }, 2, wavesSuggestion(3))).toBe('optional')
+    }
+  })
+
+  it('is not asked on the first or second set', () => {
+    expect(effortAsked(primary, 0, wavesSuggestion(1))).toBeUndefined()
+    expect(effortAsked(primary, 1, wavesSuggestion(1))).toBeUndefined()
+  })
+
+  it('is not asked anywhere in week 4', () => {
+    for (const i of [0, 1, 2]) expect(effortAsked(primary, i, wavesSuggestion(4))).toBeUndefined()
+  })
+
+  it('never blocks finishing or prompts on a delete, since it is never required', () => {
+    const noEffort = [
+      { weight: 160, reps: 5 },
+      { weight: 185, reps: 5 },
+      { weight: 210, reps: 5 },
+    ]
+    expect(hasRequiredEffort(primary, noEffort)).toBe(true)
+    const required = (i: number) => effortAsked(primary, i, wavesSuggestion(1)) === 'required'
+    expect(removalNeedsEffort(noEffort, 0, required)).toBe(false)
+    expect(canFinish([{ exerciseId: 'ohp', sets: noEffort }], () => primary)).toBe(true)
+  })
+
+  it('is unchanged for Adaptive and Linear', () => {
+    expect(effortAsked({ tier: 'primary' }, 0, suggestion(3))).toBe('required')
+    expect(effortAsked({ tier: 'primary', progression: { scheme: 'linear', increment: 5 } }, 0)).toBe('optional')
+    expect(effortAsked({ tier: 'primary' }, 2, suggestion(3))).toBeUndefined()
+  })
+})
+
+describe('how many sets a Waves exercise wants', () => {
+  it('is the wave three, in week 4 too, and a substitute gets the configured count', () => {
+    expect(targetSets(bench(), 4, wavesSuggestion(4))).toBe(3)
+    const replaced = { ...bench(), substitute: { name: 'Machine press', sets: [] } }
+    expect(targetSets(replaced, 4, wavesSuggestion(1))).toBe(4)
+  })
+})
 
 describe('how many sets an exercise wants today', () => {
   it('is the suggestion count, which a deload halves (SPEC §6.2, §6.7)', () => {

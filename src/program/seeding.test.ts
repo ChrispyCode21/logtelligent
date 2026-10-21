@@ -6,6 +6,7 @@ import {
   hasInvalidLoads,
   needsStack,
   parseLoads,
+  seedHasReps,
   seedPrefill,
   stackLoads,
   STACK_PRESETS,
@@ -20,6 +21,20 @@ const fromBank = (name: string) => exerciseFromBank(findBankExercise(name)!)
 describe('guided seeding (SPEC §5.1)', () => {
   it('pre-fills a primary with the bank weight and the top of its range', () => {
     expect(seedPrefill(fromBank('Bench Press'))).toEqual({ weight: '95', reps: '7' })
+  })
+
+  it('asks for reps for an Adaptive primary and for Waves at any tier (SPEC §5.1)', () => {
+    expect(seedHasReps('primary', 'adaptive')).toBe(true)
+    expect(seedHasReps('accessory', 'adaptive')).toBe(false)
+    expect(seedHasReps('primary', 'linear')).toBe(false)
+    expect(seedHasReps('primary', 'waves')).toBe(true)
+    expect(seedHasReps('accessory', 'waves')).toBe(true)
+  })
+
+  it('pre-fills a Waves exercise with 5 reps, whatever its rep range', () => {
+    const waves = { ...fromBank('Bench Press'), progression: { scheme: 'waves', increment: 5 } } as const
+    expect(seedPrefill(waves)).toEqual({ weight: '95', reps: '5' })
+    expect(seedPrefill({ ...fromBank('Lateral Raise'), progression: waves.progression }).reps).toBe('5')
   })
 
   it('pre-fills an accessory with the bank weight only', () => {

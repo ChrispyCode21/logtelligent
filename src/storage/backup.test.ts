@@ -136,6 +136,12 @@ describe('JSON backup (SPEC §2)', () => {
       expect(parseBackup(JSON.stringify(backup))).toEqual(backup)
     })
 
+    it('round-trips a Waves exercise and its increment', () => {
+      const waves = { ...squat, progression: { scheme: 'waves', increment: 10 } } as const
+      const backup = buildBackup(withSquat(waves) as Program, [], new Date('2026-10-04T12:00:00Z'))
+      expect(parseBackup(JSON.stringify(backup))).toEqual(backup)
+    })
+
     it('reads an exercise from before schemes as Adaptive: no scheme stored', () => {
       const { progression: _, ...old } = squat
       const backup = buildBackup(withSquat(old) as Program, [], new Date())
@@ -144,7 +150,10 @@ describe('JSON backup (SPEC §2)', () => {
 
     it('rejects an unknown scheme or an increment out of bounds', () => {
       for (const progression of [
-        { scheme: 'waves', increment: 5 },
+        { scheme: 'wave', increment: 5 },
+        { scheme: 'waves', increment: 0 },
+        { scheme: 'waves', increment: 101 },
+        { scheme: 'waves' },
         { scheme: 'linear', increment: 0 },
         { scheme: 'linear', increment: 500 },
         { scheme: 'linear' },

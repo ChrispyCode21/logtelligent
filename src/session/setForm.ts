@@ -15,10 +15,18 @@ export function formFromSet(set: LoggedSet): SetForm {
 /**
  * The next prescribed set pre-fills its weight and reps from the previous one (SPEC §5.2), not from
  * an extra; set 1 from `first`, usually the suggestion. Effort isn't carried over: only a primary's
- * first set asks for it (SPEC §6.3).
+ * first set asks for it (SPEC §6.3). A Waves prescribed set takes its own weight and rep target from
+ * `plan`, by its place among the prescribed sets (SPEC §5.2, §6.11).
  */
-export function prefill(sets: LoggedSet[], first?: { weight: number; reps: number }): SetForm {
-  const last = countedSets(sets).at(-1)
+export function prefill(
+  sets: LoggedSet[],
+  first?: { weight: number; reps: number },
+  plan?: { weight: number; reps: number }[],
+): SetForm {
+  const counted = countedSets(sets)
+  const planned = plan?.[counted.length]
+  if (planned) return { weight: String(planned.weight), reps: String(planned.reps) }
+  const last = counted.at(-1)
   if (last) return { weight: String(last.weight), reps: String(last.reps) }
   if (first) return { weight: String(first.weight), reps: String(first.reps) }
   return { weight: '', reps: '' }

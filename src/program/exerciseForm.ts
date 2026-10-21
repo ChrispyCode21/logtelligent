@@ -1,6 +1,6 @@
 // The exercise form's pure parts: fields as typed, validation, and the exercise they describe (SPEC §6.1).
 import type { EquipmentType, SchemeId, Tier } from '../engine'
-import { LINEAR_INCREMENT, MAX_RELATIVE_JUMP } from './program'
+import { SCHEME_INCREMENT, MAX_RELATIVE_JUMP } from './program'
 import { hasInvalidLoads, parseLoads, seedHasReps, toSeed, usesStack, validateSeed } from './seeding'
 import type { ProgramExercise } from './types'
 
@@ -8,7 +8,7 @@ export interface ExerciseFormFields {
   name: string
   tier: Tier
   scheme: SchemeId
-  /** Linear's increment (SPEC §6.10). */
+  /** The increment of Linear or Waves (SPEC §6.10, §6.11). */
   increment: string
   /** Linear's one Reps number; the range (`min`, `max`) is kept for switching back. */
   reps: string
@@ -29,7 +29,7 @@ export function toForm(e?: ProgramExercise): ExerciseFormFields {
     name: e?.name ?? '',
     tier: e?.tier ?? 'primary',
     scheme: e?.progression?.scheme ?? 'adaptive',
-    increment: String(e?.progression?.increment ?? LINEAR_INCREMENT.initial),
+    increment: String(e?.progression?.increment ?? SCHEME_INCREMENT.initial),
     reps: String(e?.repRange.max ?? ''),
     min: String(e?.repRange.min ?? ''),
     max: String(e?.repRange.max ?? ''),
@@ -57,9 +57,15 @@ export function withScheme(form: ExerciseFormFields, scheme: SchemeId): Exercise
   return { ...form, scheme, reps: scheme === 'linear' && form.scheme !== 'linear' ? form.max : form.reps }
 }
 
+/** A Waves exercise's rep range when none was ever typed: unused by it, but a valid range (SPEC §6.1). */
+const WAVES_REP_RANGE = { min: 5, max: 5 }
+
 const linear = (form: ExerciseFormFields) => form.scheme === 'linear'
 
-/** Starting numbers have reps for an Adaptive primary only (SPEC §5.1). */
+/** Waves sets its reps and its three sets from the wave, so the form has no rep range, sets or target RPE (SPEC §6.1). */
+export const usesWave = (form: ExerciseFormFields) => form.scheme === 'waves'
+
+/** Starting numbers have reps for an Adaptive primary and for Waves (SPEC §5.1). */
 export const formSeedHasReps = (form: ExerciseFormFields) => seedHasReps(form.tier, form.scheme)
 
 /** Starting numbers are optional here (the seed gate asks later, SPEC §5.1), but checked once any are typed. */
@@ -68,28 +74,26 @@ const hasSeed = (form: ExerciseFormFields) =>
 
 const isIncrement = (s: string) => {
   const n = Number(s)
-  return s.trim() !== '' && Number.isFinite(n) && n >= LINEAR_INCREMENT.min && n <= LINEAR_INCREMENT.max
+  return s.trim() !== '' && Number.isFinite(n) && n >= SCHEME_INCREMENT.min && n <= SCHEME_INCREMENT.max
 }
 
 const isWholeNumber = (s: string, min: number) => s !== '' && Number.isInteger(Number(s)) && Number(s) >= min
+
+const hasValidRange = (form: ExerciseFormFields) =>
+  isWholeNumber(form.min, 1) && isWholeNumber(form.max, 1) && Number(form.max) >= Number(form.min)
 
 /** What's wrong with the form; empty when it can be saved. */
 export function validateExerciseForm(form: ExerciseFormFields): string[] {
   const errors: string[] = []
   const loads = parseLoads(form.loads)
   if (!form.name.trim()) errors.push('Name is required.')
-  if (linear(form)) {
-    if (!isWholeNumber(form.reps, 1)) errors.push('Reps must be a whole number, at least 1.')
-    if (!isIncrement(form.increment))
-      errors.push(`The increase must be from ${LINEAR_INCREMENT.min} to ${LINEAR_INCREMENT.max} lb.`)
-  } else if (
-    !isWholeNumber(form.min, 1) ||
-    !isWholeNumber(form.max, 1) ||
-    Number(form.max) < Number(form.min)
-  ) {
+  if (linear(form) && !isWholeNumber(form.reps, 1)) errors.push('Reps must be a whole number, at least 1.')
+  if ((linear(form) || usesWave(form)) && !isIncrement(form.increment))
+    errors.push(`The increase must be from ${SCHEME_INCREMENT.min} to ${SCHEME_INCREMENT.max} lb.`)
+  if (!linear(form) && !usesWave(form) && !hasValidRange(form)) {
     errors.push('Rep range needs whole numbers, with the top at least the bottom.')
   }
-  if (!isWholeNumber(form.sets, 1)) errors.push('Sets must be at least 1.')
+  if (!usesWave(form) && !isWholeNumber(form.sets, 1)) errors.push('Sets must be at least 1.')
   if (hasInvalidLoads(loads)) errors.push('Loads must be numbers, e.g. 99, 110, 121.')
   if (usesStack(form.equipment) && !loads)
     errors.push('Enter the stack weights for cable and machine exercises.')
@@ -100,7 +104,8 @@ export function validateExerciseForm(form: ExerciseFormFields): string[] {
 
 /**
  * The exercise a valid form describes. Editing keeps `initial`'s id and any other stored fields; a
- * Linear exercise keeps its target RPE for switching back (SPEC §6.1).
+ * Linear or Waves exercise keeps its target RPE for switching back (SPEC §6.1). A Waves exercise's rep
+ * range and set count aren't in the form, so they keep what it held before, else a default.
  */
 export function fromForm(
   form: ExerciseFormFields,
@@ -109,7 +114,10 @@ export function fromForm(
 ): ProgramExercise {
   const repRange = linear(form)
     ? { min: Number(form.reps), max: Number(form.reps) }
-    : { min: Number(form.min), max: Number(form.max) }
+    : usesWave(form) && !hasValidRange(form)
+      ? (initial?.repRange ?? WAVES_REP_RANGE)
+      : { min: Number(form.min), max: Number(form.max) }
+  const sets = usesWave(form) && !isWholeNumber(form.sets, 1) ? (initial?.sets ?? 3) : Number(form.sets)
   const { progression: _, ...kept } = initial ?? {}
   return {
     ...kept,
@@ -118,7 +126,7 @@ export function fromForm(
     tier: form.tier,
     repRange,
     targetRpe: form.targetRpe,
-    sets: Number(form.sets),
+    sets,
     equipment: form.equipment,
     loads: parseLoads(form.loads),
     maxRelativeJump: MAX_RELATIVE_JUMP,
@@ -126,6 +134,8 @@ export function fromForm(
     seed: hasSeed(form)
       ? toSeed({ weight: form.seedWeight, reps: form.seedReps }, formSeedHasReps(form), repRange)
       : undefined,
-    ...(linear(form) && { progression: { scheme: 'linear', increment: Number(form.increment) } }),
+    ...(form.scheme !== 'adaptive' && {
+      progression: { scheme: form.scheme, increment: Number(form.increment) },
+    }),
   }
 }

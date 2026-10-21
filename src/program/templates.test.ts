@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { BANK, exerciseFromBank } from './bank'
 import { activeDays, clearProgram, EMPTY_PROGRAM, missingSeeds } from './program'
-import { LINEAR_INCREMENT } from './program'
+import { SCHEME_INCREMENT } from './program'
 import { applyTemplate, TEMPLATES, templateDays, type ProgramTemplate } from './templates'
 import type { Program } from './types'
 
@@ -17,8 +17,8 @@ describe('program templates (SPEC §5.1)', () => {
         expect(e.tier === 'primary' && e.equipment === 'bodyweight').toBe(false)
         if (e.progression) {
           expect(e.repRange.min).toBe(e.repRange.max)
-          expect(e.progression.increment).toBeGreaterThanOrEqual(LINEAR_INCREMENT.min)
-          expect(e.progression.increment).toBeLessThanOrEqual(LINEAR_INCREMENT.max)
+          expect(e.progression.increment).toBeGreaterThanOrEqual(SCHEME_INCREMENT.min)
+          expect(e.progression.increment).toBeLessThanOrEqual(SCHEME_INCREMENT.max)
         }
       }
     }
