@@ -8,6 +8,7 @@ import {
   effortAsked,
   hasAnySets,
   hasRequiredEffort,
+  isDeload,
   loggedSetCount,
   loggedSets,
   ownWeights,
@@ -62,7 +63,9 @@ describe('Waves sets each keep their own weight (SPEC §5.2, §6.11)', () => {
 
   it('keeps an extra with its own weight when a prescribed set is added', () => {
     const withExtra = [...sets, { weight: 100, reps: 10, extra: true }]
-    expect(addSet(withExtra, { weight: 210, reps: 7 }, true).map((s) => s.weight)).toEqual([160, 185, 210, 100])
+    expect(addSet(withExtra, { weight: 210, reps: 7 }, true).map((s) => s.weight)).toEqual([
+      160, 185, 210, 100,
+    ])
   })
 
   it('changes one set alone', () => {
@@ -120,8 +123,20 @@ describe('effort on a Waves exercise (SPEC §6.11)', () => {
 
   it('is unchanged for Adaptive and Linear', () => {
     expect(effortAsked({ tier: 'primary' }, 0, suggestion(3))).toBe('required')
-    expect(effortAsked({ tier: 'primary', progression: { scheme: 'linear', increment: 5 } }, 0)).toBe('optional')
+    expect(effortAsked({ tier: 'primary', progression: { scheme: 'linear', increment: 5 } }, 0)).toBe(
+      'optional',
+    )
     expect(effortAsked({ tier: 'primary' }, 2, suggestion(3))).toBeUndefined()
+  })
+})
+
+describe('marking a deload week (SPEC §6.7, §6.11)', () => {
+  it('is Adaptive’s deload plan and Waves’ week 4', () => {
+    expect(isDeload(suggestion(2, 'deload'))).toBe(true)
+    expect(isDeload(suggestion(3))).toBe(false)
+    expect(isDeload(wavesSuggestion(4))).toBe(true)
+    expect(isDeload(wavesSuggestion(3))).toBe(false)
+    expect(isDeload({ kind: 'needsSeed' })).toBe(false)
   })
 })
 

@@ -1,6 +1,7 @@
 import {
   atLightestLoad,
   exerciseCard,
+  expect,
   expectConfirm,
   expectFitsScreen,
   finishWalkthrough,
@@ -9,9 +10,11 @@ import {
   logSets,
   pickEffort,
   restore,
+  setBenchToWaves,
   setUpFromTemplate,
   tab,
   test,
+  wavesBackup,
 } from './support'
 
 // Every screen and state at phone widths: no sideways scrolling, no clipped button labels
@@ -177,6 +180,55 @@ test('Program: the exercise form with Linear picked, and with its scheme fixed',
   await tab(page, 'Program').click()
   await page.getByRole('button', { name: /^Bench Press/ }).click()
   await expectFitsScreen(page, 'exercise form, scheme fixed', page.getByText(/^Fixed once it's been logged/))
+})
+
+test('Program: the exercise form with Waves picked', async ({ page }) => {
+  await setUpFromTemplate(page)
+  await tab(page, 'Program').click()
+  await page.getByRole('button', { name: /^Bench Press/ }).click()
+  await page.getByRole('button', { name: 'Waves', exact: true }).click()
+  await expectFitsScreen(
+    page,
+    'exercise form, Waves',
+    page.getByLabel('Training max increase each cycle (lb)'),
+  )
+  await page.getByRole('button', { name: 'Save exercise' }).click()
+  await expectFitsScreen(page, 'Program with a Waves exercise', page.getByText(/· Waves \+5 lb · Barbell/))
+})
+
+test('a Waves exercise: its suggestion on Today and its sets in a live session', async ({ page }) => {
+  await setUpFromTemplate(page)
+  await setBenchToWaves(page)
+  await tab(page, 'Today').click()
+  await expectFitsScreen(page, 'Today, a Waves suggestion', page.getByText('Week 1 of 4'))
+
+  await page.getByRole('button', { name: 'Start Upper A' }).click()
+  const bench = exerciseCard(page, 'Bench Press')
+  await logSets(page, 'Bench Press', 2)
+  await expectFitsScreen(
+    page,
+    'Waves, the AMRAP set with effort',
+    bench.getByRole('heading', { name: /^Set 3 · AMRAP, 5\+ reps$/ }),
+  )
+  await expect(bench.getByRole('group', { name: /\(optional\)$/ })).toBeVisible()
+  await bench.getByRole('button', { name: 'Log set' }).click()
+  await expect(bench.locator('.set-list li')).toHaveCount(3)
+  await expectFitsScreen(page, 'Waves, all sets logged', bench.getByRole('button', { name: '+ Add set' }))
+
+  await bench.locator('.set-row').nth(2).click()
+  await expectFitsScreen(page, 'Waves, editing the AMRAP set', bench.getByRole('heading', { name: /AMRAP/ }))
+})
+
+test('Today: a Waves exercise in its deload week 4', async ({ page }) => {
+  await restore(page, wavesBackup())
+  await tab(page, 'Today').click()
+  await expectFitsScreen(page, 'Today, Waves week 4', page.getByText('Week 4 of 4 · Deload'))
+  await page.getByRole('button', { name: 'Start Upper A' }).click()
+  await expectFitsScreen(
+    page,
+    'a Waves deload session',
+    exerciseCard(page, 'Bench Press').locator('.tag', { hasText: 'Deload' }),
+  )
 })
 
 test('every step of the 3-day Novice A/B walkthrough', async ({ page }) => {

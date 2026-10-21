@@ -7,6 +7,7 @@ import {
   formSeedHasReps,
   fromForm,
   toForm,
+  usesWave,
   validateExerciseForm,
   withScheme,
   withTier,
@@ -63,7 +64,9 @@ export function ExerciseForm({
 
   const primary = form.tier === 'primary'
   const linear = form.scheme === 'linear'
-  // A primary on a lift with an e1RM needs no starting numbers; a Linear one starts from it (SPEC §6.9).
+  const waves = usesWave(form)
+  // A primary on a lift with an e1RM needs no starting numbers; a Linear one starts its weight from
+  // it, and a Waves one its training max (SPEC §6.9, §6.11).
   const fromLiftE1rm = primary && !!form.name.trim() && !!liftHasE1rm?.(form.name)
   const loads = parseLoads(form.loads)
   const errors = validateExerciseForm(form)
@@ -117,7 +120,7 @@ export function ExerciseForm({
       ) : (
         <Field as="fieldset" label="Progression">
           <SegmentedControl
-            options={(['adaptive', 'linear'] as const).map((scheme) => ({
+            options={(['adaptive', 'linear', 'waves'] as const).map((scheme) => ({
               value: scheme,
               label: SCHEME_LABELS[scheme],
             }))}
@@ -127,8 +130,14 @@ export function ExerciseForm({
         </Field>
       )}
 
-      {linear && (
-        <Field label={`${form.equipment === 'bodyweight' ? 'Added weight' : 'Increase'} each session (lb)`}>
+      {(linear || waves) && (
+        <Field
+          label={
+            waves
+              ? 'Training max increase each cycle (lb)'
+              : `${form.equipment === 'bodyweight' ? 'Added weight' : 'Increase'} each session (lb)`
+          }
+        >
           <input
             inputMode="decimal"
             value={form.increment}
@@ -137,28 +146,31 @@ export function ExerciseForm({
         </Field>
       )}
 
-      <div className="row">
-        {linear ? (
-          <Field label="Reps">
-            <input inputMode="numeric" value={form.reps} onChange={(e) => set('reps', e.target.value)} />
+      {/* Waves sets its reps and sets from the wave; the stored values are kept for switching back (SPEC §6.1). */}
+      {!waves && (
+        <div className="row">
+          {linear ? (
+            <Field label="Reps">
+              <input inputMode="numeric" value={form.reps} onChange={(e) => set('reps', e.target.value)} />
+            </Field>
+          ) : (
+            <>
+              <Field label="Reps from">
+                <input inputMode="numeric" value={form.min} onChange={(e) => set('min', e.target.value)} />
+              </Field>
+              <Field label="to">
+                <input inputMode="numeric" value={form.max} onChange={(e) => set('max', e.target.value)} />
+              </Field>
+            </>
+          )}
+          <Field label="Sets">
+            <input inputMode="numeric" value={form.sets} onChange={(e) => set('sets', e.target.value)} />
           </Field>
-        ) : (
-          <>
-            <Field label="Reps from">
-              <input inputMode="numeric" value={form.min} onChange={(e) => set('min', e.target.value)} />
-            </Field>
-            <Field label="to">
-              <input inputMode="numeric" value={form.max} onChange={(e) => set('max', e.target.value)} />
-            </Field>
-          </>
-        )}
-        <Field label="Sets">
-          <input inputMode="numeric" value={form.sets} onChange={(e) => set('sets', e.target.value)} />
-        </Field>
-      </div>
+        </div>
+      )}
 
-      {/* Linear has no effort target; a stored one is kept for switching back (SPEC §6.1). */}
-      {primary && !linear && (
+      {/* Linear and Waves have no effort target; a stored one is kept for switching back (SPEC §6.1). */}
+      {primary && !linear && !waves && (
         <Field label={TARGET_LABEL[effortScale]}>
           <select
             // A stored target between this scale's options shows as the nearest; it only changes
@@ -210,13 +222,14 @@ export function ExerciseForm({
         <span>One side at a time (reps are per side)</span>
       </label>
 
-      {fromLiftE1rm && !linear && (
+      {fromLiftE1rm && !linear && !waves && (
         <p className="muted">Optional: {form.name.trim()} already has an estimated 1RM from your history.</p>
       )}
-      {fromLiftE1rm && linear ? (
+      {fromLiftE1rm && (linear || waves) ? (
         <p className="muted">
-          The first weight comes from {form.name.trim()}&apos;s estimated 1RM, so no starting weight is
-          needed.
+          {waves
+            ? `The training max comes from ${form.name.trim()}'s estimated 1RM, so no starting numbers are needed.`
+            : `The first weight comes from ${form.name.trim()}'s estimated 1RM, so no starting weight is needed.`}
         </p>
       ) : (
         <SeedFields

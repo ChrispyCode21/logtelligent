@@ -8,8 +8,13 @@ import {
   formatLinearReason,
   formatPlanNote,
   formatRepRange,
+  formatTrainingMax,
+  formatWavesReason,
+  formatWavesSet,
+  formatWavesWeek,
   formatWeight,
 } from '../ui/format'
+import { isDeload } from '../session/sets'
 
 function e1rmNote(e1rm: RunningE1rm) {
   if (e1rm.basis === 'seed') return 'Based on your starting numbers.'
@@ -36,12 +41,36 @@ export function SuggestionCard({ config, suggestion, heading, effortScale, onEdi
     )
   }
 
+  // Waves shows its week, a weight and rep target per set, its training max and its reason (SPEC §6.11).
+  if (suggestion.scheme === 'waves') {
+    const reason = formatWavesReason(suggestion.reason)
+    return (
+      <Card>
+        <h2>
+          {heading}
+          {isDeload(suggestion) && <span className="tag">Deload</span>}
+        </h2>
+        <p className="muted">{formatWavesWeek(suggestion.week)}</p>
+        <ul className="wave-sets">
+          {suggestion.setPlan.map((set, i) => (
+            <li key={i}>{formatWavesSet(set)}</li>
+          ))}
+        </ul>
+        <p className="muted">
+          {config.equipment === 'dumbbell' && 'Per hand · '}
+          {formatTrainingMax(suggestion.tm)}
+          {config.unilateral && ' · reps per side'}
+        </p>
+        {reason && <p className="note">{reason}</p>}
+      </Card>
+    )
+  }
+
   // Linear shows one rep target, its reason and nothing of Adaptive's (SPEC §6.10).
   const adaptive = suggestion.scheme === undefined ? suggestion : undefined
   const { min } = config.repRange
   const max = adaptive?.effectiveTop ?? config.repRange.max
   const repsText = adaptive ? formatRepRange(min, max) : `${suggestion.reps}`
-  // A Waves suggestion shows its first set only, with no note, until its screens are built.
   const note =
     suggestion.scheme === 'linear'
       ? formatLinearReason(suggestion.reason)

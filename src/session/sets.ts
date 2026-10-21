@@ -100,6 +100,13 @@ export function hasRequiredEffort(exercise: EffortConfig, sets: LoggedSet[]): bo
   return !first || effortAsked(exercise, 0) !== 'required' || first.rpe !== undefined
 }
 
+/** The suggestion is for a deload week: Adaptive's (SPEC §6.7), or Waves' week 4 (§6.11). */
+export const isDeload = (suggestion: Suggestion) =>
+  suggestion.kind === 'suggestion' &&
+  (suggestion.scheme === 'waves'
+    ? suggestion.week === 4
+    : suggestion.scheme === undefined && suggestion.plan === 'deload')
+
 /**
  * How many sets this exercise wants today: the configured count, halved in a deload
  * (SPEC §6.2, §6.7). A substitute wants the configured count; it isn't on the plan (SPEC §5.2).

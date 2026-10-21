@@ -76,7 +76,12 @@ describe('database upgrades', () => {
     // A Waves exercise saves and reads back too.
     const waves: Program = {
       ...program,
-      days: [{ ...program.days[0], exercises: [{ ...exercise, id: 'ohp', progression: { scheme: 'waves', increment: 5 } }] }],
+      days: [
+        {
+          ...program.days[0],
+          exercises: [{ ...exercise, id: 'ohp', progression: { scheme: 'waves', increment: 5 } }],
+        },
+      ],
     }
     await db.programs.put(waves)
     expect(await db.programs.get('main')).toEqual(waves)

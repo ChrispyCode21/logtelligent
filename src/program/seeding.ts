@@ -1,5 +1,13 @@
 // Entering starting numbers (SPEC §5.1): the exercise form and the guided walkthrough.
-import { schemeId, snapDown, type EquipmentType, type RepRange, type SchemeId, type Seed, type Tier } from '../engine'
+import {
+  schemeId,
+  snapDown,
+  type EquipmentType,
+  type RepRange,
+  type SchemeId,
+  type Seed,
+  type Tier,
+} from '../engine'
 import { findBankExercise } from './bank'
 import type { ProgramExercise } from './types'
 
@@ -128,11 +136,7 @@ export function seedPrefill(
   return {
     weight: String(snapStartingWeight(weight, stack)),
     reps:
-      schemeId(e) === 'waves'
-        ? String(WAVES_SEED_REPS)
-        : e.tier === 'primary'
-          ? String(e.repRange.max)
-          : '',
+      schemeId(e) === 'waves' ? String(WAVES_SEED_REPS) : e.tier === 'primary' ? String(e.repRange.max) : '',
   }
 }
 
