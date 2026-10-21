@@ -46,7 +46,8 @@ const wavesSuggestion = (week: 1 | 2 | 3 | 4): Suggestion => ({
   setPlan: [
     { weight: 160, reps: 5 },
     { weight: 185, reps: 5 },
-    { weight: 210, reps: 5, amrap: true },
+    // As the engine plans it, week 4 has no AMRAP set (SPEC §6.11).
+    { weight: 210, reps: 5, ...(week < 4 && { amrap: true }) },
   ],
   reason: { kind: 'start' },
 })

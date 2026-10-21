@@ -14,7 +14,6 @@ import {
   formatWavesWeek,
   formatWeight,
 } from '../ui/format'
-import { isDeload } from '../session/sets'
 
 function e1rmNote(e1rm: RunningE1rm) {
   if (e1rm.basis === 'seed') return 'Based on your starting numbers.'
@@ -46,10 +45,8 @@ export function SuggestionCard({ config, suggestion, heading, effortScale, onEdi
     const reason = formatWavesReason(suggestion.reason)
     return (
       <Card>
-        <h2>
-          {heading}
-          {isDeload(suggestion) && <span className="tag">Deload</span>}
-        </h2>
+        {/* The week line marks week 4 as the deload (SPEC §6.11), so the heading has no tag. */}
+        <h2>{heading}</h2>
         <p className="muted">{formatWavesWeek(suggestion.week)}</p>
         <ul className="wave-sets">
           {suggestion.setPlan.map((set, i) => (

@@ -74,18 +74,16 @@ export type EffortAsk = 'required' | 'optional' | undefined
 /** The exercise as far as asking for effort goes. */
 type EffortConfig = Pick<ExerciseConfig, 'tier' | 'progression'>
 
-/** The AMRAP set is always the third prescribed set (SPEC §5.2, §6.11). */
-export const AMRAP_INDEX = 2
-
 /**
  * Effort is asked on a primary lift's first set only: required in Adaptive (SPEC §6.3, §6.5),
- * optional in Linear (§6.10). A Waves exercise asks it, optionally, on its AMRAP set at any tier,
- * and nowhere in week 4 (§6.11); that needs the `suggestion` for the week.
+ * optional in Linear (§6.10). A Waves exercise asks it, optionally, on the set its week's plan marks
+ * as the AMRAP, at any tier; week 4 has none (§6.11). That needs the `suggestion` for the week.
  */
 export function effortAsked(exercise: EffortConfig, index: number, suggestion?: Suggestion): EffortAsk {
   if (schemeId(exercise) === 'waves') {
-    const week4 = suggestion?.kind === 'suggestion' && suggestion.scheme === 'waves' && suggestion.week === 4
-    return index === AMRAP_INDEX && suggestion?.kind === 'suggestion' && !week4 ? 'optional' : undefined
+    const planned =
+      suggestion?.kind === 'suggestion' && suggestion.scheme === 'waves' && suggestion.setPlan[index]
+    return planned && planned.amrap ? 'optional' : undefined
   }
   if (exercise.tier !== 'primary' || index !== 0) return undefined
   return schemeId(exercise) === 'adaptive' ? 'required' : 'optional'
