@@ -80,7 +80,7 @@ Templates are offered while the program has no active days, with building your o
 
 **Guided starting-numbers walkthrough:** after picking a template, and from Today's seed gate for any program with exercises missing starting numbers. One screen per exercise still missing them; the seed gate's rules are unchanged.
 - **Next** saves that exercise's starting numbers straight away. **Finish later** leaves; the seed gate resumes at the first exercise still missing numbers. There is no Back button (edit an exercise on the Program tab instead).
-- **Pre-fill:** the lift's latest weight when it has history (§6.9), else the bank's placeholder weight for an exercise whose name matches a bank exercise, snapped down onto its stack; primaries also get the **top of their rep range** as reps. Others start blank.
+- **Pre-fill:** the lift's latest weight when it has history (§6.9), else the bank's placeholder weight for an exercise whose name matches a bank exercise, snapped down onto its stack; primaries also get the **top of their rep range** as reps, and Waves exercises 5 reps, whatever the tier (their rep range isn't used). Others start blank.
 - **Weight stacks:** a cable or machine exercise without a stack asks for one on its screen, with quick picks (5 lb steps, 10 lb steps) or the gym's own list typed in. The last pick is offered first on the next cable/machine exercise. Stacks stay per exercise (§6.2).
 
 **Rotation:**
