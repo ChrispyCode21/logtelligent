@@ -473,4 +473,36 @@ describe('Waves, through History (SPEC §6.11)', () => {
     expect(lift.map((s) => s.isDeload)).toEqual([false, false, false, true])
     expect(runningE1rm(lift, undefined, asOf)?.value).toBeCloseTo(261.7, 1)
   })
+
+  it("a session holding a lift's Waves sets and its 5 x 10 volume gives the e1RM of the AMRAP set alone", () => {
+    const volumeSquat = exercise('squat-v', 'Squat', {
+      tier: 'accessory',
+      repRange: { min: 10, max: 10 },
+      sets: 5,
+    })
+    const p = program(wavesSquat, volumeSquat)
+    const waves: LoggedSet[] = [
+      { weight: 65, reps: 5 },
+      { weight: 75, reps: 5 },
+      { weight: 85, reps: 5, rpe: 10 },
+    ]
+    const volume: LoggedSet[] = Array.from({ length: 5 }, () => ({ weight: 80, reps: 10 }))
+    const startedAt = '2026-10-01T10:00:00.000Z'
+    const both: Session = {
+      id: nextId++,
+      dayId: 'upper-a',
+      startedAt,
+      finishedAt: startedAt,
+      exercises: [
+        { exerciseId: 'squat-w', sets: waves },
+        { exerciseId: 'squat-v', sets: volume },
+      ],
+    }
+    const alone = finished('upper-a', 1, 'squat-w', waves)
+    const e1rmOf = (sessions: Session[]) =>
+      runningE1rm(otherLiftSessions(p, sessions, adaptiveSquat), undefined, asOf)?.value
+    // 85 x 5 @ RPE 10 is 5 effective reps: (99.17 + 95.63 + 99.84) / 3
+    expect(e1rmOf([both])).toBeCloseTo(98.2, 1)
+    expect(e1rmOf([both])).toBeCloseTo(e1rmOf([alone])!, 5)
+  })
 })
