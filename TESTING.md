@@ -43,11 +43,11 @@ Lean on purpose: the things any release could break that only the phone shows. R
 
 Replaced at each release with checks drawn from that release's CHANGELOG notes (see "Keeping these lists" below). Anything still unticked when the next release comes is carried over once, then dropped or turned into an issue.
 
-- [ ] **Picking Waves:** in an exercise's form, the Progression control (Adaptive | Linear | Waves) fits at phone width, and picking Waves shows "Training max increase each cycle (lb)" (5 to start) and hides the sets and reps fields. A bodyweight exercise doesn't offer Waves.
-- [ ] **A Waves session:** each of the three sets shows its own weight, and changing one leaves the others as they were. The last set of weeks 1 to 3 reads like "210 × 5+ (AMRAP)", with effort optional on it. Today shows the week ("Week 2 of 4"), the training max and, after a cycle, why it changed.
+- [ ] **Picking Waves:** in an exercise's form, picking Waves in the Progression control (Adaptive | Linear | Waves) shows "Training max increase each cycle (lb)" (5 to start) and hides the sets and reps fields. A bodyweight exercise doesn't offer Waves.
+- [ ] **A Waves session:** each of the three sets shows its own weight, and changing one leaves the others as they were. In weeks 1 to 3, set 3's form reads "Set 3 · AMRAP, 5+ reps", with effort optional on it. Today shows the week ("Week 2 of 4"), each set ("210 × 5+ (AMRAP)" for the last), the training max and, after a cycle, why it changed.
 - [ ] **The deload week:** week 4 reads "Week 4 of 4 · Deload" on Today, with no AMRAP set, and History marks it as a deload.
-- [ ] **4-day Main Lift + Volume:** applying it asks for starting numbers for each main lift, and each day shows the main lift on Waves, then 5 × 10 of the same lift, then one accessory. The 5 × 10 entry's History shares the main lift's sessions.
-- [ ] **Restore from file…:** an export with a Waves exercise restores with its scheme and increase intact (this release stores Waves on an exercise, Dexie v8).
+- [ ] **4-day Main Lift + Volume:** applying it walks through 12 screens (1 of 12 to 12 of 12): each main lift asks for a weight and reps (5 reps pre-filled), and the rest ask for a weight only. Each day shows the main lift on Waves, then 5 × 10 of the same lift, then one accessory. The 5 × 10 entry's History shares the main lift's sessions.
+- [ ] **Restore from file…:** an export with a Linear and a Waves exercise restores with each one's scheme and increase intact (this release stores Waves on an exercise, Dexie v8; carries over v1.5.0's Linear check).
 
 Carried over from v1.5.0:
 
