@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { exerciseFromBank, findBankExercise } from './bank'
-import { fromForm, toForm, validateExerciseForm, withScheme, withTier } from './exerciseForm'
+import {
+  equipmentOptions,
+  fromForm,
+  schemesFor,
+  toForm,
+  validateExerciseForm,
+  withEquipment,
+  withScheme,
+  withTier,
+} from './exerciseForm'
 import type { ProgramExercise } from './types'
 
 const bench: ProgramExercise = {
@@ -190,5 +199,35 @@ describe('Waves in the form (SPEC §6.1, §6.11)', () => {
     const back = withScheme(withScheme(linear, 'waves'), 'adaptive')
     expect(back).toMatchObject({ scheme: 'adaptive', min: '3', max: '5', sets: '3' })
     expect(fromForm(back, bench)).not.toHaveProperty('progression')
+  })
+})
+
+describe('Waves and bodyweight equipment (SPEC §6.1, §6.11)', () => {
+  const waves = { ...withScheme(toForm(bench), 'waves'), tier: 'accessory' as const }
+  const all = ['barbell', 'dumbbell', 'bodyweight'] as const
+
+  it('offers Adaptive and Linear for bodyweight, and all three for other equipment', () => {
+    expect(schemesFor('bodyweight')).toEqual(['adaptive', 'linear'])
+    expect(schemesFor('dumbbell')).toEqual(['adaptive', 'linear', 'waves'])
+  })
+
+  it('moves a Waves exercise to Adaptive when it becomes bodyweight, restoring its range and sets', () => {
+    const form = withEquipment(waves, 'bodyweight')
+    expect(form).toMatchObject({ equipment: 'bodyweight', scheme: 'adaptive', min: '3', max: '5', sets: '3' })
+    expect(fromForm(form, bench)).not.toHaveProperty('progression')
+  })
+
+  it('leaves the scheme alone for other changes', () => {
+    expect(withEquipment(waves, 'dumbbell').scheme).toBe('waves')
+    const linear = withScheme(toForm(bench), 'linear')
+    expect(withEquipment(linear, 'bodyweight').scheme).toBe('linear')
+    expect(withEquipment({ ...toForm(bench), equipment: 'bodyweight' }, 'barbell').scheme).toBe('adaptive')
+  })
+
+  it('leaves bodyweight out for a primary and for a Waves exercise whose scheme is fixed', () => {
+    expect(equipmentOptions(all, 'primary', 'adaptive', false)).toEqual(['barbell', 'dumbbell'])
+    expect(equipmentOptions(all, 'accessory', 'waves', true)).toEqual(['barbell', 'dumbbell'])
+    expect(equipmentOptions(all, 'accessory', 'waves', false)).toEqual([...all])
+    expect(equipmentOptions(all, 'accessory', 'adaptive', true)).toEqual([...all])
   })
 })
