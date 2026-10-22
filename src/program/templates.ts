@@ -113,7 +113,7 @@ export const TEMPLATES: ProgramTemplate[] = [
     days: [
       { name: 'Press', exercises: [main('overhead-press', 5), volume('overhead-press'), 'lat-pulldown'] },
       { name: 'Deadlift', exercises: [main('deadlift', 10), volume('deadlift'), 'hanging-leg-raise'] },
-      { name: 'Bench', exercises: [main('bench-press', 5), volume('bench-press'), 'barbell-row'] },
+      { name: 'Bench', exercises: [main('bench-press', 5), volume('bench-press'), 'seated-cable-row'] },
       { name: 'Squat', exercises: [main('back-squat', 10), volume('back-squat'), 'lying-leg-curl'] },
     ],
   },

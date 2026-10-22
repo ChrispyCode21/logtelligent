@@ -150,9 +150,13 @@ describe('the 4-day Main Lift + Volume template (SPEC §5.1)', () => {
     expect(days.map((d) => [d.name, d.exercises.map((e) => e.name)])).toEqual([
       ['Press', ['Overhead Press', 'Overhead Press', 'Lat Pulldown']],
       ['Deadlift', ['Deadlift', 'Deadlift', 'Hanging Leg Raise']],
-      ['Bench', ['Bench Press', 'Bench Press', 'Barbell Row']],
+      ['Bench', ['Bench Press', 'Bench Press', 'Seated Cable Row']],
       ['Squat', ['Back Squat', 'Back Squat', 'Lying Leg Curl']],
     ])
+  })
+
+  it('ends each day with a bank accessory', () => {
+    for (const d of days) expect(d.exercises[2].tier).toBe('accessory')
   })
 
   it('puts each main lift on Waves: +5 lb for the press and bench, +10 lb for the squat and deadlift', () => {

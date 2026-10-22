@@ -79,7 +79,7 @@ A **3-day Novice A/B**, Workout A and B alternated, every exercise a primary on 
 A **4-day Main Lift + Volume (5/3/1-style)**, Boring But Big: each day's main lift is a primary on Waves (§6.11) at the increment shown, followed by the same lift, under the same name, as an Adaptive accessory at 5 × 10 (so it shares the lift's history, §6.9), then one accessory with its bank defaults:
 - **Press:** Overhead Press (Waves +5 lb), Overhead Press 5 × 10, Lat Pulldown
 - **Deadlift:** Deadlift (Waves +10 lb), Deadlift 5 × 10, Hanging Leg Raise
-- **Bench:** Bench Press (Waves +5 lb), Bench Press 5 × 10, Barbell Row
+- **Bench:** Bench Press (Waves +5 lb), Bench Press 5 × 10, Seated Cable Row
 - **Squat:** Back Squat (Waves +10 lb), Back Squat 5 × 10, Lying Leg Curl
 
 Templates are offered while the program has no active days, with building your own as the alternative; switching from another program is "Change your program" first (§5.5). Applying one needs no confirm. It produces a normal, fully editable program, its days added after any archived ones; the effort scale is kept. Each template exercise joins the lift of the same name (§6.9). A template can set each exercise's sets, rep range, target RPE, tier and scheme with its settings, copied in when it's applied; anything it doesn't set is the bank's default. The same bank exercise can appear on several days with different settings.
