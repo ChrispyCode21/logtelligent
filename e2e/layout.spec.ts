@@ -34,6 +34,21 @@ test('every step of the starting-numbers walkthrough, and Today once it is done'
   await expectFitsScreen(page, 'Today, ready to start', page.getByRole('button', { name: 'Start Upper A' }))
 })
 
+test('the Main Lift + Volume template: its walkthrough and Today, with the same lift twice on a day', async ({
+  page,
+}) => {
+  await tab(page, 'Program').click()
+  await page.getByRole('button', { name: 'Use 4-day Main Lift + Volume (5/3/1-style)' }).click()
+  await finishWalkthrough(page, (exercise) => expectFitsScreen(page, 'walkthrough step', exercise))
+  await expectFitsScreen(page, 'Today, ready to start', page.getByRole('button', { name: 'Start Press' }))
+  await page.getByRole('button', { name: 'Start Press' }).click()
+  await expectFitsScreen(
+    page,
+    'live session with a main lift and its volume',
+    page.getByRole('button', { name: 'Finish session' }),
+  )
+})
+
 test('Today: starting numbers still needed, and a day out of rotation', async ({ page }) => {
   await tab(page, 'Program').click()
   await page.getByRole('button', { name: 'Use 4-day Upper/Lower' }).click()
