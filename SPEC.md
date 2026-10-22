@@ -194,7 +194,7 @@ Per exercise, set at program-setup time:
 | **Progression profile** | How this exercise's load can change (§6.2) |
 | Unilateral | Reps are always recorded **per side** (e.g. single-arm or alternating DB curls: 30×15 = 15 each side) |
 | Target RPE (primary lifts) | First-set target, half steps, default 8; worded in the program's effort scale (§5.6) |
-| **Progression scheme** | Adaptive (the default), Linear with its increment (§6.10) or Waves with its increment (§6.11). A Linear exercise has one Reps number (a range with equal ends) and no target RPE; a stored target is kept for switching back. Waves sets every set's reps, and its three sets, from the wave, so the configured rep range, set count and target RPE aren't used by it: its form shows the increment and hides them, keeping their stored values. Fixed once the exercise has a finished session: to change it, add the exercise again |
+| **Progression scheme** | Adaptive (the default), Linear with its increment (§6.10) or Waves with its increment (§6.11). A Linear exercise has one Reps number (a range with equal ends) and no target RPE; a stored target is kept for switching back. Waves sets every set's reps, and its three sets, from the wave, so the configured rep range, set count and target RPE aren't used by it: its form shows the increment and hides them, keeping their stored values. Waves isn't offered for bodyweight equipment (the form offers Adaptive and Linear): choosing bodyweight on a Waves exercise moves it to Adaptive, and once the scheme is fixed, a Waves exercise isn't offered bodyweight equipment. Fixed once the exercise has a finished session: to change it, add the exercise again |
 | Starting numbers (seed) | §5.1 |
 
 **Not in the setup form:** the max relative jump, a fixed 10% for every exercise (§6.2).
@@ -203,7 +203,7 @@ Per exercise, set at program-setup time:
 - **History** here means finished sessions, plus the open session if it has sets for that exercise or day.
 - **Removing the open session's day:** if the open session is on that day and has no sets, it's discarded along with the day, and the confirm says so. (Changing programs discards every open session, §5.5.)
 
-**Bodyweight** exercises can only be **accessories**. Their loads are **added weight**: 0, 5, 10, 15… up to 200 lb (overridable). Adaptive: every jump from 0 exceeds 10%, so they progress by reps up to the rep ceiling, then add 5 lb.
+**Bodyweight** exercises can only be **accessories**. Their loads are **added weight**: 0, 5, 10, 15… up to 200 lb (overridable). They use Adaptive or Linear, not Waves (§6.11). Adaptive: every jump from 0 exceeds 10%, so they progress by reps up to the rep ceiling, then add 5 lb.
 
 **Dumbbell** weights are **per hand** (incline press 70 = 70 lb in each hand).
 
@@ -352,7 +352,7 @@ A fixed weight increase every successful session, with its own failure rule. No 
 - **On screen:** the weight and rep target, no effort target (effort is asked on a primary's first set, but optional), and a reason: "+5 lb" (the actual increment), "Top of the loads: +1 rep", "Repeat: reps missed last time", "Reset: missed 3 times in a row", or after a break "Returning from a break: weight lowered 10%." A fresh start shows none. Examples L1–L42 (§7.L).
 
 ### 6.11 Waves
-5/3/1-style four-week waves of percentages of a training max (TM). Each Waves exercise has its own wave and TM, whatever lift it is (§6.9). The engine always prescribes three sets from the wave, whatever the configured set count.
+5/3/1-style four-week waves of percentages of a training max (TM). Each Waves exercise has its own wave and TM, whatever lift it is (§6.9). The engine always prescribes three sets from the wave, whatever the configured set count. Not offered for bodyweight equipment (§6.1).
 
 **Weeks:** the last set of weeks 1–3 is the AMRAP set (as many reps as possible); its prescribed reps are its minimum, written `5+`.
 

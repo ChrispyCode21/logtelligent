@@ -57,6 +57,31 @@ export function withScheme(form: ExerciseFormFields, scheme: SchemeId): Exercise
   return { ...form, scheme, reps: scheme === 'linear' && form.scheme !== 'linear' ? form.max : form.reps }
 }
 
+/** The schemes the form offers: Waves isn't offered for bodyweight equipment (SPEC §6.1, §6.11). */
+export function schemesFor(equipment: EquipmentType): SchemeId[] {
+  return equipment === 'bodyweight' ? ['adaptive', 'linear'] : ['adaptive', 'linear', 'waves']
+}
+
+/** Change the equipment. A Waves exercise moved to bodyweight becomes Adaptive (SPEC §6.1). */
+export function withEquipment(form: ExerciseFormFields, equipment: EquipmentType): ExerciseFormFields {
+  const next = { ...form, equipment }
+  return equipment === 'bodyweight' && form.scheme === 'waves' ? withScheme(next, 'adaptive') : next
+}
+
+/**
+ * The equipment the form offers. Bodyweight is accessory-only, and a Waves exercise whose scheme is
+ * fixed can't move to it, since that would change the scheme (SPEC §6.1).
+ */
+export function equipmentOptions<T extends EquipmentType>(
+  all: readonly T[],
+  tier: Tier,
+  scheme: SchemeId,
+  schemeLocked: boolean,
+): T[] {
+  const noBodyweight = tier === 'primary' || (schemeLocked && scheme === 'waves')
+  return all.filter((e) => !(noBodyweight && e === 'bodyweight'))
+}
+
 /** A Waves exercise's rep range when none was ever typed: unused by it, but a valid range (SPEC §6.1). */
 const WAVES_REP_RANGE = { min: 5, max: 5 }
 

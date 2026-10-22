@@ -4,11 +4,14 @@ import { withLiftGym } from '../history/lifts'
 import { exerciseFromBank, type BankExercise } from '../program/bank'
 import { EFFORT_SCALES, nearestOption, type EffortScale } from '../program/effort'
 import {
+  equipmentOptions,
   formSeedHasReps,
   fromForm,
+  schemesFor,
   toForm,
   usesWave,
   validateExerciseForm,
+  withEquipment,
   withScheme,
   withTier,
   type ExerciseFormFields,
@@ -22,7 +25,8 @@ import { SegmentedControl } from '../ui/SegmentedControl'
 import { EQUIPMENT_LABELS, SCHEME_LABELS, TIER_LABELS } from '../ui/format'
 import { SeedFields } from './SeedFields'
 
-const EQUIPMENT = Object.entries(EQUIPMENT_LABELS) as [EquipmentType, string][]
+const EQUIPMENT_VALUES = Object.keys(EQUIPMENT_LABELS) as EquipmentType[]
+const ALL_SCHEMES = schemesFor('barbell')
 const TARGET_LABEL: Record<EffortScale, string> = {
   rpe: 'Target RPE on the first set',
   repsLeft: 'Target reps left on the first set',
@@ -120,7 +124,7 @@ export function ExerciseForm({
       ) : (
         <Field as="fieldset" label="Progression">
           <SegmentedControl
-            options={(['adaptive', 'linear', 'waves'] as const).map((scheme) => ({
+            options={(form.scheme === 'waves' ? ALL_SCHEMES : schemesFor(form.equipment)).map((scheme) => ({
               value: scheme,
               label: SCHEME_LABELS[scheme],
             }))}
@@ -188,11 +192,14 @@ export function ExerciseForm({
       )}
 
       <Field label="Equipment">
-        <select value={form.equipment} onChange={(e) => set('equipment', e.target.value as EquipmentType)}>
-          {/* Bodyweight is accessory-only (SPEC §6.1). */}
-          {EQUIPMENT.filter(([value]) => !(primary && value === 'bodyweight')).map(([value, label]) => (
+        <select
+          value={form.equipment}
+          onChange={(e) => setForm(withEquipment(form, e.target.value as EquipmentType))}
+        >
+          {/* Bodyweight is accessory-only, and not for a Waves exercise whose scheme is fixed (SPEC §6.1). */}
+          {equipmentOptions(EQUIPMENT_VALUES, form.tier, form.scheme, !!schemeLocked).map((value) => (
             <option key={value} value={value}>
-              {label}
+              {EQUIPMENT_LABELS[value]}
             </option>
           ))}
         </select>
