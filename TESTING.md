@@ -39,21 +39,22 @@ Lean on purpose: the things any release could break that only the phone shows. R
 - Restore from file… reads an export back: when what's stored changes.
 - Any real `confirm()` the release adds or rewords.
 
-### Current release: v1.5.0
+### Current release: v1.6.0
 
 Replaced at each release with checks drawn from that release's CHANGELOG notes (see "Keeping these lists" below). Anything still unticked when the next release comes is carried over once, then dropped or turned into an issue.
 
-- [ ] **Picking Linear:** in an exercise's form, the Progression control (Adaptive | Linear) fits beside Tier at phone width. Picking Linear shows the increase field and one Reps field, and hides Target RPE. Its summary line reads "Primary · Linear +5 lb · 3 × 5 · Barbell" on one line where it fits. Once the exercise has been logged, Progression shows as text with "Fixed once it's been logged…".
+- [ ] **Picking Waves:** in an exercise's form, the Progression control (Adaptive | Linear | Waves) fits at phone width, and picking Waves shows "Training max increase each cycle (lb)" (5 to start) and hides the sets and reps fields. A bodyweight exercise doesn't offer Waves.
+- [ ] **A Waves session:** each of the three sets shows its own weight, and changing one leaves the others as they were. The last set of weeks 1 to 3 reads like "210 × 5+ (AMRAP)", with effort optional on it. Today shows the week ("Week 2 of 4"), the training max and, after a cycle, why it changed.
+- [ ] **The deload week:** week 4 reads "Week 4 of 4 · Deload" on Today, with no AMRAP set, and History marks it as a deload.
+- [ ] **4-day Main Lift + Volume:** applying it asks for starting numbers for each main lift, and each day shows the main lift on Waves, then 5 × 10 of the same lift, then one accessory. The 5 × 10 entry's History shares the main lift's sessions.
+- [ ] **Restore from file…:** an export with a Waves exercise restores with its scheme and increase intact (this release stores Waves on an exercise, Dexie v8).
+
+Carried over from v1.5.0:
+
+- [ ] **Picking Linear:** in an exercise's form, picking Linear shows the increase field and one Reps field, and hides Target RPE. Its summary line reads "Primary · Linear +5 lb · 3 × 5 · Barbell" on one line where it fits. Once the exercise has been logged, Progression shows as text with "Fixed once it's been logged…".
 - [ ] **A Linear session:** effort on the first set reads "(optional)", tapping the chosen button again clears it, and the session finishes with no effort logged. The suggestion card shows the reason ("+5 lb" after a success).
 - [ ] **3-day Novice A/B:** applying it walks through 4 starting-weight screens (1 of 4 to 4 of 4), each asking for a weight only. Today shows Workout A, with "1 set · 5 reps" on the deadlift.
 - [ ] **Shared across workouts:** after a successful Workout A, Workout B's squat and deadlift suggest the next weight up ("+5 lb", "+10 lb"), not the starting weight again.
-- [ ] **Restore from file…:** an export with a Linear exercise restores with its scheme and increase intact (this release stores a scheme on each exercise).
-
-Carried over from v1.4.0:
-
-- [ ] **Effort scale buttons:** on the Program tab's Effort scale card, "Perceived effort" sits inside its button on two lines, whole words only. If a word ever has to break (larger text), it hyphenates onto the next line and never runs past the edge. (The browser tests cover a wider font at 320 px.)
-- [ ] **Notes on Today's suggestion:** a note after a failed session, a deload or a break ("Weight lowered one step.", "Deload done: weight picked from your estimated 1RM.", "Resuming after the deload.", "Returning from a break: estimate lowered 15%.") wraps cleanly inside the card.
-- [ ] **Failing at the lightest load:** the "You're at the lightest load…" note reads well on the card, and its **Edit exercise** button is easy to tap and opens that exercise's form.
 
 ### Keeping these lists
 

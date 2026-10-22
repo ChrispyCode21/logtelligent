@@ -6,6 +6,10 @@ To release: in a PR, move the "Unreleased" notes under a new version heading, bu
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-22
+
+Waves progression (5/3/1-style): pick it for an exercise, or start from the new 4-day Main Lift + Volume template, and each set follows a four-week wave of a training max.
+
 ### Added
 
 - **A 4-day Main Lift + Volume (5/3/1-style) template:** press, deadlift, bench and squat on Waves, each followed by 5 × 10 of the same lift (sharing its history) and one accessory. A day can hold the same lift twice.
