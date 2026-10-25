@@ -22,7 +22,7 @@
     "check:fast": "node scripts/check-all.mjs --fast"
   },
   "dependencies": {
-    "dexie": "^4.4.6",
+    "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
