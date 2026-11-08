@@ -33,13 +33,13 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vite-pwa/assets-generator": "^2.0.0",
-    "@vitejs/plugin-react": "^6.1.2",
-    "fake-indexeddb": "^6.2.6",
-    "oxlint": "^1.90.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "fake-indexeddb": "^6.2.7",
+    "oxlint": "^1.91.0",
     "prettier": "^3.9.10",
     "typescript": "~7.0.2",
-    "vite": "^8.3.5",
+    "vite": "^8.3.6",
     "vite-plugin-pwa": "^2.0.0",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }
